@@ -1,0 +1,154 @@
+"""Autonomy worker - background operational loop (Phase 3)
+
+Continuous decision-making engine that observes, reasons, plans, and acts.
+States: idle, exploring, learning, working, developing, reviewing, conserving
+"""
+
+import asyncio
+import loguru
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List
+
+from app.core.database import AsyncSessionLocal
+from app.services.memory_service import MemoryService
+from app.models.memory import MemoryItem
+from app.models.autonomy import Goal, Task, DecisionRecord
+from sqlalchemy import select
+
+logger = loguru.logger
+
+
+class AutonomyWorker:
+    """
+    Continuous operational loop for autonomous decision-making.
+
+    The worker cycles through states, never calling the model every second.
+    It sleeps between ticks to conserve resources.
+    """
+
+    def __init__(self, tick_interval: int = 30):
+        self.tick_interval = tick_interval
+        self.state = "idle"
+        self.running = False
+        self._task: Optional[asyncio.Task] = None
+
+    async def start(self):
+        """Start the autonomy loop as a background task."""
+        self.running = True
+        self._task = asyncio.create_task(self._loop())
+        logger.info("Autonomy worker started")
+
+    async def stop(self):
+        """Stop the autonomy loop."""
+        self.running = False
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+        logger.info("Autonomy worker stopped")
+
+    async def _loop(self):
+        """Main autonomy loop."""
+        while self.running:
+            try:
+                await self._tick()
+            except Exception as e:
+                logger.error(f"Autonomy tick error: {e}")
+                self.state = "conserving"
+            await asyncio.sleep(self.tick_interval)
+
+    async def _tick(self):
+        """One iteration of the autonomy loop.
+
+        Steps:
+        1. Observe environment (check for new conversations, unprocessed items)
+        2. Retrieve relevant memories
+        3. Reason and evaluate (via model gateway)
+        4. Identify goals/opportunities
+        5. Check permissions and policies
+        6. Execute action or request authorization
+        7. Record decision
+        8. Reflect and learn / update memory
+        """
+        async with AsyncSessionLocal() as db:
+            # 1. Observe environment
+            recent_messages = await self._observe(db)
+            if not recent_messages:
+                self.state = "idle"
+                return
+
+            self.state = "exploring"
+
+            # 2. Retrieve relevant memories
+            memory_service = MemoryService(db)
+            relevant_memories = await memory_service.search_memory(
+                query=recent_messages[-1]["content"],
+                limit=5,
+            )
+
+            # 3. Reason and evaluate (placeholder - calls model via gateway)
+            self.state = "working"
+            decision = await self._reason(recent_messages[-1], relevant_memories)
+
+            # 4. Record decision
+            decision_record = DecisionRecord(
+                decision=decision.get("action", "observe"),
+                reasoning=decision.get("reasoning", ""),
+                confidence=decision.get("confidence", 0.5),
+            )
+            db.add(decision_record)
+            await db.commit()
+
+            # 5. Reflect and learn - store the outcome as memory
+            await memory_service.store_memory(
+                content=f"Decided to {decision.get('action', 'observe')}: {decision.get('reasoning', '')}",
+                memory_type="experience",
+                source="autonomy-worker",
+                confidence=decision.get("confidence", 0.5),
+                topic="decision-making",
+            )
+
+            self.state = "reviewing"
+            logger.info(f"Autonomy tick complete: {decision.get('action', 'observe')}")
+
+    async def _observe(self, db: AsyncSessionLocal) -> List[Dict[str, Any]]:
+        """Check for new unprocessed conversation messages."""
+        from app.models.memory import ConversationMessage
+        result = await db.execute(
+            select(ConversationMessage)
+            .where(ConversationMessage.role == "user")
+            .order_by(ConversationMessage.created_at.desc())
+            .limit(5)
+        )
+        messages = result.scalars().all()
+        return [
+            {
+                "id": str(m.id),
+                "content": m.content,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in messages
+        ]
+
+    async def _reason(
+        self, message: Dict[str, Any], memories: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Reason about the best action given context and memories."""
+        # Build context from memories
+        memory_context = "\n".join(
+            [f"- {m.get('content', '')[:100]}..." for m in memories[:3]]
+        ) if memories else "No relevant memories."
+
+        # This would call the model gateway via LiteLLM
+        # For now, return a structured decision
+        return {
+            "action": "respond",
+            "reasoning": f"User said: {message.get('content', '')[:100]}. Context: {memory_context[:200]}",
+            "confidence": 0.7,
+        }
+
+
+# Singleton instance
+autonomy_worker = AutonomyWorker(tick_interval=30)

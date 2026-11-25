@@ -1,0 +1,71 @@
+# =============================================================================
+# LiteLLM Configuration - IAM Model Gateway
+# =============================================================================
+# Provider switching, fallback and spend control.
+# IAM policy (OD-04): no standing paid budget — all spend requires owner approval.
+# LiteLLM's max_budget here is 0; free endpoints remain usable. To enable a paid
+# model, set an explicit budget only after owner authorization.
+#
+# Reference: https://docs.litellm.ai/docs/
+
+model_list:
+  # ---------------------------------------------------------------------------
+  # NVIDIA NIM / build.nvidia.com (free endpoints, OpenAI-compatible)
+  # ---------------------------------------------------------------------------
+  - model_name: nvidia-llama-3.3-70b
+    litellm_params:
+      model: openai/meta/llama-3.3-70b-instruct
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: nvidia-qwen-2.5-72b
+    litellm_params:
+      model: openai/qwen/qwen2.5-72b-instruct
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: nvidia-deepseek-r1
+    litellm_params:
+      model: openai/deepseek-ai/deepseek-r1
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: nvidia-nemotron
+    litellm_params:
+      model: openai/nvidia/llama-3.3-nemotron-super-49b-v1
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  # ---------------------------------------------------------------------------
+  # Alibaba Dashscope (Qwen)
+  # ---------------------------------------------------------------------------
+  - model_name: qwen3.5-9b
+    litellm_params:
+      model: dashscope/qwen3.5-9b
+      api_key: os.environ/DASHSCOPE_API_KEY
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+  # ---------------------------------------------------------------------------
+  # Fallback providers
+  # ---------------------------------------------------------------------------
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude-3-haiku
+    litellm_params:
+      model: claude-3-haiku-20240307
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+# ---------------------------------------------------------------------------
+# General settings — zero standing budget (OD-04)
+# ---------------------------------------------------------------------------
+general_settings:
+  max_budget: 0  # paid inference disabled until owner authorization
+  num_retries: 3
+  retry_after: 2
+
+litellm_settings:
+  enable_tagging: true
+  detailed_usage: true

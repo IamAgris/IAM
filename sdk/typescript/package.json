@@ -1,0 +1,15 @@
+{
+  "name": "@iam/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript/JavaScript SDK for the IAM Core",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/*.test.js"
+  },
+  "license": "UNLICENSED",
+  "keywords": ["iam", "sdk", "core", "node", "agent"]
+}

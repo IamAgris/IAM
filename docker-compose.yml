@@ -1,0 +1,192 @@
+# =============================================================================
+# Project AURA - Docker Compose (Phase 0)
+# =============================================================================
+# Single-VPS initial deployment: PostgreSQL + pgvector, Redis, LiteLLM, Backend, Frontend
+#
+# Run:  docker compose up -d
+# Stop: docker compose down
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL with pgvector (primary database + semantic memory)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: aura-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aura}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-securely}
+      POSTGRES_DB: ${POSTGRES_DB:-aura_db}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - aura_postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aura} -d ${POSTGRES_DB:-aura_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (cache + job queues)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: aura-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - aura_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # LiteLLM (model gateway - routing, fallback, spend control)
+  # ---------------------------------------------------------------------------
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: aura-litellm
+    restart: unless-stopped
+    command: --host 0.0.0.0 --port 4000 --config /app/litellm/config.yaml
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+    volumes:
+      - ./infra/litellm/config.yaml:/app/litellm/config.yaml
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # Backend API (Python + FastAPI)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-change-me-to-a-secure-random-secret}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      LITELLM_BASE_URL: http://litellm:4000
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-change-me}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-change-me}
+      S3_BUCKET: ${S3_BUCKET:-aura-storage}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Next.js + TypeScript)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aura-frontend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # MinIO (S3-compatible object storage - documents, images, recordings)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: aura-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-change-me}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-change-me}
+    ports:
+      - "9020:9000"
+      - "9021:9001"
+    volumes:
+      - aura_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aura-network
+
+volumes:
+  aura_postgres_data:
+  aura_redis_data:
+  aura_minio_data:
+
+networks:
+  aura-network:
+    driver: bridge

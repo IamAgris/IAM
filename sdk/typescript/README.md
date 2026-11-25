@@ -1,0 +1,36 @@
+# @iam/sdk (TypeScript)
+
+Official TypeScript/JavaScript client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
+
+**Proposed package name — not published.**
+
+```bash
+npm install @iam/sdk
+```
+
+```ts
+import { IAM } from "@iam/sdk";
+
+const iam = new IAM({
+  endpoint: process.env.IAM_CORE_URL!,
+  token: process.env.IAM_TOKEN,
+});
+
+await iam.connect();
+const status = await iam.core.status();
+const task = await iam.tasks.submit({
+  type: "research",
+  instruction: "Investigate efficient ARM64 inference engines",
+});
+console.log(status, task.id);
+await iam.disconnect();
+```
+
+Capabilities: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`.
+
+- Scoped bearer tokens; protocol version header; controlled retries.
+- Tasks submitted while disconnected are queued in memory and sent by `tasks.flushQueue()`.
+- Node registration creates a candidate node; the 1% contribution policy is core-enforced.
+- No database access; no protected-core modification.
+
+Requires Node 18+ (global `fetch`). Build with `npm run build`.
