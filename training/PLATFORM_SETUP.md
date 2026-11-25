@@ -60,7 +60,9 @@ OUTPUT_DIR = "/content/drive/MyDrive/IAM-training/qwen25-coder-3b-sft"
   --output-dir "$OUTPUT_DIR"
 ```
 
-If a session is interrupted, inspect the saved checkpoint and resume only using a checkpoint produced by the same run/configuration. Do not overwrite a completed run.
+If a session is interrupted, inspect the saved checkpoint and resume only using a
+checkpoint produced by the same run/configuration. Add `--resume` to the same command
+to continue from the latest checkpoint in `$OUTPUT_DIR`. Do not overwrite a completed run.
 
 ## Kaggle Notebooks (free)
 

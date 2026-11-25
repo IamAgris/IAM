@@ -87,8 +87,15 @@ python training/scripts/train_qlora.py \
 
 For a training-only run without validation, omit `--validation-file`. The default base
 model is the official Instruct checkpoint. Set `--base-model` only after verifying the
-exact model ID, revision, provenance and licence. The script writes adapter weights and
-tokenizer files; it does not merge or publish them.
+exact model ID, revision, provenance and licence. The script writes adapter weights,
+tokenizer files and `run_metadata.json` (every CLI argument plus the planned step and
+checkpoint cadence); it does not merge or publish them.
+
+Checkpoint and evaluation intervals are scaled to the planned run length, so short
+free-tier jobs still validate and leave a resumable checkpoint. After an interruption,
+rerun the same command with `--resume` to continue from the latest checkpoint in the
+same output directory. Only resume with the same dataset, configuration and mount;
+never overwrite a completed run.
 
 ## Evaluation and promotion
 

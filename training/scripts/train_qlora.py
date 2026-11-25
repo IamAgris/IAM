@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 from pathlib import Path
 from typing import Any
@@ -101,6 +102,11 @@ def main() -> None:
     parser.add_argument("--gradient-accumulation", type=int, default=8)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-steps", type=int, default=-1)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from the most recent checkpoint in --output-dir after an interruption.",
+    )
     args = parser.parse_args()
 
     if not torch.cuda.is_available():
@@ -159,6 +165,18 @@ def main() -> None:
             read_jsonl(args.validation_file), tokenizer, args.max_length
         )
 
+    # Free-tier runs are often shorter than the default 100-step cadence. Keep
+    # save/eval on the same interval (required when loading the best model at
+    # the end) and scale it to the actual run length so short jobs still
+    # validate and leave a checkpoint that can be resumed.
+    steps_per_epoch = math.ceil(
+        math.ceil(len(train_dataset) / args.batch_size) / args.gradient_accumulation
+    )
+    planned_steps = (
+        args.max_steps if args.max_steps > 0 else math.ceil(steps_per_epoch * args.epochs)
+    )
+    checkpoint_steps = max(1, min(100, planned_steps // 2))
+
     training_args = TrainingArguments(
         output_dir=str(args.output_dir),
         num_train_epochs=args.epochs,
@@ -174,10 +192,10 @@ def main() -> None:
         weight_decay=0.01,
         logging_steps=10,
         save_strategy="steps",
-        save_steps=100,
+        save_steps=checkpoint_steps,
         save_total_limit=2,
         eval_strategy="steps" if eval_dataset is not None else "no",
-        eval_steps=100 if eval_dataset is not None else None,
+        eval_steps=checkpoint_steps if eval_dataset is not None else None,
         load_best_model_at_end=eval_dataset is not None,
         metric_for_best_model="eval_loss" if eval_dataset is not None else None,
         greater_is_better=False if eval_dataset is not None else None,
@@ -204,7 +222,7 @@ def main() -> None:
         ),
         processing_class=tokenizer,
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True if args.resume else None)
     trainer.save_model(str(args.output_dir / "adapter"))
     tokenizer.save_pretrained(str(args.output_dir / "adapter"))
     (args.output_dir / "run_metadata.json").write_text(
@@ -218,6 +236,12 @@ def main() -> None:
                 "epochs": args.epochs,
                 "learning_rate": args.learning_rate,
                 "seed": args.seed,
+                "arguments": {
+                    key: str(value) if isinstance(value, Path) else value
+                    for key, value in vars(args).items()
+                },
+                "planned_steps": planned_steps,
+                "checkpoint_steps": checkpoint_steps,
                 "train_examples": len(train_dataset),
                 "validation_examples": len(eval_dataset) if eval_dataset is not None else 0,
                 "torch_version": torch.__version__,
