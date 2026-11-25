@@ -11,7 +11,7 @@ from typing import Any
 
 import torch
 from datasets import Dataset
-from peft import LoraConfig, TaskType, prepare_model_for_kbit_training
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -189,6 +189,11 @@ def main() -> None:
         remove_unused_columns=False,
     )
 
+    # Standard Transformers Trainer does not accept a peft_config argument;
+    # attach the LoRA adapter explicitly before constructing Trainer.
+    model = get_peft_model(model, peft_config)
+    model.print_trainable_parameters()
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -198,7 +203,6 @@ def main() -> None:
             tokenizer=tokenizer, padding=True, label_pad_token_id=-100
         ),
         processing_class=tokenizer,
-        peft_config=peft_config,
     )
     trainer.train()
     trainer.save_model(str(args.output_dir / "adapter"))
