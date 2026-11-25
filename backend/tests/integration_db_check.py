@@ -79,6 +79,8 @@ async def apply_migrations() -> None:
         "007_api_credentials.sql",
         "008_retire_legacy_approval_requests.sql",
         "009_skill_runtime.sql",
+        "010_creator_email_dead_letter.sql",
+        "011_skill_runtime_logs.sql",
     ):
         sql = (MIGRATIONS / name).read_text(encoding="utf-8")
         await conn.execute(sql)

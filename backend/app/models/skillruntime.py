@@ -35,3 +35,19 @@ class SkillRuntimeExecution(Base):
             name="ck_skill_runtime_status",
         ),
     )
+
+
+class SkillRuntimeLog(Base):
+    """Captured stdout/stderr for one Skill Runtime invocation."""
+
+    __tablename__ = "skill_runtime_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("skill_runtime_executions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    stream = Column(Text, nullable=False)
+    content = Column(Text, nullable=False, default="")
+    execution = relationship("SkillRuntimeExecution", back_populates="logs")
