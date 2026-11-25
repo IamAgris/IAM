@@ -300,6 +300,15 @@ class FreeSandboxService:
             "creator_approval_required": decision.creator_approval_required,
         }
 
+    def enable_browser_opener(self, headless: bool = False) -> Dict[str, Any]:
+        from app.services.free_sandboxes.browser import PlaywrightBrowserOpener
+
+        adapter = self.manager.get_adapter("stackblitz")
+        opener = PlaywrightBrowserOpener(headless=headless)
+        adapter.set_browser_opener(opener)
+        self._audit("sandbox_browser_opener_enabled", opener.describe())
+        return {"provider": "stackblitz", **opener.describe()}
+
     def health(self) -> Dict[str, Any]:
         return self.manager.health()
 

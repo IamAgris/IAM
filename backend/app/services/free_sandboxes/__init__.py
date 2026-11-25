@@ -25,6 +25,7 @@ from .registration import RegistrationDecision, RegistrationGate
 from .results import redact, wrap_untrusted
 from .service import FreeSandboxService
 from .monitor import FreeSandboxMonitor
+from .browser import PlaywrightBrowserOpener
 
 __all__ = [
     "CredentialMissing",
@@ -35,6 +36,7 @@ __all__ = [
     "FreeSandboxManager",
     "FreeSandboxService",
     "FreeSandboxMonitor",
+    "PlaywrightBrowserOpener",
     "ProviderDiscovery",
     "RegistrationDecision",
     "RegistrationGate",

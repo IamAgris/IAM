@@ -8,6 +8,7 @@ figures are intentionally not hard-coded as guarantees (Doc 19 §1).
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import os
 from datetime import datetime, timezone
@@ -541,13 +542,19 @@ class StackBlitzAdapter:
                 "stackblitz is browser-mediated: set a browser opener or use "
                 f"project_link() manually ({link})"
             )
-        self.browser_opener(link)
+        result = self.browser_opener(link)
+        if inspect.isawaitable(result):
+            result = await result
         return SandboxEnvironment(
             provider=self.info.name,
             external_id=link,
             capability=request.capability,
             state=EnvironmentState.REGISTERED,
-            metadata={"project_url": link, "browser_mediated": True},
+            metadata={
+                "project_url": link,
+                "browser_mediated": True,
+                "browser_result": str(result)[:200],
+            },
         )
 
     async def start(self, external_id: str) -> None:

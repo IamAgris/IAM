@@ -31,6 +31,10 @@ class RecoverPayload(ProvisionPayload):
     failed_provider: str
 
 
+class BrowserPayload(BaseModel):
+    headless: bool = False
+
+
 async def _run(request: Request, operation: Callable, *args: Any, **kwargs: Any) -> Any:
     try:
         return await operation(*args, **kwargs)
@@ -111,6 +115,18 @@ async def verify_quota(
     db: AsyncSession = Depends(get_db_session),
 ):
     return await _run(request, _service(request, db).verify_quota, name)
+
+
+@router.post("/providers/{name}/enable-browser")
+async def enable_browser(
+    name: str,
+    payload: BrowserPayload,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    if name != "stackblitz":
+        return JSONResponse(status_code=400, content={"detail": "browser opener only applies to stackblitz"})
+    return _service(request, db).enable_browser_opener(headless=payload.headless)
 
 
 @router.get("/status")

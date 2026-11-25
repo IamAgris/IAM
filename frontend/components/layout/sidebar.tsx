@@ -31,6 +31,7 @@ const navItems = [
   { name: "Businesses", href: "/businesses", icon: LinkIcon },
   { name: "Finances", href: "/finances", icon: ShieldCheck },
   { name: "Resources", href: "/resources", icon: ShieldCheck },
+  { name: "Free Infrastructure", href: "/freesandboxes", icon: ShieldCheck },
   { name: "Security", href: "/security", icon: ShieldCheck },
   { name: "Life Management", href: "/life", icon: Zap },
   { name: "World Model", href: "/world", icon: ShieldCheck },
