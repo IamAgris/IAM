@@ -12,6 +12,12 @@ architecture or change the production model configuration.
 - Method: 4-bit QLoRA supervised fine-tuning; save adapters separately from base weights.
 - Initial output: an experimental adapter, not a production model.
 
+## Free GPU platform setup
+
+See [PLATFORM_SETUP.md](PLATFORM_SETUP.md) for connecting Google Colab and Kaggle
+notebooks to this branch. The workflow is strictly free-tier: no paid GPU rentals,
+upgrades, automatic billing or surprise charges.
+
 ## Important licence gate
 
 The official Hugging Face model card identifies the 3B Instruct weights as
