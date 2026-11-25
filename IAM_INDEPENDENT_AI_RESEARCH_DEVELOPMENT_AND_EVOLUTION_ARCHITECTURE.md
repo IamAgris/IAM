@@ -123,7 +123,7 @@ These are research objectives, not promised capabilities.
 
 IAM should be able to research, design, reproduce, train, optimise, compress, reproduce, test, protect, deploy and maintain its own AI models — from legacy-compatible ultra-small assistants to larger general-purpose foundation models — while its identity, memory and protected core remain independent of any model.
 
-Current implementation status: OD-38 (foundation set, local baseline `qwen2.5-coder:3b` confirmed by benchmark), OD-39 (resource manager + RAM profile), OD-40 (MEFE), OD-41 (frozen requirements below), and the adaptive selector described in section 6. The implementation sequence is in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`.
+Current implementation status: OD-38 (foundation set; local baseline reopened 25 Nov to `qwen2.5:3b` only, previously benchmark-favoured `qwen2.5-coder:3b` retired from local use), OD-39 (resource manager + RAM profile), OD-40 (MEFE), OD-41 (frozen requirements below), and the adaptive selector described in section 6. The implementation sequence is in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`.
 
 ---
 

@@ -122,9 +122,15 @@ Weights: Critical = 3, High = 2; score 0–5. N/A criteria excluded; weighted av
 | Tool calling | High | N/A (not tested) | N/A | N/A |
 | **Weighted score (measured only)** | | **4.10** | **3.83** | **2.87** |
 
-## 6. Recommendation
+## 6. Recommendation (historical benchmark — superseded by owner direction)
 
-**For IAM's initial local brain, prefer `local-qwen-coder-3b`** — coding-first, as OD-38 requires. It wins on the only measured correctness evidence, is ~7% faster warm, and showed no eviction across five valid warm trials. Its disadvantages (slower cold start by ~1.35 s, ~40 MB more RAM) are minor by comparison.
+**Owner direction, 25 November 2026 (OD-38 reopening):** only `qwen2.5:3b` is kept locally;
+`qwen2.5-coder:3b` and `qwen3.5:4b` are removed from the local set. The benchmark below
+remains valid historical evidence and is not rewritten; the owner knowingly accepted the
+measured coding-quality trade-off in favour of a single-model footprint. Re-benchmark before
+approving another local model.
+
+**Original benchmark recommendation:** for IAM's initial local brain, prefer `local-qwen-coder-3b` — coding-first, as OD-38 then required. It wins on the only measured correctness evidence, is ~7% faster warm, and showed no eviction across five valid warm trials. Its disadvantages (slower cold start by ~1.35 s, ~40 MB more RAM) are minor by comparison.
 
 `qwen3.5:4b` is **not** recommended as the local brain here: its edge-case correctness equals the coder's, but it is ~2.6× slower warm, uses ~700 MB more RAM and fails entirely in default thinking mode. It remains a candidate for a machine with more RAM/CPU or with thinking explicitly disabled.
 

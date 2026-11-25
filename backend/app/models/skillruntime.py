@@ -2,8 +2,9 @@
 
 import uuid
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, JSON, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, JSON, Text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -24,6 +25,9 @@ class SkillRuntimeExecution(Base):
     error = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    logs = relationship(
+        "SkillRuntimeLog", back_populates="execution", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
