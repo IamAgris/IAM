@@ -30,7 +30,7 @@ from app.models.worldmodel import (
 from app.models.resilience import HealthCheck, RecoveryLog, BackupVerification, IncidentRecord, CredentialRotation
 from app.models.capability import CapabilityDefinition, CapabilityAssessment, LearningPath
 from app.models.researchlab import ResearchHypothesis, ResearchExperiment, ExperimentResult, ResearchPublication
-from app.models.socialintel import ConversationContext, SocialProfile, InteractionPreference, ScamDetectionLog
+from app.models.socialintel import ConversationContext, SocialProfile, InteractionPreference, ToneAnalysis, ScamDetectionLog
 from app.models.businessengine import BusinessBudget, CustomerRecord, SalesRecord, BusinessReport, ProjectPortfolio
 from app.models.digitalassets import DigitalAsset, AssetLicence, DomainRegistration, IPRecord
 from app.models.modelindependence import ModelComparison, ModelPortabilityExport, FallbackConfig
@@ -42,9 +42,10 @@ from app.models.globalaccess import (
     RequestJob, RequestUsage, VisitorRateLimit, RegionalSetting,
 )
 from app.models.ainetwork import (
-    ExternalAgent, AgentInteraction, AgentTrustRecord, AgentCollaboration,
+    ExternalAgent, AgentInteraction, AgentInterview, AgentTrustRecord, AgentCollaboration,
     ExternalIntegration, InternetResource, CloudWorkload,
 )
+from app.models.ownerauth import OwnerAuthorization
 from app.models.internetaccess import (
     InternetSession, BrowserAction, OnlineAccount, PublishedContent,
     MonitoredTarget, RetrievedFile, InternetPermission, InternetEvent,
@@ -72,12 +73,27 @@ from app.models.creatorapproval import (
     CreatorApproval,
     CreatorAuthorization,
     CreatorEmailOutbox,
+    CreatorMessage,
     CommunicationAudit,
 )
 from app.models.sdk import RegisteredNode, NodeResourceReport
 from app.models.storage import StoredObject
 from app.models.uwaie import WebsiteWorkflow
 from app.models.integrity import IntegrityManifest, NodeAttestation, SyncObject
+from app.models.freesandbox import (
+    FreeSandboxProvider,
+    FreeSandboxQuotaSnapshot,
+    FreeSandboxEnvironment,
+    FreeSandboxResult,
+)
+from app.models.publicrecords import PublicSource, PublicRecord, RecordRelationship
+from app.models.legal import LegalSource, LegalInstrument, LegalVersion, LegalChange, LegalImpact
+from app.models.geo import (
+    GeoProvider, GeoPlace, GeoDataFile, LiveGeoFeed, MapTileCache, LocationPermission,
+)
+from app.models.humanpresence import (
+    PublicPerson, PublicProfile, PresenceClaim, IdentityMatch, PublicRelationship,
+)
 
 __all__ = [
     # Identity
@@ -144,6 +160,8 @@ __all__ = [
     "CreatorAuthorization", "CreatorEmailOutbox", "CommunicationAudit",
     # API authentication
     "ApiCredential",
+    # Owner authorization
+    "OwnerAuthorization",
     # Skill Runtime
     "SkillRuntimeExecution",
     # Node registry (OD-26)
@@ -152,4 +170,17 @@ __all__ = [
     "StoredObject", "WebsiteWorkflow",
     # Integrity, attestation and sync
     "IntegrityManifest", "NodeAttestation", "SyncObject",
+    # Public records research
+    "PublicSource", "PublicRecord", "RecordRelationship",
+    # Legal intelligence
+    "LegalSource", "LegalInstrument", "LegalVersion", "LegalChange", "LegalImpact",
+    # Geospatial
+    "GeoProvider", "GeoPlace", "GeoDataFile", "LiveGeoFeed", "MapTileCache",
+    "LocationPermission",
+    # Human public presence
+    "PublicPerson", "PublicProfile", "PresenceClaim", "IdentityMatch",
+    "PublicRelationship",
+    # OEDIE free infrastructure adapters (Doc 22)
+    "FreeSandboxProvider", "FreeSandboxQuotaSnapshot",
+    "FreeSandboxEnvironment", "FreeSandboxResult",
 ]

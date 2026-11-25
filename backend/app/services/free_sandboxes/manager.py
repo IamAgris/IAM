@@ -10,6 +10,7 @@ from .base import (
     ProviderInfo,
     ProviderUnavailable,
     SandboxCapability,
+    SandboxDisabled,
     SandboxEnvironment,
     SandboxError,
     WorkloadRequest,
@@ -31,11 +32,19 @@ class FreeSandboxManager:
         self,
         quota_guard: Optional[QuotaGuard] = None,
         audit_sink: Optional[AuditSink] = None,
+        enabled: bool = True,
     ) -> None:
         self.guard = quota_guard or QuotaGuard()
         self.audit_sink = audit_sink
+        self.enabled = enabled
         self._adapters: Dict[str, ProviderAdapter] = {}
         self._environments: Dict[str, SandboxEnvironment] = {}
+
+    def require_enabled(self) -> None:
+        if not self.enabled:
+            raise SandboxDisabled(
+                "Free sandbox capability is disabled; creator authorisation is required"
+            )
 
     def register(self, adapter: ProviderAdapter) -> None:
         name = adapter.info.name
@@ -43,6 +52,16 @@ class FreeSandboxManager:
             raise ValueError(f"provider already registered: {name}")
         self._adapters[name] = adapter
         self._audit("sandbox_provider_registered", {"provider": name})
+
+    @property
+    def adapters(self) -> List[ProviderAdapter]:
+        return list(self._adapters.values())
+
+    def get_adapter(self, name: str) -> ProviderAdapter:
+        adapter = self._adapters.get(name)
+        if not adapter:
+            raise SandboxError(f"provider not registered: {name}")
+        return adapter
 
     def discover(self) -> List[ProviderInfo]:
         """Return discovered providers and their declared capabilities."""
@@ -53,6 +72,7 @@ class FreeSandboxManager:
         request: WorkloadRequest,
         exclude: Optional[Set[str]] = None,
     ) -> SandboxEnvironment:
+        self.require_enabled()
         skipped = exclude or set()
         candidates = [
             adapter
@@ -107,24 +127,28 @@ class FreeSandboxManager:
         return updated
 
     async def start(self, external_id: str) -> None:
+        self.require_enabled()
         env = self._require(external_id)
         await self._adapter_for(env).start(external_id)
         env.state = EnvironmentState.RUNNING
         self._audit("sandbox_started", {"provider": env.provider, "external_id": external_id})
 
     async def stop(self, external_id: str) -> None:
+        self.require_enabled()
         env = self._require(external_id)
         await self._adapter_for(env).stop(external_id)
         env.state = EnvironmentState.STOPPED
         self._audit("sandbox_stopped", {"provider": env.provider, "external_id": external_id})
 
     async def delete(self, external_id: str) -> None:
+        self.require_enabled()
         env = self._require(external_id)
         await self._adapter_for(env).delete(external_id)
         env.state = EnvironmentState.DELETED
         self._audit("sandbox_deleted", {"provider": env.provider, "external_id": external_id})
 
     async def collect_results(self, external_id: str) -> Dict[str, Any]:
+        self.require_enabled()
         env = self._require(external_id)
         results = await self._adapter_for(env).collect_results(external_id)
         results["task_provider"] = env.provider
@@ -171,7 +195,10 @@ def build_default_manager(
     )
     from app.core.config import settings
 
-    manager = FreeSandboxManager(audit_sink=audit_sink)
+    manager = FreeSandboxManager(
+        audit_sink=audit_sink,
+        enabled=bool(getattr(settings, "free_sandboxes_enabled", False)),
+    )
     manager.register(
         GitHubCodespacesAdapter(
             owner=getattr(settings, "free_sandbox_github_owner", "IamAgris"),

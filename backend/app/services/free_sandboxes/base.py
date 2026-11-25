@@ -36,6 +36,10 @@ class SandboxError(RuntimeError):
     """Base error for sandbox operations."""
 
 
+class SandboxDisabled(SandboxError):
+    """The capability is not activated; no external action is permitted."""
+
+
 class CredentialMissing(SandboxError):
     """Provider credentials are not configured."""
 
@@ -65,6 +69,7 @@ class QuotaSnapshot:
     resets_at: Optional[str] = None
     verified_at: Optional[str] = None
     source_url: Optional[str] = None
+    reason: Optional[str] = None
 
     @property
     def verified(self) -> bool:

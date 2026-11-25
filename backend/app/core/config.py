@@ -38,6 +38,8 @@ class Settings(BaseSettings):
 
     # IAM SDK protocol (OD-29) and node contribution (OD-26)
     iam_protocol_version: str = "1"
+    # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
+    # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     iam_sdk_default_model: str = "nvidia-llama-3.3-70b"
 
     # Provider API keys
@@ -49,6 +51,9 @@ class Settings(BaseSettings):
     nvidia_api_key: Optional[str] = None
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_free_only: bool = True  # Never incur charges unless explicitly disabled
+
+    # Ollama - local models (private / low-resource tasks)
+    ollama_base_url: str = "http://ollama:11434"
 
     # OEDIE free infrastructure provider adapters (Doc 22) — default-disabled.
     # Values are environment-variable NAMES, never literal secrets.

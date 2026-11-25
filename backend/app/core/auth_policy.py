@@ -20,10 +20,13 @@ PUBLIC_EXACT = {
     "/api/v1/openapi.json",
     "/api/v1/auth/bootstrap",
     "/api/v1/creator/gateway/decision",  # protected by HMAC, not a bearer key
+    "/api/v1/autonomy/status",  # read-only worker status (operational visibility)
 }
 
 PUBLIC_PREFIXES = (
-    "/api/v1/access",  # global/anonymous access
+    "/api/v1/access",     # global/anonymous access
+    "/api/v1/models",     # public chat proxy — gateway key stays backend-only
+    "/api/v1/interface",  # public display: suggestions + permission-filtered nodes
 )
 
 ADMIN_PREFIXES = (
@@ -44,10 +47,12 @@ ADMIN_PREFIXES = (
     "/api/v1/development",
     "/api/v1/economics",
     "/api/v1/finance",
+    "/api/v1/free-sandboxes",
 )
 
 USER_PREFIXES = (
     "/api/v1/interface",
+    "/api/v1/capabilities",
     "/api/v1/conversations",
     "/api/v1/memory",
     "/api/v1/languages",

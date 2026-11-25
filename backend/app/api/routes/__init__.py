@@ -6,7 +6,8 @@ from . import (
     external_presence, lifemanagement, worldmodel, resilience, capabilities,
     governance, reflection, globalaccess, ainetwork, internetaccess,
     modelrouter, skillforge, cybersecurity, creatorapproval, bootstrap, suggestions, development, economy,
-    auth, skillruntime,
+    auth, skillruntime, tone, ownerauth, p2p, creator_communication, aegis,
+    freesandboxes,
 )
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "worldmodel", "resilience", "capabilities", "governance", "reflection",
     "globalaccess", "ainetwork", "internetaccess", "modelrouter",
     "skillforge", "cybersecurity", "creatorapproval", "bootstrap", "suggestions", "development", "economy",
-    "auth", "skillruntime",
+    "auth", "skillruntime", "tone", "ownerauth", "p2p", "creator_communication", "aegis",
+    "freesandboxes",
 ]

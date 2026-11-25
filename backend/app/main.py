@@ -35,7 +35,10 @@ from app.api.routes import (
     governance,
     reflection,
     globalaccess,
+    ownerauth,
     ainetwork,
+    p2p,
+    aegis,
     internetaccess,
     modelrouter,
     skillforge,
@@ -51,6 +54,12 @@ from app.api.routes import (
     storage,
     uwaie,
     integrity,
+    publicrecords,
+    tone,
+    legal,
+    creator_communication,
+    geo,
+    freesandboxes,
 )
 from app.workers.autonomy_worker import autonomy_worker
 
@@ -135,7 +144,10 @@ app.include_router(capabilities.router)
 app.include_router(governance.router)
 app.include_router(reflection.router)
 app.include_router(globalaccess.router)
+app.include_router(ownerauth.router)
 app.include_router(ainetwork.router)
+app.include_router(p2p.router)
+app.include_router(aegis.router)
 app.include_router(internetaccess.router)
 app.include_router(modelrouter.router)
 app.include_router(skillforge.router)
@@ -151,6 +163,12 @@ app.include_router(nodes.router)
 app.include_router(storage.router)
 app.include_router(uwaie.router)
 app.include_router(integrity.router)
+app.include_router(publicrecords.router)
+app.include_router(tone.router)
+app.include_router(legal.router)
+app.include_router(creator_communication.router)
+app.include_router(geo.router)
+app.include_router(freesandboxes.router)
 
 
 # Global exception handler

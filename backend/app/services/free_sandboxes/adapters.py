@@ -70,10 +70,66 @@ class GitHubCodespacesAdapter:
         self._quota = _verified_snapshot(self.info.name, used_percent, source_url, **extra)
 
     async def verify_free_tier(self) -> QuotaSnapshot:
-        # Unverified by default: the billing allowance must be read live.
-        return self._quota or QuotaSnapshot(
-            provider=self.info.name, source_url=self.info.terms_url
+        if self._quota:
+            return self._quota
+        if not self.credentials_available():
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason="credential not configured",
+            )
+        # Attempt the authenticated billing usage endpoint. It is only available
+        # on the enhanced billing platform; otherwise stay unverified (fail closed).
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                response = await client.get(
+                    f"{self.api_base}/user/billing/usage",
+                    headers=self._headers(),
+                    params={"addon_type": "codespaces"},
+                )
+        except httpx.HTTPError:
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason="billing usage endpoint unavailable",
+            )
+        if response.status_code != 200:
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason=f"billing usage endpoint returned HTTP {response.status_code}",
+            )
+        data = response.json()
+        used = self._find_number(data, "used")
+        remaining = self._find_number(data, "remaining")
+        if used is None or remaining is None or used + remaining <= 0:
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason="billing response did not expose a usable quota figure",
+            )
+        return _verified_snapshot(
+            self.info.name,
+            used / (used + remaining) * 100,
+            self.info.terms_url,
+            remaining=remaining,
         )
+
+    @staticmethod
+    def _find_number(data: Any, key: str) -> Optional[float]:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k == key and isinstance(v, (int, float)):
+                    return float(v)
+                found = GitHubCodespacesAdapter._find_number(v, key)
+                if found is not None:
+                    return found
+        elif isinstance(data, list):
+            for item in data:
+                found = GitHubCodespacesAdapter._find_number(item, key)
+                if found is not None:
+                    return found
+        return None
 
     def _headers(self) -> Dict[str, str]:
         token = _token(self.token_env)
@@ -186,12 +242,20 @@ class KaggleAdapter:
             out = await self._cli("quota")
             data = json.loads(out)
         except (ProviderUnavailable, json.JSONDecodeError):
-            return QuotaSnapshot(provider=self.info.name, source_url=self.info.terms_url)
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason="kaggle quota command unavailable or unparseable",
+            )
 
         used = self._find_number(data, "totalSecondsUsed")
         left = self._find_number(data, "totalSecondsLeft")
         if used is None or left is None or used + left <= 0:
-            return QuotaSnapshot(provider=self.info.name, source_url=self.info.terms_url)
+            return QuotaSnapshot(
+                provider=self.info.name,
+                source_url=self.info.terms_url,
+                reason="quota response did not expose usable figures",
+            )
         return _verified_snapshot(
             self.info.name,
             used / (used + left) * 100,
@@ -291,7 +355,9 @@ class HuggingFaceAdapter:
 
     async def verify_free_tier(self) -> QuotaSnapshot:
         return self._quota or QuotaSnapshot(
-            provider=self.info.name, source_url=self.info.terms_url
+            provider=self.info.name,
+            source_url=self.info.terms_url,
+            reason="free inference credits are volatile; no authenticated quota API",
         )
 
     async def provision(self, request: WorkloadRequest) -> SandboxEnvironment:
@@ -363,7 +429,9 @@ class ColabAdapter:
 
     async def verify_free_tier(self) -> QuotaSnapshot:
         return self._quota or QuotaSnapshot(
-            provider=self.info.name, source_url=self.info.terms_url
+            provider=self.info.name,
+            source_url=self.info.terms_url,
+            reason="Colab runtime API does not expose a free-tier quota reading",
         )
 
     def _headers(self) -> Dict[str, str]:

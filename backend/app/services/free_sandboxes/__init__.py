@@ -15,16 +15,19 @@ from .base import (
     SandboxCapability,
     SandboxEnvironment,
     SandboxError,
+    SandboxDisabled,
     WorkloadRequest,
 )
 from .quota import DEFAULT_SAFETY_MARGIN, QuotaGuard
 from .manager import FreeSandboxManager, build_default_manager
+from .service import FreeSandboxService
 
 __all__ = [
     "CredentialMissing",
     "DEFAULT_SAFETY_MARGIN",
     "EnvironmentState",
     "FreeSandboxManager",
+    "FreeSandboxService",
     "FreeTierUnverified",
     "ProviderInfo",
     "ProviderUnavailable",
@@ -34,6 +37,7 @@ __all__ = [
     "SandboxCapability",
     "SandboxEnvironment",
     "SandboxError",
+    "SandboxDisabled",
     "WorkloadRequest",
     "build_default_manager",
 ]
