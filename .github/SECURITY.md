@@ -114,7 +114,5 @@ the channels above.
 
 ## Related Documentation
 
-- [IAM Security and Internet Access Policy](../IAM_SECURITY_AND_INTERNET_POLICY.md)
-- [Privacy, Secrets and Encryption](../IAM_PRIVACY_AND_SECRETS.md)
-- [API Authentication Specification](../IAM_API_AUTH_SPEC.md)
-- [Skill Runtime Specification](../IAM_SKILL_RUNTIME_SPEC.md)
+- [IAM Security and Internet Access Policy](../IAM_SECURITY_AND_INTERNET_POLICY.md) — internet access rules, network and browser controls, isolation, incident response.
+- Further design documents in the source tree cover privacy and secrets handling, scoped API authentication, and the sandboxed Skill Runtime. Consult those documents there when available.
