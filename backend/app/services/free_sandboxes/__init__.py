@@ -19,15 +19,28 @@ from .base import (
     WorkloadRequest,
 )
 from .quota import DEFAULT_SAFETY_MARGIN, QuotaGuard
-from .manager import FreeSandboxManager, build_default_manager
+from .manager import FreeSandboxManager, SchedulerPolicy, build_default_manager
+from .discovery import ProviderDiscovery, DiscoverySeed, DiscoveredProvider
+from .registration import RegistrationDecision, RegistrationGate
+from .results import redact, wrap_untrusted
 from .service import FreeSandboxService
+from .monitor import FreeSandboxMonitor
 
 __all__ = [
     "CredentialMissing",
     "DEFAULT_SAFETY_MARGIN",
     "EnvironmentState",
+    "DiscoveredProvider",
+    "DiscoverySeed",
     "FreeSandboxManager",
     "FreeSandboxService",
+    "FreeSandboxMonitor",
+    "ProviderDiscovery",
+    "RegistrationDecision",
+    "RegistrationGate",
+    "SchedulerPolicy",
+    "redact",
+    "wrap_untrusted",
     "FreeTierUnverified",
     "ProviderInfo",
     "ProviderUnavailable",

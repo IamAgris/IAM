@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     # Values are environment-variable NAMES, never literal secrets.
     free_sandboxes_enabled: bool = False
     free_sandbox_quota_safety_margin: float = 0.20  # refuse new work at 80% use
+    free_sandbox_discovery_enabled: bool = False
+    free_sandbox_discovery_interval_ticks: int = 10
+    free_sandbox_max_concurrent_per_provider: int = 1
+    free_sandbox_retry_attempts: int = 2
+    free_sandbox_circuit_breaker_threshold: int = 3
     free_sandbox_github_owner: str = "IamAgris"
     free_sandbox_github_repo: str = "IAM"
     github_codespaces_token_env: str = "GITHUB_CODESPACES_TOKEN"

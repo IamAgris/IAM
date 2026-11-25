@@ -509,6 +509,13 @@ class StackBlitzAdapter:
         notes="Browser-mediated only: WebContainer runs in a tab; no headless server API.",
     )
 
+    def __init__(self, browser_opener: Optional[Any] = None) -> None:
+        self.browser_opener = browser_opener
+
+    def set_browser_opener(self, opener: Any) -> None:
+        """Inject a callable that opens a URL in an interactive browser."""
+        self.browser_opener = opener
+
     def credentials_available(self) -> bool:
         return True  # public project links need no credential
 
@@ -522,9 +529,25 @@ class StackBlitzAdapter:
         return f"https://stackblitz.com/github/{owner}/{repo}"
 
     async def provision(self, request: WorkloadRequest) -> SandboxEnvironment:
-        raise SandboxError(
-            "stackblitz is browser-mediated: use project_link(owner, repo) and "
-            "open it in an interactive browser; it is not background compute"
+        owner = request.metadata.get("owner")
+        repo = request.metadata.get("repo")
+        if not owner or not repo:
+            raise SandboxError(
+                "stackblitz requires metadata['owner'] and metadata['repo'] for a project link"
+            )
+        link = self.project_link(str(owner), str(repo))
+        if self.browser_opener is None:
+            raise SandboxError(
+                "stackblitz is browser-mediated: set a browser opener or use "
+                f"project_link() manually ({link})"
+            )
+        self.browser_opener(link)
+        return SandboxEnvironment(
+            provider=self.info.name,
+            external_id=link,
+            capability=request.capability,
+            state=EnvironmentState.REGISTERED,
+            metadata={"project_url": link, "browser_mediated": True},
         )
 
     async def start(self, external_id: str) -> None:

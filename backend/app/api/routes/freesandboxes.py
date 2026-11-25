@@ -78,6 +78,23 @@ async def providers(
     return await _run(request, _service(request, db).ensure_providers)
 
 
+@router.post("/discover")
+async def discover(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await _run(request, _service(request, db).discover)
+
+
+@router.post("/providers/{name}/request-registration")
+async def request_registration(
+    name: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await _run(request, _service(request, db).request_registration, name)
+
+
 @router.post("/providers/{name}/verify-credentials")
 async def verify_credentials(
     name: str,
@@ -94,6 +111,31 @@ async def verify_quota(
     db: AsyncSession = Depends(get_db_session),
 ):
     return await _run(request, _service(request, db).verify_quota, name)
+
+
+@router.get("/status")
+async def status(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    service = _service(request, db)
+    return {"policy": service.policy(), "scheduler": service.health()}
+
+
+@router.post("/monitor")
+async def monitor(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await _run(request, _service(request, db).monitor_once)
+
+
+@router.get("/expiry-calendar")
+async def expiry_calendar(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await _run(request, _service(request, db).expiry_calendar)
 
 
 @router.post("/provision")

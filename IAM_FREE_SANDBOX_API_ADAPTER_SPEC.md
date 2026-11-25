@@ -155,7 +155,7 @@ All figures above are examples requiring live verification; see Doc 19 §1.
 
 ## 7. Implementation status
 
-The scaffold in `backend/app/services/free_sandboxes/` provides the common contract, quota guard, registry/scheduler and thin adapters. It is **default-disabled** and requires:
+The implementation in `backend/app/services/free_sandboxes/` provides the common contract, quota guard, provider discovery, registration gating, quota-based scheduler with concurrency limits/retries/circuit breaker, result redaction, background monitor, and thin adapters (including a browser-opener hook for StackBlitz). All HTTP operations are admin-gated at `/api/v1/free-sandboxes`. It is **default-disabled** and requires:
 
 - credentials configured via environment-variable *names* in settings (never literal secrets);
 - live verification of each provider's current terms and quota endpoints;

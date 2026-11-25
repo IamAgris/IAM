@@ -20,6 +20,8 @@ from app.services.free_sandboxes import (
     WorkloadRequest,
     build_default_manager,
 )
+from app.services.free_sandboxes.registration import RegistrationGate
+from app.services.free_sandboxes.results import redact, wrap_untrusted
 from app.services.free_sandboxes.service import FreeSandboxService
 
 
@@ -156,3 +158,46 @@ def test_service_policy_reports_no_paid_fallback():
     assert policy["paid_fallback"] is False
     assert policy["enabled"] is False
     assert policy["threshold_percent"] == 80
+
+
+def test_redaction_removes_secret_like_values():
+    cleaned = redact({"token": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"})
+    assert "ghp_" not in str(cleaned)
+
+
+def test_wrap_untrusted_marks_output_as_data_only():
+    wrapped = wrap_untrusted({"status": "ok"})
+    assert wrapped["trusted"] is False
+    assert wrapped["content"]["status"] == "ok"
+
+
+def test_registration_gate_requires_creator_approval_by_default():
+    decision = RegistrationGate().decide("kaggle")
+    assert decision.action == "creator_approval"
+    assert decision.creator_approval_required is True
+
+
+def test_circuit_breaker_opens_after_repeated_failures():
+    manager = FreeSandboxManager()
+    adapter = StubAdapter(name="flaky", fail=True)
+    manager.register(adapter)
+    for _ in range(manager.policy.circuit_breaker_threshold):
+        try:
+            asyncio.run(manager.provision(_request()))
+        except ProviderUnavailable:
+            pass
+    assert manager.health()["flaky"]["circuit_open"] is True
+
+
+def test_protected_core_material_is_refused():
+    request = WorkloadRequest(
+        task_id="t9",
+        capability=SandboxCapability.DEVELOPMENT,
+        description="test",
+        metadata={"private_key": "do-not-send"},
+    )
+    try:
+        FreeSandboxService.assert_no_protected_data(request)
+        raise AssertionError("should have refused")
+    except SandboxError:
+        pass

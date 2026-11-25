@@ -7,6 +7,8 @@ activation flag and records every external action as an AuditEvent.
 from __future__ import annotations
 
 import os
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -22,12 +24,16 @@ from app.models.freesandbox import (
     FreeSandboxResult,
 )
 from app.models.security import AuditEvent, CredentialReference, IntegrationRegistry
+from app.models.creatorapproval import CreatorRequest
 from app.services.free_sandboxes.base import (
     SandboxEnvironment,
     SandboxError,
     WorkloadRequest,
 )
 from app.services.free_sandboxes.manager import FreeSandboxManager, build_default_manager
+from app.services.free_sandboxes.discovery import ProviderDiscovery
+from app.services.free_sandboxes.registration import RegistrationGate
+from app.services.free_sandboxes.results import redact, wrap_untrusted
 
 
 def _env_names() -> Dict[str, str]:
@@ -200,6 +206,125 @@ class FreeSandboxService:
                 )
             )
 
+    # ------------------------------------------------------- discovery/register
+    async def discover(self) -> List[Dict[str, Any]]:
+        self.manager.require_enabled()
+        if not getattr(settings, "free_sandbox_discovery_enabled", False):
+            raise SandboxError("Provider discovery is disabled")
+        found = await ProviderDiscovery().discover()
+        for item in found:
+            existing = await self.db.execute(
+                select(FreeSandboxProvider).where(FreeSandboxProvider.name == item.name)
+            )
+            record = existing.scalar_one_or_none()
+            if not record:
+                record = FreeSandboxProvider(
+                    name=item.name,
+                    provider_type=item.provider_type,
+                    capabilities=item.capabilities,
+                    terms_url=item.terms_url,
+                    headless=item.headless,
+                    registration_status="candidate",
+                    is_active=False,
+                    config={"discovery_evidence": item.evidence},
+                )
+                self.db.add(record)
+            else:
+                record.terms_url = item.terms_url
+                record.capabilities = item.capabilities
+                record.docs_verified_at = datetime.now(timezone.utc)
+                record.config = {
+                    **(record.config or {}),
+                    "discovery_evidence": item.evidence,
+                }
+        await self._record_result(
+            "sandbox_providers_discovered",
+            {"count": len(found), "names": [item.name for item in found]},
+        )
+        await self.db.commit()
+        return ProviderDiscovery().to_records(found)
+
+    async def request_registration(self, provider: str) -> Dict[str, Any]:
+        self.manager.require_enabled()
+        decision = RegistrationGate().decide(provider)
+        existing = await self.db.execute(
+            select(CreatorRequest).where(
+                CreatorRequest.action_type == "free_sandbox_registration",
+                CreatorRequest.target_ref == provider,
+                CreatorRequest.status == "pending",
+            )
+        )
+        pending = existing.scalar_one_or_none()
+        if pending:
+            return {
+                "provider": provider,
+                "request_id": pending.request_id,
+                "status": "pending",
+                "creator_approval_required": True,
+            }
+        request_id = f"free-sandbox-register-{provider}-{uuid.uuid4().hex[:8]}"
+        self.db.add(
+            CreatorRequest(
+                request_id=request_id,
+                action_type="free_sandbox_registration",
+                target_ref=provider,
+                risk_level="4",
+                summary=f"Register and authorise free infrastructure provider: {provider}",
+                reason=decision.reason,
+                consequences=[
+                    "Creates an external account only if provider terms permit it",
+                    "No paid resources or upgrades are activated",
+                    "Provider is registered as candidate infrastructure only",
+                ],
+                requester=self.actor,
+                expires_at=datetime.now(timezone.utc)
+                + timedelta(seconds=settings.creator_authorization_ttl_seconds),
+                metadata_={"decision": decision.action, "provider": provider},
+            )
+        )
+        record = await self.db.execute(
+            select(FreeSandboxProvider).where(FreeSandboxProvider.name == provider)
+        )
+        provider_record = record.scalar_one_or_none()
+        if provider_record:
+            provider_record.registration_status = "pending_creator_approval"
+        await self._record_result(
+            "sandbox_registration_requested",
+            {"provider": provider, "request_id": request_id, "decision": decision.action},
+        )
+        await self.db.commit()
+        return {
+            "provider": provider,
+            "request_id": request_id,
+            "status": "pending",
+            "creator_approval_required": decision.creator_approval_required,
+        }
+
+    def health(self) -> Dict[str, Any]:
+        return self.manager.health()
+
+    async def monitor_once(self) -> List[Dict[str, Any]]:
+        from app.services.free_sandboxes.monitor import FreeSandboxMonitor
+
+        return await FreeSandboxMonitor(self).poll()
+
+    async def expiry_calendar(self) -> List[Dict[str, Any]]:
+        from app.services.free_sandboxes.monitor import FreeSandboxMonitor
+
+        return await FreeSandboxMonitor(self).expiry_calendar()
+
+    # ---------------------------------------------------------------- safety
+    @staticmethod
+    def assert_no_protected_data(request: WorkloadRequest) -> None:
+        forbidden = {
+            "private_key", "signing_key", "seed_phrase", "password", "secret",
+            "credential_value", "token_value", "memory_dump", "identity_export",
+        }
+        if forbidden.intersection(request.metadata.keys()):
+            raise SandboxError("workload metadata contains protected-core material")
+        if redact(request.metadata) != request.metadata:
+            raise SandboxError("workload metadata contains a secret-like value")
+
     # ------------------------------------------------------------------- quota
     async def verify_quota(self, provider: str) -> Dict[str, Any]:
         self.manager.require_enabled()
@@ -245,6 +370,7 @@ class FreeSandboxService:
     # -------------------------------------------------------------- lifecycle
     async def provision(self, request: WorkloadRequest) -> Dict[str, Any]:
         self.manager.require_enabled()
+        self.assert_no_protected_data(request)
         await self.ensure_providers()
         try:
             env = await self.manager.provision(request)
@@ -300,7 +426,7 @@ class FreeSandboxService:
                 )
             )
         await self.db.commit()
-        return results
+        return wrap_untrusted(results)
 
     async def list_environments(self) -> List[Dict[str, Any]]:
         result = await self.db.execute(select(FreeSandboxEnvironment))

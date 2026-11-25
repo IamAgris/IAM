@@ -34,7 +34,9 @@ class AutonomyWorker:
         self.tick_interval = tick_interval
         self.state = "idle"
         self.running = False
+        self.last_cycle: Optional[Dict[str, Any]] = None
         self._task: Optional[asyncio.Task] = None
+        self._ticks = 0
 
     async def start(self):
         """Start the autonomy loop as a background task."""
@@ -54,10 +56,51 @@ class AutonomyWorker:
         logger.info("Autonomy worker stopped")
 
     async def _loop(self):
-        """Main autonomy loop."""
+        """Main autonomy loop — uses the durable LangGraph workflow when available."""
         while self.running:
             try:
-                await self._tick()
+                durable = None
+                try:
+                    from app.orchestration.autonomy_graph import run_cycle
+                    durable = await run_cycle(trigger="scheduled")
+                    self.last_cycle = durable
+                    if durable.get("action", {}).get("status") == "advanced":
+                        self.state = "working"
+                    else:
+                        self.state = "idle"
+                except Exception as ge:
+                    logger.warning(f"Durable graph unavailable, using simple tick: {ge}")
+                    await self._tick()
+
+                # Periodic free-infrastructure quota/expiry monitor (Doc 22).
+                self._ticks += 1
+                if (
+                    getattr(settings, "free_sandboxes_enabled", False)
+                    and self._ticks
+                    % max(getattr(settings, "free_sandbox_discovery_interval_ticks", 10), 1)
+                    == 0
+                ):
+                    try:
+                        from app.services.free_sandboxes.monitor import FreeSandboxMonitor
+                        from app.services.free_sandboxes.service import FreeSandboxService
+
+                        async with AsyncSessionLocal() as sandbox_db:
+                            outcomes = await FreeSandboxMonitor(
+                                FreeSandboxService(sandbox_db, actor="autonomy_worker")
+                            ).poll()
+                            if outcomes:
+                                logger.info(f"Free sandbox quota poll: {len(outcomes)} providers")
+                    except Exception as monitor_error:
+                        logger.warning(f"Free sandbox monitor unavailable: {monitor_error}")
+
+                # Also record a heartbeat decision for operational visibility
+                async with AsyncSessionLocal() as db:
+                    db.add(DecisionRecord(
+                        decision="autonomy_heartbeat",
+                        reasoning=durable.get("reasoning") if durable else "simple loop",
+                        confidence=0.5,
+                    ))
+                    await db.commit()
             except Exception as e:
                 logger.error(f"Autonomy tick error: {e}")
                 self.state = "conserving"
