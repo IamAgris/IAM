@@ -70,3 +70,7 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+
+# IAM model training artifacts (never commit datasets or checkpoints)
+training/data/*.jsonl
+training/outputs/
