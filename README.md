@@ -1,13 +1,17 @@
 # IAM — Independent AI Entity
 
 **Project Codename:** AURA (Autonomous Unified Reasoning Architecture) — engineering codename only  
-**Status:** Architecture frozen — 16 documents, 32 decisions, 7 resolved specs. All 5 acceptance levels passed (with a scoped admin API credential). Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation and signed sync are implemented.  
+**Status:** Architecture frozen — 16 documents, 41 decisions, 7 resolved specs. All 5 acceptance levels passed (with a scoped admin API credential). Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation, signed sync, evidence-based public-records/vital/estate research the 8-stage legal-intelligence lifecycle, provider-independent geospatial knowledge with live-map freshness and location privacy, evidence-based human public-presence research and the internal assistant-interoperability learning lab are implemented.  
 **Interface:** The supplied HTML is the visual source of truth; displayed identity is **IAM** (Intellectual Artificial Mainbrain).  
 **Native skill system:** IAM Skill Forge — [specification](IAM_SKILL_FORGE_SPEC.md)  
 **External security engines:** ARTEX connector — [specification](IAM_ARTEX_INTEGRATION_SPEC.md)  
 **Creator authority:** email + signed challenge, no Creator UI — [specification](IAM_CREATOR_APPROVAL_SPEC.md)  
 **API authentication:** scoped credentials and rate limiting — [specification](IAM_API_AUTH_SPEC.md)  
-**Skill Runtime:** gated, sandboxed execution — [specification](IAM_SKILL_RUNTIME_SPEC.md)
+**Skill Runtime:** gated, sandboxed execution — [specification](IAM_SKILL_RUNTIME_SPEC.md)  
+**Frontend:** home + suggestions only; all other functions are backend/email — [scope note](IAM_FRONTEND_IMPLEMENTATION.md)  
+**CI & workers:** [pipeline and background jobs](IAM_CI_AND_WORKERS.md)  
+**Deployment:** [configuration and preflight](IAM_DEPLOYMENT_CONFIG.md)  
+**Privacy:** [secrets, encryption and data rights](IAM_PRIVACY_AND_SECRETS.md)
 
 ---
 
@@ -36,10 +40,11 @@ ecosystem — not a feature locked inside one application.
 
 | Layer | Technology |
 |-------|-----------|
-| Foundation model | Qwen3.5-9B (replaceable) |
+| Foundation model | **Qwen3.5-9B** (hosted) + **Qwen2.5-3B** (local) — OD-38 reopened by owner 25 Nov 2026: only qwen2.5:3b kept locally |
 | Backend | Python + FastAPI |
 | Agent orchestration | LangGraph |
 | Model gateway | LiteLLM |
+| Local inference (optional) | Ollama + compatible open models |
 | Database | PostgreSQL + pgvector |
 | Cache / queue | Redis |
 | Web interface | Next.js + TypeScript |
@@ -47,6 +52,12 @@ ecosystem — not a feature locked inside one application.
 | Execution | Isolated Docker containers |
 | Storage | S3-compatible (MinIO) |
 | Deployment | Docker Compose initially |
+
+> **Local inference policy (OD-38):** Ollama is provider-independent. On the
+> Contabo VPS 4 (4 vCPU / 8 GB RAM), use hosted inference for heavy reasoning and
+> keep local models small (3–4B, quantized). Adding or replacing a model never
+> changes IAM's identity, memory, skills, goals or creator authority. See
+> [IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md](IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md).
 
 ---
 
@@ -86,7 +97,7 @@ project-aura/
 ├── docker-compose.yml         # Infrastructure stack
 ├── .env.example              # Environment template
 ├── backend/                  # Python + FastAPI (119 ORM tables, 41 routes)
-├── frontend/                 # Next.js + TypeScript (24 pages)
+├── frontend/                 # Immersive IAM interface + /voice + /vision (no dashboard)
 ├── tests/                    # Level 1–5 acceptance suites
 └── infra/                    # LiteLLM config, Postgres init
 ```
@@ -149,8 +160,15 @@ cp .env.example .env
 # 2. Start infrastructure
 docker compose up -d
 
-# 3. Initialize database (001 creates the schema; 002-011 add later subsystems)
+# 3. Initialize database (001 creates the schema; 002-019 add later subsystems)
 docker exec -i aura-postgres psql -U aura -d aura_db < backend\app\db\migrations\001_initial_schema.sql
+
+# 3b. Install UWAIE browser runtime after a container rebuild
+docker exec -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright aura-backend \
+  python -m playwright install chromium
+
+# 3b. (Optional) Pull a local model for private / low-resource tasks
+docker exec aura-ollama ollama pull qwen2.5:3b
 
 # 4. Create the first scoped API credential (set IAM_BOOTSTRAP_API_KEY in .env first)
 curl -X POST http://localhost:8000/api/v1/auth/bootstrap \
@@ -165,6 +183,11 @@ python tests/level1_acceptance.py   # ... through level5_acceptance.py
 python tests/uwaie_storage_smoke.py # S3 + UWAIE verification smoke
 # Node attestation needs IAM_ADMIN_KEY and IAM_OPERATOR_KEY:
 python tests/attestation_smoke.py   # integrity + Ed25519 attestation + signed sync
+python tests/public_records_smoke.py # provenance, access gates, corrections
+python tests/legal_smoke.py          # legal monitoring + lifecycle gates
+python tests/geo_smoke.py            # maps, GIS, freshness, location privacy
+python tests/human_presence_smoke.py # public-only research, no de-anonymisation
+python tests/assistant_lab_smoke.py  # internal assistant technology learning
 
 # 6. Open the UI
 # http://localhost:3000
@@ -213,11 +236,19 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - **`IAM_FREE_SANDBOX_API_ADAPTER_SPEC.md`** — Document 22 : autonomous use of free platform APIs under OEDIE (extends OD-15/OD-35). Default-disabled scaffold in `backend/app/services/free_sandboxes/`.
 - **`IAM_FINAL_CONSOLIDATION.md`** — master gap analysis: all systems, conflicts, completion levels, roadmap
 - `IAM_OPEN_SPECS_RESOLVED.md` — resolved engineering specs A–G (creator keys, memory boundaries, P2P, hardware, scaling, finance, operations)
+- **`IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md`** — Document 23 : locked initial foundation model, routing, model competition and model-development programme (OD-38)
+- **`IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md`** — RAM/CPU limits, model residency, context control and node workload allocation (OD-39)
+- **`IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md`** — Model Evolution and Fine-Tuning Engine (MEFE): datasets, SFT/QLoRA, evaluation, registry and safe releases (OD-40)
+- **`IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md`** — Parent research/development architecture; autonomous distributed free-compute requirements frozen (OD-41)
+- **`IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`** — OD-41 work packages, dependencies, priorities and acceptance tests
+- **`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`** — hybrid Python + Rust + TypeScript implementation allocation (cross-cutting; not a new decision)
+- **`IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`** — Document 24 : human behaviour research, Equality of Existence and responsibility (OD-43)
+- **`IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`** — Document 25 : income, crypto, trading and payments amendment (OD-44)
 - `IAM_DATABASE_DESIGN.md` — canonical ERD and migration strategy
 - `IAM_DATABASE_INTEGRATION_REPORT.md` — live Postgres verification, fixes and remaining migration issues
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
-- `IAM_OWNER_DECISIONS.md` — 37 owner decisions (ALL LOCKED)
+- `IAM_OWNER_DECISIONS.md` — 44 owner decisions (ALL LOCKED)
 - `IAM_OPENAPI.json` — generated OpenAPI schema (113 paths, 103 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 

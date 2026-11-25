@@ -17,6 +17,7 @@ from pathlib import Path
 
 import asyncpg
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from sqlalchemy import select
 
 ROOT = Path(__file__).resolve().parents[1]  # backend/
 MIGRATIONS = ROOT / "app" / "db" / "migrations"
@@ -209,7 +210,28 @@ async def run_checks() -> None:
         assert outbox[0]["transport"] == "log"
         challenge = await creator_service.challenge_for_signer(request["request_id"])
         assert challenge["challenge_hash"] == request["challenge_hash"]
-        print("  PASS creator email outbox + signer challenge")
+
+        # Worker retries failed deliveries without changing approval authority.
+        from app.models.creatorapproval import CreatorEmailOutbox
+        from app.workers.creator_email_worker import CreatorEmailWorker
+
+        row = (
+            await db.execute(
+                select(CreatorEmailOutbox).where(
+                    CreatorEmailOutbox.request_id == request["request_id"]
+                )
+            )
+        ).scalar_one()
+        row.status = "failed"
+        await db.commit()
+        await CreatorEmailWorker(interval=999)._cycle()
+        db.expire_all()  # the worker committed through a separate session
+        retried = await creator_service.outbox()
+        assert any(
+            r["request_id"] == request["request_id"] and r["status"] == "sent"
+            for r in retried
+        )
+        print("  PASS creator email outbox + signer challenge + retry worker")
         await CreatorApprovalService(db).decide(
             request["request_id"],
             decision="approved",
@@ -361,7 +383,65 @@ async def run_checks() -> None:
             assert (
                 await client.patch(activation_url, headers=admin_headers)
             ).status_code == 200
-        print("  PASS auth middleware + scoped credentials + email-based integration approval")
+
+            # Visitor data rights + encryption at rest (OD-05/07/09).
+            from app.models.globalaccess import VisitorMessage
+
+            created_visitor = await client.post(
+                "/api/v1/access/visitors", json={"visitor_token": "integration-visitor"}
+            )
+            assert created_visitor.status_code == 200, created_visitor.text
+            # The service issues an unpredictable token; use the one it returned.
+            visitor_token = created_visitor.json()["visitor_token"]
+            session = await client.post(
+                "/api/v1/access/sessions",
+                json={"visitor_token": visitor_token, "mode": "focus"},
+            )
+            assert session.status_code == 200, session.text
+            session_token = session.json()["session_token"]
+            await client.post(
+                "/api/v1/access/messages",
+                json={
+                    "session_token": session_token,
+                    "role": "user",
+                    "content": "private integration note",
+                },
+            )
+            stored = (await db.execute(select(VisitorMessage))).scalars().first()
+            assert stored is not None and stored.content.startswith("enc:v1:")
+            inspected = await client.get(
+                f"/api/v1/access/visitors/{visitor_token}/data"
+            )
+            assert inspected.status_code == 200, inspected.text
+            assert any(
+                m["content"] == "private integration note"
+                for m in inspected.json()["messages"]
+            )
+            corrected = await client.patch(
+                f"/api/v1/access/visitors/{visitor_token}/data",
+                json={
+                    "preferences": {"theme": "dark"},
+                    "memory_permissions": {"allow_shared_knowledge": False},
+                },
+            )
+            assert corrected.status_code == 200, corrected.text
+            assert (
+                await client.delete(f"/api/v1/access/visitors/{visitor_token}")
+            ).status_code == 200
+        print("  PASS auth + approval + visitor data rights + encryption at rest")
+
+        # Redis limiter is optional; exercised when REDIS_URL is provided.
+        redis_url = os.environ.get("REDIS_URL")
+        if redis_url:
+            from app.core.rate_limit import RedisRateLimiter
+
+            limiter = RedisRateLimiter(redis_url, default_limit=2)
+            key = f"integration:{os.getpid()}"
+            assert (await limiter.check(key))[0]
+            assert (await limiter.check(key))[0]
+            allowed, retry = await limiter.check(key)
+            assert not allowed and retry >= 1
+            print("  PASS redis rate limiter")
 
 
 async def main() -> None:

@@ -7,6 +7,7 @@ external AI network trust boundaries, background worker.
 """
 
 import sys
+import uuid
 import httpx
 from auth_headers import install_auth_headers
 
@@ -138,7 +139,7 @@ def main():
     # 11. External AI network trust boundary
     try:
         r = httpx.post(f"{BASE}/api/v1/network/agents", json={
-            "name": "L2 test agent", "endpoint_url": "https://example.invalid/api",
+            "name": f"L2 test agent {uuid.uuid4().hex[:8]}", "endpoint_url": "https://example.invalid/api",
             "protocol": "rest", "capabilities": ["reasoning"]
         }, timeout=10)
         agent_id = r.json().get("id")

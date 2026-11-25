@@ -16,6 +16,7 @@ from app.services.free_sandboxes import (
     QuotaSnapshot,
     SandboxCapability,
     SandboxDisabled,
+    SandboxError,
     SandboxEnvironment,
     WorkloadRequest,
     build_default_manager,

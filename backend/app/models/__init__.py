@@ -73,6 +73,7 @@ from app.models.creatorapproval import (
     CreatorApproval,
     CreatorAuthorization,
     CreatorEmailOutbox,
+    CreatorEmailDeadLetter,
     CreatorMessage,
     CommunicationAudit,
 )
@@ -93,6 +94,10 @@ from app.models.geo import (
 )
 from app.models.humanpresence import (
     PublicPerson, PublicProfile, PresenceClaim, IdentityMatch, PublicRelationship,
+)
+from app.models.assistantlab import (
+    AssistantSystem, AssistantResearchNote, AssistantAdapter,
+    ReplicationExperiment, CapabilityComparison,
 )
 
 __all__ = [
@@ -157,7 +162,8 @@ __all__ = [
     "SecurityFinding", "SecurityEngineAudit",
     # Creator approval by email
     "CreatorRequest", "SignedChallenge", "CreatorApproval",
-    "CreatorAuthorization", "CreatorEmailOutbox", "CommunicationAudit",
+    "CreatorAuthorization", "CreatorEmailOutbox", "CreatorEmailDeadLetter",
+    "CommunicationAudit",
     # API authentication
     "ApiCredential",
     # Owner authorization
@@ -180,6 +186,9 @@ __all__ = [
     # Human public presence
     "PublicPerson", "PublicProfile", "PresenceClaim", "IdentityMatch",
     "PublicRelationship",
+    # Assistant interoperability lab
+    "AssistantSystem", "AssistantResearchNote", "AssistantAdapter",
+    "ReplicationExperiment", "CapabilityComparison",
     # OEDIE free infrastructure adapters (Doc 22)
     "FreeSandboxProvider", "FreeSandboxQuotaSnapshot",
     "FreeSandboxEnvironment", "FreeSandboxResult",

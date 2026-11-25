@@ -133,6 +133,33 @@ class CreatorAuthorization(Base):
     )
 
 
+class CreatorMessage(Base):
+    """IAM-initiated non-authority communication with the Creator (OD-18/OD-19).
+
+    Questions and status updates travel by email. They are informational: a plain
+    reply can never create an approval or authorization. The database constraint
+    makes that separation permanent.
+    """
+    __tablename__ = "creator_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_id = Column(Text, nullable=False, unique=True, index=True)
+    direction = Column(Text, nullable=False)  # outbound, inbound
+    purpose = Column(Text, nullable=False)  # question, status_update, reply
+    subject = Column(Text, nullable=False)
+    body = Column(Text, nullable=False)
+    status = Column(Text, nullable=False, default="pending")
+    authority_bearing = Column(Boolean, nullable=False, default=False)
+    request_id = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("direction IN ('outbound', 'inbound')", name="ck_creator_message_direction"),
+        CheckConstraint("purpose IN ('question', 'status_update', 'reply')", name="ck_creator_message_purpose"),
+        CheckConstraint("authority_bearing = false", name="ck_creator_message_no_authority"),
+    )
+
+
 class CreatorEmailOutbox(Base):
     """Queued Creator approval email, with delivery state for retries."""
 
@@ -156,6 +183,20 @@ class CreatorEmailOutbox(Base):
             name="ck_creator_outbox_status",
         ),
     )
+
+
+class CreatorEmailDeadLetter(Base):
+    """A Creator approval email that could not be delivered after retries."""
+
+    __tablename__ = "creator_email_dead_letters"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_id = Column(Text, nullable=False, unique=True, index=True)
+    recipient = Column(Text, nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    last_error = Column(Text, nullable=True)
+    failed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class CommunicationAudit(Base):

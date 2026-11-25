@@ -46,6 +46,33 @@ model_list:
       api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
 
   # ---------------------------------------------------------------------------
+  # Google Gemini — additional reasoning/research/coding provider (OD-38).
+  # GATED TEMPLATE: enable only after verifying the current free-tier model ID
+  # and applying the data-policy rule (no private/visitor data to third parties
+  # without creator approval). GOOGLE_API_KEY is passed via docker-compose.
+  # ---------------------------------------------------------------------------
+  # - model_name: gemini-free
+  #   litellm_params:
+  #     model: gemini/gemini-2.5-flash
+  #     api_key: os.environ/GOOGLE_API_KEY
+
+  # ---------------------------------------------------------------------------
+  # Local inference (Ollama) - private, no API key, no spend
+  # OD-38 reopened by owner on 25 Nov 2026: only qwen2.5:3b is kept locally.
+  # Pull first: docker exec aura-ollama ollama pull qwen2.5:3b
+  # Additional local models require an owner decision before being pulled or routed.
+  # ---------------------------------------------------------------------------
+  - model_name: local-qwen-3b
+    litellm_params:
+      model: ollama/qwen2.5:3b
+      api_base: http://ollama:11434
+
+  # ---------------------------------------------------------------------------
+  # Adaptive selection tiers (OD-39 / OD-41) map to the single approved local
+  # alias above. Other tier aliases are intentionally unavailable.
+  # ---------------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------------
   # Fallback providers
   # ---------------------------------------------------------------------------
   - model_name: gpt-4o-mini

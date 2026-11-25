@@ -30,6 +30,8 @@ All lifecycle checks passed against real PostgreSQL:
 - ARTEX engine: signed registration → signed scope → signed security-testing authorization → task → signed task approval → dry-run dispatch → sync
 - Findings: normalisation → remediation → Skill Forge defensive-skill handoff
 - Governance: authority boundary → signed Creator authorization → permitted
+- Creator email retry worker: a failed outbox row was retried to `sent` by a worker cycle
+- Visitor data rights: inspect → correct → delete, with messages stored as `enc:v1:` ciphertext
 - HTTP auth: unauthenticated admin path → 401, admin key → 200, user key → 403, public health → 200
 - External-presence integration: connect → email request → activation blocked → signed approval → activation allowed
 

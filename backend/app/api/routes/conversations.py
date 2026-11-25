@@ -10,6 +10,7 @@ import uuid
 
 from app.core.database import get_db_session
 from app.models.memory import Conversation, ConversationMessage
+from app.services.crypto_service import crypto
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
 
@@ -109,7 +110,7 @@ async def get_messages(
             id=str(m.id),
             conversation_id=str(m.conversation_id),
             role=m.role,
-            content=m.content,
+            content=crypto.decrypt(m.content),
             created_at=m.created_at.isoformat() if m.created_at else None,
             metadata=m.metadata_ or {},
         )
@@ -141,7 +142,7 @@ async def create_message(
     msg = ConversationMessage(
         conversation_id=conv_id,
         role=message.role,
-        content=message.content,
+        content=crypto.encrypt(message.content),
         metadata_=message.metadata,
     )
     db.add(msg)
@@ -152,7 +153,7 @@ async def create_message(
         id=str(msg.id),
         conversation_id=str(msg.conversation_id),
         role=msg.role,
-        content=msg.content,
+        content=crypto.decrypt(msg.content),
         created_at=msg.created_at.isoformat() if msg.created_at else None,
         metadata=msg.metadata_ or {},
     )

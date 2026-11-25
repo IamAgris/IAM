@@ -71,6 +71,12 @@ class UWAIEService:
         try:
             response = await page.goto(url, wait_until="domcontentloaded", timeout=browser_service.timeout)
             structure = await page.evaluate(INSPECT_SCRIPT)
+        except Exception as exc:
+            if "Executable doesn't exist" in str(exc) or "BrowserType.launch" in str(exc):
+                raise UWAIEError(
+                    "browser runtime unavailable; install Playwright chromium before using UWAIE"
+                ) from exc
+            raise
         finally:
             await page.close()
 
@@ -140,6 +146,11 @@ class UWAIEService:
                     },
                 )
             )
+            error_text = str(result.get("error") or "")
+            if "Executable doesn't exist" in error_text or "BrowserType.launch" in error_text:
+                raise UWAIEError(
+                    "browser runtime unavailable; install Playwright chromium before using UWAIE"
+                )
             outcomes.append(
                 {
                     "action": action,

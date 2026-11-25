@@ -1,6 +1,6 @@
 """Social intelligence SQLAlchemy models"""
 
-from sqlalchemy import Column, String, Text, JSON, Boolean, Integer, DateTime, ForeignKey, CheckConstraint
+from sqlalchemy import Column, String, Text, JSON, Boolean, Integer, Numeric, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -52,6 +52,34 @@ class InteractionPreference(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     profile = relationship("SocialProfile")
+
+
+class ToneAnalysis(Base):
+    """Doc 17 / OD-33: tone and influence analysis of public text.
+
+    Results are possible interpretations with confidence markers, never
+    psychological diagnoses or claims about a person's private mental state.
+    """
+    __tablename__ = "tone_analyses"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_type = Column(Text, nullable=False, default="text")  # message, article, post, comment, discussion
+    content_summary = Column(Text, nullable=False)
+    tone = Column(Text, nullable=False, default="neutral")
+    register = Column(Text, nullable=False, default="informal")
+    sentiment = Column(Numeric(3, 2), nullable=False, default=0.0)
+    confidence = Column(Numeric(3, 2), nullable=False, default=0.0)
+    signals = Column(JSON, nullable=False, default=list)
+    manipulation_indicators = Column(JSON, nullable=False, default=list)
+    interpretations = Column(JSON, nullable=False, default=list)
+    caveat = Column(Text, nullable=False, default="Possible interpretations from text alone, not psychological diagnoses.")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("source_type IN ('message', 'article', 'post', 'comment', 'discussion', 'text')", name="ck_tone_source_type"),
+        CheckConstraint("confidence BETWEEN 0 AND 1", name="ck_tone_confidence"),
+        CheckConstraint("sentiment BETWEEN -1 AND 1", name="ck_tone_sentiment"),
+    )
 
 
 class ScamDetectionLog(Base):

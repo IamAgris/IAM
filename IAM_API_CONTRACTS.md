@@ -46,8 +46,9 @@ The legacy `/owner` routes, service and model are removed; no second authority p
 | GET | `/skill-runtime/capabilities/{id}` | admin | Effective permissions for a skill |
 | POST | `/skill-runtime/invoke` | admin | Gated skill invocation |
 | GET | `/skill-runtime/executions` | admin | Invocation audit trail |
+| GET | `/deployment/preflight` | admin | Redacted configuration readiness report |
 | GET | `/creator/policy` | session | Email-only Creator approval, no UI |
-| POST | `/creator/requests` | session | Create email approval request (returns email package) |
+| POST | `/creator/requests` | session | Create approval request; `channel` = `creator_email` (default) or `creator_cli` / `creator_webhook` / `creator_node` / `creator_file` (no email required) |
 | GET | `/creator/requests` | session | List requests |
 | GET | `/creator/requests/{id}` | session | Request detail |
 | POST | `/creator/requests/{id}/decide` | internal signed | Verify ED25519 challenge signature; only authority source |
@@ -58,6 +59,10 @@ The legacy `/owner` routes, service and model are removed; no second authority p
 | POST | `/creator/outbox/retry` | worker | Retry all pending/failed deliveries |
 | GET | `/creator/audit` | session | Creator-channel audit |
 | POST | `/creator/authorizations/{id}/revoke` | signed gateway | Revoke a signed authorization |
+| POST | `/creator/messages/questions` | session | IAM asks the Creator a question by email — informational, never authority |
+| POST | `/creator/messages/status` | session | IAM sends a progress update by email — informational |
+| GET | `/creator/messages` | session | Message history with authority markers |
+| POST | `/creator/messages/replies` | HMAC gateway | Record a Creator reply — informational, never authority |
 
 **OD-19:** Creator approval is email-based, never a dashboard. A plain email reply
 must not authorise anything; only `/creator/requests/{id}/decide` with a valid
@@ -78,6 +83,8 @@ signature over the one-time challenge creates authority.
 | POST | `/access/consent` | session | Record consent |
 | POST | `/access/memory-permissions` | session | Set memory tier permissions |
 | PATCH | `/access/location` | session | Correct region/language/timezone |
+| GET | `/access/visitors/{token}/data` | token | Inspect all visitor data (OD-05) |
+| PATCH | `/access/visitors/{token}/data` | token | Correct preferences and memory permissions (OD-05) |
 | DELETE | `/access/visitors/{token}` | session | Delete all visitor data |
 
 **Isolation invariant:** the server derives `owner_id` from `X-Session-Token` on every request. Client-supplied `visitor_id` is ignored. Repository layer enforces `owner_id` filter on every conversation query.
@@ -93,6 +100,9 @@ signature over the one-time challenge creates authority.
 | POST | `/conversations/messages` | Store message |
 | POST | `/conversations/{id}/chat` | **Non-streaming** chat fallback |
 | POST | `/conversations/{id}/chat/stream` | **SSE streaming chat** (canonical) |
+| POST | `/tone/analyze` | Doc 17 tone/influence interpretation (possibilities, not diagnoses) |
+| POST | `/tone/discussion` | Discussion analysis with possible tone-shift flags |
+| POST/GET | `/tone/records` | Store / list tone analysis evidence |
 
 ### SSE event schema (canonical — resolves C-10)
 

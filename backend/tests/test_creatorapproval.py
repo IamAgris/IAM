@@ -21,6 +21,20 @@ CHALLENGE = {
 }
 
 
+class ChannelTests(unittest.IsolatedAsyncioTestCase):
+    async def test_unknown_channel_rejected(self):
+        from app.services.creatorapproval_service import (
+            CreatorApprovalError,
+            CreatorApprovalService,
+        )
+
+        service = CreatorApprovalService(None)
+        with self.assertRaises(CreatorApprovalError):
+            await service.create_request(
+                action_type="test.action", summary="test", channel="carrier_pigeon"
+            )
+
+
 class ChallengeTests(unittest.TestCase):
     def test_canonical_payload_is_deterministic(self):
         other_order = dict(reversed(list(CHALLENGE.items())))

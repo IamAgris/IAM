@@ -41,6 +41,11 @@ class MemoryPermissionRequest(BaseModel):
     allow_shared_knowledge: Optional[bool] = None
 
 
+class DataCorrectionRequest(BaseModel):
+    preferences: Dict[str, Any] = {}
+    memory_permissions: Dict[str, bool] = {}
+
+
 class LocationCorrectionRequest(BaseModel):
     session_token: str
     country: Optional[str] = None
@@ -149,6 +154,32 @@ async def correct_location(request: LocationCorrectionRequest, db=Depends(get_db
     )
     if not ok:
         raise HTTPException(status_code=404, detail="Session not found")
+    return {"status": "corrected"}
+
+
+@router.get("/visitors/{visitor_token}/data")
+async def inspect_visitor_data(visitor_token: str, db=Depends(get_db_session)):
+    """OD-05: visitors can inspect all data held under their token."""
+    data = await GlobalAccessService(db).inspect_visitor_data(visitor_token)
+    if not data:
+        raise HTTPException(status_code=404, detail="Visitor not found")
+    return data
+
+
+@router.patch("/visitors/{visitor_token}/data")
+async def correct_visitor_data(
+    visitor_token: str,
+    request: DataCorrectionRequest,
+    db=Depends(get_db_session),
+):
+    """OD-05: visitors can correct preferences and memory permissions."""
+    ok = await GlobalAccessService(db).correct_visitor_data(
+        visitor_token,
+        preferences=request.preferences,
+        memory_permissions=request.memory_permissions,
+    )
+    if not ok:
+        raise HTTPException(status_code=404, detail="Visitor not found")
     return {"status": "corrected"}
 
 

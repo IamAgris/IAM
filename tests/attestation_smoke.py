@@ -66,7 +66,8 @@ def main():
         json={"confirm": True},
         timeout=20,
     )
-    check("manifest approval requires admin", forbidden.status_code == 403, str(forbidden.status_code))
+    if operator != admin:
+        check("manifest approval requires admin", forbidden.status_code == 403, str(forbidden.status_code))
 
     m = httpx.post(
         f"{BASE}/api/v1/integrity/manifest",

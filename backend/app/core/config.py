@@ -55,6 +55,20 @@ class Settings(BaseSettings):
     # Ollama - local models (private / low-resource tasks)
     ollama_base_url: str = "http://ollama:11434"
 
+    # Adaptive model selection (OD-39 / OD-41) — hardware-aware local model choice.
+    adaptive_model_enabled: bool = True
+    # OD-38 reopened by owner on 25 Nov 2026: only qwen2.5:3b is kept locally.
+    # All local tiers map to that single alias until another local model is approved.
+    adaptive_tiny_model: str = "local-qwen-3b"
+    adaptive_small_model: str = "local-qwen-3b"
+    adaptive_standard_model: str = "local-qwen-3b"
+    adaptive_large_model: str = "local-qwen-3b"
+    adaptive_delegate_model: str = "qwen3.5-9b"
+    adaptive_delegate_node: Optional[str] = None
+    adaptive_reserved_ram_mb: int = 1500  # protected core services (OD-39)
+    adaptive_min_ram_mb_standard: int = 2500
+    adaptive_min_ram_mb_large: int = 5500
+
     # OEDIE free infrastructure provider adapters (Doc 22) — default-disabled.
     # Values are environment-variable NAMES, never literal secrets.
     free_sandboxes_enabled: bool = False
@@ -92,11 +106,14 @@ class Settings(BaseSettings):
     skill_runtime_timeout_seconds: int = 30
     skill_runtime_memory: str = "256m"
     skill_runtime_cpus: float = 0.5
+    skill_runtime_per_skill_limit_per_minute: int = 60
+    skill_runtime_max_log_chars: int = 200000
 
     # API authentication and rate limiting
     auth_enabled: bool = True
     auth_bootstrap_key_env: str = "IAM_BOOTSTRAP_API_KEY"
     auth_rate_limit_per_minute: int = 120
+    rate_limit_backend: str = "memory"  # memory | redis
 
     # Creator approval by email (OD-18/OD-19) — no Creator UI
     # Email is the carrier; authority comes from a signed challenge.
@@ -121,6 +138,10 @@ class Settings(BaseSettings):
 
     # HMAC secret for the inbound signer/email gateway. Empty = gateway disabled.
     creator_gateway_secret: str = ""
+    creator_email_worker_enabled: bool = True
+    creator_email_retry_interval_seconds: int = 300
+    creator_email_max_attempts: int = 5
+    creator_alert_webhook_url: str = ""
 
     # External Security Engines — ARTEX connector (default-disabled, defensive-only)
     artex_enabled: bool = False

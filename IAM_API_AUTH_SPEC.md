@@ -12,10 +12,16 @@ approval or authorization by itself.
 
 | Scope | Rank | Typical use |
 | --- | --- | --- |
-| `user` | 1 | Conversations, memory, skills, languages, identity, interface |
+| `user` | 1 | Conversations, memory, skills, capabilities, languages, identity, interface |
 | `service` | 3 | Internal service/worker calls — same reach as `operator`, distinct audit identity |
 | `operator` | 3 | Autonomy, research, voice, vision, world, life, default |
 | `admin` | 4 | Skill Forge, cybersecurity, Creator, governance, internet, network, finance, development, setup |
+
+These scopes authenticate backend and service callers. They are **not** browser
+roles or login accounts. The frontend is open to use: it holds one user-scope
+credential server-side and acts on behalf of visitors, who never authenticate.
+Every non-user capability is reached through the email/signed-challenge flow or a
+server-side service credential.
 
 Public paths: `/`, `/health`, `/api/v1/docs`, `/api/v1/redoc`,
 `/api/v1/openapi.json`, `/api/v1/access/*`, `/api/v1/auth/bootstrap`, and

@@ -1,0 +1,124 @@
+{
+  "captured_utc": "2026-11-25T15:15:08.887920+00:00",
+  "evidence_class": "DEV (not representative)",
+  "hostname": "KOJOPAPO",
+  "system": "Windows",
+  "release": "11",
+  "machine": "AMD64",
+  "python": "3.15.2",
+  "cpu_count": 12,
+  "host_memory": {
+    "total_gb": 15.79,
+    "available_gb": 0.69,
+    "source": "Win32_OperatingSystem"
+  },
+  "disk": {
+    "total_gb": 17.5,
+    "free_gb": 15.42
+  },
+  "compose": {
+    "base_compose": {
+      "cpus": 2,
+      "memory": "4294967296"
+    },
+    "base_reservations": {
+      "memory": "536870912"
+    }
+  },
+  "containers": {
+    "aura-ollama": {
+      "image": "ollama/ollama:latest",
+      "nano_cpus": 4000000000,
+      "memory_bytes": 8589934592,
+      "memory_swap": 17179869184
+    },
+    "aura-backend": {
+      "image": "project-aura-backend",
+      "nano_cpus": 2000000000,
+      "memory_bytes": 4294967296,
+      "memory_swap": 8589934592
+    },
+    "aura-litellm": {
+      "image": "ghcr.io/berriai/litellm:main-latest",
+      "nano_cpus": 0,
+      "memory_bytes": 0,
+      "memory_swap": 0
+    },
+    "aura-postgres": {
+      "image": "pgvector/pgvector:pg17",
+      "nano_cpus": 0,
+      "memory_bytes": 0,
+      "memory_swap": 0
+    },
+    "aura-redis": {
+      "image": "redis:7-alpine",
+      "nano_cpus": 0,
+      "memory_bytes": 0,
+      "memory_swap": 0
+    }
+  },
+  "container_usage": [
+    {
+      "name": "aura-backend",
+      "cpu_pct": "0.15%",
+      "mem_usage": "105.2MiB / 4GiB"
+    },
+    {
+      "name": "aura-ollama",
+      "cpu_pct": "13.00%",
+      "mem_usage": "5.37GiB / 7.651GiB"
+    },
+    {
+      "name": "aura-minio",
+      "cpu_pct": "0.08%",
+      "mem_usage": "125.6MiB / 7.651GiB"
+    },
+    {
+      "name": "aura-postgres",
+      "cpu_pct": "2.81%",
+      "mem_usage": "55.83MiB / 7.651GiB"
+    },
+    {
+      "name": "aura-redis",
+      "cpu_pct": "0.42%",
+      "mem_usage": "16.7MiB / 7.651GiB"
+    },
+    {
+      "name": "aura-litellm",
+      "cpu_pct": "7.65%",
+      "mem_usage": "217.7MiB / 7.651GiB"
+    }
+  ],
+  "ollama_cgroup": {
+    "cpu_max": "400000 100000",
+    "effective_cores": 4.0,
+    "memory_max_bytes": 8589934592,
+    "memory_current_bytes": 5808734208,
+    "swap_current_bytes": 609071104,
+    "events": {
+      "low": "0",
+      "high": "0",
+      "max": "0",
+      "oom": "0",
+      "oom_kill": "0",
+      "oom_group_kill": "0"
+    },
+    "cpu_stat": {
+      "usage_usec": "693237715",
+      "user_usec": "651030107",
+      "system_usec": "42207607",
+      "nice_usec": "0",
+      "nr_periods": "2273",
+      "nr_throttled": "1597",
+      "throttled_usec": "346040856",
+      "nr_bursts": "0",
+      "burst_usec": "0"
+    }
+  },
+  "ollama_state": {
+    "version": "ollama version is 0.40.18",
+    "resident_models": "NAME                ID              SIZE      PROCESSOR    CONTEXT    RUNNER      UNTIL              \nqwen2.5-coder:3b    f72c60cabf62    2.2 GB    100% CPU     4096       llamacpp    4 minutes from now    \nqwen3.5:4b          d8b0f5e9760c    3.1 GB    100% CPU     4096       llamacpp    4 minutes from now",
+    "available_models": "NAME                ID              SIZE      MODIFIED       \nqwen3.5:4b          d8b0f5e9760c    3.3 GB    17 minutes ago    \nqwen2.5:3b          357c53fb659c    1.9 GB    4 hours ago       \nqwen2.5-coder:3b    f72c60cabf62    1.9 GB    5 hours ago"
+  },
+  "expected_target": "Contabo VPS 4 \u2014 4 vCPU / 8 GB RAM"
+}

@@ -31,6 +31,7 @@ PUBLIC_PREFIXES = (
 
 ADMIN_PREFIXES = (
     "/api/v1/skill-runtime",
+    "/api/v1/deployment",
     "/api/v1/skill-forge",
     "/api/v1/skillforge",  # legacy alias
     "/api/v1/cybersecurity",

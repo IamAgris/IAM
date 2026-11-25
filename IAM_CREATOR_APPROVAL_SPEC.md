@@ -107,4 +107,6 @@ a real database (140 tables).
    `"<challenge_hash>|approved"` or `"<challenge_hash>|rejected"`.
 3. Restrict `/gateway/decision` and `/authorizations/{id}/revoke` at the
    deployment boundary to the gateway's network identity.
-4. Add a periodic worker that calls `POST /outbox/retry` for failed deliveries.
+4. ~~Periodic retry worker~~ — implemented as `app/workers/creator_email_worker.py`,
+   started in the backend lifespan, with `CREATOR_EMAIL_WORKER_ENABLED` and
+   `CREATOR_EMAIL_RETRY_INTERVAL_SECONDS`.

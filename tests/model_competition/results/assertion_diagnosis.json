@@ -1,0 +1,111 @@
+{
+  "spec_test_consistency": "PASS \u2014 expected values match the original task spec: collapse repeated '/' to one, strip outer '/', return '' for None/empty. The test is not stricter than the specification.",
+  "root_cause": "Model coding error, not a specification or harness problem. The coder model used a single replace('//', '/'), which cannot collapse 3+ consecutive separators. The general model used '/'.join(path.split('/')) without dropping empty split parts, so repeats survive. Both handle None/empty and outer stripping correctly.",
+  "models": {
+    "local-qwen-coder-3b": {
+      "code": "def normalise_path(path: str) -> str:\n    if path is None or path == \"\":\n        return \"\"\n    return path.strip('/').replace('//', '/')",
+      "cases_total": 16,
+      "cases_failed": 4,
+      "failures": [
+        {
+          "input": "a///b",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a////b",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a//b///c",
+          "expected": "a/b/c",
+          "actual": "a/b//c",
+          "pass": false
+        },
+        {
+          "input": "a/b//c///d/",
+          "expected": "a/b/c/d",
+          "actual": "a/b/c//d",
+          "pass": false
+        }
+      ]
+    },
+    "local-qwen-3b": {
+      "code": "def normalise_path(path: str) -> str:\n    if not path:\n        return ''\n    path = path.strip('/')\n    return '/'.join(path.split('/'))",
+      "cases_total": 16,
+      "cases_failed": 6,
+      "failures": [
+        {
+          "input": "a//b",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a///b",
+          "expected": "a/b",
+          "actual": "a///b",
+          "pass": false
+        },
+        {
+          "input": "a////b",
+          "expected": "a/b",
+          "actual": "a////b",
+          "pass": false
+        },
+        {
+          "input": "//a//b//",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a//b///c",
+          "expected": "a/b/c",
+          "actual": "a//b///c",
+          "pass": false
+        },
+        {
+          "input": "a/b//c///d/",
+          "expected": "a/b/c/d",
+          "actual": "a/b//c///d",
+          "pass": false
+        }
+      ]
+    },
+    "local-qwen3.5-4b": {
+      "code": "def normalise_path(path: str) -> str:\n    if not path:\n        return ''\n    path = path.strip('/')\n    path = path.replace('//', '/')\n    return path",
+      "cases_total": 16,
+      "cases_failed": 4,
+      "failures": [
+        {
+          "input": "a///b",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a////b",
+          "expected": "a/b",
+          "actual": "a//b",
+          "pass": false
+        },
+        {
+          "input": "a//b///c",
+          "expected": "a/b/c",
+          "actual": "a/b//c",
+          "pass": false
+        },
+        {
+          "input": "a/b//c///d/",
+          "expected": "a/b/c/d",
+          "actual": "a/b/c//d",
+          "pass": false
+        }
+      ]
+    }
+  }
+}

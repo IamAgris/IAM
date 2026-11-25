@@ -15,14 +15,28 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.auth_policy import has_scope, required_scope
 from app.core.config import settings
 from app.core.database import get_session_factory
-from app.core.rate_limit import RateLimiter
+from app.core.rate_limit import RateLimiter, RedisRateLimiter
 from app.services.auth_service import AuthService
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
-        self.limiter = RateLimiter(settings.auth_rate_limit_per_minute)
+        self.local_limiter = RateLimiter(settings.auth_rate_limit_per_minute)
+        self.redis_limiter = (
+            RedisRateLimiter(settings.redis_url, settings.auth_rate_limit_per_minute)
+            if settings.rate_limit_backend.lower() == "redis"
+            else None
+        )
+
+    async def _rate_check(self, key: str):
+        if self.redis_limiter:
+            try:
+                return await self.redis_limiter.check(key)
+            except Exception:
+                # Fall back to local state if Redis is temporarily unavailable.
+                return self.local_limiter.check(key)
+        return self.local_limiter.check(key)
 
     async def _authenticate(self, request: Request) -> Optional[Dict[str, Any]]:
         header = request.headers.get("authorization", "")
@@ -62,7 +76,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             )
 
         client = request.client.host if request.client else "unknown"
-        allowed, retry_after = self.limiter.check(f"{credential['id']}:{client}")
+        allowed, retry_after = await self._rate_check(f"{credential['id']}:{client}")
         if not allowed:
             return JSONResponse(
                 status_code=429,

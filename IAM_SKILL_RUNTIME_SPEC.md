@@ -72,7 +72,8 @@ Base path `/api/v1/skill-runtime` (admin scope):
 
 ## 7. Remaining work
 
-1. Enable the Docker adapter in a controlled environment and test a real skill script.
+1. ~~Docker adapter lab test~~ — `backend/tests/docker_adapter_lab_check.py` ran a real
+   script in the no-network container and verified an outbound connection was blocked.
 2. Add a narrowly scoped, explicitly configured isolated network for skills that
    legitimately need network access.
 3. Stream execution logs to the audit trail rather than storing truncated output.

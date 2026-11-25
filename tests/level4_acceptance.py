@@ -8,6 +8,7 @@ architecture metadata (ARM64/x86-64 readiness).
 
 import sys
 import platform
+import uuid
 import httpx
 from auth_headers import install_auth_headers
 
@@ -53,7 +54,7 @@ def main():
     agent_id = None
     try:
         r = httpx.post(f"{BASE}/api/v1/network/agents", json={
-            "name": "L4 dist test", "endpoint_url": "https://example.invalid/agent",
+            "name": f"L4 dist test {uuid.uuid4().hex[:8]}", "endpoint_url": "https://example.invalid/agent",
             "protocol": "rest", "capabilities": ["research"]
         }, timeout=10)
         agent_id = r.json().get("id")
