@@ -26,9 +26,10 @@ console.log(status, task.id);
 await iam.disconnect();
 ```
 
-Capabilities: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`.
+Capabilities: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`, `creator`, plus `integrity`, `uwaie`, `publicRecords`, `legal`, `geo`, `humanPresence`, `assistantLab` and `freeSandbox`.
 
-- Scoped bearer tokens; protocol version header; controlled retries.
+- Scoped bearer tokens; protocol version header; controlled retries; optional Cloudflare Access service-token headers via `accessClientId` / `accessClientSecret`.
+- `creator.pending()`, `creator.challenge()` and `creator.decide()` support locally reviewed, signed Creator decisions. Signatures must be produced by a separate trusted signer; this SDK never generates authority.
 - Tasks submitted while disconnected are queued in memory and sent by `tasks.flushQueue()`.
 - Node registration creates a candidate node; the 1% contribution policy is core-enforced.
 - No database access; no protected-core modification.

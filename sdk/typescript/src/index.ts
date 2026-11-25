@@ -37,6 +37,10 @@ class Transport {
       Accept: "application/json",
     };
     if (this.options.token) headers.Authorization = `Bearer ${this.options.token}`;
+    if (this.options.accessClientId && this.options.accessClientSecret) {
+      headers["CF-Access-Client-Id"] = this.options.accessClientId;
+      headers["CF-Access-Client-Secret"] = this.options.accessClientSecret;
+    }
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (method === "POST") headers["Idempotency-Key"] = randomUUID();
 
@@ -212,6 +216,19 @@ export class IAM {
     correct: (id: string, body: Record<string, unknown>) => Promise<Record<string, unknown>>;
     relationships: (id: string) => Promise<Record<string, unknown>>;
     status: () => Promise<Record<string, unknown>>;
+  };
+  /** Creator channel: locally reviewed, signed decisions (OD-03/OD-19). */
+  creator: {
+    policy: () => Promise<Record<string, unknown>>;
+    pending: (status?: string) => Promise<Record<string, unknown>>;
+    get: (id: string) => Promise<Record<string, unknown>>;
+    challenge: (id: string) => Promise<Record<string, unknown>>;
+    decide: (
+      id: string,
+      decision: "approved" | "rejected",
+      signature: string,
+      signerId: string,
+    ) => Promise<Record<string, unknown>>;
   };
   events: { stream: () => EventSource | null };
 
@@ -464,6 +481,28 @@ export class IAM {
         this.transport.request("POST", `${pr}/records/${id}/corrections`, body),
       relationships: (id) => this.transport.request("GET", `${pr}/records/${id}/relationships`),
       status: () => this.transport.request("GET", `${pr}/status`),
+    };
+    const creator = "/api/v1/creator";
+    this.creator = {
+      policy: () => this.transport.request("GET", `${creator}/policy`),
+      pending: (status = "pending") =>
+        this.transport.request(
+          "GET",
+          `${creator}/requests${status ? `?status=${encodeURIComponent(status)}` : ""}`,
+        ),
+      get: (id) =>
+        this.transport.request("GET", `${creator}/requests/${encodeURIComponent(id)}`),
+      challenge: (id) =>
+        this.transport.request(
+          "GET",
+          `${creator}/requests/${encodeURIComponent(id)}/challenge`,
+        ),
+      decide: (id, decision, signature, signerId) =>
+        this.transport.request(
+          "POST",
+          `${creator}/requests/${encodeURIComponent(id)}/decide`,
+          { decision, signature, signer_id: signerId },
+        ),
     };
     this.events = {
       stream: () => {
