@@ -49,6 +49,18 @@ class Settings(BaseSettings):
     nvidia_api_key: Optional[str] = None
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_free_only: bool = True  # Never incur charges unless explicitly disabled
+
+    # OEDIE free infrastructure provider adapters (Doc 22) — default-disabled.
+    # Values are environment-variable NAMES, never literal secrets.
+    free_sandboxes_enabled: bool = False
+    free_sandbox_quota_safety_margin: float = 0.20  # refuse new work at 80% use
+    free_sandbox_github_owner: str = "IamAgris"
+    free_sandbox_github_repo: str = "IAM"
+    github_codespaces_token_env: str = "GITHUB_CODESPACES_TOKEN"
+    kaggle_token_env: str = "KAGGLE_API_TOKEN"
+    huggingface_token_env: str = "HF_TOKEN"
+    colab_token_env: str = "COLAB_API_TOKEN"
+
     brave_api_key: Optional[str] = None
     google_cx: Optional[str] = None
 

@@ -210,6 +210,7 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` — Document 19 : free cloud/platform node lifecycle (OD-35)
 - `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` — Document 20 : SDK/framework research + Technology Capability Registry (OD-36)
 - `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` — Document 21 : traffic, queues and distributed processing (OD-37)
+- **`IAM_FREE_SANDBOX_API_ADAPTER_SPEC.md`** — Document 22 : autonomous use of free platform APIs under OEDIE (extends OD-15/OD-35). Default-disabled scaffold in `backend/app/services/free_sandboxes/`.
 - **`IAM_FINAL_CONSOLIDATION.md`** — master gap analysis: all systems, conflicts, completion levels, roadmap
 - `IAM_OPEN_SPECS_RESOLVED.md` — resolved engineering specs A–G (creator keys, memory boundaries, P2P, hardware, scaling, finance, operations)
 - `IAM_DATABASE_DESIGN.md` — canonical ERD and migration strategy
