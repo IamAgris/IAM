@@ -16,7 +16,7 @@ survive any model or provider change. No provider — including NVIDIA — is pe
 | Provider | Type | Notes |
 |----------|------|-------|
 | NVIDIA NIM / build.nvidia.com | Hosted, OpenAI-compatible API | `https://integrate.api.nvidia.com/v1`, API key auth. Free endpoints for prototyping. |
-| Alibaba Dashscope | Hosted | Qwen3.5-9B starting candidate |
+| Alibaba Dashscope | Hosted | Qwen3.5-9B — locked initial general-reasoning anchor (OD-38) |
 | OpenAI / Anthropic | Hosted | Fallback / specialist |
 | Ollama | Local | Lightweight tasks, privacy-sensitive work |
 | Open-weight / self-hosted | Local | Future GPU inference (vLLM / SGLang) |

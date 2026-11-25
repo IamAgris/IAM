@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square } from "lucide-react";
+import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip } from "lucide-react";
 import { PresenceSphere, IAMState, MemoryNode } from "./presence-sphere";
 import { api } from "@/lib/api";
 
@@ -65,6 +65,8 @@ export function IAMInterface() {
   const [theme, setTheme] = React.useState<"dark" | "light">("dark");
   const [listening, setListening] = React.useState(false);
   const [voiceEnabled, setVoiceEnabled] = React.useState(false);
+  const [attachment, setAttachment] = React.useState<File | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
   const [connected, setConnected] = React.useState<boolean | null>(null);
   const [lastQuery, setLastQuery] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
@@ -199,6 +201,40 @@ export function IAMInterface() {
     } catch {}
   };
 
+  // Vision/document analysis — runs inside the same interface, no separate page.
+  const handleAttachment = async (file: File) => {
+    setAttachment(file);
+    setResponse("");
+    setShowHistory(false);
+    setState("thinking");
+    setStatus("Analysing…");
+    setGenerating(true);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const isImage = file.type.startsWith("image/");
+      const url = isImage ? "/api/v1/vision/understand-image" : "/api/v1/vision/analyze-video";
+      const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
+      const res = await fetch(base + url, { method: "POST", body: form });
+      const data = await res.json();
+      const text = data.description || data.error || "Could not analyse the file.";
+      setResponse(text);
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: `[attachment: ${file.name}]` },
+        { role: "assistant", content: text },
+      ]);
+      if (res.ok && !text.startsWith("Could not")) speak(text);
+    } catch {
+      setResponse("I could not read that file. Try an image or video.");
+    } finally {
+      setGenerating(false);
+      setAttachment(null);
+      const t = window.setTimeout(() => { setState("idle"); setStatus(MODE_CONFIG[mode].status); }, 1200);
+      timersRef.current.push(t);
+    }
+  };
+
   const stopGeneration = () => {
     abortRef.current?.abort();
     timersRef.current.forEach((t) => window.clearTimeout(t));
@@ -206,19 +242,6 @@ export function IAMInterface() {
     window.speechSynthesis?.cancel();
     setGenerating(false);
     setState("idle");
-  };
-
-  const animateResponse = (text: string) => {
-    setResponse("");
-    const words = text.split(" ");
-    words.forEach((_, i) => {
-      const t = window.setTimeout(() => {
-        setResponse((prev) => prev + (i === 0 ? "" : " ") + words[i]);
-      }, i * 45);
-      timersRef.current.push(t);
-    });
-    speak(text);
-    return words.length * 45;
   };
 
   const ask = async (query: string) => {
@@ -253,28 +276,70 @@ export function IAMInterface() {
       content: m.content,
     }));
 
-    let answer: string;
-    try {
-      const resp = await api.post("/api/v1/models/chat", {
-        model: "qwen3.5-9b",
-        messages: [
-          { role: "system", content: cfg.systemPrompt },
-          ...historyMessages,
-        ],
-        temperature: mode === "create" ? 0.8 : 0.6,
-      }, { signal: abortRef.current?.signal });
-      answer = resp.data?.choices?.[0]?.message?.content
-        || resp.data?.response
-        || "I received your message but could not generate a response.";
-    } catch {
-      answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
-    }
-
-    const duration = animateResponse(answer);
+    // Real SSE streaming from the backend
     setState("speaking");
     setStatus("Speaking");
-    setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
+    let answer = "";
+    try {
+      const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
+      const res = await fetch(`${base}/api/v1/models/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "qwen3.5-9b",
+          messages: [
+            { role: "system", content: cfg.systemPrompt },
+            ...historyMessages,
+          ],
+          temperature: mode === "create" ? 0.8 : 0.6,
+        }),
+        signal: abortRef.current?.signal,
+      });
 
+      if (!res.ok || !res.body) throw new Error(`stream status ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() || "";
+        for (const frame of frames) {
+          let event = "message", dataStr = "";
+          for (const line of frame.split("\n")) {
+            if (line.startsWith("event:")) event = line.slice(6).trim();
+            if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+          }
+          if (!dataStr) continue;
+          let data: any;
+          try { data = JSON.parse(dataStr); } catch { continue; }
+
+          if (event === "start") {
+            setState("speaking");
+          } else if (event === "delta") {
+            full += data.text || "";
+            setResponse(full);
+          } else if (event === "error") {
+            full += (full ? "\n\n" : "") + (data.message || "stream error");
+            setResponse(full);
+          } else if (event === "done") {
+            // finished
+          }
+        }
+      }
+      answer = full || "I could not generate a response.";
+    } catch {
+      answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
+      setResponse(answer);
+    }
+
+    setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
     if (activeSession) {
       api.post("/api/v1/access/messages", {
         session_token: activeSession.session_token,
@@ -284,11 +349,12 @@ export function IAMInterface() {
       }).catch(() => {});
     }
 
+    if (answer && !answer.startsWith("I'm unable")) speak(answer);
     setGenerating(false);
     const doneTimer = window.setTimeout(() => {
       setState("idle");
       setStatus(MODE_CONFIG[mode].status);
-    }, duration + 900);
+    }, 900);
     timersRef.current.push(doneTimer);
   };
 
@@ -481,6 +547,26 @@ export function IAMInterface() {
             className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2.5 text-inherit"
             style={{ color: "var(--ink)" }}
           />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleAttachment(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label="Attach image or video"
+            className="w-[36px] h-[36px] rounded-full border grid place-items-center transition-colors hover:border-[var(--accent)]"
+            style={{ borderColor: "var(--line)" }}
+          >
+            <Paperclip size={16} />
+          </button>
           <button
             type="button"
             onClick={toggleMic}

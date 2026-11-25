@@ -29,7 +29,12 @@ async function main(): Promise<void> {
   iam dev init               Scaffold a local IAM project
   iam dev test               Run local SDK contract tests
   iam storage status         Show core-authorised storage status
-  iam sync status            Show synchronisation status`);
+  iam sync status            Show synchronisation status
+  iam sandbox status         Show free-sandbox policy and scheduler health
+  iam sandbox providers      List free infrastructure providers
+  iam sandbox discover       Discover eligible free providers
+  iam sandbox monitor        Poll provider quotas once
+  iam sandbox provision <json>  Provision a workload on a free provider`);
     return;
   }
 
@@ -71,6 +76,23 @@ async function main(): Promise<void> {
     case "sync status":
       console.log(await iam.sync.status());
       break;
+    case "sandbox status":
+      console.log(await iam.freeSandbox.status());
+      break;
+    case "sandbox providers":
+      console.log(await iam.freeSandbox.providers());
+      break;
+    case "sandbox discover":
+      console.log(await iam.freeSandbox.discover());
+      break;
+    case "sandbox monitor":
+      console.log(await iam.freeSandbox.monitor());
+      break;
+    case "sandbox provision": {
+      if (!rest[0]) fail("sandbox provision requires a JSON payload");
+      console.log(await iam.freeSandbox.provision(JSON.parse(rest[0])));
+      break;
+    }
     case "login":
       fail("login must write a scoped token to the OS credential store (not implemented in scaffold)");
       break;

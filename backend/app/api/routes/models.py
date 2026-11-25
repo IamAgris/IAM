@@ -1,8 +1,10 @@
 """Model gateway routes - LiteLLM integration"""
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, AsyncGenerator
+import json
 import httpx
 import loguru
 
@@ -92,6 +94,105 @@ async def chat_completion(request: ChatRequest, db: AsyncSession = Depends(get_d
     except Exception as e:
         logger.error(f"Model inference failed: {e}")
         raise HTTPException(status_code=502, detail=f"Model inference failed: {str(e)}")
+
+
+@router.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """Streaming chat via Server-Sent Events (SSE).
+
+    Event schema (see IAM_API_CONTRACTS.md):
+      event: start  -> {request_id, model}
+      event: delta  -> {text}
+      event: done   -> {finish_reason}
+      event: error  -> {code, message}
+    """
+    request_id = str(__import__("uuid").uuid4())
+
+    async def generate() -> AsyncGenerator[str, None]:
+        import asyncio
+        def evt(event: str, data: dict) -> str:
+            return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+        # If no provider keys configured, stream a graceful informational response
+        has_key = any([
+            settings.nvidia_api_key, settings.dashscope_api_key,
+            settings.openai_api_key, settings.anthropic_api_key,
+        ])
+        if not has_key:
+            yield evt("start", {"request_id": request_id, "model": "offline"})
+            msg = (
+                "I am IAM, and I am running without a model provider key. "
+                "My memory, research and decision systems are active, but live language "
+                "generation needs an API key (NVIDIA or Dashscope) in the environment. "
+                "Everything else you see is real."
+            )
+            for word in msg.split(" "):
+                yield evt("delta", {"text": word + " "})
+                await asyncio.sleep(0.02)
+            yield evt("done", {"finish_reason": "stop", "offline": True})
+            return
+
+        # Try real LiteLLM stream first
+        try:
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
+            yield evt("start", {"request_id": request_id, "model": request.model})
+
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream(
+                    "POST",
+                    f"{settings.litellm_base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.litellm_master_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": request.model,
+                        "messages": messages,
+                        "temperature": request.temperature,
+                        "max_tokens": request.max_tokens,
+                        "stream": True,
+                    },
+                ) as resp:
+                    if resp.status_code != 200:
+                        body = ""
+                        async for chunk in resp.aiter_text():
+                            body += chunk
+                        yield evt("error", {"code": "provider_error", "message": body[:400]})
+                        yield evt("done", {"finish_reason": "error"})
+                        return
+
+                    async for line in resp.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        payload = line[5:].strip()
+                        if payload == "[DONE]":
+                            break
+                        try:
+                            obj = json.loads(payload)
+                            delta = obj.get("choices", [{}])[0].get("delta", {})
+                            text = delta.get("content")
+                            if text:
+                                yield evt("delta", {"text": text})
+                        except Exception:
+                            continue
+
+            yield evt("done", {"finish_reason": "stop"})
+            return
+
+        except Exception as e:
+            logger.error(f"Stream error: {e}")
+            yield evt("error", {"code": "stream_error", "message": str(e)[:300]})
+            yield evt("done", {"finish_reason": "error"})
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/{model_name}")

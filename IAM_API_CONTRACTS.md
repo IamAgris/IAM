@@ -30,15 +30,25 @@
 | GET | `/governance/boundaries` | session | Authority ladder |
 | POST | `/governance/check-authority` | session | `{action_type, requested_level}` → permitted? |
 | GET | `/governance/security-boundaries` | session | Immutable boundaries |
-| POST | `/governance/initialize` | owner | Install defaults |
-| GET/POST | `/approvals` | session/owner | Legacy approval requests |
-| PATCH | `/approvals/{id}/decide` | owner | Legacy approve/reject |
+| POST | `/governance/initialize` | admin | Install defaults |
 
-~~`GET/POST/DELETE /owner/authorizations` and `POST /owner/authorizations/check`~~ —
-**removed (OD-19 cleanup).** The legacy routes, service and model are gone; signed
-Creator authorization via `/creator/requests/{id}/decide` is the only authority path.
+Legacy `/external-presence/approvals` was removed. Integration activation now
+requires a signed Creator authorization for `external_presence.connect_integration`;
+`POST /external-presence/integrations/{id}/request-approval` sends the email request.
+
+Creator authority is **only** `/creator/requests/{id}/decide` via signed email.
+The legacy `/owner` routes, service and model are removed; no second authority path exists.
+| POST | `/auth/bootstrap` | bootstrap key | Create first scoped credential (key returned once) |
+| GET | `/auth/me` | credential | Current credential identity |
+| GET/POST | `/auth/credentials` | admin | List/create scoped API credentials |
+| POST | `/auth/credentials/{name}/revoke` | admin | Revoke a credential |
+| GET | `/skill-runtime/policy` | admin | Runtime posture and container limits |
+| GET | `/skill-runtime/capabilities/{id}` | admin | Effective permissions for a skill |
+| POST | `/skill-runtime/invoke` | admin | Gated skill invocation |
+| GET | `/skill-runtime/executions` | admin | Invocation audit trail |
+| GET | `/deployment/preflight` | admin | Redacted configuration readiness report |
 | GET | `/creator/policy` | session | Email-only Creator approval, no UI |
-| POST | `/creator/requests` | session | Create email approval request (returns email package) |
+| POST | `/creator/requests` | session | Create approval request; `channel` = `creator_email` (default) or `creator_cli` / `creator_webhook` / `creator_node` / `creator_file` (no email required) |
 | GET | `/creator/requests` | session | List requests |
 | GET | `/creator/requests/{id}` | session | Request detail |
 | POST | `/creator/requests/{id}/decide` | internal signed | Verify ED25519 challenge signature; only authority source |
@@ -49,6 +59,10 @@ Creator authorization via `/creator/requests/{id}/decide` is the only authority 
 | POST | `/creator/outbox/retry` | worker | Retry all pending/failed deliveries |
 | GET | `/creator/audit` | session | Creator-channel audit |
 | POST | `/creator/authorizations/{id}/revoke` | signed gateway | Revoke a signed authorization |
+| POST | `/creator/messages/questions` | session | IAM asks the Creator a question by email — informational, never authority |
+| POST | `/creator/messages/status` | session | IAM sends a progress update by email — informational |
+| GET | `/creator/messages` | session | Message history with authority markers |
+| POST | `/creator/messages/replies` | HMAC gateway | Record a Creator reply — informational, never authority |
 
 **OD-19:** Creator approval is email-based, never a dashboard. A plain email reply
 must not authorise anything; only `/creator/requests/{id}/decide` with a valid
@@ -69,6 +83,8 @@ signature over the one-time challenge creates authority.
 | POST | `/access/consent` | session | Record consent |
 | POST | `/access/memory-permissions` | session | Set memory tier permissions |
 | PATCH | `/access/location` | session | Correct region/language/timezone |
+| GET | `/access/visitors/{token}/data` | token | Inspect all visitor data (OD-05) |
+| PATCH | `/access/visitors/{token}/data` | token | Correct preferences and memory permissions (OD-05) |
 | DELETE | `/access/visitors/{token}` | session | Delete all visitor data |
 
 **Isolation invariant:** the server derives `owner_id` from `X-Session-Token` on every request. Client-supplied `visitor_id` is ignored. Repository layer enforces `owner_id` filter on every conversation query.
@@ -84,6 +100,9 @@ signature over the one-time challenge creates authority.
 | POST | `/conversations/messages` | Store message |
 | POST | `/conversations/{id}/chat` | **Non-streaming** chat fallback |
 | POST | `/conversations/{id}/chat/stream` | **SSE streaming chat** (canonical) |
+| POST | `/tone/analyze` | Doc 17 tone/influence interpretation (possibilities, not diagnoses) |
+| POST | `/tone/discussion` | Discussion analysis with possible tone-shift flags |
+| POST/GET | `/tone/records` | Store / list tone analysis evidence |
 
 ### SSE event schema (canonical — resolves C-10)
 
@@ -214,6 +233,9 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET | `/network/interactions` | Communication audit | session |
 | POST | `/network/trust` | Record trust assessment | session |
 | GET/POST | `/network/collaborations` | Delegated tasks | **signed Creator authorization if high-impact** |
+| POST | `/network/agents/{id}/verify` | Record independent identity verification evidence (self-reported claims never auto-verify) | session |
+| POST/GET | `/network/agents/{id}/interviews` | Record / list structured interviews with provenance and risk markers | session |
+| GET | `/network/agents/{id}/profile` | AI relationship registry profile (Doc 18 §7) | session |
 
 ---
 

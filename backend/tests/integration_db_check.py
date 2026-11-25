@@ -17,6 +17,7 @@ from pathlib import Path
 
 import asyncpg
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from sqlalchemy import select
 
 ROOT = Path(__file__).resolve().parents[1]  # backend/
 MIGRATIONS = ROOT / "app" / "db" / "migrations"
@@ -75,6 +76,11 @@ async def apply_migrations() -> None:
         "004_creator_email_approval.sql",
         "005_retire_legacy_owner_authorizations.sql",
         "006_creator_email_outbox.sql",
+        "007_api_credentials.sql",
+        "008_retire_legacy_approval_requests.sql",
+        "009_skill_runtime.sql",
+        "010_creator_email_dead_letter.sql",
+        "011_skill_runtime_logs.sql",
     ):
         sql = (MIGRATIONS / name).read_text(encoding="utf-8")
         await conn.execute(sql)
@@ -100,6 +106,8 @@ async def run_checks() -> None:
     settings.creator_signer_id = "integration-signer"
     settings.creator_email_transport = "log"
     settings.creator_gateway_secret = "integration-gateway-secret"
+    settings.skill_runtime_enabled = True
+    settings.skill_runtime_adapter = "stub"
     settings.creator_challenge_ttl_seconds = 3600
     settings.creator_authorization_ttl_seconds = 3600
 
@@ -158,7 +166,30 @@ async def run_checks() -> None:
             )
         )
         assert (await forge.rollback(sid, "1.0.0"))["version"] == "1.0.0"
+        await forge.activate(sid)
         print("  PASS skillforge personal lifecycle + rollback")
+
+        # --- Skill Runtime: gated execution ----------------------------------
+        from app.services.skillruntime.service import (
+            SkillRuntimeError,
+            SkillRuntimeService,
+        )
+
+        runtime = SkillRuntimeService(db)
+        invocation = await runtime.invoke(
+            sid, permission="knowledge", arguments={"input": "integration"}
+        )
+        assert invocation["execution"]["status"] == "completed"
+        assert invocation["execution"]["dry_run"] is True
+        try:
+            await runtime.invoke(sid, permission="security_analysis")
+        except SkillRuntimeError:
+            pass
+        else:
+            raise AssertionError("ungranted permission should be denied")
+        executions = await runtime.executions(sid)
+        assert any(e["status"] == "denied" for e in executions)
+        print("  PASS skill runtime gated invocation + denial audit")
 
         # --- Skill Forge: sensitive skill requires signed email approval -------
         sensitive_id = "iam.native.security.integration_defensive"
@@ -181,7 +212,28 @@ async def run_checks() -> None:
         assert outbox[0]["transport"] == "log"
         challenge = await creator_service.challenge_for_signer(request["request_id"])
         assert challenge["challenge_hash"] == request["challenge_hash"]
-        print("  PASS creator email outbox + signer challenge")
+
+        # Worker retries failed deliveries without changing approval authority.
+        from app.models.creatorapproval import CreatorEmailOutbox
+        from app.workers.creator_email_worker import CreatorEmailWorker
+
+        row = (
+            await db.execute(
+                select(CreatorEmailOutbox).where(
+                    CreatorEmailOutbox.request_id == request["request_id"]
+                )
+            )
+        ).scalar_one()
+        row.status = "failed"
+        await db.commit()
+        await CreatorEmailWorker(interval=999)._cycle()
+        db.expire_all()  # the worker committed through a separate session
+        retried = await creator_service.outbox()
+        assert any(
+            r["request_id"] == request["request_id"] and r["status"] == "sent"
+            for r in retried
+        )
+        print("  PASS creator email outbox + signer challenge + retry worker")
         await CreatorApprovalService(db).decide(
             request["request_id"],
             decision="approved",
@@ -259,6 +311,139 @@ async def run_checks() -> None:
         assert result["permitted"] is True
         assert result["source"] == "signed_creator_authorization"
         print("  PASS governance signed-authorization check")
+
+        # --- API authentication + rate limiting -------------------------------
+        from httpx import ASGITransport, AsyncClient
+        from app.main import app
+
+        os.environ["IAM_BOOTSTRAP_API_KEY"] = "integration-bootstrap"
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            bootstrap = await client.post(
+                "/api/v1/auth/bootstrap",
+                json={"name": "integration-admin", "scope": "admin"},
+                headers={"X-Bootstrap-Key": "integration-bootstrap"},
+            )
+            assert bootstrap.status_code == 201, bootstrap.text
+            admin_headers = {"Authorization": f"Bearer {bootstrap.json()['key']}"}
+
+            assert (await client.get("/api/v1/skill-forge/skills")).status_code == 401
+            assert (await client.get("/health")).status_code == 200
+            assert (
+                await client.get("/api/v1/auth/me", headers=admin_headers)
+            ).status_code == 200
+            admin_skills = await client.get(
+                "/api/v1/skill-forge/skills", headers=admin_headers
+            )
+            assert admin_skills.status_code == 200, (
+                admin_skills.status_code,
+                admin_skills.text[:500],
+            )
+
+            user = await client.post(
+                "/api/v1/auth/credentials",
+                json={"name": "integration-user", "scope": "user"},
+                headers=admin_headers,
+            )
+            assert user.status_code == 201, user.text
+            user_headers = {"Authorization": f"Bearer {user.json()['key']}"}
+            assert (
+                await client.get("/api/v1/skill-forge/skills", headers=user_headers)
+            ).status_code == 403
+
+            # External-presence approval now uses the signed Creator email flow.
+            integration = await client.post(
+                "/api/v1/external-presence/integrations",
+                json={
+                    "name": "integration-lab",
+                    "provider": "lab",
+                    "integration_type": "business",
+                    "requires_human_approval": True,
+                },
+                headers=admin_headers,
+            )
+            assert integration.status_code == 200, integration.text
+            integ = integration.json()
+            assert integ["creator_request_id"] and integ["is_active"] is False
+            activation_url = (
+                f"/api/v1/external-presence/integrations/{integ['id']}/activate"
+            )
+            assert (
+                await client.patch(activation_url, headers=admin_headers)
+            ).status_code == 403
+
+            challenge = await CreatorApprovalService(db).challenge_for_signer(
+                integ["creator_request_id"]
+            )
+            await CreatorApprovalService(db).decide(
+                integ["creator_request_id"],
+                decision="approved",
+                signature=sign(challenge["challenge_hash"]),
+                signer_id=settings.creator_signer_id,
+            )
+            assert (
+                await client.patch(activation_url, headers=admin_headers)
+            ).status_code == 200
+
+            # Visitor data rights + encryption at rest (OD-05/07/09).
+            from app.models.globalaccess import VisitorMessage
+
+            created_visitor = await client.post(
+                "/api/v1/access/visitors", json={"visitor_token": "integration-visitor"}
+            )
+            assert created_visitor.status_code == 200, created_visitor.text
+            # The service issues an unpredictable token; use the one it returned.
+            visitor_token = created_visitor.json()["visitor_token"]
+            session = await client.post(
+                "/api/v1/access/sessions",
+                json={"visitor_token": visitor_token, "mode": "focus"},
+            )
+            assert session.status_code == 200, session.text
+            session_token = session.json()["session_token"]
+            await client.post(
+                "/api/v1/access/messages",
+                json={
+                    "session_token": session_token,
+                    "role": "user",
+                    "content": "private integration note",
+                },
+            )
+            stored = (await db.execute(select(VisitorMessage))).scalars().first()
+            assert stored is not None and stored.content.startswith("enc:v1:")
+            inspected = await client.get(
+                f"/api/v1/access/visitors/{visitor_token}/data"
+            )
+            assert inspected.status_code == 200, inspected.text
+            assert any(
+                m["content"] == "private integration note"
+                for m in inspected.json()["messages"]
+            )
+            corrected = await client.patch(
+                f"/api/v1/access/visitors/{visitor_token}/data",
+                json={
+                    "preferences": {"theme": "dark"},
+                    "memory_permissions": {"allow_shared_knowledge": False},
+                },
+            )
+            assert corrected.status_code == 200, corrected.text
+            assert (
+                await client.delete(f"/api/v1/access/visitors/{visitor_token}")
+            ).status_code == 200
+        print("  PASS auth + approval + visitor data rights + encryption at rest")
+
+        # Redis limiter is optional; exercised when REDIS_URL is provided.
+        redis_url = os.environ.get("REDIS_URL")
+        if redis_url:
+            from app.core.rate_limit import RedisRateLimiter
+
+            limiter = RedisRateLimiter(redis_url, default_limit=2)
+            key = f"integration:{os.getpid()}"
+            assert (await limiter.check(key))[0]
+            assert (await limiter.check(key))[0]
+            allowed, retry = await limiter.check(key)
+            assert not allowed and retry >= 1
+            print("  PASS redis rate limiter")
 
 
 async def main() -> None:

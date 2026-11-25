@@ -17,16 +17,23 @@ python tests/integration_db_check.py
 `alembic upgrade head` now succeeds from an empty database: `0001_initial` was
 regenerated from ORM metadata in foreign-key dependency order. Migrations
 `002_skillforge.sql`, `003_security_engines.sql`, `004_creator_email_approval.sql`,
-`005_retire_legacy_owner_authorizations.sql` and `006_creator_email_outbox.sql`
-then apply cleanly (idempotently). 137 relations present, including `alembic_version`. `alembic downgrade base` also
+`005_retire_legacy_owner_authorizations.sql`, `006_creator_email_outbox.sql`,
+`007_api_credentials.sql`, `008_retire_legacy_approval_requests.sql` and
+`009_skill_runtime.sql` then apply cleanly (idempotently). 141 relations present,
+including `alembic_version`. `alembic downgrade base` also
 succeeds; the archived `legacy_owner_authorizations` table is deliberately retained.
 All lifecycle checks passed against real PostgreSQL:
 
 - Skill Forge personal skill: create → validate → test → publish → activate → new version → rollback
+- Skill Runtime: gated invocation → simulated result; ungranted permission → denied + audited
 - Skill Forge sensitive skill: create → validate → test → email request → outbox delivery → signer challenge → signed decision → publish
 - ARTEX engine: signed registration → signed scope → signed security-testing authorization → task → signed task approval → dry-run dispatch → sync
 - Findings: normalisation → remediation → Skill Forge defensive-skill handoff
 - Governance: authority boundary → signed Creator authorization → permitted
+- Creator email retry worker: a failed outbox row was retried to `sent` by a worker cycle
+- Visitor data rights: inspect → correct → delete, with messages stored as `enc:v1:` ciphertext
+- HTTP auth: unauthenticated admin path → 401, admin key → 200, user key → 403, public health → 200
+- External-presence integration: connect → email request → activation blocked → signed approval → activation allowed
 
 ## Bugs found and fixed during the check
 
@@ -54,8 +61,9 @@ All lifecycle checks passed against real PostgreSQL:
 
 ## Non-blocking warnings
 
-- `alembic downgrade base` leaves `legacy_owner_authorizations` in place by design
-  (archived history is never deleted). It is inert and unreferenced by code.
+- `alembic downgrade base` may leave `legacy_owner_authorizations` in place on
+  databases that predate the cleanup. Fresh databases no longer create it. It is
+  inert and unreferenced by code.
 - SQLAlchemy emits two pre-existing `SAWarning`s about overlapping relationships
   in `app/models/worldmodel.py` (`EntityRelationship.source_entity` /
   `target_entity` vs `WorldEntity.relationships_as_source` / `_as_target`).

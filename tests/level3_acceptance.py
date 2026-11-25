@@ -8,6 +8,9 @@ reflection, resilience checks.
 
 import sys
 import httpx
+from auth_headers import install_auth_headers
+
+install_auth_headers()
 
 BASE = "http://localhost:8000"
 results = []

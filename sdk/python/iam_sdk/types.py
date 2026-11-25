@@ -15,6 +15,9 @@ class IAMOptions:
     api_version: str = PROTOCOL_VERSION
     timeout_ms: int = 30_000
     max_retries: int = 3
+    # Optional Cloudflare Access service-token headers (private Core access).
+    access_client_id: str | None = None
+    access_client_secret: str | None = None
 
 
 @dataclass

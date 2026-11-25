@@ -9,6 +9,9 @@ import sys
 import json
 import httpx
 from datetime import datetime
+from auth_headers import install_auth_headers
+
+install_auth_headers()
 
 BASE = "http://localhost:8000"
 results = []
@@ -109,12 +112,13 @@ def main():
     except Exception as e:
         check("authority boundary", False, str(e))
 
-    # 8. Owner authorization endpoint exists and IAM cannot write
+    # 8. Creator authority is email + signed challenge; legacy owner routes
+    #    were retired (OD-03/OD-19). Verify the replacement is readable.
     try:
-        r = httpx.get(f"{BASE}/api/v1/owner/authorizations", timeout=10)
-        check("owner authorizations readable", r.status_code == 200, str(r.status_code))
+        r = httpx.get(f"{BASE}/api/v1/creator/policy", timeout=10)
+        check("creator approval policy readable", r.status_code == 200, str(r.status_code))
     except Exception as e:
-        check("owner authorizations", False, str(e))
+        check("creator approval policy", False, str(e))
 
     print("\n=== Level 1 summary ===")
     passed = sum(1 for r in results if r["passed"])

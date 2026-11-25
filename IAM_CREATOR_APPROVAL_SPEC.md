@@ -82,6 +82,7 @@ preserved as an inert archive rather than deleted.
 | Cybersecurity `POST /tasks/{id}/approve` | `cybersecurity.task_approve` (3/4) | Signed authorization required |
 | Cybersecurity `POST /tasks/{id}/reject` | `cybersecurity.task_reject` (3) | Signed authorization required |
 | Cybersecurity task create/dispatch | `security_testing` (3/4) | Signed authorization required |
+| External-presence integration activation | `external_presence.connect_integration` (3) | Signed authorization required; email request sent on connect |
 
 `approved_by` is the verified signer ID, never the literal string `"owner"`.
 
@@ -92,10 +93,11 @@ cd backend
 python -m unittest discover -s tests -p 'test_*.py' -q
 ```
 
-52 unit tests pass, covering deterministic payloads, nonce binding, signature
-reuse rejection, gateway HMAC validation and the default log transport. The
-Postgres integration check additionally verifies outbox delivery, signer
-challenge retrieval and signed decisions against a real database (137 tables).
+61 unit tests pass, covering deterministic payloads, nonce binding, signature
+reuse rejection, gateway HMAC validation, auth scopes and the default log transport.
+The Postgres integration check additionally verifies outbox delivery, signer
+challenge retrieval, signed decisions and email-based integration approval against
+a real database (140 tables).
 
 ## 7. Remaining work
 
@@ -105,4 +107,6 @@ challenge retrieval and signed decisions against a real database (137 tables).
    `"<challenge_hash>|approved"` or `"<challenge_hash>|rejected"`.
 3. Restrict `/gateway/decision` and `/authorizations/{id}/revoke` at the
    deployment boundary to the gateway's network identity.
-4. Add a periodic worker that calls `POST /outbox/retry` for failed deliveries.
+4. ~~Periodic retry worker~~ — implemented as `app/workers/creator_email_worker.py`,
+   started in the backend lifespan, with `CREATOR_EMAIL_WORKER_ENABLED` and
+   `CREATOR_EMAIL_RETRY_INTERVAL_SECONDS`.

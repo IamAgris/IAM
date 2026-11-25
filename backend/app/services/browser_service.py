@@ -1,6 +1,7 @@
 """Browser service - isolated Playwright browser for controlled internet interaction"""
 
 import asyncio
+import os
 import loguru
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -27,6 +28,10 @@ class BrowserService:
 
     async def start(self):
         """Launch the browser instance."""
+        # The container installs browsers at /ms-playwright. Honour that path
+        # even when the environment variable was not passed at container start.
+        if os.path.isdir("/ms-playwright") and not os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
+            os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/ms-playwright"
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(
             headless=self.headless,
@@ -207,6 +212,9 @@ class BrowserService:
                 result["success"] = True
             elif action == "text":
                 result["result"] = await page.evaluate("() => document.body.innerText")
+                result["success"] = True
+            elif action == "url":
+                result["result"] = page.url
                 result["success"] = True
             elif action == "links":
                 result["result"] = await page.evaluate(

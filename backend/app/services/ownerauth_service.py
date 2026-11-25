@@ -20,15 +20,11 @@ class OwnerAuthService:
         can_modify_own_security=False, scope=None, granted_by="owner", expires_at=None,
     ):
         auth = OwnerAuthorization(
-            action_type=action_type,
-            max_authority_level=max_authority_level,
-            spending_limit_usd=spending_limit_usd,
-            can_create_accounts=can_create_accounts,
+            action_type=action_type, max_authority_level=max_authority_level,
+            spending_limit_usd=spending_limit_usd, can_create_accounts=can_create_accounts,
             can_publish_externally=can_publish_externally,
             can_modify_own_security=can_modify_own_security,
-            scope=scope or {},
-            granted_by=granted_by,
-            is_active=True,
+            scope=scope or {}, granted_by=granted_by, is_active=True,
         )
         if expires_at:
             auth.expires_at = datetime.fromisoformat(expires_at)
@@ -51,13 +47,9 @@ class OwnerAuthService:
             if auth.expires_at and auth.expires_at.replace(tzinfo=timezone.utc) < now:
                 continue
             if levels.get(requested_level, 0) <= levels.get(auth.max_authority_level, 0):
-                return {
-                    "authorized": True,
-                    "authorization_id": str(auth.id),
-                    "max_level": auth.max_authority_level,
-                    "granted_by": auth.granted_by,
-                    "scope": auth.scope,
-                }
+                return {"authorized": True, "authorization_id": str(auth.id),
+                        "max_level": auth.max_authority_level, "granted_by": auth.granted_by,
+                        "scope": auth.scope}
         return {"authorized": False, "reason": "No active owner authorization", "action_type": action_type}
 
     async def revoke_authorization(self, authorization_id):
@@ -78,13 +70,11 @@ class OwnerAuthService:
 
     def _to_dict(self, auth):
         return {
-            "id": str(auth.id),
-            "action_type": auth.action_type,
+            "id": str(auth.id), "action_type": auth.action_type,
             "max_authority_level": auth.max_authority_level,
             "spending_limit_usd": float(auth.spending_limit_usd) if auth.spending_limit_usd else None,
             "can_create_accounts": auth.can_create_accounts,
             "can_publish_externally": auth.can_publish_externally,
             "can_modify_own_security": auth.can_modify_own_security,
-            "is_active": auth.is_active,
-            "granted_by": auth.granted_by,
+            "is_active": auth.is_active, "granted_by": auth.granted_by,
         }

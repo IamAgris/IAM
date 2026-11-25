@@ -68,8 +68,9 @@ regional privacy compliance; separate public/private data stores or strictly enf
 2. Displayed identity is IAM, never Marlow.
 3. Do not redesign into a conventional chatbot.
 4. New capabilities integrate into the existing design language.
-5. Complex settings are optional and unobtrusive; there is no Creator UI —
-   authorization is email-based and signed.
+5. The frontend is user-only. There is no Creator UI and no operator/admin UI —
+   authorization, governance, research control, Skill Forge and security work all
+   happen through the signed email flow or scoped backend credentials.
 6. Sphere reflects real IAM state.
 7. Memory nodes represent real, permission-filtered information.
 8. All visitors use the same interface.

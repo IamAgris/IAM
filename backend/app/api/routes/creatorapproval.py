@@ -33,6 +33,7 @@ class RequestCreate(BaseModel):
     risk_level: str = "3"
     target_ref: Optional[str] = None
     reason: Optional[str] = None
+    channel: str = "creator_email"  # creator_email | creator_cli | creator_webhook | creator_node | creator_file
 
 
 class DecisionRequest(BaseModel):
@@ -78,6 +79,7 @@ async def create_request(
         risk_level=request.risk_level,
         target_ref=request.target_ref,
         reason=request.reason,
+        channel=request.channel,
     )
 
 
@@ -167,6 +169,11 @@ async def deliver_request(
 @router.get("/outbox")
 async def outbox(db: AsyncSession = Depends(get_db_session)):
     return await _run(CreatorApprovalService(db).outbox)
+
+
+@router.get("/outbox/dead-letters")
+async def dead_letters(db: AsyncSession = Depends(get_db_session)):
+    return await _run(CreatorApprovalService(db).dead_letters)
 
 
 @router.post("/outbox/retry")

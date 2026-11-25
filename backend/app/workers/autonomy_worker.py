@@ -5,10 +5,14 @@ States: idle, exploring, learning, working, developing, reviewing, conserving
 """
 
 import asyncio
+import json
 import loguru
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
+import httpx
+
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.services.memory_service import MemoryService
 from app.models.memory import MemoryItem
@@ -30,7 +34,9 @@ class AutonomyWorker:
         self.tick_interval = tick_interval
         self.state = "idle"
         self.running = False
+        self.last_cycle: Optional[Dict[str, Any]] = None
         self._task: Optional[asyncio.Task] = None
+        self._ticks = 0
 
     async def start(self):
         """Start the autonomy loop as a background task."""
@@ -50,10 +56,51 @@ class AutonomyWorker:
         logger.info("Autonomy worker stopped")
 
     async def _loop(self):
-        """Main autonomy loop."""
+        """Main autonomy loop — uses the durable LangGraph workflow when available."""
         while self.running:
             try:
-                await self._tick()
+                durable = None
+                try:
+                    from app.orchestration.autonomy_graph import run_cycle
+                    durable = await run_cycle(trigger="scheduled")
+                    self.last_cycle = durable
+                    if durable.get("action", {}).get("status") == "advanced":
+                        self.state = "working"
+                    else:
+                        self.state = "idle"
+                except Exception as ge:
+                    logger.warning(f"Durable graph unavailable, using simple tick: {ge}")
+                    await self._tick()
+
+                # Periodic free-infrastructure quota/expiry monitor (Doc 22).
+                self._ticks += 1
+                if (
+                    getattr(settings, "free_sandboxes_enabled", False)
+                    and self._ticks
+                    % max(getattr(settings, "free_sandbox_discovery_interval_ticks", 10), 1)
+                    == 0
+                ):
+                    try:
+                        from app.services.free_sandboxes.monitor import FreeSandboxMonitor
+                        from app.services.free_sandboxes.service import FreeSandboxService
+
+                        async with AsyncSessionLocal() as sandbox_db:
+                            outcomes = await FreeSandboxMonitor(
+                                FreeSandboxService(sandbox_db, actor="autonomy_worker")
+                            ).poll()
+                            if outcomes:
+                                logger.info(f"Free sandbox quota poll: {len(outcomes)} providers")
+                    except Exception as monitor_error:
+                        logger.warning(f"Free sandbox monitor unavailable: {monitor_error}")
+
+                # Also record a heartbeat decision for operational visibility
+                async with AsyncSessionLocal() as db:
+                    db.add(DecisionRecord(
+                        decision="autonomy_heartbeat",
+                        reasoning=durable.get("reasoning") if durable else "simple loop",
+                        confidence=0.5,
+                    ))
+                    await db.commit()
             except Exception as e:
                 logger.error(f"Autonomy tick error: {e}")
                 self.state = "conserving"
@@ -135,19 +182,64 @@ class AutonomyWorker:
     async def _reason(
         self, message: Dict[str, Any], memories: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """Reason about the best action given context and memories."""
-        # Build context from memories
+        """Reason about the next action through the LiteLLM model gateway."""
         memory_context = "\n".join(
             [f"- {m.get('content', '')[:100]}..." for m in memories[:3]]
         ) if memories else "No relevant memories."
 
-        # This would call the model gateway via LiteLLM
-        # For now, return a structured decision
-        return {
-            "action": "respond",
-            "reasoning": f"User said: {message.get('content', '')[:100]}. Context: {memory_context[:200]}",
-            "confidence": 0.7,
-        }
+        system_prompt = (
+            "You are IAM's autonomy worker. Choose one safe next action: "
+            "observe, respond, research, plan or ask_authorization. "
+            "Never grant yourself permissions or spend funds. "
+            'Return JSON only: {"action": str, "reasoning": str, "confidence": number 0-1}.'
+        )
+        user_prompt = (
+            f"Latest user message: {message.get('content', '')[:500]}\n"
+            f"Relevant memories: {memory_context[:500]}"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.post(
+                    f"{settings.litellm_base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.litellm_master_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.iam_sdk_default_model,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 256,
+                    },
+                )
+            if response.status_code != 200:
+                raise RuntimeError(f"model gateway returned {response.status_code}")
+            content = response.json()["choices"][0]["message"]["content"]
+            decision = json.loads(content)
+            action = str(decision.get("action", "observe"))
+            allowed = {"observe", "respond", "research", "plan", "ask_authorization"}
+            if action not in allowed:
+                action = "observe"
+            confidence = max(0.0, min(1.0, float(decision.get("confidence", 0.5))))
+            return {
+                "action": action,
+                "reasoning": str(decision.get("reasoning", ""))[:1000],
+                "confidence": confidence,
+                "model_used": True,
+            }
+        except Exception as exc:
+            # Never fabricate a decision or silently claim model reasoning.
+            logger.warning(f"Model reasoning unavailable: {exc}")
+            return {
+                "action": "observe",
+                "reasoning": f"model unavailable; no autonomous action taken: {exc}"[:1000],
+                "confidence": 0.0,
+                "model_used": False,
+            }
 
 
 # Singleton instance

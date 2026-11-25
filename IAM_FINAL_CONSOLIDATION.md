@@ -13,6 +13,15 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 
 "Covered" below means included in the requirements — **not** necessarily implemented or fully specified.
 
+Five capability addenda — Doc 17 (psychology/tone/influence defence, OD-33), Doc 18 (external AI identity and interview, OD-34), Doc 19 (free infrastructure node lifecycle, OD-35), Doc 20 (AI SDK/framework research, OD-36) and Doc 21 (traffic management and distributed processing, OD-37) — are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026).
+They extend existing systems (research/communication/governance, Doc 03 §7, OEDIE/Doc 10, Doc 02/OEDIE and system 13/Doc 10 respectively); they are not new major systems.
+A sixth addendum — Doc 23 (foundation model, router, model competition and model development, OD-38) — is likewise **CONFIRMED**. It extends Doc 02 and systems 2, 5, 11 and 14 by locking the initial foundation-model set and the replacement process; it does not add a new top-level system.
+Two further confirmed capability decisions — OD-39 (Intelligent Resource and Workload Manager) and OD-40 (Model Evolution and Fine-Tuning Engine / MEFE) — extend systems 2/13 and 5/11/14 respectively. They govern resource control and model development; neither alters a locked decision or adds a new top-level system. Specified in `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` and `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md`.
+OD-41 freezes the parent research architecture (`IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md`), including distributed free-compute research, autonomous operation boundaries and five pillars; implementation is sequenced in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`. It explicitly ends further subsystem invention for this capability.
+
+Doc 24 / OD-43 (human behaviour, Equality of Existence and responsibility) is **CONFIRMED** and extends Docs 17/14 rather than adding a new system or a separate AI. OD-42 (Creator channels, including Cloudflare private access) and Doc 25 / OD-44 (financial intelligence, extending Doc 09) are likewise confirmed. None alters any earlier decision, including OD-04/OD-25 financial authority.
+A cross-cutting implementation addendum (`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`) confirms a hybrid Python + Rust + TypeScript allocation: Python for research, training and the FastAPI service layer; Rust for performance- and security-sensitive infrastructure; TypeScript for web and SDK clients. It is **not** a new owner decision, changes no technology mandated in `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` §5 (including OD-08 ARQ), and applies prospectively — no completed component is rewritten.
+
 ---
 
 ## 2. Document inventory
@@ -30,7 +39,7 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 | — | `IAM_DATABASE_DESIGN.md` | Canonical ERD (119 tables) |
 | — | `IAM_API_CONTRACTS.md` | Endpoint contracts + SSE schema |
 | — | `IAM_SECURITY_AND_INTERNET_POLICY.md` | Security/internet policy |
-| — | `IAM_OWNER_DECISIONS.md` | 32 locked decisions |
+| — | `IAM_OWNER_DECISIONS.md` | 41 locked decisions |
 | — | `IAM_ARTEX_INTEGRATION_SPEC.md` | ArteX integration |
 | — | `IAM_CREATOR_APPROVAL_SPEC.md` | Creator approval flow |
 | — | `IAM_SKILL_FORGE_SPEC.md` | Skill development system |
@@ -42,6 +51,19 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 | 14 | `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` | Frozen global research scope (OD-30) |
 | 15 | `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` | Legal and government monitoring (OD-31) |
 | 16 | `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` | Geospatial and live maps (OD-32) |
+| 17 | `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` | Human psychology, tone and influence defence (OD-33) |
+| 18 | `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` | External AI identity, interview, collaborative learning and skill packages (OD-34) |
+| 19 | `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` | Free infrastructure node discovery and lifecycle (OD-35) |
+| 20 | `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` | AI SDK/framework/model research and Technology Capability Registry (OD-36) |
+| 21 | `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` | Traffic management, queues and distributed processing (OD-37) |
+| 23 | `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` | Foundation model selection, router, competition and model development (OD-38) |
+| — | `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` | RAM/CPU control, model residency and node workload allocation (OD-39) |
+| — | `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` | Dataset, training, evaluation, registry and safe model releases (OD-40 / MEFE) |
+| — | `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` | Parent research/development architecture + frozen distributed free-compute requirements (OD-41) |
+| — | `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md` | OD-41 work packages, dependencies, priorities and acceptance tests |
+| — | `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` | Cross-cutting Python + Rust + TypeScript implementation allocation (not a decision) |
+| 24 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Human behaviour research, Equality of Existence and responsibility (OD-43, proposed) |
+| 25 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Income, crypto, trading and payments amendment (OD-44, proposed) |
 | — | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
 | — | `IAM_OPENAPI.json` | Generated schema (113 paths, 103 schemas) |
 
@@ -67,6 +89,9 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 | GitHub & email identities | Covered | Blockchain (thirdweb free-only) | Covered (OD-23) |
 | thirdweb/blockchain | Covered (Doc 09) | SA banking (18 capabilities) | Covered (OD-24) |
 | Financial authority | Covered (OD-25) | | |
+| Psychology, tone & influence defence | Covered (Doc 17 / OD-33) | External AI identity & interview | Covered — extends Doc 03 §7 (Doc 18 / OD-34) |
+| Free infrastructure node lifecycle | Covered — extends OEDIE/Doc 10 (Doc 19 / OD-35) | AI SDK/framework research | Covered — extends OEDIE/Doc 02 (Doc 20 / OD-36) |
+| Traffic management & distributed processing | Covered — extends system 13 / Doc 10 (Doc 21 / OD-37); OD-08 ARQ unchanged | | |
 
 ---
 
@@ -195,6 +220,18 @@ Each level requires its tests to pass before the next is declared complete. Auto
 ## 9. Conclusion
 
 The IAM architecture is **frozen at the feature level** and **complete at the requirements level**. The 7 open specification areas are RESOLVED (`IAM_OPEN_SPECS_RESOLVED.md`).
+
+**Creator hardware signer ceremony implemented & verified (25 Nov):** `app/services/creator_keys.py` + `/api/v1/creator/keys/*` — Ed25519 keypair generation, offline challenge signing, signature verification, documented 8-step key ceremony. IAM runtime never holds the private key; admin scope required for ceremony endpoints. `tests/signer_acceptance.py` 9/9 — generation, signing, valid/wrong-decision/tampered-hash verification, ceremony docs, unsigned gateway rejection. The existing `creatorapproval_service.py` already enforced Ed25519 signatures over one-time challenges — this adds the missing key-generation tooling.
+
+**Interface correction (25 Nov):** Removed ALL additional frontend routes. The app is a single immersive screen — `/` only. Focus/Recall/Create are modes; voice (Web Speech + TTS), vision (image/video attachment via paperclip), conversation history, theme are capabilities inside that one screen. No other pages. Capabilities like memory, goals, projects, finance, security are AI functions invoked through the interface, not navigable pages. Frontend build clean (1 route).
+
+**IAM Aegis implemented & verified (25 Nov):** `app/services/aegis.py` — all 7 defensive components (white-hat intelligence, ethical scope verification, vulnerability research, secure remediation, threat detection/prevention, threat intel, self-defence research). `tests/aegis_acceptance.py` 12/12 — injection detection, safe text, secret detection without echo, scope checks, SSRF/metadata blocking, safe remediation, shareable-finding sanitization, self-test. Security bug found and fixed: shareable findings were leaking raw evidence; now only type/severity/evidence-hash are shared. Also fixed concurrent-work model bug (`metadata` reserved attribute in freesandbox.py).
+
+**P2P transport implemented & verified (25 Nov):** `app/services/p2p_transport.py` + `app/api/routes/p2p.py` — signed envelopes (HMAC), replay/dedup protection, store-and-forward outbox, WebSocket peer connections with per-peer shared secret, gossip fan-out. `tests/p2p_acceptance.py` 9/9 (signing, tamper detection, auth-gated HTTP, offline queue, broadcast, real two-peer WebSocket gossip). Operator credential required for HTTP P2P routes; WS uses `?secret=`.
+
+**LangGraph durable orchestration implemented & verified (25 Nov):** `app/orchestration/autonomy_graph.py` — 11-node StateGraph (observe→retrieve→reason→identify→plan→authority→execute→verify→reflect→memory→end) with `AsyncSqliteSaver` checkpointing. Worker now calls the durable graph each tick with simple-loop fallback. `/api/v1/autonomy/status` reports `langgraph_durable` with real cycle results (observed goals/tasks, advanced task, verified, reflected). Restored missing ownerauth model/service/route files lost during concurrent edits.
+
+**SSE streaming implemented & verified (25 Nov):** `POST /api/v1/models/chat/stream` emits real `start`/`delta`/`done`/`error` events (backend proxies LiteLLM streaming; graceful offline fallback). Frontend consumes with `ReadableStream` — live token display replaces fake animation. `/api/v1/models` and `/api/v1/interface` made public at IAM auth layer (gateway key stays backend-only). Verified in browser: full streamed response rendered, zero console errors.
 
 **ALL FIVE ACCEPTANCE LEVELS PASSED (25 Nov):**
 - Level 1 Operational: 14/14 + 3/3

@@ -9,8 +9,9 @@ from datetime import datetime
 import uuid
 
 from app.core.database import get_db_session
-from app.models.security import IntegrationRegistry, IntegrationPermission, ApprovalRequest
+from app.models.security import IntegrationRegistry, IntegrationPermission
 from app.models.identity import AIIdentity
+from app.services.creatorapproval_service import CreatorApprovalService
 
 router = APIRouter(prefix="/api/v1/external-presence", tags=["external-presence"])
 
@@ -69,26 +70,13 @@ class IntegrationResponse(BaseModel):
     integration_type: str
     config: Dict[str, Any]
     is_active: bool
+    requires_creator_approval: bool = True
+    creator_request_id: Optional[str] = None
     created_at: Optional[str]
     updated_at: Optional[str]
 
     class Config:
         from_attributes = True
-
-
-class ApprovalRequestCreate(BaseModel):
-    action_type: str
-    description: str
-    requested_by: str = "autonomy-service"
-
-
-class ApprovalResponse(BaseModel):
-    id: str
-    action_type: str
-    description: str
-    status: str
-    requested_at: Optional[str]
-    decided_at: Optional[str]
 
 
 # --- In-memory store for website/email identity (Phase 9 MVP)
@@ -207,7 +195,8 @@ async def connect_integration(
         provider=integration.provider,
         integration_type=integration.integration_type,
         config=integration.config,
-        is_active=False,  # Not active until approved
+        is_active=False,  # Not active until signed Creator approval
+        requires_creator_approval=bool(integration.requires_human_approval),
     )
     db.add(integ)
     await db.flush()
@@ -220,15 +209,21 @@ async def connect_integration(
     )
     db.add(perm)
 
-    # If human approval required, create approval request
+    creator_request_id = None
     if integration.requires_human_approval:
-        approval = ApprovalRequest(
-            action_type=f"connect_integration:{integration.provider}",
-            description=f"Connect external integration: {integration.name} ({integration.provider})",
-            requested_by=integration.config.get("requested_by", "autonomy-service"),
-            status="pending",
+        # OD-19: the Creator email flow replaces the legacy in-app approval row.
+        request = await CreatorApprovalService(db).create_request(
+            action_type="external_presence.connect_integration",
+            summary=f"Connect {integration.provider} integration {integration.name}",
+            consequences=[
+                "Integration will be able to act within its configured permission scope",
+                "Activation still requires a verified signed challenge",
+            ],
+            risk_level="3",
+            target_ref=str(integ.id),
+            reason=integration.config.get("requested_by", "autonomy-service"),
         )
-        db.add(approval)
+        creator_request_id = request["request_id"]
 
     await db.commit()
     await db.refresh(integ)
@@ -240,6 +235,8 @@ async def connect_integration(
         integration_type=integ.integration_type,
         config=integ.config or {},
         is_active=integ.is_active,
+        requires_creator_approval=integ.requires_creator_approval,
+        creator_request_id=creator_request_id,
         created_at=integ.created_at.isoformat() if integ.created_at else None,
         updated_at=integ.updated_at.isoformat() if integ.updated_at else None,
     )
@@ -250,16 +247,53 @@ async def activate_integration(
     integration_id: str,
     db: AsyncSession = Depends(get_db_session),
 ):
-    """Activate an integration after approval."""
+    """Activate an integration only after signed Creator email approval."""
     result = await db.execute(select(IntegrationRegistry).where(IntegrationRegistry.id == integration_id))
     integ = result.scalar_one_or_none()
     if not integ:
         raise HTTPException(status_code=404, detail="Integration not found")
 
+    if integ.requires_creator_approval:
+        authorization = await CreatorApprovalService(db).check_authorization(
+            "external_presence.connect_integration", "3", target_ref=str(integ.id)
+        )
+        if not authorization["authorized"]:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    authorization["reason"]
+                    + " Request approval through the Creator email challenge."
+                ),
+            )
+
     integ.is_active = True
     await db.commit()
 
     return {"integration_id": integration_id, "is_active": True}
+
+
+@router.post("/integrations/{integration_id}/request-approval")
+async def request_integration_approval(
+    integration_id: str,
+    reason: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Send (or re-send) the Creator email request for a pending integration."""
+    result = await db.execute(select(IntegrationRegistry).where(IntegrationRegistry.id == integration_id))
+    integ = result.scalar_one_or_none()
+    if not integ:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    if not integ.requires_creator_approval:
+        raise HTTPException(status_code=400, detail="Integration does not require approval")
+    request = await CreatorApprovalService(db).create_request(
+        action_type="external_presence.connect_integration",
+        summary=f"Connect {integ.provider} integration {integ.name}",
+        consequences=["Integration can act within its configured permission scope"],
+        risk_level="3",
+        target_ref=str(integ.id),
+        reason=reason,
+    )
+    return request
 
 
 @router.delete("/integrations/{integration_id}")
@@ -279,84 +313,7 @@ async def disconnect_integration(
     return {"integration_id": integration_id, "disconnected": True}
 
 
-# --- Approval Requests ---
-
-@router.get("/approvals", response_model=List[ApprovalResponse])
-async def list_approval_requests(db: AsyncSession = Depends(get_db_session)):
-    """List all pending approval requests."""
-    result = await db.execute(
-        select(ApprovalRequest).order_by(ApprovalRequest.requested_at.desc())
-    )
-    requests = result.scalars().all()
-    return [
-        ApprovalResponse(
-            id=str(r.id),
-            action_type=r.action_type,
-            description=r.description,
-            status=r.status,
-            requested_at=r.requested_at.isoformat() if r.requested_at else None,
-            decided_at=r.decided_at.isoformat() if r.decided_at else None,
-        )
-        for r in requests
-    ]
-
-
-@router.post("/approvals", response_model=ApprovalResponse)
-async def create_approval_request(
-    request: ApprovalRequestCreate,
-    db: AsyncSession = Depends(get_db_session),
-):
-    """Create a new approval request for a sensitive action."""
-    approval = ApprovalRequest(
-        action_type=request.action_type,
-        description=request.description,
-        requested_by=request.requested_by,
-        status="pending",
-    )
-    db.add(approval)
-    await db.commit()
-    await db.refresh(approval)
-
-    return ApprovalResponse(
-        id=str(approval.id),
-        action_type=approval.action_type,
-        description=approval.description,
-        status=approval.status,
-        requested_at=approval.requested_at.isoformat() if approval.requested_at else None,
-        decided_at=approval.decided_at.isoformat() if approval.decided_at else None,
-    )
-
-
-@router.patch("/approvals/{approval_id}/decide")
-async def decide_approval_request(
-    approval_id: str,
-    decision: str,  # 'approved' or 'rejected'
-    decided_by: str = "human",
-    reason: Optional[str] = None,
-    db: AsyncSession = Depends(get_db_session),
-):
-    """Approve or reject a pending approval request."""
-    if decision not in ("approved", "rejected"):
-        raise HTTPException(status_code=400, detail="Decision must be 'approved' or 'rejected'")
-
-    result = await db.execute(select(ApprovalRequest).where(ApprovalRequest.id == approval_id))
-    approval = result.scalar_one_or_none()
-    if not approval:
-        raise HTTPException(status_code=404, detail="Approval request not found")
-
-    approval.status = decision
-    approval.decided_at = datetime.utcnow()
-    approval.decided_by = decided_by
-    if reason:
-        approval.reason = reason
-
-    await db.commit()
-
-    return ApprovalResponse(
-        id=str(approval.id),
-        action_type=approval.action_type,
-        description=approval.description,
-        status=approval.status,
-        requested_at=approval.requested_at.isoformat() if approval.requested_at else None,
-        decided_at=approval.decided_at.isoformat() if approval.decided_at else None,
-    )
+# Legacy in-app approval endpoints were removed (OD-19).
+# Creator approvals now travel by email and are proven by signed challenges:
+#   POST /api/v1/creator/requests  -> send approval email
+#   POST /api/v1/creator/gateway/decision -> verified signature

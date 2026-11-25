@@ -13,6 +13,8 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+import httpx
+import loguru
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -24,6 +26,7 @@ from app.models.creatorapproval import (
     CommunicationAudit,
     CreatorApproval,
     CreatorAuthorization,
+    CreatorEmailDeadLetter,
     CreatorEmailOutbox,
     CreatorRequest,
     SignedChallenge,
@@ -142,14 +145,26 @@ class CreatorApprovalService:
         target_ref: Optional[str] = None,
         reason: Optional[str] = None,
         requester: str = "iam",
+        channel: str = "creator_email",
     ) -> Dict[str, Any]:
-        """Create a pending request and return the email package to be delivered."""
+        """Create a pending request. Email is only one possible carrier (OD-42 proposed).
+
+        Non-email channels (CLI, webhook, node, air-gapped file) do not require
+        CREATOR_EMAIL. Authority is unchanged: only a signed challenge grants it.
+        """
         if risk_level not in LEVEL_ORDER:
             raise CreatorApprovalError("risk_level must be 1, 2, 3 or 4")
+        allowed_channels = {
+            "creator_email", "creator_cli", "creator_webhook",
+            "creator_node", "creator_file",
+        }
+        if channel not in allowed_channels:
+            raise CreatorApprovalError(f"unknown Creator channel: {channel}")
         email = settings.creator_email
-        if not email:
+        if channel == "creator_email" and not email:
             raise CreatorApprovalError(
-                "No verified Creator email is configured; approval cannot be requested"
+                "No verified Creator email is configured; use a non-email channel "
+                "or set CREATOR_EMAIL"
             )
 
         request_id = f"cr_{secrets.token_hex(16)}"
@@ -164,7 +179,8 @@ class CreatorApprovalService:
             "consequences": list(consequences or []),
             "nonce": nonce,
             "expires_at": expires.isoformat(),
-            "creator_email": email,
+            "creator_email": email or "",
+            "channel": channel,
         }
         payload_hash = hash_payload(payload)
 
@@ -179,7 +195,7 @@ class CreatorApprovalService:
             status="pending",
             requester=requester,
             creator_email=email,
-            channel="creator_email",
+            channel=channel,
             expires_at=expires,
             metadata_={"payload_hash": payload_hash},
         )
@@ -202,6 +218,7 @@ class CreatorApprovalService:
             f"Subject: {summary}\n"
             f"Reason: {reason or 'not supplied'}\n"
             f"Target: {target_ref or 'none'}\n"
+            f"Channel: {channel}\n"
             "Consequences:\n"
             + "\n".join(f"- {c}" for c in (consequences or []))
             + f"\n\nChallenge hash: {payload_hash}\n"
@@ -212,29 +229,35 @@ class CreatorApprovalService:
             f"'{payload_hash}|approved' or '{payload_hash}|rejected'."
         )
         subject = f"Approval required: {action_type} ({request_id})"
-        self.db.add(
-            CreatorEmailOutbox(
-                request_id=request_id,
-                recipient=email,
-                subject=subject,
-                body=body,
-                transport=settings.creator_email_transport,
-                status="pending",
+        if channel == "creator_email":
+            self.db.add(
+                CreatorEmailOutbox(
+                    request_id=request_id,
+                    recipient=email,
+                    subject=subject,
+                    body=body,
+                    transport=settings.creator_email_transport,
+                    status="pending",
+                )
             )
-        )
         await self._audit(
-            channel="creator_email",
+            channel=channel,
             direction="outbound",
             purpose="creator_approval_request",
             request_id=request_id,
-            details={"action_type": action_type, "risk_level": risk_level},
+            details={"action_type": action_type, "risk_level": risk_level, "channel": channel},
         )
         await self.db.commit()
 
-        delivery = await self.deliver_request(request_id)
+        delivery = (
+            await self.deliver_request(request_id)
+            if channel == "creator_email"
+            else {"status": "not_applicable", "channel": channel}
+        )
         return {
             "request_id": request_id,
             "to": email,
+            "channel": channel,
             "subject": subject,
             "body": body,
             "challenge_hash": payload_hash,
@@ -301,12 +324,17 @@ class CreatorApprovalService:
                 request_id=request_id,
                 details={"transport": outbox.transport, "error": type(exc).__name__},
             )
+            dead_lettered = False
+            if outbox.attempts >= settings.creator_email_max_attempts:
+                await self._dead_letter(outbox, str(exc))
+                dead_lettered = True
             await self.db.commit()
             return {
                 "status": "failed",
                 "transport": outbox.transport,
                 "attempts": outbox.attempts,
                 "error": str(exc),
+                "dead_lettered": dead_lettered,
             }
 
         outbox.status = outcome["status"]
@@ -332,15 +360,79 @@ class CreatorApprovalService:
             "delivered_externally": outcome.get("delivered_externally", False),
         }
 
+    async def _dead_letter(self, outbox: CreatorEmailOutbox, error: str) -> None:
+        """Stop retrying and alert once a delivery has failed too many times."""
+        existing = await self.db.execute(
+            select(CreatorEmailDeadLetter).where(
+                CreatorEmailDeadLetter.request_id == outbox.request_id
+            )
+        )
+        if not existing.scalar_one_or_none():
+            self.db.add(
+                CreatorEmailDeadLetter(
+                    request_id=outbox.request_id,
+                    recipient=outbox.recipient,
+                    attempts=outbox.attempts,
+                    last_error=error[:1000],
+                )
+            )
+            loguru.logger.error(
+                "Creator email dead-lettered: request={} attempts={}",
+                outbox.request_id,
+                outbox.attempts,
+            )
+            if settings.creator_alert_webhook_url:
+                try:
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        await client.post(
+                            settings.creator_alert_webhook_url,
+                            json={
+                                "event": "creator_email_dead_letter",
+                                "request_id": outbox.request_id,
+                                "attempts": outbox.attempts,
+                                "error": error[:500],
+                            },
+                        )
+                except Exception as exc:
+                    loguru.logger.warning("Dead-letter alert failed: {}", type(exc).__name__)
+
     async def retry_failed_deliveries(self) -> List[Dict[str, Any]]:
-        """Worker entry point for CM-10 delivery retries."""
+        """Worker entry point for CM-10 delivery retries, skipping dead letters."""
+        dead = await self.db.execute(
+            select(CreatorEmailDeadLetter.request_id).where(
+                CreatorEmailDeadLetter.resolved_at.is_(None)
+            )
+        )
+        excluded = set(dead.scalars().all())
         result = await self.db.execute(
             select(CreatorEmailOutbox).where(
                 CreatorEmailOutbox.status.in_(["pending", "failed"])
             )
         )
-        request_ids = [row.request_id for row in result.scalars().all()]
+        request_ids = [
+            row.request_id
+            for row in result.scalars().all()
+            if row.request_id not in excluded
+        ]
         return [await self.deliver_request(rid, force=True) for rid in request_ids]
+
+    async def dead_letters(self) -> List[Dict[str, Any]]:
+        result = await self.db.execute(
+            select(CreatorEmailDeadLetter).order_by(
+                CreatorEmailDeadLetter.failed_at.desc()
+            )
+        )
+        return [
+            {
+                "request_id": row.request_id,
+                "recipient": row.recipient,
+                "attempts": row.attempts,
+                "last_error": row.last_error,
+                "failed_at": _iso(row.failed_at),
+                "resolved_at": _iso(row.resolved_at),
+            }
+            for row in result.scalars().all()
+        ]
 
     async def outbox(self) -> List[Dict[str, Any]]:
         result = await self.db.execute(

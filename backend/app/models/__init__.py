@@ -20,7 +20,7 @@ from app.models.business import (
     CryptoActivity, OperatingExpense,
 )
 from app.models.security import (
-    IntegrationRegistry, IntegrationPermission, ApprovalRequest,
+    IntegrationRegistry, IntegrationPermission,
     AuditEvent, SecurityIncident, CredentialReference,
 )
 from app.models.lifemanagement import AIIdentityGenesis, LifeCycle, DailyRoutine, LifeHistory, GoalLifecycle
@@ -30,7 +30,7 @@ from app.models.worldmodel import (
 from app.models.resilience import HealthCheck, RecoveryLog, BackupVerification, IncidentRecord, CredentialRotation
 from app.models.capability import CapabilityDefinition, CapabilityAssessment, LearningPath
 from app.models.researchlab import ResearchHypothesis, ResearchExperiment, ExperimentResult, ResearchPublication
-from app.models.socialintel import ConversationContext, SocialProfile, InteractionPreference, ScamDetectionLog
+from app.models.socialintel import ConversationContext, SocialProfile, InteractionPreference, ToneAnalysis, ScamDetectionLog
 from app.models.businessengine import BusinessBudget, CustomerRecord, SalesRecord, BusinessReport, ProjectPortfolio
 from app.models.digitalassets import DigitalAsset, AssetLicence, DomainRegistration, IPRecord
 from app.models.modelindependence import ModelComparison, ModelPortabilityExport, FallbackConfig
@@ -42,7 +42,7 @@ from app.models.globalaccess import (
     RequestJob, RequestUsage, VisitorRateLimit, RegionalSetting,
 )
 from app.models.ainetwork import (
-    ExternalAgent, AgentInteraction, AgentTrustRecord, AgentCollaboration,
+    ExternalAgent, AgentInteraction, AgentInterview, AgentTrustRecord, AgentCollaboration,
     ExternalIntegration, InternetResource, CloudWorkload,
 )
 from app.models.ownerauth import OwnerAuthorization
@@ -65,13 +65,39 @@ from app.models.securityengines import (
     SecurityFinding,
     SecurityEngineAudit,
 )
+from app.models.skillruntime import SkillRuntimeExecution
+from app.models.auth import ApiCredential
 from app.models.creatorapproval import (
     CreatorRequest,
     SignedChallenge,
     CreatorApproval,
     CreatorAuthorization,
     CreatorEmailOutbox,
+    CreatorEmailDeadLetter,
+    CreatorMessage,
     CommunicationAudit,
+)
+from app.models.sdk import RegisteredNode, NodeResourceReport
+from app.models.storage import StoredObject
+from app.models.uwaie import WebsiteWorkflow
+from app.models.integrity import IntegrityManifest, NodeAttestation, SyncObject
+from app.models.freesandbox import (
+    FreeSandboxProvider,
+    FreeSandboxQuotaSnapshot,
+    FreeSandboxEnvironment,
+    FreeSandboxResult,
+)
+from app.models.publicrecords import PublicSource, PublicRecord, RecordRelationship
+from app.models.legal import LegalSource, LegalInstrument, LegalVersion, LegalChange, LegalImpact
+from app.models.geo import (
+    GeoProvider, GeoPlace, GeoDataFile, LiveGeoFeed, MapTileCache, LocationPermission,
+)
+from app.models.humanpresence import (
+    PublicPerson, PublicProfile, PresenceClaim, IdentityMatch, PublicRelationship,
+)
+from app.models.assistantlab import (
+    AssistantSystem, AssistantResearchNote, AssistantAdapter,
+    ReplicationExperiment, CapabilityComparison,
 )
 
 __all__ = [
@@ -92,7 +118,7 @@ __all__ = [
     "FinancialLedger", "FinancialBudget", "FinancialTransaction",
     "CryptoActivity", "OperatingExpense",
     # Security
-    "IntegrationRegistry", "IntegrationPermission", "ApprovalRequest",
+    "IntegrationRegistry", "IntegrationPermission",
     "AuditEvent", "SecurityIncident", "CredentialReference",
     # Life Management
     "AIIdentityGenesis", "LifeCycle", "DailyRoutine", "LifeHistory", "GoalLifecycle",
@@ -136,5 +162,34 @@ __all__ = [
     "SecurityFinding", "SecurityEngineAudit",
     # Creator approval by email
     "CreatorRequest", "SignedChallenge", "CreatorApproval",
-    "CreatorAuthorization", "CreatorEmailOutbox", "CommunicationAudit",
+    "CreatorAuthorization", "CreatorEmailOutbox", "CreatorEmailDeadLetter",
+    "CommunicationAudit",
+    # API authentication
+    "ApiCredential",
+    # Owner authorization
+    "OwnerAuthorization",
+    # Skill Runtime
+    "SkillRuntimeExecution",
+    # Node registry (OD-26)
+    "RegisteredNode", "NodeResourceReport",
+    # Storage and website interaction
+    "StoredObject", "WebsiteWorkflow",
+    # Integrity, attestation and sync
+    "IntegrityManifest", "NodeAttestation", "SyncObject",
+    # Public records research
+    "PublicSource", "PublicRecord", "RecordRelationship",
+    # Legal intelligence
+    "LegalSource", "LegalInstrument", "LegalVersion", "LegalChange", "LegalImpact",
+    # Geospatial
+    "GeoProvider", "GeoPlace", "GeoDataFile", "LiveGeoFeed", "MapTileCache",
+    "LocationPermission",
+    # Human public presence
+    "PublicPerson", "PublicProfile", "PresenceClaim", "IdentityMatch",
+    "PublicRelationship",
+    # Assistant interoperability lab
+    "AssistantSystem", "AssistantResearchNote", "AssistantAdapter",
+    "ReplicationExperiment", "CapabilityComparison",
+    # OEDIE free infrastructure adapters (Doc 22)
+    "FreeSandboxProvider", "FreeSandboxQuotaSnapshot",
+    "FreeSandboxEnvironment", "FreeSandboxResult",
 ]

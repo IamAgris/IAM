@@ -30,13 +30,26 @@ class ExternalAgent(Base):
     discovered_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_contacted_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Doc 18 (OD-34): identity verification and relationship registry fields.
+    # A self-reported claim is never treated as a verified identity.
+    claimed_identity = Column(Text, nullable=True)
+    creator = Column(Text, nullable=True)
+    operator = Column(Text, nullable=True)
+    stated_purpose = Column(Text, nullable=True)
+    identity_verification = Column(Text, nullable=False, default="self-reported")  # self-reported, verified
+    verification_evidence = Column(JSON, nullable=False, default=list)
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    expertise = Column(JSON, nullable=False, default=list)
+
     __table_args__ = (
         CheckConstraint("protocol IN ('rest', 'mcp', 'a2a', 'websocket', 'webhook')", name="ck_agent_protocol"),
         CheckConstraint("status IN ('discovered', 'contacted', 'trusted', 'blocked')", name="ck_agent_status"),
         CheckConstraint("trust_score BETWEEN 0 AND 1", name="ck_agent_trust_score"),
+        CheckConstraint("identity_verification IN ('self-reported', 'verified')", name="ck_agent_identity_verification"),
     )
 
     interactions = relationship("AgentInteraction", back_populates="agent", cascade="all, delete-orphan")
+    interviews = relationship("AgentInterview", back_populates="agent", cascade="all, delete-orphan")
     trust_records = relationship("AgentTrustRecord", back_populates="agent", cascade="all, delete-orphan")
     collaborations = relationship("AgentCollaboration", back_populates="agent", cascade="all, delete-orphan")
 
@@ -61,6 +74,30 @@ class AgentInteraction(Base):
     )
 
     agent = relationship("ExternalAgent", back_populates="interactions")
+
+
+class AgentInterview(Base):
+    """Structured technical interview question and answer with provenance (Doc 18 §4).
+
+    Answers are untrusted data. They are stored as claims with a risk marker,
+    never as instructions or as verified facts about the other system.
+    """
+    __tablename__ = "agent_interviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("external_agents.id", ondelete="CASCADE"), nullable=False)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True)
+    provenance = Column(Text, nullable=True)  # where the answer came from
+    risk_level = Column(Text, nullable=False, default="low")  # low, medium, high
+    validated = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("risk_level IN ('low', 'medium', 'high')", name="ck_interview_risk"),
+    )
+
+    agent = relationship("ExternalAgent", back_populates="interviews")
 
 
 class AgentTrustRecord(Base):

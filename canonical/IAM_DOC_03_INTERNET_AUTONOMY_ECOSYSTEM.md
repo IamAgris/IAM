@@ -634,7 +634,10 @@ The implementation should include the following entities, with final names and r
 - tasks
 - scheduled_activities
 - execution_records
-- approval_requests
+- creator_requests
+- signed_challenges
+- creator_approvals
+- creator_authorizations
 
 ### Business and finance
 

@@ -9,6 +9,7 @@ import loguru
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.deps import get_db_session
+from app.api.middleware import AuthMiddleware
 from app.api.routes import (
     identity,
     conversations,
@@ -36,17 +37,36 @@ from app.api.routes import (
     globalaccess,
     ownerauth,
     ainetwork,
+    p2p,
+    aegis,
+    creator_keys,
     internetaccess,
     modelrouter,
     skillforge,
     cybersecurity,
     creatorapproval,
+    auth,
+    skillruntime,
+    deployment,
     bootstrap,
     suggestions,
     development,
     economy,
+    nodes,
+    storage,
+    uwaie,
+    integrity,
+    publicrecords,
+    tone,
+    legal,
+    creator_communication,
+    geo,
+    freesandboxes,
+    humanpresence,
+    assistantlab,
 )
 from app.workers.autonomy_worker import autonomy_worker
+from app.workers.creator_email_worker import creator_email_worker
 
 
 logger = loguru.logger
@@ -56,6 +76,10 @@ logger = loguru.logger
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""
     logger.info("Starting Project AURA backend...")
+
+    from app.core.secrets import enforce_secret_policy
+
+    enforce_secret_policy()
 
     # Create database tables (in production, use Alembic migrations)
     async with engine.begin() as conn:
@@ -74,10 +98,13 @@ async def lifespan(app: FastAPI):
     await autonomy_worker.start()
     logger.info("Autonomy worker started.")
 
+    await creator_email_worker.start()
+
     yield
 
     # Shutdown
     logger.info("Shutting down Project AURA backend...")
+    await creator_email_worker.stop()
     await autonomy_worker.stop()
     await engine.dispose()
 
@@ -100,6 +127,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Authentication and rate limiting (CORS stays outermost for preflight requests)
+app.add_middleware(AuthMiddleware)
 
 # API routes
 app.include_router(identity.router)
@@ -128,15 +158,33 @@ app.include_router(reflection.router)
 app.include_router(globalaccess.router)
 app.include_router(ownerauth.router)
 app.include_router(ainetwork.router)
+app.include_router(p2p.router)
+app.include_router(aegis.router)
+app.include_router(creator_keys.router)
 app.include_router(internetaccess.router)
 app.include_router(modelrouter.router)
 app.include_router(skillforge.router)
 app.include_router(cybersecurity.router)
 app.include_router(creatorapproval.router)
+app.include_router(auth.router)
+app.include_router(skillruntime.router)
+app.include_router(deployment.router)
 app.include_router(bootstrap.router)
 app.include_router(suggestions.router)
 app.include_router(development.router)
 app.include_router(economy.router)
+app.include_router(nodes.router)
+app.include_router(storage.router)
+app.include_router(uwaie.router)
+app.include_router(integrity.router)
+app.include_router(publicrecords.router)
+app.include_router(tone.router)
+app.include_router(legal.router)
+app.include_router(creator_communication.router)
+app.include_router(geo.router)
+app.include_router(freesandboxes.router)
+app.include_router(humanpresence.router)
+app.include_router(assistantlab.router)
 
 
 # Global exception handler

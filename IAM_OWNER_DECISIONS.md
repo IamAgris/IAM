@@ -1,7 +1,7 @@
 # IAM — Owner Decision Register
 
-**Status:** ALL 32 DECISIONS LOCKED (25 November 2026)  
-**Purpose:** Record of every owner decision (OD-01…OD-32) made during architecture finalisation. This is now a historical register — no decisions are pending.
+**Status:** ALL 44 DECISIONS LOCKED (25 November 2026).  
+**Purpose:** Record of every owner decision (OD-01…OD-44) made during architecture finalisation. This is now a historical register — no decisions are pending.
 
 ---
 
@@ -64,9 +64,50 @@
 | OD-31 | Legal intelligence and compliance | **Autonomous Legal Intelligence and Government Monitoring System** — continuous legal learning, official-source monitoring, legal change lifecycle, obligation mapping, compliance evidence, alerts and creator approval. Legal research is not legal advice; high-impact conclusions need qualified review; no legally significant commitment without authority. Specified in `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md`. | ✅ **CONFIRMED** |
 | OD-32 | Geospatial intelligence and live mapping | **Geospatial Intelligence and Live Mapping System** — geography knowledge, interactive/live maps in IAM's interface, multi-provider adapters, geocoding/routing/GIS, satellite and live feeds, offline/distributed maps, location privacy. Own geographic knowledge survives provider loss; free-tier verification at implementation; no covert tracking or targeting. Specified in `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md`. | ✅ **CONFIRMED** |
 
+## Confirmed decisions — capabilities (25 November 2026)
+
+These decisions were confirmed by the owner on 25 November 2026. They add new capabilities without reopening or modifying any earlier decision, including OD-08 (ARQ queue runtime).
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-33 | Human psychology, tone and influence intelligence | **Defensive** capability inside existing research/communication/governance systems: study human behaviour, cognitive bias, tone and emotional expression, propaganda/manipulation patterns and ethical negotiation in order to recognise and defend against manipulation. Must not exploit vulnerability, conduct targeted psychological attacks or run deceptive influence campaigns. No private psychological-state or sensitive-characteristic inference. Specified in `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-34 | External AI identity, interview and collaborative learning | Extend frozen Doc 03 §7: discover AI systems globally; distinguish verified from self-reported identity; interview accessible systems through permitted interfaces with permission; study how they are built; benchmark capabilities without trusting claims; maintain a relationship registry; study security/website-scanning AI defensively; collaborate on authorised tasks; share validated discoveries with trusted nodes; study external skill/agent package formats (e.g. xAI/Grok skills) through Skill Forge. No private source code, internal reasoning, training data or hidden architecture; no offensive intrusion capability; external AI never gains automatic authority over IAM. Specified in `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-35 | Free infrastructure node discovery and lifecycle | Extend OEDIE (OD-15) and the dynamic node network (OD-26): continuously discover legitimate free hosting (Google Cloud, AWS, Railway, Vercel, Cloudflare, Neon and future providers); verify current terms, quotas, architecture and expiry live; deploy restricted nodes only when authorised and useful; register as candidates with the Core; monitor quotas and migrate before expiry; stop before unauthorised charges. No paid fallback, auto-upgrade, surprise billing or limit circumvention; core stays independent. Specified in `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-36 | AI SDK, framework and model research | **AI Research and SDK Learning Programme** inside existing research/self-development engines: discover and study SDKs, frameworks, models and research projects through official documentation and permitted source; compare licence, hardware, cost and capability; benchmark in isolated environments; reproduce independently where permitted; maintain a Technology Capability Registry with lifecycle states; share validated non-private findings with trusted nodes. Learning / capability acquisition / core modification remain distinct; protected-core changes require creator approval. Free SDK does not mean free inference or hosting. Specified in `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-37 | Infrastructure, traffic management and distributed processing | One engine inside existing system 13 extending the baseline, Doc 10 scheduler and Doc 19 node lifecycle: web servers/reverse proxies (Caddy, Nginx, HAProxy, Envoy), global/regional load balancing, resource-aware workload distribution, background workers, queues/events, caching, service discovery, observability and bounded scaling. Study all, install only what the workload needs; start with Caddy + Docker + PostgreSQL + Redis + a few workers on the Contabo core. **OD-08 remains locked to ARQ** — Celery is a studied alternative only and adopting it requires explicitly reopening OD-08. No silent paid scaling, no single-provider dependency, no private data in metrics. Specified in `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md`. | ✅ **CONFIRMED** |
+
+## Additional confirmed decision — foundation model and model independence (25 November 2026)
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-38 | Initial foundation model and model independence | **No permanent single foundation model.** The starting set is **Qwen3.5-9B** (hosted, DashScope free tier) as the general-reasoning anchor plus **Qwen2.5-3B** (`qwen2.5:3b`, local Ollama) as the only local model. **Owner-directed reopening 25 Nov 2026:** the former local coding baseline `qwen2.5-coder:3b` and the evaluation model `qwen3.5:4b` are removed from the local set; prefer `qwen2.5:3b` for all local tasks until another model is approved; **NVIDIA NIM** free endpoints and **Google Gemini** free tier are additional replaceable providers; **LiteLLM** is the single gateway/router. The primary brain is coding-first but general-purpose, never coding-only. Heavy reasoning stays hosted on the Contabo VPS 4 (4 vCPU / 8 GB RAM); local models stay small. Selection uses a formal competition (hardware/compatibility → identical coding tasks → real-world repository assignments → weighted scoring → selection), with the previous model preserved. Replacing the primary model requires benchmark evidence, isolated-dev testing and creator approval under OD-11/OD-19. Identity, personality, memory, knowledge, goals, skills and creator authority are model-independent. Specified in `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` (Doc 23). | ✅ **CONFIRMED** |
+
+## Additional confirmed decisions — resource management and model development (25 November 2026)
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-39 | Intelligent Resource and Workload Manager (IRWM) | **Core capability** inside systems 2, 13 and OD-37. Monitors RAM/CPU/swap/model residency; evaluates whether a requested model fits alongside essential services; allocates model, context size and concurrency; unloads idle models, queues work and delegates to nodes. Starting 8 GB core policy: one resident model, one parallel request, 5–5.5 GB loaded-model RAM target (6 GB hard ceiling), 1–2 min keep-alive, 4,096-token context. Planning budget: 1 GB OS, 1 GB PostgreSQL, 1 GB Redis/backend, 4 GB model, 1 GB headroom. Distribution never pools RAM across machines. **Permanent rule: IAM must never sacrifice core services to keep a large model running.** Specified in `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-40 | Model Evolution and Fine-Tuning Engine (MEFE) | **Permanent subsystem** spanning systems 5, 11 and 14: dataset collection/preparation, training (start SFT + QLoRA; add DPO/distillation later), evaluation, model registry and rollback. Framework-independent evaluation of Transformers, PEFT, TRL, Unsloth, Axolotl and MLflow. Develop specialist IAM models (coding, reasoning, research, security, communication, maths, legal, data, multilingual) coordinated by central IAM — never independent identities and never authoritative over the protected core. Substantial training runs on trusted GPU nodes or approved free/hosted resources, **not** on the 8 GB core. Mandatory safeguards: provenance/licensing, consent, poisoning detection, private-data separation, baseline/post benchmarks, security evaluation, versioning, creator approval before primary-model changes, rollback and change records. Fine-tuning is never used to store private user memories. Specified in `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md`. | ✅ **CONFIRMED** |
+
+## Additional confirmed decision — autonomous distributed research (25 November 2026)
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-41 | Distributed AI Research and Compute; Independent AI Research, Development and Evolution Architecture | **Requirements frozen in `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` (14 engines + section 15); no further subsystems to be invented at this stage.** IAM autonomously discovers/evaluates free GPU platforms (Kaggle, Google Colab, Lightning AI, Hugging Face ZeroGPU), submits common-format jobs through platform adapters, uses vLLM as an alternative serving engine alongside Ollama, and keeps code, datasets, checkpoints, logs and results in IAM-controlled storage. Five pillars: Discover, Develop, Test, Improve, Manage. Ten additional requirements are frozen: autonomous recovery, intelligent scheduling, persistent research environment, platform lifecycle management, reproducibility, security/privacy, independent quality control, research prioritisation, human approval boundaries and continuous improvement. Operating rules: free resources first; no paid compute/upgrades without Creator approval; no dependence on temporary notebooks for persistent identity/memory/core; live verification of quotas/GPU/licences/terms. IAM acts autonomously by default; Creator is involved only for genuine human actions, explicit authority (paid/binding/protected-core changes) or legitimate blockers. Implementation sequence: `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`. | ✅ **CONFIRMED — FROZEN** |
+
 **Security principle (confirmed):** integrity reporting is best-effort when another party controls a deployment. Signed attestations and hardware-backed verification strengthen it, but IAM must never falsely claim a compromised machine cannot hide modifications.
 
-## Status: ALL THIRTY-TWO DECISIONS LOCKED (25 November 2026)
+## Confirmed decisions — creator channels, human behaviour and finance (25 November 2026)
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-42 | Additional Creator communication channels | Extend OD-18/OD-19 with non-email carriers for Creator review and signing: Creator CLI + local hardware signer (primary signed-decision path), optional signed webhook/bot relay and trusted-node relay for questions/status, and an air-gapped signed-file path for protected-core actions. Email becomes an optional notification channel, not a dependency. Authority remains solely the verified ED25519 signature over the one-time challenge; no Creator dashboard, no auto-signing, no IAM self-approval. Implemented in the Python SDK/CLI (`iam_sdk.creator_cli`) against the existing `/api/v1/creator/requests` and `/decide` endpoints. Private reachability uses Cloudflare Tunnel + Cloudflare Access as transport (identity gate only, never authority); see `infra/cloudflare/README.md`. | ✅ **CONFIRMED** |
+| OD-43 | Human behaviour, equality and responsibility | Add the supplied human-behaviour and equality material **to IAM**, not as a new AI: Equality of Existence Principle ("The ability to do something better than another does not make an individual more important than another"), Human Behaviour Research Module (wealth, power, status, emotions, relationships, competition, morality, society, conflict, cooperation), the five-step Human Behaviour Learning Cycle (Observe, Analyse, Understand, Evaluate, Learn), and the Equality/Power/Responsibility research question. Observing behaviour is not approving or copying it; capability or speed never changes authority or worth; no subjective-consciousness claim. Extends Docs 17/14, not a new system; does not touch OD-23/24/25 finance or OD-18/19/42 Creator channels. Specified in `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-44 | Financial intelligence and economic independence | Add the supplied financial architecture **to IAM**, extending Doc 09 / OD-23/24/25: income intelligence, cryptocurrency intelligence, trading operations, payment management and financial governance; staged development (education → simulation → proposals → approved real trading → authorised payments); explicit approval for every real trade and outgoing payment, separate incoming-payment authority, separate trading/payment budgets, risk disclosure, emergency stop, no borrowing or profit guarantees, simulated accounts first, legal ownership of income stays with the owner/entity. No real trading, real payments or account access in the first implementation. Specified in `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`. | ✅ **CONFIRMED** |
+
+## Status: ALL FORTY-FOUR DECISIONS LOCKED (25 November 2026)
+
+Decisions OD-33…OD-44 were confirmed on 25 November 2026 and are listed above. They add new capabilities without modifying any earlier decision, including OD-08 (ARQ queue runtime). OD-38 locks the initial foundation-model set and its replacement process; OD-39 governs resource allocation; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements; OD-42 adds non-email Creator channels; OD-43 adds human behaviour and equality; OD-44 adds financial intelligence. None alters identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25) or protected-core rules (OD-11).
 
 Owner choices, in order:
 1. **OD-01** ULID + immutable genesis record
@@ -102,7 +143,7 @@ Owner choices, in order:
 ### OD-02 — Owner relationship / legal entity
 - **Recommendation:** You are the owner. A named legal entity (company/close corporation) is designated for economic activity; IAM operates accounts under authorization with disclosure. IAM itself owns nothing legally.
 - **Why:** D1 §11, D3 §9/§14, and your confirmed "IAM is not a legal person".
-- **Effect if accepted:** `owner_authorizations.granted_by` records the owner; `digital_assets.owner_entity` records the legal entity.
+- **Effect:** `creator_authorizations.signer_id` records the Creator signer; `digital_assets.owner_entity` records the legal entity. Legacy owner grants were removed.
 
 ### OD-03 — Owner authorization method
 - **Locked:** hardware key / external signer for high-impact approvals. OD-19 further removes the Creator dashboard: requests are sent to the verified Creator email address, and authority comes only from an ED25519 signature over a one-time challenge.
@@ -112,7 +153,7 @@ Owner choices, in order:
 ### OD-04 — Spending limits
 - **Recommendation:** $100/month total ceiling; $10 per transaction; increases owner-only. Paid inference remains disabled (`allow_paid=false`) unless an owner authorization exists.
 - **Why:** D2 §3.3 (no unexpected charges), D1 §11, D3 §14.
-- **Effect if accepted:** stored in `financial_budgets` and `owner_authorizations.spending_limit_usd`.
+- **Effect:** stored in `financial_budgets`. Spending approvals are signed Creator requests via email, not owner-grant rows.
 
 ### OD-05 — Memory ownership defaults
 - **Recommendation:** Session memory on by default; anonymous cross-visit memory opt-in only; optional accounts for cross-device. Private IAM memory never exposed to visitors.
@@ -144,8 +185,30 @@ Owner choices, in order:
 - **Why:** D2 §9.4; D1 §10.
 - **Effect if accepted:** dev environment provisioned in Phase 7.
 
+### OD-38 — Initial foundation model and model independence
+- **Locked:** Qwen3.5-9B (hosted) as the initial general-reasoning anchor and Qwen2.5-Coder-3B-Instruct (local Ollama) as the coding-first baseline; NVIDIA NIM and Gemini as additional replaceable providers; LiteLLM as gateway. The primary brain is coding-first but not coding-only.
+- **Why:** canonical Doc 02 requires identity to survive model changes; OD-15/OD-36 require replaceable, free-first tooling; the 4 vCPU / 8 GB core cannot run large models locally.
+- **Effect:** model selection by formal competition and weighted scoring; previous model preserved; primary-model changes require benchmark evidence and creator approval under OD-11/OD-19. Benchmark of 25 November 2026 originally confirmed **qwen2.5-coder:3b** (`local-qwen-coder-3b`) as the local coding baseline: weighted score 4.10 vs 3.83 (`qwen2.5:3b`) and 2.87 (`qwen3.5:4b` with `think=false`). Evidence: `tests/model_competition/RESULTS.md`. **Owner-directed reopening, 25 Nov 2026:** only `qwen2.5:3b` is retained locally. This knowingly trades a small measured coding-quality advantage for a single-model local footprint; coding quality must be re-benchmarked before a new coder model is approved. Specified in `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md`.
+
+### OD-39 — Intelligent Resource and Workload Manager
+- **Locked:** one resident model, one parallel request, 5–5.5 GB RAM target (6 GB hard cap), 1–2 min keep-alive, 4,096-token initial context; monitor/evaluate/allocate/optimise loop; node delegation without RAM pooling.
+- **Why:** measured 3B models peaked ~4.7 GB when two were resident and left 1.88 GB host RAM available; core services must be protected.
+- **Effect:** new settings in `config.py`, router allocation decisions, `docker-compose.ram-profile.yml`; model eviction and low-memory protection. Specified in `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md`.
+
+### OD-40 — Model Evolution and Fine-Tuning Engine
+- **Locked:** MEFE as a permanent subsystem; SFT + QLoRA first, then DPO/distillation; specialist models coordinated by central IAM; substantial training off the 8 GB core; full safeguard set and creator approval before primary-model change.
+- **Why:** OD-36 requires framework-independent research and OD-11 requires protected-core approval; model independence must survive self-improvement.
+- **Effect:** dataset/training/evaluation/registry services and Skill Forge jobs; rollback and change records. Specified in `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md`.
+
+### OD-41 — Distributed AI Research and Compute (requirements frozen)
+- **Locked:** `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` (14 engines + section 15) is the parent specification; distributed free-compute research is part of it, not a standalone system. Five pillars (Discover, Develop, Test, Improve, Manage), ten additional requirements and free-first operating rules are frozen.
+- **Why:** free platforms are temporary research workers, never IAM's home; autonomous operation with narrow Creator involvement requires explicit boundaries; further subsystem invention would dilute implementation.
+- **Effect:** platform adapters, common job format, central repository/registry, benchmark runner, autonomous recovery and scheduling; implementation sequence in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`. Acceptance tests defined there.
+
 ---
 
 ## Change control (frozen)
 
-This register is frozen. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.
+This register is frozen at 44 decisions. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.
+
+Cross-cutting implementation technology (the hybrid Python + Rust + TypeScript allocation) is recorded in `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`. That addendum is **not** a decision, does not change the number 41, and does not alter any technology mandated by a locked decision (including OD-08 ARQ and the Doc 01 §5 baseline).

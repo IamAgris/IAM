@@ -7,13 +7,14 @@ Free-only mode prevents unexpected charges.
 
 import httpx
 import loguru
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Set
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
 from app.models.modelrouter import AIProvider, DiscoveredModel, RoutingDecision, ProviderUsage
+from app.services.adaptive_model_selector import AdaptiveModelSelector
 
 logger = loguru.logger
 
@@ -31,7 +32,7 @@ class IntelligenceRouter:
             ("alibaba-dashscope", "hosted", "https://dashscope.aliyuncs.com/compatible-mode/v1", False),
             ("openai", "hosted", "https://api.openai.com/v1", True),
             ("anthropic", "hosted", "https://api.anthropic.com/v1", True),
-            ("ollama", "local", "http://ollama:11434", True),
+            ("ollama", "local", settings.ollama_base_url, True),
         ]
         for name, ptype, base_url, free_only in providers:
             result = await self.db.execute(select(AIProvider).where(AIProvider.name == name))
@@ -136,9 +137,30 @@ class IntelligenceRouter:
         required_capabilities: Optional[List[str]] = None,
         prefer_provider: Optional[str] = None,
         allow_paid: bool = False,
+        task_complexity: Optional[int] = None,
+        available_aliases: Optional[Set[str]] = None,
     ) -> Dict[str, Any]:
-        """Select the best available model for a task with failover."""
+        """Select the best available model for a task with failover.
+
+        When `available_aliases` is supplied and adaptive selection is enabled,
+        hardware-aware local model choice (OD-39) runs first; the caller can
+        delegate to a hosted specialist or trusted node when no local model fits.
+        """
         required_capabilities = required_capabilities or []
+        if settings.adaptive_model_enabled and available_aliases is not None:
+            decision = AdaptiveModelSelector().select(
+                task_complexity or 3, set(available_aliases), task_type
+            )
+            self.db.add(RoutingDecision(
+                task_type=task_type,
+                required_capabilities=required_capabilities,
+                selected_provider="delegated" if decision["delegate"] else "ollama",
+                selected_model=decision["model"],
+                reason=decision["reason"],
+                fallback_used=decision["delegate"],
+            ))
+            await self.db.commit()
+            return decision
         result = await self.db.execute(
             select(DiscoveredModel).where(DiscoveredModel.is_available == True)
         )

@@ -596,6 +596,8 @@ class SkillForgeService:
             "network_access": self.permissions.can_use_network(
                 manifest, granted=network_grant
             ),
+            "filesystem_access": manifest.filesystem_access,
+            "filesystem_full_granted": "filesystem_full" in granted,
             "status": package.status,
         }
 

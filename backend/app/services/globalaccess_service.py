@@ -18,6 +18,7 @@ from app.models.globalaccess import (
     VisitorMessage, VisitorPreference, VisitorConsent, VisitorMemoryPermission,
     RequestJob, RequestUsage, VisitorRateLimit, RegionalSetting,
 )
+from app.services.crypto_service import crypto
 
 logger = loguru.logger
 
@@ -215,7 +216,7 @@ class GlobalAccessService:
         message = VisitorMessage(
             thread_id=thread.id,
             role=role,
-            content=content,
+            content=crypto.encrypt(content),
             mode=mode or session.mode,
         )
         self.db.add(message)
@@ -261,7 +262,7 @@ class GlobalAccessService:
             {
                 "id": str(m.id),
                 "role": m.role,
-                "content": m.content,
+                "content": crypto.decrypt(m.content),
                 "mode": m.mode,
                 "created_at": m.created_at.isoformat() if m.created_at else None,
             }
@@ -354,6 +355,142 @@ class GlobalAccessService:
         await self.db.delete(visitor)
         await self.db.commit()
         logger.info(f"Deleted visitor data for token {visitor_token[:8]}...")
+        return True
+
+    async def inspect_visitor_data(self, visitor_token: str) -> Optional[Dict[str, Any]]:
+        """OD-05: let a visitor inspect everything held under their token."""
+        result = await self.db.execute(
+            select(AnonymousVisitor).where(AnonymousVisitor.visitor_token == visitor_token)
+        )
+        visitor = result.scalar_one_or_none()
+        if not visitor:
+            return None
+
+        sessions = (
+            await self.db.execute(
+                select(VisitorSession).where(VisitorSession.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        session_ids = [s.id for s in sessions]
+
+        messages = []
+        if session_ids:
+            message_rows = (
+                await self.db.execute(
+                    select(VisitorMessage)
+                    .join(ConversationThread, VisitorMessage.thread_id == ConversationThread.id)
+                    .where(ConversationThread.session_id.in_(session_ids))
+                    .order_by(VisitorMessage.created_at.asc())
+                    .limit(500)
+                )
+            ).scalars().all()
+            messages = [
+                {
+                    "role": m.role,
+                    "content": crypto.decrypt(m.content),
+                    "created_at": m.created_at.isoformat() if m.created_at else None,
+                }
+                for m in message_rows
+            ]
+
+        preferences = (
+            await self.db.execute(
+                select(VisitorPreference).where(VisitorPreference.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        consents = (
+            await self.db.execute(
+                select(VisitorConsent).where(VisitorConsent.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        permissions = (
+            await self.db.execute(
+                select(VisitorMemoryPermission).where(
+                    VisitorMemoryPermission.visitor_id == visitor.id
+                )
+            )
+        ).scalars().all()
+
+        return {
+            "visitor_token": visitor.visitor_token,
+            "created_at": visitor.created_at.isoformat() if visitor.created_at else None,
+            "is_active": visitor.is_active,
+            "sessions": [
+                {
+                    "session_token": s.session_token,
+                    "mode": s.mode,
+                    "started_at": s.started_at.isoformat() if s.started_at else None,
+                    "ended_at": s.ended_at.isoformat() if s.ended_at else None,
+                }
+                for s in sessions
+            ],
+            "messages": messages,
+            "preferences": {p.key: p.value for p in preferences},
+            "consents": [
+                {
+                    "consent_type": c.consent_type,
+                    "granted": c.granted,
+                    "retention_days": c.retention_days,
+                }
+                for c in consents
+            ],
+            "memory_permissions": [
+                {
+                    "allow_session_memory": p.allow_session_memory,
+                    "allow_anonymous_memory": p.allow_anonymous_memory,
+                    "allow_shared_knowledge": p.allow_shared_knowledge,
+                }
+                for p in permissions
+            ],
+        }
+
+    async def correct_visitor_data(
+        self,
+        visitor_token: str,
+        *,
+        preferences: Optional[Dict[str, Any]] = None,
+        memory_permissions: Optional[Dict[str, bool]] = None,
+    ) -> bool:
+        """OD-05: let a visitor correct stored preferences and permissions."""
+        result = await self.db.execute(
+            select(AnonymousVisitor).where(AnonymousVisitor.visitor_token == visitor_token)
+        )
+        visitor = result.scalar_one_or_none()
+        if not visitor:
+            return False
+
+        for key, value in (preferences or {}).items():
+            pref_result = await self.db.execute(
+                select(VisitorPreference).where(
+                    VisitorPreference.visitor_id == visitor.id,
+                    VisitorPreference.key == key,
+                )
+            )
+            pref = pref_result.scalar_one_or_none()
+            if pref:
+                pref.value = value
+            else:
+                self.db.add(VisitorPreference(visitor_id=visitor.id, key=key, value=value))
+
+        perm_result = await self.db.execute(
+            select(VisitorMemoryPermission).where(
+                VisitorMemoryPermission.visitor_id == visitor.id
+            )
+        )
+        perm = perm_result.scalar_one_or_none()
+        if memory_permissions:
+            if not perm:
+                perm = VisitorMemoryPermission(visitor_id=visitor.id)
+                self.db.add(perm)
+            for field in (
+                "allow_session_memory",
+                "allow_anonymous_memory",
+                "allow_shared_knowledge",
+            ):
+                if field in memory_permissions:
+                    setattr(perm, field, bool(memory_permissions[field]))
+
+        await self.db.commit()
         return True
 
     async def check_rate_limit(self, scope_key: str, max_requests: int = 60, window_minutes: int = 1) -> bool:
