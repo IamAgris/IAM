@@ -241,7 +241,10 @@ These are initial technology choices, subject to compatibility, security, licens
 - tool_permissions
 - integration_registry
 - integration_permissions
-- approval_requests
+- creator_requests
+- signed_challenges
+- creator_approvals
+- creator_authorizations
 - audit_events
 - security_incidents
 - credential_references

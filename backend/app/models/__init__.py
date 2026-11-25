@@ -20,7 +20,7 @@ from app.models.business import (
     CryptoActivity, OperatingExpense,
 )
 from app.models.security import (
-    IntegrationRegistry, IntegrationPermission, ApprovalRequest,
+    IntegrationRegistry, IntegrationPermission,
     AuditEvent, SecurityIncident, CredentialReference,
 )
 from app.models.lifemanagement import AIIdentityGenesis, LifeCycle, DailyRoutine, LifeHistory, GoalLifecycle
@@ -45,7 +45,6 @@ from app.models.ainetwork import (
     ExternalAgent, AgentInteraction, AgentTrustRecord, AgentCollaboration,
     ExternalIntegration, InternetResource, CloudWorkload,
 )
-from app.models.ownerauth import OwnerAuthorization
 from app.models.internetaccess import (
     InternetSession, BrowserAction, OnlineAccount, PublishedContent,
     MonitoredTarget, RetrievedFile, InternetPermission, InternetEvent,
@@ -65,6 +64,8 @@ from app.models.securityengines import (
     SecurityFinding,
     SecurityEngineAudit,
 )
+from app.models.skillruntime import SkillRuntimeExecution
+from app.models.auth import ApiCredential
 from app.models.creatorapproval import (
     CreatorRequest,
     SignedChallenge,
@@ -73,6 +74,10 @@ from app.models.creatorapproval import (
     CreatorEmailOutbox,
     CommunicationAudit,
 )
+from app.models.sdk import RegisteredNode, NodeResourceReport
+from app.models.storage import StoredObject
+from app.models.uwaie import WebsiteWorkflow
+from app.models.integrity import IntegrityManifest, NodeAttestation, SyncObject
 
 __all__ = [
     # Identity
@@ -92,7 +97,7 @@ __all__ = [
     "FinancialLedger", "FinancialBudget", "FinancialTransaction",
     "CryptoActivity", "OperatingExpense",
     # Security
-    "IntegrationRegistry", "IntegrationPermission", "ApprovalRequest",
+    "IntegrationRegistry", "IntegrationPermission",
     "AuditEvent", "SecurityIncident", "CredentialReference",
     # Life Management
     "AIIdentityGenesis", "LifeCycle", "DailyRoutine", "LifeHistory", "GoalLifecycle",
@@ -137,4 +142,14 @@ __all__ = [
     # Creator approval by email
     "CreatorRequest", "SignedChallenge", "CreatorApproval",
     "CreatorAuthorization", "CreatorEmailOutbox", "CommunicationAudit",
+    # API authentication
+    "ApiCredential",
+    # Skill Runtime
+    "SkillRuntimeExecution",
+    # Node registry (OD-26)
+    "RegisteredNode", "NodeResourceReport",
+    # Storage and website interaction
+    "StoredObject", "WebsiteWorkflow",
+    # Integrity, attestation and sync
+    "IntegrityManifest", "NodeAttestation", "SyncObject",
 ]

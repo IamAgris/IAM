@@ -81,7 +81,7 @@
 
 | ID | Missing item | Why it matters | Priority |
 |----|--------------|----------------|----------|
-| M-01 | **Owner relationship definition** — owner authority vs IAM operational independence, and the `owner_authorizations` mechanism | You explicitly require "let it do as I ask". Without a written owner-grant model, the authority rules in all four docs have no actor | BLOCKING |
+| M-01 | **Creator relationship definition** — Creator authority vs IAM operational independence, via email + signed challenges (OD-19) | Resolved: `creator_authorizations` records authority from verified signatures; no owner-grant table remains | Resolved |
 | M-02 | **Permanent identity identifier & genesis record** — scheme, immutability, recovery procedure | D2 §6 lists identity records but no permanent ID or creation record | BLOCKING |
 | M-03 | **RPO/RTO targets and backup verification procedure** | D1 §12 requires backups and recovery testing but no targets | BLOCKING |
 | M-04 | **Memory ownership/access matrix** — IAM private / visitor / shared / public boundaries | D4 §16 names categories but no permissions matrix | BLOCKING |

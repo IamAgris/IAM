@@ -30,13 +30,22 @@
 | GET | `/governance/boundaries` | session | Authority ladder |
 | POST | `/governance/check-authority` | session | `{action_type, requested_level}` → permitted? |
 | GET | `/governance/security-boundaries` | session | Immutable boundaries |
-| POST | `/governance/initialize` | owner | Install defaults |
-| GET/POST | `/approvals` | session/owner | Legacy approval requests |
-| PATCH | `/approvals/{id}/decide` | owner | Legacy approve/reject |
+| POST | `/governance/initialize` | admin | Install defaults |
 
-~~`GET/POST/DELETE /owner/authorizations` and `POST /owner/authorizations/check`~~ —
-**removed (OD-19 cleanup).** The legacy routes, service and model are gone; signed
-Creator authorization via `/creator/requests/{id}/decide` is the only authority path.
+Legacy `/external-presence/approvals` was removed. Integration activation now
+requires a signed Creator authorization for `external_presence.connect_integration`;
+`POST /external-presence/integrations/{id}/request-approval` sends the email request.
+
+Creator authority is **only** `/creator/requests/{id}/decide` via signed email.
+The legacy `/owner` routes, service and model are removed; no second authority path exists.
+| POST | `/auth/bootstrap` | bootstrap key | Create first scoped credential (key returned once) |
+| GET | `/auth/me` | credential | Current credential identity |
+| GET/POST | `/auth/credentials` | admin | List/create scoped API credentials |
+| POST | `/auth/credentials/{name}/revoke` | admin | Revoke a credential |
+| GET | `/skill-runtime/policy` | admin | Runtime posture and container limits |
+| GET | `/skill-runtime/capabilities/{id}` | admin | Effective permissions for a skill |
+| POST | `/skill-runtime/invoke` | admin | Gated skill invocation |
+| GET | `/skill-runtime/executions` | admin | Invocation audit trail |
 | GET | `/creator/policy` | session | Email-only Creator approval, no UI |
 | POST | `/creator/requests` | session | Create email approval request (returns email package) |
 | GET | `/creator/requests` | session | List requests |
@@ -214,6 +223,9 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET | `/network/interactions` | Communication audit | session |
 | POST | `/network/trust` | Record trust assessment | session |
 | GET/POST | `/network/collaborations` | Delegated tasks | **signed Creator authorization if high-impact** |
+| POST | `/network/agents/{id}/verify` | Record independent identity verification evidence (self-reported claims never auto-verify) | session |
+| POST/GET | `/network/agents/{id}/interviews` | Record / list structured interviews with provenance and risk markers | session |
+| GET | `/network/agents/{id}/profile` | AI relationship registry profile (Doc 18 §7) | session |
 
 ---
 

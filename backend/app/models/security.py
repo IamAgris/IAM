@@ -18,6 +18,7 @@ class IntegrationRegistry(Base):
     integration_type = Column(Text, nullable=False)
     config = Column(JSON, nullable=False, default=dict)
     is_active = Column(Boolean, nullable=False, default=True)
+    requires_creator_approval = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -36,24 +37,6 @@ class IntegrationPermission(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 
     integration = relationship("IntegrationRegistry", back_populates="permissions")
-
-
-class ApprovalRequest(Base):
-    __tablename__ = "approval_requests"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    action_type = Column(Text, nullable=False)
-    description = Column(Text, nullable=False)
-    requested_by = Column(Text, nullable=False)
-    status = Column(Text, nullable=False, default="pending")
-    requested_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    decided_at = Column(DateTime(timezone=True), nullable=True)
-    decided_by = Column(Text, nullable=True)
-    reason = Column(Text, nullable=True)
-
-    __table_args__ = (
-        CheckConstraint("status IN ('pending', 'approved', 'rejected')", name="ck_approval_status"),
-    )
 
 
 class AuditEvent(Base):

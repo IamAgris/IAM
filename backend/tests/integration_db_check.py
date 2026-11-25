@@ -75,6 +75,9 @@ async def apply_migrations() -> None:
         "004_creator_email_approval.sql",
         "005_retire_legacy_owner_authorizations.sql",
         "006_creator_email_outbox.sql",
+        "007_api_credentials.sql",
+        "008_retire_legacy_approval_requests.sql",
+        "009_skill_runtime.sql",
     ):
         sql = (MIGRATIONS / name).read_text(encoding="utf-8")
         await conn.execute(sql)
@@ -100,6 +103,8 @@ async def run_checks() -> None:
     settings.creator_signer_id = "integration-signer"
     settings.creator_email_transport = "log"
     settings.creator_gateway_secret = "integration-gateway-secret"
+    settings.skill_runtime_enabled = True
+    settings.skill_runtime_adapter = "stub"
     settings.creator_challenge_ttl_seconds = 3600
     settings.creator_authorization_ttl_seconds = 3600
 
@@ -158,7 +163,30 @@ async def run_checks() -> None:
             )
         )
         assert (await forge.rollback(sid, "1.0.0"))["version"] == "1.0.0"
+        await forge.activate(sid)
         print("  PASS skillforge personal lifecycle + rollback")
+
+        # --- Skill Runtime: gated execution ----------------------------------
+        from app.services.skillruntime.service import (
+            SkillRuntimeError,
+            SkillRuntimeService,
+        )
+
+        runtime = SkillRuntimeService(db)
+        invocation = await runtime.invoke(
+            sid, permission="knowledge", arguments={"input": "integration"}
+        )
+        assert invocation["execution"]["status"] == "completed"
+        assert invocation["execution"]["dry_run"] is True
+        try:
+            await runtime.invoke(sid, permission="security_analysis")
+        except SkillRuntimeError:
+            pass
+        else:
+            raise AssertionError("ungranted permission should be denied")
+        executions = await runtime.executions(sid)
+        assert any(e["status"] == "denied" for e in executions)
+        print("  PASS skill runtime gated invocation + denial audit")
 
         # --- Skill Forge: sensitive skill requires signed email approval -------
         sensitive_id = "iam.native.security.integration_defensive"
@@ -259,6 +287,81 @@ async def run_checks() -> None:
         assert result["permitted"] is True
         assert result["source"] == "signed_creator_authorization"
         print("  PASS governance signed-authorization check")
+
+        # --- API authentication + rate limiting -------------------------------
+        from httpx import ASGITransport, AsyncClient
+        from app.main import app
+
+        os.environ["IAM_BOOTSTRAP_API_KEY"] = "integration-bootstrap"
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            bootstrap = await client.post(
+                "/api/v1/auth/bootstrap",
+                json={"name": "integration-admin", "scope": "admin"},
+                headers={"X-Bootstrap-Key": "integration-bootstrap"},
+            )
+            assert bootstrap.status_code == 201, bootstrap.text
+            admin_headers = {"Authorization": f"Bearer {bootstrap.json()['key']}"}
+
+            assert (await client.get("/api/v1/skill-forge/skills")).status_code == 401
+            assert (await client.get("/health")).status_code == 200
+            assert (
+                await client.get("/api/v1/auth/me", headers=admin_headers)
+            ).status_code == 200
+            admin_skills = await client.get(
+                "/api/v1/skill-forge/skills", headers=admin_headers
+            )
+            assert admin_skills.status_code == 200, (
+                admin_skills.status_code,
+                admin_skills.text[:500],
+            )
+
+            user = await client.post(
+                "/api/v1/auth/credentials",
+                json={"name": "integration-user", "scope": "user"},
+                headers=admin_headers,
+            )
+            assert user.status_code == 201, user.text
+            user_headers = {"Authorization": f"Bearer {user.json()['key']}"}
+            assert (
+                await client.get("/api/v1/skill-forge/skills", headers=user_headers)
+            ).status_code == 403
+
+            # External-presence approval now uses the signed Creator email flow.
+            integration = await client.post(
+                "/api/v1/external-presence/integrations",
+                json={
+                    "name": "integration-lab",
+                    "provider": "lab",
+                    "integration_type": "business",
+                    "requires_human_approval": True,
+                },
+                headers=admin_headers,
+            )
+            assert integration.status_code == 200, integration.text
+            integ = integration.json()
+            assert integ["creator_request_id"] and integ["is_active"] is False
+            activation_url = (
+                f"/api/v1/external-presence/integrations/{integ['id']}/activate"
+            )
+            assert (
+                await client.patch(activation_url, headers=admin_headers)
+            ).status_code == 403
+
+            challenge = await CreatorApprovalService(db).challenge_for_signer(
+                integ["creator_request_id"]
+            )
+            await CreatorApprovalService(db).decide(
+                integ["creator_request_id"],
+                decision="approved",
+                signature=sign(challenge["challenge_hash"]),
+                signer_id=settings.creator_signer_id,
+            )
+            assert (
+                await client.patch(activation_url, headers=admin_headers)
+            ).status_code == 200
+        print("  PASS auth middleware + scoped credentials + email-based integration approval")
 
 
 async def main() -> None:

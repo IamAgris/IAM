@@ -70,4 +70,6 @@ Superseded (historical only): `MASTER_SPECIFICATION.md`, `IAM_MASTER_ARCHITECTUR
 
 The architecture is internally consistent and correctly documented. All 5 acceptance levels pass on the running stack. The frozen claim is accurate.
 
-**Remaining work is implementation of specified-but-not-built subsystems** (P2P transport, Aegis, streaming, LangGraph, hardware signer, real bank/thirdweb adapters), not architecture design.
+**Implemented since this audit:** scoped API credentials and auth middleware, node registry with enforced 1% resource ceiling, protected-core measurement with explicitly approved known-good manifests, Ed25519 node attestation with trust transitions (candidate → trusted/restricted/revoked), signed sync objects, model-backed autonomy reasoning with honest fallback, core-authorised S3 storage, the first UWAIE slice (frontend inspection, permission-gated execution, outcome verification, credential-free workflow learning), and acceptance-test authentication (`IAM_API_KEY`).
+
+**Remaining work is implementation of specified-but-not-built subsystems** (live peer-to-peer transport and store-and-forward routing beyond signed sync objects, hardware-backed platform measurements, full UWAIE multi-browser/visual-learning stack, public-presence/public-records/legal/geospatial research systems, assistant interoperability lab, hardware signer, real bank/thirdweb adapters), not architecture design.

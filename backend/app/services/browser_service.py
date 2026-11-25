@@ -208,6 +208,9 @@ class BrowserService:
             elif action == "text":
                 result["result"] = await page.evaluate("() => document.body.innerText")
                 result["success"] = True
+            elif action == "url":
+                result["result"] = page.url
+                result["success"] = True
             elif action == "links":
                 result["result"] = await page.evaluate(
                     "() => Array.from(document.querySelectorAll('a[href]')).map(a => ({text: a.innerText.trim(), url: a.href})).filter(l => l.url.startsWith('http'))"

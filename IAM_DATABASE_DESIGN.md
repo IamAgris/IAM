@@ -50,9 +50,9 @@
 | `operating_principles` | `id`, `name`, `statement`, `category`, `is_mutable`, `timestamps` | safety/legal/security = immutable (C-01 owner boundary) |
 | `authority_boundaries` | `id`, `action_type`, `authority_level` (0–4), `requires_human_approval` | Canonical authority ladder (C-01) |
 | `security_boundaries` | `id`, `name`, `type`, `description`, `is_immutable` | Owner-only |
-| `owner_authorizations` | `id`, `action_type`, `max_level`, `spending_limit`, `can_*` flags, `granted_by`, `expires_at`, `revoked_at` | Only owner writes; resolves M-01 |
+| `creator_requests`, `signed_challenges`, `creator_approvals`, `creator_authorizations` | request id, action, risk, expiry, nonce hash, signature, signer id, scope | Email carrier + signed challenge; replaces owner grants |
 | `approval_policies` | `id`, `category`, `min_level`, `auto_approve_conditions` | |
-| `approval_requests` | `id`, `action_type`, `description`, `requested_by`, `status`, `decision`, `decided_by`, `timestamps` | One approval system |
+| `creator_email_outbox` | request id, recipient, subject, body, transport, status, attempts | Delivery/retry of Creator approval emails |
 
 ---
 
@@ -212,8 +212,8 @@ All ten decisions are resolved in `IAM_OWNER_DECISIONS.md`. Impacts on this sche
 |----------|---------------|
 | OD-01 | `iam_identity_genesis.permanent_id` = ULID, immutable |
 | OD-02 | `digital_assets.owner_entity`, `business_projects.legal_entity` = designated entity |
-| OD-03 | `owner_authorizations` and `approval_requests` carry `signer_ref` (hardware key/signer) and `signature` |
-| OD-04 | `financial_budgets.amount` default 0; every spend requires an approved `approval_requests` record — no standing spend |
+| OD-03 | `signed_challenges` + `creator_approvals` carry the ED25519 signature and `signer_id`; no owner-grant table |
+| OD-04 | `financial_budgets.amount` default 0; every spend requires a signed Creator approval record — no standing spend |
 | OD-05 | `visitor_memory_permissions.allow_anonymous_memory` default **true** (opt-out model); `deletion_requests` and retention policies required |
 | OD-06 | backup/verification cadence: daily (RPO 24h), restore procedure documented for RTO 4h |
 | OD-07 | no secret values in tables; `credential_references` points to SOPS/Docker secrets only |

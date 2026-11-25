@@ -57,6 +57,25 @@ CREATE TABLE anonymous_visitors (
 CREATE UNIQUE INDEX ix_anonymous_visitors_visitor_token ON anonymous_visitors (visitor_token);
     ''')
     op.execute(r'''
+CREATE TABLE api_credentials (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	key_hash TEXT NOT NULL, 
+	scope TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_by TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_used_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_api_credential_scope CHECK (scope IN ('user', 'service', 'operator', 'admin')), 
+	UNIQUE (name)
+);
+    ''')
+    op.execute(r'''
+CREATE UNIQUE INDEX ix_api_credentials_key_hash ON api_credentials (key_hash);
+    ''')
+    op.execute(r'''
 CREATE TABLE approval_policies (
 	id UUID NOT NULL, 
 	action_category TEXT NOT NULL, 
@@ -65,21 +84,6 @@ CREATE TABLE approval_policies (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_approval_policy_level CHECK (min_authority_level IN ('1', '2', '3', '4'))
-);
-    ''')
-    op.execute(r'''
-CREATE TABLE approval_requests (
-	id UUID NOT NULL, 
-	action_type TEXT NOT NULL, 
-	description TEXT NOT NULL, 
-	requested_by TEXT NOT NULL, 
-	status TEXT NOT NULL, 
-	requested_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-	decided_at TIMESTAMP WITH TIME ZONE, 
-	decided_by TEXT, 
-	reason TEXT, 
-	PRIMARY KEY (id), 
-	CONSTRAINT ck_approval_status CHECK (status IN ('pending', 'approved', 'rejected'))
 );
     ''')
     op.execute(r'''
@@ -222,6 +226,26 @@ CREATE TABLE conversations (
 	metadata JSON NOT NULL, 
 	PRIMARY KEY (id)
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE creator_email_outbox (
+	id UUID NOT NULL, 
+	request_id TEXT NOT NULL, 
+	recipient TEXT NOT NULL, 
+	subject TEXT NOT NULL, 
+	body TEXT NOT NULL, 
+	transport TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	attempts INTEGER NOT NULL, 
+	last_error TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	sent_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_creator_outbox_status CHECK (status IN ('pending', 'sent', 'failed', 'skipped'))
+);
+    ''')
+    op.execute(r'''
+CREATE UNIQUE INDEX ix_creator_email_outbox_request_id ON creator_email_outbox (request_id);
     ''')
     op.execute(r'''
 CREATE TABLE creator_requests (
@@ -486,6 +510,7 @@ CREATE TABLE integration_registry (
 	integration_type TEXT NOT NULL, 
 	config JSON NOT NULL, 
 	is_active BOOLEAN NOT NULL, 
+	requires_creator_approval BOOLEAN NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
@@ -712,28 +737,6 @@ CREATE TABLE operating_principles (
 );
     ''')
     op.execute(r'''
-CREATE TABLE owner_authorizations (
-	id UUID NOT NULL, 
-	action_type TEXT NOT NULL, 
-	max_authority_level VARCHAR(1) NOT NULL, 
-	spending_limit_usd NUMERIC(15, 4), 
-	can_create_accounts BOOLEAN NOT NULL, 
-	can_publish_externally BOOLEAN NOT NULL, 
-	can_modify_own_security BOOLEAN NOT NULL, 
-	scope JSON NOT NULL, 
-	is_active BOOLEAN NOT NULL, 
-	granted_by TEXT NOT NULL, 
-	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-	expires_at TIMESTAMP WITH TIME ZONE, 
-	revoked_at TIMESTAMP WITH TIME ZONE, 
-	PRIMARY KEY (id), 
-	CONSTRAINT ck_owner_auth_level CHECK (max_authority_level IN ('1', '2', '3', '4'))
-);
-    ''')
-    op.execute(r'''
-CREATE INDEX ix_owner_authorizations_action_type ON owner_authorizations (action_type);
-    ''')
-    op.execute(r'''
 CREATE TABLE project_portfolios (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -809,6 +812,26 @@ CREATE TABLE regional_settings (
 	defaults JSON NOT NULL, 
 	PRIMARY KEY (id), 
 	UNIQUE (country_code)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE registered_nodes (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	architecture TEXT NOT NULL, 
+	resources JSON NOT NULL, 
+	capabilities JSON NOT NULL, 
+	trust_level TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	contribution_percent FLOAT NOT NULL, 
+	status TEXT NOT NULL, 
+	registered_by_token_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_seen_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_registered_node_trust_level CHECK (trust_level IN ('candidate', 'restricted', 'trusted', 'revoked')), 
+	CONSTRAINT ck_registered_node_contribution_ceiling CHECK (contribution_percent >= 0 AND contribution_percent <= 1)
 );
     ''')
     op.execute(r'''
@@ -1039,6 +1062,23 @@ CREATE TABLE software_projects (
 );
     ''')
     op.execute(r'''
+CREATE TABLE stored_objects (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	s3_key TEXT NOT NULL, 
+	bucket TEXT NOT NULL, 
+	content_type TEXT NOT NULL, 
+	size_bytes INTEGER NOT NULL, 
+	sha256 TEXT NOT NULL, 
+	owner TEXT NOT NULL, 
+	is_approved_for_sharing BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_stored_object_size CHECK (size_bytes >= 0), 
+	UNIQUE (s3_key)
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE tool_registry (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -1072,6 +1112,19 @@ CREATE TABLE visitor_rate_limits (
 	window_start TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	request_count INTEGER NOT NULL, 
 	is_blocked BOOLEAN NOT NULL, 
+	PRIMARY KEY (id)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE website_workflows (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	url_pattern TEXT NOT NULL, 
+	steps JSON NOT NULL, 
+	verification JSON NOT NULL, 
+	source_actor TEXT NOT NULL, 
+	is_approved BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
 );
     ''')
@@ -1518,6 +1571,25 @@ CREATE TABLE model_versions (
 );
     ''')
     op.execute(r'''
+CREATE TABLE node_resource_reports (
+	id UUID NOT NULL, 
+	node_id UUID NOT NULL, 
+	cpu_cores INTEGER NOT NULL, 
+	ram_bytes FLOAT NOT NULL, 
+	storage_bytes FLOAT NOT NULL, 
+	used_percent FLOAT, 
+	contribution_percent FLOAT NOT NULL, 
+	permitted_ram_bytes FLOAT NOT NULL, 
+	permitted_storage_bytes FLOAT NOT NULL, 
+	reported_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_node_resource_reports_node_id ON node_resource_reports (node_id);
+    ''')
+    op.execute(r'''
 CREATE TABLE plans (
 	id UUID NOT NULL, 
 	goal_id UUID NOT NULL, 
@@ -1953,6 +2025,7 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS security_engine_scopes CASCADE")
     op.execute("DROP TABLE IF EXISTS research_experiments CASCADE")
     op.execute("DROP TABLE IF EXISTS plans CASCADE")
+    op.execute("DROP TABLE IF EXISTS node_resource_reports CASCADE")
     op.execute("DROP TABLE IF EXISTS model_versions CASCADE")
     op.execute("DROP TABLE IF EXISTS model_evaluations CASCADE")
     op.execute("DROP TABLE IF EXISTS memory_relationships CASCADE")
@@ -1985,9 +2058,11 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS world_events CASCADE")
     op.execute("DROP TABLE IF EXISTS world_entities CASCADE")
     op.execute("DROP TABLE IF EXISTS workflow_checkpoints CASCADE")
+    op.execute("DROP TABLE IF EXISTS website_workflows CASCADE")
     op.execute("DROP TABLE IF EXISTS visitor_rate_limits CASCADE")
     op.execute("DROP TABLE IF EXISTS upgrade_history CASCADE")
     op.execute("DROP TABLE IF EXISTS tool_registry CASCADE")
+    op.execute("DROP TABLE IF EXISTS stored_objects CASCADE")
     op.execute("DROP TABLE IF EXISTS software_projects CASCADE")
     op.execute("DROP TABLE IF EXISTS social_profiles CASCADE")
     op.execute("DROP TABLE IF EXISTS skills CASCADE")
@@ -2003,13 +2078,13 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS research_publications CASCADE")
     op.execute("DROP TABLE IF EXISTS research_hypotheses CASCADE")
     op.execute("DROP TABLE IF EXISTS request_usage CASCADE")
+    op.execute("DROP TABLE IF EXISTS registered_nodes CASCADE")
     op.execute("DROP TABLE IF EXISTS regional_settings CASCADE")
     op.execute("DROP TABLE IF EXISTS reflection_entries CASCADE")
     op.execute("DROP TABLE IF EXISTS recovery_logs CASCADE")
     op.execute("DROP TABLE IF EXISTS published_content CASCADE")
     op.execute("DROP TABLE IF EXISTS provider_usage CASCADE")
     op.execute("DROP TABLE IF EXISTS project_portfolios CASCADE")
-    op.execute("DROP TABLE IF EXISTS owner_authorizations CASCADE")
     op.execute("DROP TABLE IF EXISTS operating_principles CASCADE")
     op.execute("DROP TABLE IF EXISTS operating_expenses CASCADE")
     op.execute("DROP TABLE IF EXISTS online_accounts CASCADE")
@@ -2044,6 +2119,7 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS decision_records CASCADE")
     op.execute("DROP TABLE IF EXISTS daily_routines CASCADE")
     op.execute("DROP TABLE IF EXISTS creator_requests CASCADE")
+    op.execute("DROP TABLE IF EXISTS creator_email_outbox CASCADE")
     op.execute("DROP TABLE IF EXISTS conversations CASCADE")
     op.execute("DROP TABLE IF EXISTS conversation_contexts CASCADE")
     op.execute("DROP TABLE IF EXISTS communication_audit CASCADE")
@@ -2055,8 +2131,8 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS backup_verifications CASCADE")
     op.execute("DROP TABLE IF EXISTS authority_boundaries CASCADE")
     op.execute("DROP TABLE IF EXISTS audit_events CASCADE")
-    op.execute("DROP TABLE IF EXISTS approval_requests CASCADE")
     op.execute("DROP TABLE IF EXISTS approval_policies CASCADE")
+    op.execute("DROP TABLE IF EXISTS api_credentials CASCADE")
     op.execute("DROP TABLE IF EXISTS anonymous_visitors CASCADE")
     op.execute("DROP TABLE IF EXISTS ai_providers CASCADE")
     op.execute("DROP TABLE IF EXISTS ai_identity CASCADE")

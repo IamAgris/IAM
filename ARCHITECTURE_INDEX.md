@@ -24,9 +24,16 @@
 | 2 | `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` | Document 14 (global research scope frozen, OD-30) |
 | 2 | `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` | Document 15 (legal/government monitoring, OD-31) |
 | 2 | `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` | Document 16 (maps/geospatial, OD-32) |
+| 2 | `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` | Document 17 (human psychology, tone and influence intelligence — defensive; OD-33) |
+| 2 | `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` | Document 18 (external AI identity, interview, collaborative learning and external skill packages — extends Doc 03 §7; OD-34) |
+| 2 | `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` | Document 19 (free cloud/platform nodes — extends OEDIE and Doc 10; OD-35) |
+| 2 | `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` | Document 20 (AI SDK/framework/model research + Technology Capability Registry; OD-36) |
+| 2 | `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` | Document 21 (traffic, queues and distributed processing — extends system 13 / Doc 10; OD-37) |
 | 3 | `sdk/` | SDK scaffolds: TypeScript, Python, CLI, shared protocol |
 | 2 | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
 | 2 | `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md` | Technical specifications |
+
+**Note:** Documents 17–21 and OD-33/OD-37 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime).
 
 ## Superseded documents (historical — do not use as source of truth)
 

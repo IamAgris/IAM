@@ -90,6 +90,17 @@ export class IAM {
   nodes: {
     register: (node: NodeRegistration) => Promise<Record<string, unknown>>;
     status: (id: string) => Promise<Record<string, unknown>>;
+    attest: (
+      id: string,
+      payload: Record<string, unknown>,
+      signature: string,
+    ) => Promise<Record<string, unknown>>;
+    restrict: (id: string, reason: string) => Promise<Record<string, unknown>>;
+    revoke: (id: string) => Promise<Record<string, unknown>>;
+  };
+  integrity: {
+    status: () => Promise<Record<string, unknown>>;
+    approve: () => Promise<Record<string, unknown>>;
   };
   resources: { report: (nodeId: string, report: ResourceReport) => Promise<void> };
   files: {
@@ -97,8 +108,17 @@ export class IAM {
     get: (id: string) => Promise<Record<string, unknown>>;
   };
   knowledge: { submit: (c: Contribution) => Promise<Record<string, unknown>> };
-  sync: { status: () => Promise<Record<string, unknown>> };
+  sync: {
+    status: () => Promise<Record<string, unknown>>;
+    publish: (object: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    list: (since?: string) => Promise<Record<string, unknown>>;
+  };
   diagnostics: { status: () => Promise<Record<string, unknown>> };
+  uwaie: {
+    inspect: (url: string) => Promise<Record<string, unknown>>;
+    execute: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    workflows: () => Promise<Record<string, unknown>>;
+  };
   events: { stream: () => EventSource | null };
 
   constructor(options: IAMOptions) {
@@ -131,6 +151,24 @@ export class IAM {
       register: (node) =>
         this.transport.request("POST", "/api/v1/nodes/register", node),
       status: (id) => this.transport.request("GET", `/api/v1/nodes/${id}`),
+      attest: (id, payload, signature) =>
+        this.transport.request("POST", `/api/v1/nodes/${id}/attestation`, {
+          payload,
+          signature,
+        }),
+      restrict: (id, reason) =>
+        this.transport.request("POST", `/api/v1/nodes/${id}/restricted-report`, {
+          reason,
+        }),
+      revoke: (id) =>
+        this.transport.request("POST", `/api/v1/nodes/${id}/revoke`),
+    };
+    this.integrity = {
+      status: () => this.transport.request("GET", "/api/v1/integrity/status"),
+      approve: () =>
+        this.transport.request("POST", "/api/v1/integrity/manifest", {
+          confirm: true,
+        }),
     };
     this.resources = {
       report: async (nodeId, report) => {
@@ -150,9 +188,26 @@ export class IAM {
       submit: (c) =>
         this.transport.request("POST", "/api/v1/knowledge/contributions", c),
     };
-    this.sync = { status: () => this.transport.request("GET", "/api/v1/sync/status") };
+    this.sync = {
+      status: () => this.transport.request("GET", "/api/v1/sync/status"),
+      publish: (object) =>
+        this.transport.request("POST", "/api/v1/sync/objects", object),
+      list: (since) =>
+        this.transport.request(
+          "GET",
+          `/api/v1/sync/objects${since ? `?since=${encodeURIComponent(since)}` : ""}`,
+        ),
+    };
     this.diagnostics = {
-      status: () => this.transport.request("GET", "/api/v1/diagnostics"),
+      status: () =>
+        this.transport.request("GET", "/api/v1/nodes/protocol/diagnostics"),
+    };
+    this.uwaie = {
+      inspect: (url) =>
+        this.transport.request("POST", "/api/v1/uwaie/inspect", { url }),
+      execute: (payload) =>
+        this.transport.request("POST", "/api/v1/uwaie/execute", payload),
+      workflows: () => this.transport.request("GET", "/api/v1/uwaie/workflows"),
     };
     this.events = {
       stream: () => {

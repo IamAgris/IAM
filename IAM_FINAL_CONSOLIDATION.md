@@ -13,6 +13,9 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 
 "Covered" below means included in the requirements — **not** necessarily implemented or fully specified.
 
+Five capability addenda — Doc 17 (psychology/tone/influence defence, OD-33), Doc 18 (external AI identity and interview, OD-34), Doc 19 (free infrastructure node lifecycle, OD-35), Doc 20 (AI SDK/framework research, OD-36) and Doc 21 (traffic management and distributed processing, OD-37) — are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026).
+They extend existing systems (research/communication/governance, Doc 03 §7, OEDIE/Doc 10, Doc 02/OEDIE and system 13/Doc 10 respectively); they are not new major systems.
+
 ---
 
 ## 2. Document inventory
@@ -42,6 +45,11 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 | 14 | `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` | Frozen global research scope (OD-30) |
 | 15 | `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` | Legal and government monitoring (OD-31) |
 | 16 | `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` | Geospatial and live maps (OD-32) |
+| 17 | `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` | Human psychology, tone and influence defence (OD-33) |
+| 18 | `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` | External AI identity, interview, collaborative learning and skill packages (OD-34) |
+| 19 | `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` | Free infrastructure node discovery and lifecycle (OD-35) |
+| 20 | `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` | AI SDK/framework/model research and Technology Capability Registry (OD-36) |
+| 21 | `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` | Traffic management, queues and distributed processing (OD-37) |
 | — | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
 | — | `IAM_OPENAPI.json` | Generated schema (113 paths, 103 schemas) |
 
@@ -67,6 +75,9 @@ The IAM vision is **comprehensive and internally consistent**. No further major 
 | GitHub & email identities | Covered | Blockchain (thirdweb free-only) | Covered (OD-23) |
 | thirdweb/blockchain | Covered (Doc 09) | SA banking (18 capabilities) | Covered (OD-24) |
 | Financial authority | Covered (OD-25) | | |
+| Psychology, tone & influence defence | Covered (Doc 17 / OD-33) | External AI identity & interview | Covered — extends Doc 03 §7 (Doc 18 / OD-34) |
+| Free infrastructure node lifecycle | Covered — extends OEDIE/Doc 10 (Doc 19 / OD-35) | AI SDK/framework research | Covered — extends OEDIE/Doc 02 (Doc 20 / OD-36) |
+| Traffic management & distributed processing | Covered — extends system 13 / Doc 10 (Doc 21 / OD-37); OD-08 ARQ unchanged | | |
 
 ---
 

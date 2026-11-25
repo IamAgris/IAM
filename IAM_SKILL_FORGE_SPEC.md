@@ -156,18 +156,20 @@ through the signed-email gateway. No Creator UI exists (OD-19).
 | 1 — Foundation: registry, manifest, folder structure, builder, validation, versions | **Done** |
 | 2 — Security & testing: permissions, static inspection, tests, quarantine, rollback | **Core done** |
 | 3 — Autonomous development: automated design, improvement, duplicate detection | Scaffold (`discover_gaps`, version/tests hooks) |
-| 4 — External ecosystem: OpenAI/NVIDIA/Google adapters and verification | Folder + origin/provider support; adapters not implemented |
+| 4 — External ecosystem: OpenAI/NVIDIA/Google/xAI (Grok) and community skill adapters with verification | Folder + origin/provider support; adapters not implemented. External skill packages (e.g. xAI/Grok skills) are candidate sources — see Doc 18 §15 |
 | 5 — IAM network: P2P skill exchange, signed releases, trust policy | Not implemented |
 
 ### Remaining work
 
-1. Sandboxed execution for skill scripts (containers with no network by default).
-2. Full Skill Runtime that consumes `effective_permissions()` before invoking a skill.
-3. Provider-specific import adapters and signature verification.
+1. ~~Sandboxed execution for skill scripts~~ — implemented in `IAM_SKILL_RUNTIME_SPEC.md`
+   (disabled by default, stub adapter, optional no-network Docker adapter).
+2. ~~Skill Runtime consuming `effective_permissions()`~~ — implemented; next step is
+   testing the Docker adapter against a real skill script in a controlled environment.
+3. Provider-specific import adapters and signature verification, including external skill/agent package ecosystems such as xAI/Grok skills. Verify all provider URLs, package formats and directory conventions live; do not freeze source-material claims as facts.
 4. Feedback-driven Skill Learning Engine and duplicate/conflict detection.
 5. User-facing Marlow view of the Forge lifecycle (not a Creator approval UI).
-6. Email transport wiring: deliver `creator_requests` packages through the IAM
-   domain email channel, and connect the hardware signer to `/creator/requests/{id}/decide`.
+6. ~~Email transport wiring~~ — implemented; deployment still needs credentials and
+   the signer callback pointed at `/api/v1/creator/gateway/decide`.
 
 ---
 
@@ -183,6 +185,7 @@ through the signed-email gateway. No Creator UI exists (OD-19).
 8. No skill can bypass creator approval by invoking another skill.
 9. Skill execution authority is enforced independently of model instructions.
 10. IAM can disable, revoke or roll back any skill.
+11. External skill packages (including xAI/Grok skills) are untrusted until verified: no blind installation, no script execution without security review, no permissions implied by the manifest, and original author/licence/source must be preserved.
 
 ---
 

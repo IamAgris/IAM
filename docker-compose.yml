@@ -117,6 +117,9 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-change-me}
       S3_BUCKET: ${S3_BUCKET:-aura-storage}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      IAM_BOOTSTRAP_API_KEY: ${IAM_BOOTSTRAP_API_KEY:-}
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      IAM_SDK_DEFAULT_MODEL: ${IAM_SDK_DEFAULT_MODEL:-nvidia-llama-3.3-70b}
     depends_on:
       postgres:
         condition: service_healthy

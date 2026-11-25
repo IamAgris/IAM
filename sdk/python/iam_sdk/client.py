@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any
+from typing import Any, Dict
 
 import httpx
 
@@ -106,6 +106,53 @@ class _Nodes:
     async def status(self, node_id: str) -> dict[str, Any]:
         return await self._t.request("GET", f"/api/v1/nodes/{node_id}")
 
+    async def attest(
+        self, node_id: str, payload: dict[str, Any], signature: str
+    ) -> dict[str, Any]:
+        return await self._t.request(
+            "POST",
+            f"/api/v1/nodes/{node_id}/attestation",
+            {"payload": payload, "signature": signature},
+        )
+
+    async def restrict(self, node_id: str, reason: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", f"/api/v1/nodes/{node_id}/restricted-report", {"reason": reason}
+        )
+
+    async def revoke(self, node_id: str) -> dict[str, Any]:
+        return await self._t.request("POST", f"/api/v1/nodes/{node_id}/revoke")
+
+
+class _Integrity:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def status(self) -> dict[str, Any]:
+        return await self._t.request("GET", "/api/v1/integrity/status")
+
+    async def approve(self) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/integrity/manifest", {"confirm": True}
+        )
+
+
+class _Sync:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def status(self) -> dict[str, Any]:
+        return await self._t.request("GET", "/api/v1/sync/status")
+
+    async def publish(self, obj: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", "/api/v1/sync/objects", obj)
+
+    async def list(self, since: str | None = None) -> Any:
+        path = "/api/v1/sync/objects"
+        if since:
+            path += f"?since={since}"
+        return await self._t.request("GET", path)
+
 
 class _Resources:
     def __init__(self, transport: _Transport) -> None:
@@ -148,6 +195,20 @@ class _Simple:
         return await self._t.request(self._method, path, body)
 
 
+class _UWAIE:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def inspect(self, url: str) -> Dict[str, Any]:
+        return await self._t.request("POST", "/api/v1/uwaie/inspect", {"url": url})
+
+    async def execute(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._t.request("POST", "/api/v1/uwaie/execute", payload)
+
+    async def workflows(self) -> Any:
+        return await self._t.request("GET", "/api/v1/uwaie/workflows")
+
+
 class IAM:
     """Connect local applications and nodes to the IAM Core."""
 
@@ -165,8 +226,12 @@ class IAM:
         self.knowledge = _Simple(
             self._transport, "POST", "/api/v1/knowledge/contributions"
         )
-        self.sync = _Simple(self._transport, "GET", "/api/v1/sync/status")
-        self.diagnostics = _Simple(self._transport, "GET", "/api/v1/diagnostics")
+        self.integrity = _Integrity(self._transport)
+        self.sync = _Sync(self._transport)
+        self.diagnostics = _Simple(
+            self._transport, "GET", "/api/v1/nodes/protocol/diagnostics"
+        )
+        self.uwaie = _UWAIE(self._transport)
 
     async def connect(self) -> None:
         await self.core.status()

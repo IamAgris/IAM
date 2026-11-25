@@ -1,7 +1,7 @@
 # IAM — Owner Decision Register
 
-**Status:** ALL 32 DECISIONS LOCKED (25 November 2026)  
-**Purpose:** Record of every owner decision (OD-01…OD-32) made during architecture finalisation. This is now a historical register — no decisions are pending.
+**Status:** ALL 37 DECISIONS LOCKED (25 November 2026).  
+**Purpose:** Record of every owner decision (OD-01…OD-37) made during architecture finalisation. This is now a historical register — no decisions are pending.
 
 ---
 
@@ -64,9 +64,23 @@
 | OD-31 | Legal intelligence and compliance | **Autonomous Legal Intelligence and Government Monitoring System** — continuous legal learning, official-source monitoring, legal change lifecycle, obligation mapping, compliance evidence, alerts and creator approval. Legal research is not legal advice; high-impact conclusions need qualified review; no legally significant commitment without authority. Specified in `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md`. | ✅ **CONFIRMED** |
 | OD-32 | Geospatial intelligence and live mapping | **Geospatial Intelligence and Live Mapping System** — geography knowledge, interactive/live maps in IAM's interface, multi-provider adapters, geocoding/routing/GIS, satellite and live feeds, offline/distributed maps, location privacy. Own geographic knowledge survives provider loss; free-tier verification at implementation; no covert tracking or targeting. Specified in `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md`. | ✅ **CONFIRMED** |
 
+## Confirmed decisions — capabilities (25 November 2026)
+
+These decisions were confirmed by the owner on 25 November 2026. They add new capabilities without reopening or modifying any earlier decision, including OD-08 (ARQ queue runtime).
+
+| ID | Decision | Confirmed value | Status |
+|----|----------|-----------------|--------|
+| OD-33 | Human psychology, tone and influence intelligence | **Defensive** capability inside existing research/communication/governance systems: study human behaviour, cognitive bias, tone and emotional expression, propaganda/manipulation patterns and ethical negotiation in order to recognise and defend against manipulation. Must not exploit vulnerability, conduct targeted psychological attacks or run deceptive influence campaigns. No private psychological-state or sensitive-characteristic inference. Specified in `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-34 | External AI identity, interview and collaborative learning | Extend frozen Doc 03 §7: discover AI systems globally; distinguish verified from self-reported identity; interview accessible systems through permitted interfaces with permission; study how they are built; benchmark capabilities without trusting claims; maintain a relationship registry; study security/website-scanning AI defensively; collaborate on authorised tasks; share validated discoveries with trusted nodes; study external skill/agent package formats (e.g. xAI/Grok skills) through Skill Forge. No private source code, internal reasoning, training data or hidden architecture; no offensive intrusion capability; external AI never gains automatic authority over IAM. Specified in `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-35 | Free infrastructure node discovery and lifecycle | Extend OEDIE (OD-15) and the dynamic node network (OD-26): continuously discover legitimate free hosting (Google Cloud, AWS, Railway, Vercel, Cloudflare, Neon and future providers); verify current terms, quotas, architecture and expiry live; deploy restricted nodes only when authorised and useful; register as candidates with the Core; monitor quotas and migrate before expiry; stop before unauthorised charges. No paid fallback, auto-upgrade, surprise billing or limit circumvention; core stays independent. Specified in `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-36 | AI SDK, framework and model research | **AI Research and SDK Learning Programme** inside existing research/self-development engines: discover and study SDKs, frameworks, models and research projects through official documentation and permitted source; compare licence, hardware, cost and capability; benchmark in isolated environments; reproduce independently where permitted; maintain a Technology Capability Registry with lifecycle states; share validated non-private findings with trusted nodes. Learning / capability acquisition / core modification remain distinct; protected-core changes require creator approval. Free SDK does not mean free inference or hosting. Specified in `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md`. | ✅ **CONFIRMED** |
+| OD-37 | Infrastructure, traffic management and distributed processing | One engine inside existing system 13 extending the baseline, Doc 10 scheduler and Doc 19 node lifecycle: web servers/reverse proxies (Caddy, Nginx, HAProxy, Envoy), global/regional load balancing, resource-aware workload distribution, background workers, queues/events, caching, service discovery, observability and bounded scaling. Study all, install only what the workload needs; start with Caddy + Docker + PostgreSQL + Redis + a few workers on the Contabo core. **OD-08 remains locked to ARQ** — Celery is a studied alternative only and adopting it requires explicitly reopening OD-08. No silent paid scaling, no single-provider dependency, no private data in metrics. Specified in `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md`. | ✅ **CONFIRMED** |
+
 **Security principle (confirmed):** integrity reporting is best-effort when another party controls a deployment. Signed attestations and hardware-backed verification strengthen it, but IAM must never falsely claim a compromised machine cannot hide modifications.
 
-## Status: ALL THIRTY-TWO DECISIONS LOCKED (25 November 2026)
+## Status: ALL THIRTY-SEVEN DECISIONS LOCKED (25 November 2026)
+
+Decisions OD-33…OD-37 were confirmed on 25 November 2026 and are listed above. They add new capabilities without modifying any earlier decision, including OD-08 (ARQ queue runtime).
 
 Owner choices, in order:
 1. **OD-01** ULID + immutable genesis record
@@ -102,7 +116,7 @@ Owner choices, in order:
 ### OD-02 — Owner relationship / legal entity
 - **Recommendation:** You are the owner. A named legal entity (company/close corporation) is designated for economic activity; IAM operates accounts under authorization with disclosure. IAM itself owns nothing legally.
 - **Why:** D1 §11, D3 §9/§14, and your confirmed "IAM is not a legal person".
-- **Effect if accepted:** `owner_authorizations.granted_by` records the owner; `digital_assets.owner_entity` records the legal entity.
+- **Effect:** `creator_authorizations.signer_id` records the Creator signer; `digital_assets.owner_entity` records the legal entity. Legacy owner grants were removed.
 
 ### OD-03 — Owner authorization method
 - **Locked:** hardware key / external signer for high-impact approvals. OD-19 further removes the Creator dashboard: requests are sent to the verified Creator email address, and authority comes only from an ED25519 signature over a one-time challenge.
@@ -112,7 +126,7 @@ Owner choices, in order:
 ### OD-04 — Spending limits
 - **Recommendation:** $100/month total ceiling; $10 per transaction; increases owner-only. Paid inference remains disabled (`allow_paid=false`) unless an owner authorization exists.
 - **Why:** D2 §3.3 (no unexpected charges), D1 §11, D3 §14.
-- **Effect if accepted:** stored in `financial_budgets` and `owner_authorizations.spending_limit_usd`.
+- **Effect:** stored in `financial_budgets`. Spending approvals are signed Creator requests via email, not owner-grant rows.
 
 ### OD-05 — Memory ownership defaults
 - **Recommendation:** Session memory on by default; anonymous cross-visit memory opt-in only; optional accounts for cross-device. Private IAM memory never exposed to visitors.
@@ -148,4 +162,4 @@ Owner choices, in order:
 
 ## Change control (frozen)
 
-This register is frozen. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.
+This register is frozen at 37 decisions. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.

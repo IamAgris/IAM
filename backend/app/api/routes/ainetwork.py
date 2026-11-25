@@ -43,14 +43,42 @@ class CollaborationRequest(BaseModel):
     requires_authorization: bool = False
 
 
+class AgentRegisterIdentityRequest(AgentRegisterRequest):
+    """Optional identity claims — always self-reported until independently verified."""
+    claimed_identity: Optional[str] = None
+    creator: Optional[str] = None
+    operator: Optional[str] = None
+    stated_purpose: Optional[str] = None
+    expertise: Optional[List[str]] = None
+
+
+class IdentityVerificationRequest(BaseModel):
+    evidence: List[Dict[str, Any]]
+
+
+class InterviewRecordRequest(BaseModel):
+    question: str
+    answer: Optional[str] = None
+    provenance: Optional[str] = None
+
+
 @router.post("/agents")
-async def register_agent(request: AgentRegisterRequest, db=Depends(get_db_session)):
-    """Register a discovered external AI agent."""
+async def register_agent(request: AgentRegisterIdentityRequest, db=Depends(get_db_session)):
+    """Register a discovered external AI agent. Identity claims stay self-reported."""
     service = AINetworkService(db)
     try:
         return await service.register_agent(
-            request.name, request.endpoint_url, request.protocol,
-            request.capabilities, request.description, request.discovery_source,
+            name=request.name,
+            endpoint_url=request.endpoint_url,
+            protocol=request.protocol,
+            capabilities=request.capabilities,
+            description=request.description,
+            discovery_source=request.discovery_source,
+            claimed_identity=request.claimed_identity,
+            creator=request.creator,
+            operator=request.operator,
+            stated_purpose=request.stated_purpose,
+            expertise=request.expertise,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -121,3 +149,43 @@ async def list_collaborations(db=Depends(get_db_session)):
     """List all external AI collaborations."""
     service = AINetworkService(db)
     return await service.list_collaborations()
+
+
+@router.post("/agents/{agent_id}/verify")
+async def verify_identity(agent_id: str, request: IdentityVerificationRequest, db=Depends(get_db_session)):
+    """Record independent verification evidence for an external AI identity.
+
+    A self-reported claim never becomes a verified identity on its own.
+    """
+    service = AINetworkService(db)
+    try:
+        return await service.verify_identity(agent_id, request.evidence)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/agents/{agent_id}/interviews")
+async def record_interview(agent_id: str, request: InterviewRecordRequest, db=Depends(get_db_session)):
+    """Store a structured interview answer with provenance as untrusted data."""
+    service = AINetworkService(db)
+    try:
+        return await service.record_interview(agent_id, request.question, request.answer, request.provenance)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/agents/{agent_id}/interviews")
+async def get_interviews(agent_id: str, limit: int = 50, db=Depends(get_db_session)):
+    """Get interview history with provenance and risk markers."""
+    service = AINetworkService(db)
+    return await service.get_interviews(agent_id, limit)
+
+
+@router.get("/agents/{agent_id}/profile")
+async def get_relationship_profile(agent_id: str, db=Depends(get_db_session)):
+    """Get the AI relationship registry profile for one system (Doc 18 §7)."""
+    service = AINetworkService(db)
+    try:
+        return await service.get_relationship_profile(agent_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

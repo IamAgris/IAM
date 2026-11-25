@@ -8,7 +8,7 @@ All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this 
 
 - Base URL: `<endpoint>/api/v1` (health is absolute: `<endpoint>/health`).
 - JSON, UTF-8; timestamps ISO-8601 UTC; IDs UUID except permanent ULID.
-- Auth header: `Authorization: Bearer <scoped token>`.
+- Auth header: `Authorization: Bearer <scoped API credential>` (created via `POST /api/v1/auth/bootstrap` with `X-Bootstrap-Key`, or via `/api/v1/auth/credentials` using an admin key). Node routes need `operator` scope or higher; `/health` and `/api/v1/access/*` stay public.
 - Protocol header: `X-IAM-Protocol-Version: 1`; server rejects incompatible versions with `426`.
 - POST that creates resources sends `Idempotency-Key`.
 - Errors: `{ detail, code, request_id }` with HTTP status.
@@ -24,15 +24,20 @@ All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this 
 | Submit task | POST | `/autonomy/tasks/` | exists |
 | Get task | GET | `/autonomy/tasks/{id}` | exists |
 | Submit research | POST | `/research/` | exists |
-| Register node | POST | `/nodes/register` | reserved — SDK supports it; core endpoint pending |
-| Node status | GET | `/nodes/{id}` | reserved |
-| Resource report | POST | `/nodes/{id}/resources` | reserved |
-| File upload/retrieve | POST/GET | `/storage/objects` | reserved — core-authorised S3 |
+| Register node | POST | `/nodes/register` | implemented — candidate node only |
+| Node status | GET | `/nodes/{id}` | implemented |
+| Resource report | POST | `/nodes/{id}/resources` | implemented — 1% ceiling enforced |
+| Node attestation | POST | `/nodes/{id}/attestation` | implemented — Ed25519 signed |
+| Restricted report / revoke | POST | `/nodes/{id}/restricted-report`, `/revoke` | implemented |
+| SDK diagnostics | GET | `/nodes/protocol/diagnostics` | implemented |
+| File upload/retrieve | POST/GET | `/storage/objects` | implemented — core-authorised S3, checksum-verified |
+| UWAIE inspect/execute | POST | `/uwaie/inspect`, `/uwaie/execute` | implemented — permission-gated, verified |
+| Integrity status / manifest | GET/POST | `/integrity/status`, `/integrity/manifest` | implemented — best-effort, explicit approval |
 | Knowledge contribution | POST | `/knowledge/contributions` | reserved |
-| Sync status | GET | `/sync/status` | reserved |
+| Sync objects/status | POST/GET | `/sync/objects`, `/sync/status` | implemented — signed, untrusted data |
 | Events | GET (SSE) | `/events` | reserved |
 
-Reserved endpoints return `501` until implemented. SDKs surface a clear diagnostic rather than silently degrading.
+Remaining reserved endpoints return `501` until implemented. SDKs surface a clear diagnostic rather than silently degrading.
 
 ## Shared semantics
 

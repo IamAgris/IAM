@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     litellm_master_key: str = "change-me-securely"
     litellm_base_url: str = "http://localhost:4000"
 
+    # IAM SDK protocol (OD-29) and node contribution (OD-26)
+    iam_protocol_version: str = "1"
+    iam_sdk_default_model: str = "nvidia-llama-3.3-70b"
+
     # Provider API keys
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
@@ -58,6 +62,19 @@ class Settings(BaseSettings):
     # Security
     encryption_key: str = "change-me-to-a-32-byte-base64-key"
     session_secret: str = "change-me-session-secret"
+
+    # Skill Runtime — execution of approved Skill Forge packages
+    skill_runtime_enabled: bool = False
+    skill_runtime_adapter: str = "stub"  # stub | docker
+    skill_runtime_image: str = "python:3.12-alpine"
+    skill_runtime_timeout_seconds: int = 30
+    skill_runtime_memory: str = "256m"
+    skill_runtime_cpus: float = 0.5
+
+    # API authentication and rate limiting
+    auth_enabled: bool = True
+    auth_bootstrap_key_env: str = "IAM_BOOTSTRAP_API_KEY"
+    auth_rate_limit_per_minute: int = 120
 
     # Creator approval by email (OD-18/OD-19) — no Creator UI
     # Email is the carrier; authority comes from a signed challenge.

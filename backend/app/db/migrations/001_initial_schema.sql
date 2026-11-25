@@ -46,6 +46,23 @@ CREATE TABLE anonymous_visitors (
 
 CREATE UNIQUE INDEX ix_anonymous_visitors_visitor_token ON anonymous_visitors (visitor_token);
 
+CREATE TABLE api_credentials (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	key_hash TEXT NOT NULL, 
+	scope TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_by TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_used_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_api_credential_scope CHECK (scope IN ('user', 'service', 'operator', 'admin')), 
+	UNIQUE (name)
+);
+
+CREATE UNIQUE INDEX ix_api_credentials_key_hash ON api_credentials (key_hash);
+
 CREATE TABLE approval_policies (
 	id UUID NOT NULL, 
 	action_category TEXT NOT NULL, 
@@ -54,20 +71,6 @@ CREATE TABLE approval_policies (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_approval_policy_level CHECK (min_authority_level IN ('1', '2', '3', '4'))
-);
-
-CREATE TABLE approval_requests (
-	id UUID NOT NULL, 
-	action_type TEXT NOT NULL, 
-	description TEXT NOT NULL, 
-	requested_by TEXT NOT NULL, 
-	status TEXT NOT NULL, 
-	requested_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-	decided_at TIMESTAMP WITH TIME ZONE, 
-	decided_by TEXT, 
-	reason TEXT, 
-	PRIMARY KEY (id), 
-	CONSTRAINT ck_approval_status CHECK (status IN ('pending', 'approved', 'rejected'))
 );
 
 CREATE TABLE audit_events (
@@ -199,6 +202,24 @@ CREATE TABLE conversations (
 	metadata JSON NOT NULL, 
 	PRIMARY KEY (id)
 );
+
+CREATE TABLE creator_email_outbox (
+	id UUID NOT NULL, 
+	request_id TEXT NOT NULL, 
+	recipient TEXT NOT NULL, 
+	subject TEXT NOT NULL, 
+	body TEXT NOT NULL, 
+	transport TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	attempts INTEGER NOT NULL, 
+	last_error TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	sent_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_creator_outbox_status CHECK (status IN ('pending', 'sent', 'failed', 'skipped'))
+);
+
+CREATE UNIQUE INDEX ix_creator_email_outbox_request_id ON creator_email_outbox (request_id);
 
 CREATE TABLE creator_requests (
 	id UUID NOT NULL, 
@@ -443,6 +464,7 @@ CREATE TABLE integration_registry (
 	integration_type TEXT NOT NULL, 
 	config JSON NOT NULL, 
 	is_active BOOLEAN NOT NULL, 
+	requires_creator_approval BOOLEAN NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
@@ -651,26 +673,6 @@ CREATE TABLE operating_principles (
 	CONSTRAINT ck_operating_principle_category CHECK (category IN ('safety', 'legal', 'security', 'operational', 'personal'))
 );
 
-CREATE TABLE owner_authorizations (
-	id UUID NOT NULL, 
-	action_type TEXT NOT NULL, 
-	max_authority_level VARCHAR(1) NOT NULL, 
-	spending_limit_usd NUMERIC(15, 4), 
-	can_create_accounts BOOLEAN NOT NULL, 
-	can_publish_externally BOOLEAN NOT NULL, 
-	can_modify_own_security BOOLEAN NOT NULL, 
-	scope JSON NOT NULL, 
-	is_active BOOLEAN NOT NULL, 
-	granted_by TEXT NOT NULL, 
-	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
-	expires_at TIMESTAMP WITH TIME ZONE, 
-	revoked_at TIMESTAMP WITH TIME ZONE, 
-	PRIMARY KEY (id), 
-	CONSTRAINT ck_owner_auth_level CHECK (max_authority_level IN ('1', '2', '3', '4'))
-);
-
-CREATE INDEX ix_owner_authorizations_action_type ON owner_authorizations (action_type);
-
 CREATE TABLE project_portfolios (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -741,6 +743,25 @@ CREATE TABLE regional_settings (
 	defaults JSON NOT NULL, 
 	PRIMARY KEY (id), 
 	UNIQUE (country_code)
+);
+
+CREATE TABLE registered_nodes (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	architecture TEXT NOT NULL, 
+	resources JSON NOT NULL, 
+	capabilities JSON NOT NULL, 
+	trust_level TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	contribution_percent FLOAT NOT NULL, 
+	status TEXT NOT NULL, 
+	registered_by_token_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_seen_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_registered_node_trust_level CHECK (trust_level IN ('candidate', 'restricted', 'trusted', 'revoked')), 
+	CONSTRAINT ck_registered_node_contribution_ceiling CHECK (contribution_percent >= 0 AND contribution_percent <= 1)
 );
 
 CREATE TABLE request_usage (
@@ -954,6 +975,22 @@ CREATE TABLE software_projects (
 	CONSTRAINT ck_software_project_status CHECK (status IN ('planning', 'in_development', 'testing', 'deployed', 'archived'))
 );
 
+CREATE TABLE stored_objects (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	s3_key TEXT NOT NULL, 
+	bucket TEXT NOT NULL, 
+	content_type TEXT NOT NULL, 
+	size_bytes INTEGER NOT NULL, 
+	sha256 TEXT NOT NULL, 
+	owner TEXT NOT NULL, 
+	is_approved_for_sharing BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_stored_object_size CHECK (size_bytes >= 0), 
+	UNIQUE (s3_key)
+);
+
 CREATE TABLE tool_registry (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -985,6 +1022,18 @@ CREATE TABLE visitor_rate_limits (
 	window_start TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	request_count INTEGER NOT NULL, 
 	is_blocked BOOLEAN NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE website_workflows (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	url_pattern TEXT NOT NULL, 
+	steps JSON NOT NULL, 
+	verification JSON NOT NULL, 
+	source_actor TEXT NOT NULL, 
+	is_approved BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
 );
 
@@ -1396,6 +1445,23 @@ CREATE TABLE model_versions (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(model_id) REFERENCES model_registry (id) ON DELETE CASCADE
 );
+
+CREATE TABLE node_resource_reports (
+	id UUID NOT NULL, 
+	node_id UUID NOT NULL, 
+	cpu_cores INTEGER NOT NULL, 
+	ram_bytes FLOAT NOT NULL, 
+	storage_bytes FLOAT NOT NULL, 
+	used_percent FLOAT, 
+	contribution_percent FLOAT NOT NULL, 
+	permitted_ram_bytes FLOAT NOT NULL, 
+	permitted_storage_bytes FLOAT NOT NULL, 
+	reported_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_node_resource_reports_node_id ON node_resource_reports (node_id);
 
 CREATE TABLE plans (
 	id UUID NOT NULL, 

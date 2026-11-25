@@ -6,7 +6,7 @@ managed by `app.services.skillforge.SkillForgeEngine` at runtime.
 | Directory | Purpose |
 | --- | --- |
 | `native/` | IAM's own created skills, grouped by category |
-| `imported/` | Verified skills from OpenAI, NVIDIA, Google, Anthropic, Microsoft or the community |
+| `imported/` | Verified skills from OpenAI, NVIDIA, Google, Anthropic, Microsoft, xAI (Grok) or the community |
 | `pending/` | Unverified imported candidates — never active |
 | `quarantine/` | Failed, suspicious or revoked skills — never active |
 | `archived/` | Immutable version snapshots used for rollback |

@@ -1,11 +1,13 @@
 # IAM — Independent AI Entity
 
 **Project Codename:** AURA (Autonomous Unified Reasoning Architecture) — engineering codename only  
-**Status:** Architecture frozen — 16 documents, 32 decisions, 7 resolved specs. All 5 acceptance levels passed.  
+**Status:** Architecture frozen — 16 documents, 32 decisions, 7 resolved specs. All 5 acceptance levels passed (with a scoped admin API credential). Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation and signed sync are implemented.  
 **Interface:** The supplied HTML is the visual source of truth; displayed identity is **IAM** (Intellectual Artificial Mainbrain).  
 **Native skill system:** IAM Skill Forge — [specification](IAM_SKILL_FORGE_SPEC.md)  
 **External security engines:** ARTEX connector — [specification](IAM_ARTEX_INTEGRATION_SPEC.md)  
-**Creator authority:** email + signed challenge, no Creator UI — [specification](IAM_CREATOR_APPROVAL_SPEC.md)
+**Creator authority:** email + signed challenge, no Creator UI — [specification](IAM_CREATOR_APPROVAL_SPEC.md)  
+**API authentication:** scoped credentials and rate limiting — [specification](IAM_API_AUTH_SPEC.md)  
+**Skill Runtime:** gated, sandboxed execution — [specification](IAM_SKILL_RUNTIME_SPEC.md)
 
 ---
 
@@ -102,6 +104,7 @@ project-aura/
 | Languages | `/api/v1/languages/` |
 | Skills (proficiency registry) | `/api/v1/skills/` |
 | Skill Forge (native skill system) | `/api/v1/skill-forge/` |
+| Skill Runtime (gated execution) | `/api/v1/skill-runtime/` |
 | Cybersecurity / external engines | `/api/v1/cybersecurity/` |
 | Goals | `/api/v1/autonomy/goals/` |
 | Tasks | `/api/v1/autonomy/tasks/` |
@@ -121,6 +124,7 @@ project-aura/
 | Reflection | `/api/v1/reflection/` |
 | Global Access | `/api/v1/access/` |
 | Creator approval (email, signed) | `/api/v1/creator/` |
+| API authentication | `/api/v1/auth/` |
 | External AI Network | `/api/v1/network/` |
 | Internet Access | `/api/v1/internet/` |
 
@@ -145,12 +149,32 @@ cp .env.example .env
 # 2. Start infrastructure
 docker compose up -d
 
-# 3. Initialize database
+# 3. Initialize database (001 creates the schema; 002-011 add later subsystems)
 docker exec -i aura-postgres psql -U aura -d aura_db < backend\app\db\migrations\001_initial_schema.sql
 
-# 4. Open the UI
+# 4. Create the first scoped API credential (set IAM_BOOTSTRAP_API_KEY in .env first)
+curl -X POST http://localhost:8000/api/v1/auth/bootstrap \
+  -H "X-Bootstrap-Key: $IAM_BOOTSTRAP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"local-admin","scope":"admin"}'
+# The returned "key" is shown once. Export it for SDK/CLI and acceptance tests:
+export IAM_API_KEY=<returned-key>
+
+# 5. Run live-stack acceptance tests
+python tests/level1_acceptance.py   # ... through level5_acceptance.py
+python tests/uwaie_storage_smoke.py # S3 + UWAIE verification smoke
+# Node attestation needs IAM_ADMIN_KEY and IAM_OPERATOR_KEY:
+python tests/attestation_smoke.py   # integrity + Ed25519 attestation + signed sync
+
+# 6. Open the UI
 # http://localhost:3000
 ```
+
+---
+
+## Free Development Sandboxes
+
+See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (devcontainer included), Google Colab, Kaggle, Hugging Face and StackBlitz with IAM.
 
 ---
 
@@ -181,13 +205,18 @@ docker exec -i aura-postgres psql -U aura -d aura_db < backend\app\db\migrations
 - `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` — Document 14: frozen global research scope (OD-30)
 - `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` — Document 15: legal and government monitoring (OD-31)
 - `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` — Document 16: geospatial and live maps (OD-32)
+- `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` — Document 17 : defensive psychology, tone and influence intelligence (OD-33)
+- `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` — Document 18 : external AI identity, interview and learning; extends Doc 03 §7 (OD-34)
+- `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` — Document 19 : free cloud/platform node lifecycle (OD-35)
+- `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` — Document 20 : SDK/framework research + Technology Capability Registry (OD-36)
+- `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` — Document 21 : traffic, queues and distributed processing (OD-37)
 - **`IAM_FINAL_CONSOLIDATION.md`** — master gap analysis: all systems, conflicts, completion levels, roadmap
 - `IAM_OPEN_SPECS_RESOLVED.md` — resolved engineering specs A–G (creator keys, memory boundaries, P2P, hardware, scaling, finance, operations)
 - `IAM_DATABASE_DESIGN.md` — canonical ERD and migration strategy
 - `IAM_DATABASE_INTEGRATION_REPORT.md` — live Postgres verification, fixes and remaining migration issues
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
-- `IAM_OWNER_DECISIONS.md` — 32 owner decisions (ALL LOCKED)
+- `IAM_OWNER_DECISIONS.md` — 37 owner decisions (ALL LOCKED)
 - `IAM_OPENAPI.json` — generated OpenAPI schema (113 paths, 103 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 

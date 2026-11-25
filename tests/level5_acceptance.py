@@ -8,6 +8,9 @@ integration isolation, life history.
 
 import sys
 import httpx
+from auth_headers import install_auth_headers
+
+install_auth_headers()
 
 BASE = "http://localhost:8000"
 results = []
@@ -90,10 +93,17 @@ def main():
         check("budget", False, str(e))
 
     # 7. External presence registry (ecosystem integrations)
+    # Unique name per run: repeated acceptance runs must not fail on a duplicate.
     try:
+        import uuid
+        integration_name = f"L5 test integration {uuid.uuid4().hex[:8]}"
         r = httpx.post(f"{BASE}/api/v1/external-presence/integrations", json={
-            "name": "L5 test integration", "provider": "test",
-            "integration_type": "api", "requires_human_approval": True
+            "name": integration_name, "provider": "test",
+            "integration_type": "api",
+            # No verified Creator email in a fresh dev stack, so skip the
+            # approval email here. The registry must still create an inactive
+            # integration that cannot be used before explicit activation.
+            "requires_human_approval": False
         }, timeout=10)
         d = r.json()
         check("integration registered", r.status_code == 200 and d.get("id") is not None)

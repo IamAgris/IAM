@@ -3,7 +3,7 @@
 **Status:** FROZEN — architecture baseline  
 **Companion documents:** Intelligence & Self-Evolution Spec · Internet, Autonomy & Ecosystem Spec · UI & Global Access Spec  
 **Note:** This describes one integrated IAM system, not four separate projects.  
-**Addenda:** `IAM_DISTRIBUTED_ARCHITECTURE.md` · `IAM_HARDWARE_ADAPTATION.md` · `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (OD-26) · `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md` (OD-27) · `IAM_AI_ASSISTANT_INTEROPERABILITY_SPEC.md` (OD-28) · `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (OD-29) · `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30) · `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31) · `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` (OD-32)
+**Addenda:** `IAM_DISTRIBUTED_ARCHITECTURE.md` · `IAM_HARDWARE_ADAPTATION.md` · `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (OD-26) · `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md` (OD-27) · `IAM_AI_ASSISTANT_INTEROPERABILITY_SPEC.md` (OD-28) · `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (OD-29) · `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30) · `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31) · `IAM_GEOSPATIAL_INTELLIGENCE_AND_LIVE_MAPPING_SPEC.md` (OD-32) · `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` (OD-33) · `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` (OD-34) · `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` (OD-35) · `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` (OD-36) · `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` (OD-37)
 
 ---
 
@@ -59,6 +59,17 @@ IAM uses three separate channels: operational (Google/Gmail) for signups and ser
 
 **Cross-cutting:** External AI Network and Internet Access & Digital Interaction System —
 spanning systems 2, 6, 7, 8, 10, 12 and 15.
+
+Five confirmed addenda extend existing systems rather than add new top-level systems:
+`IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` (Doc 17, OD-33) places psychology, tone and
+influence-defence modules inside systems 2, 5, 6 and 12; `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md`
+(Doc 18, OD-34) extends the cross-cutting External AI Network and Doc 03 §7 with identity verification,
+interviewing, capability benchmarking and security-AI study; `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md`
+(Doc 19, OD-35) extends OEDIE and the dynamic node network with free-tier node lifecycle discipline;
+`IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` (Doc 20, OD-36) formalises SDK/framework research and a
+Technology Capability Registry inside the existing research engines; `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md`
+(Doc 21, OD-37) adds traffic, queue and workload-distribution responsibilities to system 13 and Doc 10.
+All five were confirmed by the owner on 25 November 2026 and are part of the frozen architecture.
 
 ---
 

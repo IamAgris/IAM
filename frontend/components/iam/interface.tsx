@@ -208,19 +208,6 @@ export function IAMInterface() {
     setState("idle");
   };
 
-  const animateResponse = (text: string) => {
-    setResponse("");
-    const words = text.split(" ");
-    words.forEach((_, i) => {
-      const t = window.setTimeout(() => {
-        setResponse((prev) => prev + (i === 0 ? "" : " ") + words[i]);
-      }, i * 45);
-      timersRef.current.push(t);
-    });
-    speak(text);
-    return words.length * 45;
-  };
-
   const ask = async (query: string) => {
     query = query.trim();
     if (!query) return;
@@ -253,28 +240,70 @@ export function IAMInterface() {
       content: m.content,
     }));
 
-    let answer: string;
-    try {
-      const resp = await api.post("/api/v1/models/chat", {
-        model: "qwen3.5-9b",
-        messages: [
-          { role: "system", content: cfg.systemPrompt },
-          ...historyMessages,
-        ],
-        temperature: mode === "create" ? 0.8 : 0.6,
-      }, { signal: abortRef.current?.signal });
-      answer = resp.data?.choices?.[0]?.message?.content
-        || resp.data?.response
-        || "I received your message but could not generate a response.";
-    } catch {
-      answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
-    }
-
-    const duration = animateResponse(answer);
+    // Real SSE streaming from the backend
     setState("speaking");
     setStatus("Speaking");
-    setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
+    let answer = "";
+    try {
+      const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
+      const res = await fetch(`${base}/api/v1/models/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "qwen3.5-9b",
+          messages: [
+            { role: "system", content: cfg.systemPrompt },
+            ...historyMessages,
+          ],
+          temperature: mode === "create" ? 0.8 : 0.6,
+        }),
+        signal: abortRef.current?.signal,
+      });
 
+      if (!res.ok || !res.body) throw new Error(`stream status ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() || "";
+        for (const frame of frames) {
+          let event = "message", dataStr = "";
+          for (const line of frame.split("\n")) {
+            if (line.startsWith("event:")) event = line.slice(6).trim();
+            if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+          }
+          if (!dataStr) continue;
+          let data: any;
+          try { data = JSON.parse(dataStr); } catch { continue; }
+
+          if (event === "start") {
+            setState("speaking");
+          } else if (event === "delta") {
+            full += data.text || "";
+            setResponse(full);
+          } else if (event === "error") {
+            full += (full ? "\n\n" : "") + (data.message || "stream error");
+            setResponse(full);
+          } else if (event === "done") {
+            // finished
+          }
+        }
+      }
+      answer = full || "I could not generate a response.";
+    } catch {
+      answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
+      setResponse(answer);
+    }
+
+    setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
     if (activeSession) {
       api.post("/api/v1/access/messages", {
         session_token: activeSession.session_token,
@@ -284,11 +313,12 @@ export function IAMInterface() {
       }).catch(() => {});
     }
 
+    if (answer && !answer.startsWith("I'm unable")) speak(answer);
     setGenerating(false);
     const doneTimer = window.setTimeout(() => {
       setState("idle");
       setStatus(MODE_CONFIG[mode].status);
-    }, duration + 900);
+    }, 900);
     timersRef.current.push(doneTimer);
   };
 

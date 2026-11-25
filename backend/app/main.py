@@ -9,6 +9,7 @@ import loguru
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.deps import get_db_session
+from app.api.middleware import AuthMiddleware
 from app.api.routes import (
     identity,
     conversations,
@@ -34,17 +35,22 @@ from app.api.routes import (
     governance,
     reflection,
     globalaccess,
-    ownerauth,
     ainetwork,
     internetaccess,
     modelrouter,
     skillforge,
     cybersecurity,
     creatorapproval,
+    auth,
+    skillruntime,
     bootstrap,
     suggestions,
     development,
     economy,
+    nodes,
+    storage,
+    uwaie,
+    integrity,
 )
 from app.workers.autonomy_worker import autonomy_worker
 
@@ -101,6 +107,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Authentication and rate limiting (CORS stays outermost for preflight requests)
+app.add_middleware(AuthMiddleware)
+
 # API routes
 app.include_router(identity.router)
 app.include_router(conversations.router)
@@ -126,17 +135,22 @@ app.include_router(capabilities.router)
 app.include_router(governance.router)
 app.include_router(reflection.router)
 app.include_router(globalaccess.router)
-app.include_router(ownerauth.router)
 app.include_router(ainetwork.router)
 app.include_router(internetaccess.router)
 app.include_router(modelrouter.router)
 app.include_router(skillforge.router)
 app.include_router(cybersecurity.router)
 app.include_router(creatorapproval.router)
+app.include_router(auth.router)
+app.include_router(skillruntime.router)
 app.include_router(bootstrap.router)
 app.include_router(suggestions.router)
 app.include_router(development.router)
 app.include_router(economy.router)
+app.include_router(nodes.router)
+app.include_router(storage.router)
+app.include_router(uwaie.router)
+app.include_router(integrity.router)
 
 
 # Global exception handler
