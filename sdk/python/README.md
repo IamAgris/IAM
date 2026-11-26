@@ -2,11 +2,14 @@
 
 Official Python client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
 
-**Proposed PyPI name — not published.** Python 3.11+.
+Python 3.11+. Published to the GitHub Packages Python registry; authenticate with a token that has `read:packages`:
 
 ```bash
-pip install iam-sdk
+pip install --index-url https://pypi.pkg.github.com/IamAgris iam-sdk \
+  --extra-index-url https://pypi.org/simple
 ```
+
+`--extra-index-url` is needed for dependencies such as `httpx`, which are not mirrored in GitHub Packages.
 
 ```python
 import asyncio
@@ -53,4 +56,9 @@ the signing message without submitting. `decide` submits a signature obtained
 from a separate signer.
 
 Email is optional notification only. Authority comes from the verified
-signature over the one-time challenge (OD-03/OD-19), never from the channel.
+signature over the one-time challenge (OD-03/OD-19/OD-42), never from the channel.
+
+For production, configure `CREATOR_PUBLIC_KEY` and `CREATOR_SIGNER_ID` in the
+Core environment so signatures can be verified. `scripts/creator_signer_example.py`
+is a reference signer template — replace it with a hardware-key/HSM command.
+End-to-end evidence: `tests/creator_cli_e2e.md`.

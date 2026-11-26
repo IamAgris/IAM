@@ -1,0 +1,105 @@
+name: Publish SDK packages
+
+# Publishes the official SDKs to GitHub Packages. The repository is public, so
+# packages are published as public. Versions are immutable: bump the version in
+# each package.json/pyproject.toml before publishing again.
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Actually publish (default: dry run / pack only)"
+        type: boolean
+        default: false
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  npm:
+    name: npm (@iamagris/sdk, @iamagris/cli)
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH: ${{ inputs.publish == true || github.event_name == 'release' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: testing
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@iamagris"
+
+      - name: Scope the registry to this owner
+        run: npm config set @iamagris:registry https://npm.pkg.github.com
+
+      - name: Build and publish TypeScript SDK
+        working-directory: sdk/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci
+          npm run build
+          npm test
+          if [ "$PUBLISH" = "true" ]; then
+            npm publish --access public
+          else
+            npm pack --dry-run
+          fi
+
+      - name: Build and publish CLI
+        working-directory: sdk/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$PUBLISH" = "true" ]; then
+            # Published CLIs must depend on the registry package, not a local path.
+            node -e "const fs=require('fs');const p=require('./package.json');p.dependencies['@iamagris/sdk']=p.version;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+            npm install
+          else
+            npm ci
+          fi
+          npm run build
+          if [ "$PUBLISH" = "true" ]; then
+            npm publish --access public
+          else
+            npm pack --dry-run
+          fi
+
+  pypi:
+    name: PyPI (iam-sdk)
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH: ${{ inputs.publish == true || github.event_name == 'release' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: testing
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build twine
+
+      - name: Build distributions
+        working-directory: sdk/python
+        run: python -m build
+
+      - name: Verify distributions
+        working-directory: sdk/python
+        run: twine check dist/*
+
+      - name: Publish to GitHub Packages
+        if: env.PUBLISH == 'true'
+        working-directory: sdk/python
+        env:
+          TWINE_USERNAME: ${{ github.actor }}
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: twine upload --non-interactive --repository-url https://pypi.pkg.github.com/IamAgris dist/*

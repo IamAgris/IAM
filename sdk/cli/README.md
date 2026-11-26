@@ -1,11 +1,16 @@
-# @iam/cli (proposed)
+# @iamagris/cli
 
-Official CLI for IAM developers and node operators. It is a thin wrapper over `@iam/sdk` — no separate auth or protocol implementation. See [../PROTOCOL.md](../PROTOCOL.md).
+Official CLI for IAM developers and node operators. It is a thin wrapper over `@iamagris/sdk` — no separate auth or protocol implementation. See [../PROTOCOL.md](../PROTOCOL.md).
 
-**Proposed package name — not published.**
+Published to GitHub Packages as `@iamagris/cli`. Use the same scoped `.npmrc` as `@iamagris/sdk`:
+
+```ini
+@iamagris:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
 
 ```bash
-npm install -g @iam/cli
+npm install -g @iamagris/cli
 iam login
 iam core status
 iam node register my-node

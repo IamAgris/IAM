@@ -2,14 +2,19 @@
 
 Official TypeScript/JavaScript client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
 
-**Proposed package name — not published.**
+Published to GitHub Packages as `@iamagris/sdk`. Add the scope to `.npmrc` before installing:
+
+```ini
+@iamagris:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
 
 ```bash
-npm install @iam/sdk
+npm install @iamagris/sdk
 ```
 
 ```ts
-import { IAM } from "@iam/sdk";
+import { IAM } from "@iamagris/sdk";
 
 const iam = new IAM({
   endpoint: process.env.IAM_CORE_URL!,

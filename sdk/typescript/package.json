@@ -1,7 +1,11 @@
 {
-  "name": "@iam/sdk",
+  "name": "@iamagris/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript/JavaScript SDK for the IAM Core",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
