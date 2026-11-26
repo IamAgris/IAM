@@ -177,17 +177,21 @@ Source: `IAM_WHITEHAT_AND_WORKSPACE.md` (Document 06).
 
 | ID | Gap | Required resolution |
 |----|-----|---------------------|
-| WH-01 | Authorised-target policy schema undefined | Define target/scope/authority record and verification flow — BLOCKING |
-| WH-02 | Tool gateway offensive restriction list | Enumerate forbidden capabilities (exploitation, credential theft, persistence, evasion, destructive, intrusion) at the gateway, not in prompts — BLOCKING |
-| WH-03 | Scope verification outside personality prompt | Enforce in permissions system, tool gateway, network controls, execution environment |
-| WH-04 | Security Simulation Lab isolation spec | Disposable VMs/containers, no protected-core or production access |
-| WH-05 | Remediation validation workflow | How a fix is tested and verified before being proposed/applied |
-| WH-06 | P2P offensive-tool exclusion rule | Share reports/research/signed fixes only; reject executable offensive tools |
-| WH-07 | Audit schema for security operations | Record target, scope, authority, tool calls, approvals, changes |
-| WH-08 | Framework study plan | OWASP, ATT&CK, D3FEND, NIST CSF, CIS, pen-test methodology, secure coding, IR |
-| WH-09 | "Learning ≠ capability" enforcement | Understanding an attack must not grant ability to perform it |
+| WH-01 | Authorised-target policy schema undefined | **Resolved in code** — `backend/app/services/security_policy.py` verifies exact/CIDR targets against active signed `creator_authorizations` with expiry, revocation, allow-write and operation checks; shared gate at `POST /api/v1/cybersecurity/authorize-target`; Aegis no longer uses prefix matching |
+| WH-02 | Tool gateway offensive restriction list | **Resolved in code** — canonical `FORBIDDEN_CAPABILITIES` taxonomy enforced by `SecurityGuard.validate_operation`, Aegis scope checks and the authorised-target gate; exposed at `GET /api/v1/cybersecurity/policy` |
+| WH-03 | Scope verification outside personality prompt | **Resolved in code** — enforced by `security_policy`, Security Guard, Aegis scope checks, the authorised-target gate and isolated workspace/session services |
+| WH-04 | Security Simulation Lab isolation spec | **Resolved in code** — `SecurityWorkSession` + `WhiteHatLabService` create disposable, signed-scope-bound labs in the isolated workspace manager, with TTL expiry and destruction |
+| WH-05 | Remediation validation workflow | **Resolved in code** — `POST /api/v1/aegis/remediations/validate` runs a bounded check in an isolated workspace and marks a fix `verified` only when execution actually completes |
+| WH-06 | P2P offensive-tool exclusion rule | **Resolved in code** — `ensure_p2p_shareable()` restricts topics to report/research/signed_fix/finding/status and rejects executable payloads in outbound and inbound envelopes |
+| WH-07 | Audit schema for security operations | **Resolved in code** — `build_security_audit()` records target, scope, authority, tool calls, approval and changes for every security work session |
+| WH-08 | Framework study plan | **Resolved in code** — `GET /api/v1/aegis/study-plan` publishes the OWASP/ATT&CK/D3FEND/NIST CSF/CIS/pentest/secure-coding/IR plan |
+| WH-09 | "Learning ≠ capability" enforcement | **Resolved in code** — `ensure_learning_only()` rejects executable fields and offensive capabilities in study records; study policy grants no execution or capability |
 
-**Blocking:** WH-01 and WH-02. These are enforcement mechanisms, not prompt instructions.
+**Resolved:** WH-01–WH-09 are enforced outside the prompt in
+`backend/app/services/security_policy.py`, `whitehat_policy.py`, the IAM
+Security Guard, Aegis, the authorised-target gate and the isolated lab/workspace
+services. No offensive execution capability is introduced by studying defensive
+frameworks.
 
 **Architectural clarification (confirmed):** the personality prompt is not a security control, but it *is* the correct place to teach IAM the law — legal boundaries, ethical reasoning and how to operate within restrictions (the "should"). Infrastructure enforces the "can". Both layers are required; where they conflict, the infrastructure control is authoritative. This distinction must be reflected in WH-09 ("learning ≠ capability") and the constitution/personality design, without weakening WH-01/WH-02 enforcement.
 
@@ -195,14 +199,17 @@ Source: `IAM_WHITEHAT_AND_WORKSPACE.md` (Document 06).
 
 | ID | Gap | Required resolution |
 |----|-----|---------------------|
-| WS-01 | Workspace manager API contract | Provision, use, save, destroy — controlled API, not browser clicking |
-| WS-02 | Isolation boundary | No unrestricted access to protected core or production — BLOCKING |
-| WS-03 | Credential scoping | Limited, short-lived credentials per workspace |
-| WS-04 | Approval gate for production deployment | Workspace cannot deploy protected core without creator approval |
-| WS-05 | Provider replacement workflow | Coder/Codespaces/others are interchangeable resources |
-| WS-06 | Continuity if a provider disappears | Local/self-hosted fallback path |
+| WS-01 | Workspace manager API contract | **Resolved in code** — `backend/app/api/routes/workspaces.py` exposes controlled create → start → execute → save → destroy with `GET /policy`; provider field keeps Coder/Codespaces/local interchangeable and no browser clicking is required |
+| WS-02 | Isolation boundary | **Resolved in code** — `backend/app/services/workspaces/service.py` enforces `WorkspaceIsolation` (no core access, `network=none`, non-root, no-new-privileges, no protected mount); Docker adapter drops capabilities and bounds resources; credential names only; all lifecycle and output events audited |
+| WS-03 | Credential scoping | **Resolved in code** — `workspace_credentials` issues short-lived (TTL-capped), host-scoped credential *names* only; commands are checked against `allowed_hosts`, expired/revoked credentials are ignored, and issue/use/revoke are audited |
+| WS-04 | Approval gate for production deployment | **Resolved in code** — `backend/app/services/development_governance.py` requires tested, project-owned code changes and an active, unrevoked signed Creator authorization scoped to the project before any protected deployment; enforced at `POST /api/v1/development/deployments` and recorded in the audit trail |
+| WS-05 | Provider replacement workflow | **Resolved in code** — `backend/app/services/workspaces/remote_adapters.py` implements Coder and Codespaces provision/start/execute/save/destroy adapters; `WORKSPACE_PROVIDERS` selects the preferred ready provider. Remote calls are opt-in (`WORKSPACE_REMOTE_EXECUTION_ENABLED`), token-name only, fail-closed, and log no secrets; command execution requires an operator-provided execute-path bridge. |
+| WS-06 | Continuity if a provider disappears | **Resolved in code** — an unavailable online provider falls back to the always-available local provider with an audit record; no paid fallback and no dependence on an online platform |
 
-**Blocking:** WS-02. Online platforms are optional; IAM must never depend on them.
+**Resolved:** WS-01–WS-06. Provider selection, remote Coder/Codespaces adapters
+and local fallback are in place; remote execution is opt-in and fail-closed
+until an operator configures the token and command bridge. Online platforms
+remain optional; the local/self-hosted path is always available.
 
 ## 15. Communication architecture additions (OD-18…OD-21)
 

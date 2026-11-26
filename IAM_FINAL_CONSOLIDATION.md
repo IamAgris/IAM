@@ -62,10 +62,10 @@ A cross-cutting implementation addendum (`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM
 | — | `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` | Parent research/development architecture + frozen distributed free-compute requirements (OD-41) |
 | — | `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md` | OD-41 work packages, dependencies, priorities and acceptance tests |
 | — | `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` | Cross-cutting Python + Rust + TypeScript implementation allocation (not a decision) |
-| 24 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Human behaviour research, Equality of Existence and responsibility (OD-43, proposed) |
-| 25 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Income, crypto, trading and payments amendment (OD-44, proposed) |
+| 24 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Human behaviour research, Equality of Existence and responsibility (OD-43) |
+| 25 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Financial intelligence amendment: income, crypto, trading, payments; expanded to prediction markets, gaming intelligence and investments (OD-44, Amendment A) |
 | — | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
-| — | `IAM_OPENAPI.json` | Generated schema (113 paths, 103 schemas) |
+| — | `IAM_OPENAPI.json` | Generated schema (505 paths, 320 schemas) |
 
 ---
 
@@ -220,6 +220,8 @@ Each level requires its tests to pass before the next is declared complete. Auto
 ## 9. Conclusion
 
 The IAM architecture is **frozen at the feature level** and **complete at the requirements level**. The 7 open specification areas are RESOLVED (`IAM_OPEN_SPECS_RESOLVED.md`).
+
+**Real inference unified (26 Nov):** `app/services/model_inference.py` resolves one of three modes — hosted provider keys through LiteLLM, opted-in local Ollama (discovered via `/api/tags`), or explicit offline. `/api/v1/models/chat`, `/chat/stream` and the autonomy worker all use that same resolver; readiness is exposed at `GET /api/v1/models/readiness` without revealing keys. Unit smoke: `tests/model_inference_smoke.py` 3/3 (offline, hosted, Ollama).
 
 **Creator hardware signer ceremony implemented & verified (25 Nov):** `app/services/creator_keys.py` + `/api/v1/creator/keys/*` — Ed25519 keypair generation, offline challenge signing, signature verification, documented 8-step key ceremony. IAM runtime never holds the private key; admin scope required for ceremony endpoints. `tests/signer_acceptance.py` 9/9 — generation, signing, valid/wrong-decision/tampered-hash verification, ceremony docs, unsigned gateway rejection. The existing `creatorapproval_service.py` already enforced Ed25519 signatures over one-time challenges — this adds the missing key-generation tooling.
 

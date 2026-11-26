@@ -40,6 +40,9 @@ class CreatorEmailWorker:
         if not settings.creator_email_worker_enabled:
             logger.info("Creator email worker disabled")
             return
+        if settings.creator_email_worker_backend.lower() == "arq":
+            logger.info("Creator email retries are handled by the external ARQ worker")
+            return
         if self._task and not self._task.done():
             return
         self.state = "running"

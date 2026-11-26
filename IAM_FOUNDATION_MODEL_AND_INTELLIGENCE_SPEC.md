@@ -3,6 +3,7 @@
 **Document:** 23  
 **Confirmed decision:** OD-38 (extends `IAM_OWNER_DECISIONS.md`)  
 **Status:** CONFIRMED — owner direction, 25 November 2026  
+**Amendment (confirmed OD-46, 26 November 2026):** `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (Doc 23-A) establishes one shared primary model for frontend and backend (Qwen2.5-Coder 3B), hosted models as subordinate sub-agents, and a bridge from signed model releases to live inference. It supersedes only §1 and §3 below on local-model selection; all other provisions of this document remain authoritative.  
 **Extends:** canonical `IAM_DOC_02_INTELLIGENCE_EVOLUTION.md`; core systems 2 (Intelligence and Reasoning), 5 (Learning), 11 (Self-Evolution and Model Independence), 14 (Evaluation and Research)  
 **Related:** `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` (Doc 20 / OD-36), `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` (Doc 21 / OD-37), `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (OD-26), `IAM_HARDWARE_ADAPTATION.md` (OD-22)
 
@@ -17,7 +18,7 @@ The initial foundation model is a **set of two Qwen-family models**, not a singl
 | Role | Model | Where | Purpose |
 |------|-------|-------|---------|
 | General-reasoning anchor | **Qwen3.5-9B** | Hosted — Alibaba DashScope free tier (configured in LiteLLM) | Broad reasoning, research, language, finance, communication, world model |
-| Coding-first local baseline | **Qwen2.5-3B** | Local — Ollama on the Contabo core (`qwen2.5:3b`) | Private/low-resource coding, debugging, repository work, offline tasks. OD-38 reopened by owner 25 Nov 2026: coder-3b and qwen3.5-4b removed from the local set |
+| Coding-first local baseline | **Qwen2.5-Coder 3B** | Local — Ollama on the Contabo core (`qwen2.5-coder:3b`) | Shared primary brain for frontend and backend; private/low-resource coding, debugging, repository work, offline tasks. OD-46 (26 Nov 2026) supersedes the 25 Nov local-model choice; `qwen2.5:3b` remains an approved secondary local model |
 | Additional providers | NVIDIA NIM free endpoints; Google Gemini free tier | Hosted, replaceable | Reasoning, research, coding, independent cross-checking |
 | Gateway and router | LiteLLM + IAM's Intelligence Orchestrator | Local | One interface for all providers, failover, spend control, answer comparison |
 
@@ -154,4 +155,4 @@ Roadmap:
 - `backend/app/services/intel_router_service.py` — provider registry, including `ollama` as a local provider.
 - Pull the single approved local model before first use: `docker exec aura-ollama ollama pull qwen2.5:3b`.
 - `tests/model_competition/` — `provider_readiness.py` (credential/reachability check), `hardware_evidence.py` (Phase 1 facts; use `--target` on the Contabo core), `smoke_coding.py` / `full_benchmark.py` / `benchmark_qwen35.py` (bounded Phase 2 task, cold/warm matrix), `run_constrained.py` (resource sampling), `concurrent_check.py`, `diagnose_assertion.py`, `final_report.py`; evidence in `tests/model_competition/RESULTS.md`.
-- Evaluated local aliases (historical benchmark): `local-qwen-coder-3b` (best score), `local-qwen-3b`, `local-qwen3.5-4b` (requires `think=false`; slower and more memory-hungry on CPU). Owner direction of 25 Nov 2026 keeps **only `local-qwen-3b`** active; the others are not pulled or routed without a new decision.
+- Evaluated local aliases (historical benchmark): `local-qwen-coder-3b` (best score), `local-qwen-3b`, `local-qwen3.5-4b` (requires `think=false`; slower and more memory-hungry on CPU). Owner direction of 25 Nov 2026 kept only `local-qwen-3b` active; **OD-46 (26 Nov 2026) reopens that choice and makes `local-qwen-coder-3b` the shared primary**, with `local-qwen-3b` retained as an approved secondary alias. `local-qwen3.5-4b` remains inactive without a new decision.

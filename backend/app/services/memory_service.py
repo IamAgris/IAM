@@ -6,11 +6,27 @@ import uuid
 import httpx
 import loguru
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, text, or_
 from app.core.config import settings
 from app.models.memory import MemoryItem, MemoryEmbedding
+from app.models.security import AuditEvent
+from app.services.source_identity import node_id_for_url
+from urllib.parse import urlparse
 
 logger = loguru.logger
+
+
+async def _emit_recall(db, **details: Any) -> None:
+    """Emit a privacy-filtered recall signal to the durable activity stream."""
+    db.add(
+        AuditEvent(
+            event_type="memory.retrieved",
+            actor="memory-service",
+            target="memory",
+            details=details,
+        )
+    )
+    await db.commit()
 
 
 class MemoryService:
@@ -70,7 +86,39 @@ class MemoryService:
         # Generate query embedding
         query_embedding = await self._generate_embedding(query)
         if not query_embedding:
-            return []
+            # Fallback keyword recall when no embedding model is configured.
+            # Still produces a real recall event with provenance fingerprints.
+            result = await self.db.execute(
+                select(MemoryItem)
+                .where(
+                    or_(
+                        MemoryItem.content.ilike(f"%{query}%"),
+                        MemoryItem.topic.ilike(f"%{query}%"),
+                    )
+                )
+                .limit(limit)
+            )
+            rows = [
+                (
+                    item.id, item.content, item.memory_type, item.source,
+                    item.confidence_level, item.topic, item.created_at, 0.0,
+                )
+                for item in result.scalars().all()
+            ]
+            await self._emit_recall_from_rows(rows)
+            return [
+                {
+                    "id": str(row[0]),
+                    "content": row[1],
+                    "memory_type": row[2],
+                    "source": row[3],
+                    "confidence_level": float(row[4]) if row[4] else 0.5,
+                    "topic": row[5],
+                    "created_at": row[6].isoformat() if row[6] else None,
+                    "similarity": 0.0,
+                }
+                for row in rows
+            ]
 
         # Build SQL query with pgvector cosine distance
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
@@ -106,6 +154,8 @@ class MemoryService:
             )
 
         rows = result.fetchall()
+        await self._emit_recall_from_rows(rows)
+
         return [
             {
                 "id": str(row[0]),
@@ -119,6 +169,28 @@ class MemoryService:
             }
             for row in rows
         ]
+
+    async def _emit_recall_from_rows(self, rows) -> None:
+        """Emit only counts and source fingerprints — never memory content."""
+        if not rows:
+            return
+        public_nodes = []
+        for row in rows:
+            source = row[3]
+            if isinstance(source, str) and source.startswith(("http://", "https://")):
+                public_nodes.append(
+                    {
+                        "node_id": node_id_for_url(source),
+                        "domain": urlparse(source).netloc,
+                    }
+                )
+        await _emit_recall(
+            self.db,
+            label="Retrieving memory",
+            result_count=len(rows),
+            memory_class="public_research" if public_nodes else "private",
+            nodes=public_nodes[:6],
+        )
 
     async def verify_memory(self, memory_id: str, status: str) -> bool:
         """Mark a memory as verified, disputed, or retracted."""

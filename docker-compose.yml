@@ -151,8 +151,42 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aura-storage}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       IAM_BOOTSTRAP_API_KEY: ${IAM_BOOTSTRAP_API_KEY:-}
+      CREATOR_EMAIL: ${CREATOR_EMAIL:-}
+      CREATOR_PUBLIC_KEY: ${CREATOR_PUBLIC_KEY:-}
+      CREATOR_SIGNER_ID: ${CREATOR_SIGNER_ID:-creator-hardware-signer}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      CREATOR_GATEWAY_SECRET: ${CREATOR_GATEWAY_SECRET:-}
       AUTH_ENABLED: ${AUTH_ENABLED:-true}
-      IAM_SDK_DEFAULT_MODEL: ${IAM_SDK_DEFAULT_MODEL:-nvidia-llama-3.3-70b}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+      CREATOR_EMAIL_WORKER_BACKEND: ${CREATOR_EMAIL_WORKER_BACKEND:-loop}
+      # Docker secret file paths take precedence over literal env values.
+      APP_SECRET_KEY_FILE: ${APP_SECRET_KEY_FILE:-}
+      SESSION_SECRET_FILE: ${SESSION_SECRET_FILE:-}
+      ENCRYPTION_KEY_FILE: ${ENCRYPTION_KEY_FILE:-}
+      CREATOR_PUBLIC_KEY_FILE: ${CREATOR_PUBLIC_KEY_FILE:-}
+      CREATOR_GATEWAY_SECRET_FILE: ${CREATOR_GATEWAY_SECRET_FILE:-}
+      VOICE_TTS_URL: ${VOICE_TTS_URL:-}
+      VISION_FFMPEG_PATH: ${VISION_FFMPEG_PATH:-ffmpeg}
+      ARTEX_ENABLED: ${ARTEX_ENABLED:-false}
+      ARTEX_BASE_URL: ${ARTEX_BASE_URL:-http://127.0.0.1:8787}
+      ARTEX_DRY_RUN: ${ARTEX_DRY_RUN:-true}
+      ARTEX_MCP_TOKEN: ${ARTEX_MCP_TOKEN:-}
+      IAM_SDK_DEFAULT_MODEL: ${IAM_SDK_DEFAULT_MODEL:-nvidia-nemotron-3.5-lightning}
+      # One shared primary model for frontend and backend. Hosted models are
+      # optional specialists reached only by explicit model id.
+      IAM_PRIMARY_MODEL: ${IAM_PRIMARY_MODEL:-local-qwen-coder-3b}
+      IAM_PRIMARY_LOCAL_TAG: ${IAM_PRIMARY_LOCAL_TAG:-qwen2.5-coder:3b}
+      # Cold local model loads on a 4 vCPU core can exceed a short timeout.
+      INFERENCE_CHAT_TIMEOUT_SECONDS: ${INFERENCE_CHAT_TIMEOUT_SECONDS:-300}
+      INFERENCE_STREAM_TIMEOUT_SECONDS: ${INFERENCE_STREAM_TIMEOUT_SECONDS:-300}
+      # Real inference: hosted keys (free-only policy enforced by LiteLLM config)
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Opt-in local inference via Ollama
+      OLLAMA_ENABLED: ${OLLAMA_ENABLED:-false}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       # UWAIE browser runtime lives outside /app so container rebuilds can
       # reinstall it explicitly (see README).
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
@@ -165,6 +199,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      # Playwright browsers survive container recreation (UWAIE runtime).
+      - aura_playwright_data:/ms-playwright
     networks:
       - aura-network
 
@@ -175,6 +211,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        IAM_API_URL: http://backend:8000
     container_name: aura-frontend
     restart: unless-stopped
     deploy:
@@ -223,11 +261,58 @@ services:
     networks:
       - aura-network
 
+  # OD-08 ARQ worker for Creator email retries. Optional profile:
+  #   docker compose --profile arq up -d
+  # Set CREATOR_EMAIL_WORKER_BACKEND=arq to stop the in-process loop.
+  creator-email-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-creator-email-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_creator_email.WorkerSettings
+    profiles: ["arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # Doc 21 / OD-37: optional Caddy edge entry point. Enable with:
+  #   docker compose --profile edge up -d
+  # Transport only — no authority or decision logic runs here.
+  caddy:
+    image: caddy:2-alpine
+    container_name: aura-caddy
+    restart: unless-stopped
+    profiles: ["edge"]
+    ports:
+      - "${EDGE_PORT:-8080}:8080"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - aura_caddy_data:/data
+      - aura_caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - aura-network
+
 volumes:
+  aura_caddy_data:
+  aura_caddy_config:
   aura_postgres_data:
   aura_redis_data:
   aura_minio_data:
   aura_ollama_data:
+  aura_playwright_data:
 
 networks:
   aura-network:

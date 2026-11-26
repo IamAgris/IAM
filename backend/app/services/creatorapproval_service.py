@@ -440,6 +440,31 @@ class CreatorApprovalService:
         )
         return [self._outbox_dict(row) for row in result.scalars().all()]
 
+    async def resolve_dead_letter(self, request_id: str) -> Dict[str, Any]:
+        """Resolve a dead letter and re-queue its email for immediate retry."""
+        result = await self.db.execute(
+            select(CreatorEmailDeadLetter).where(
+                CreatorEmailDeadLetter.request_id == request_id
+            )
+        )
+        dead = result.scalar_one_or_none()
+        if not dead:
+            raise LookupError(f"Dead letter not found: {request_id}")
+        outbox = await self._outbox(request_id)
+        outbox.status = "pending"
+        outbox.attempts = 0
+        outbox.last_error = None
+        dead.resolved_at = _now()
+        await self._audit(
+            channel="creator_email",
+            direction="outbound",
+            purpose="creator_email_dead_letter_resolved",
+            request_id=request_id,
+        )
+        await self.db.commit()
+        delivery = await self.deliver_request(request_id, force=True)
+        return {"request_id": request_id, "resolved": True, "delivery": delivery}
+
     async def challenge_for_signer(self, request_id: str) -> Dict[str, Any]:
         """Challenge material for the external signer; never includes a private key."""
         request = await self._request(request_id)

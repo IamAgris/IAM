@@ -176,6 +176,15 @@ async def dead_letters(db: AsyncSession = Depends(get_db_session)):
     return await _run(CreatorApprovalService(db).dead_letters)
 
 
+@router.post("/outbox/dead-letters/{request_id}/resolve")
+async def resolve_dead_letter(
+    request_id: str, db: AsyncSession = Depends(get_db_session)
+):
+    return await _run(
+        CreatorApprovalService(db).resolve_dead_letter, request_id
+    )
+
+
 @router.post("/outbox/retry")
 async def retry_outbox(db: AsyncSession = Depends(get_db_session)):
     """Worker-friendly retry of all pending/failed email deliveries."""

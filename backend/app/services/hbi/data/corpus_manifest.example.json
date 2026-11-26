@@ -1,0 +1,42 @@
+[
+  {
+    "source_id": "SRC-0001",
+    "path": "REPLACE_WITH_PATH_RELATIVE_TO_ROOT",
+    "source": {
+      "title": "Example Open Research Article",
+      "origin": "https://example.org/research",
+      "collection_date": "2026-11-27"
+    },
+    "licensing": {
+      "licence_id": "CC-BY-4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+      "permission_evidence": null,
+      "commercial_use_allowed": true,
+      "attribution_required": true,
+      "ingestion_allowed": true,
+      "storage_allowed": true,
+      "analysis_allowed": true,
+      "model_training_allowed": false,
+      "licence_expires_at": null,
+      "revocation_reference": null
+    },
+    "permitted_purposes": ["research", "historical", "aggregate_analysis"],
+    "lawful_basis": {
+      "applies_to_living_persons": false,
+      "basis": "not_applicable",
+      "evidence_reference": null
+    },
+    "privacy": {
+      "contains_personal_information": false,
+      "contains_sensitive_personal_information": false,
+      "identifiable_profiles": false,
+      "sensitive_trait_inference": false
+    },
+    "governance": {
+      "validation_status": "pending",
+      "validated_by": null,
+      "validation_date": null,
+      "restrictions": []
+    }
+  }
+]

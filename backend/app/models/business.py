@@ -35,6 +35,7 @@ class BusinessProject(Base):
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     opportunity_id = Column(UUID(as_uuid=True), ForeignKey("business_opportunities.id", ondelete="SET NULL"), nullable=True)
+    legal_entity = Column(Text, nullable=True)  # OD-02 named owner entity, never IAM itself
     status = Column(Text, nullable=False, default="planning")
     revenue = Column(Numeric(15, 4), nullable=False, default=0)
     expenses = Column(Numeric(15, 4), nullable=False, default=0)
@@ -101,6 +102,28 @@ class FinancialTransaction(Base):
     )
 
     ledger_entries = relationship("FinancialLedger", backref="transaction", cascade="all, delete-orphan")
+
+
+class IncomingReceipt(Base):
+    """An incoming payment recorded under separate authority from spending.
+
+    Receiving funds never creates autonomous spending budget (OD-25).
+    """
+
+    __tablename__ = "incoming_receipts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    transaction_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("financial_transactions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source = Column(Text, nullable=False)
+    reference = Column(Text, nullable=False)
+    amount = Column(Numeric(15, 4), nullable=False)
+    authorization_id = Column(Text, nullable=True)
+    received_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class CryptoActivity(Base):

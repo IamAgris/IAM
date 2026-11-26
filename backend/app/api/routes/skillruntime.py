@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db_session
-from app.services.skillruntime.service import SkillRuntimeError, SkillRuntimeService
+from app.services.skillruntime.service import (
+    SkillRuntimeError,
+    SkillRuntimeRateLimited,
+    SkillRuntimeService,
+)
 
 router = APIRouter(prefix="/api/v1/skill-runtime", tags=["skill-runtime"])
 
@@ -24,6 +28,8 @@ class InvokeRequest(BaseModel):
 async def _run(request: Request, operation: Callable, *args: Any, **kwargs: Any) -> Any:
     try:
         return await operation(*args, **kwargs)
+    except SkillRuntimeRateLimited as exc:
+        return JSONResponse(status_code=429, content={"detail": str(exc)})
     except SkillRuntimeError as exc:
         return JSONResponse(status_code=403, content={"detail": str(exc)})
     except LookupError as exc:
@@ -38,7 +44,14 @@ async def policy():
         "enabled": settings.skill_runtime_enabled,
         "adapter": settings.skill_runtime_adapter,
         "default_adapter": "stub",
-        "network_execution": False,
+        "network_execution": bool(
+            settings.skill_runtime_network_enabled and settings.skill_runtime_network_name
+        ),
+        "network_name": (
+            settings.skill_runtime_network_name
+            if settings.skill_runtime_network_enabled
+            else None
+        ),
         "container_limits": {
             "memory": settings.skill_runtime_memory,
             "cpus": settings.skill_runtime_cpus,
@@ -76,6 +89,15 @@ async def invoke(
         arguments=payload.arguments,
         caller=caller,
     )
+
+
+@router.get("/executions/{execution_id}/logs")
+async def execution_logs(
+    execution_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await _run(request, SkillRuntimeService(db).logs, execution_id)
 
 
 @router.get("/executions")

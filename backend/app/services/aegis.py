@@ -10,11 +10,17 @@ It respects the Security Guard's deny-by-default posture.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import os
 import re
 import loguru
+
+from app.services.security_policy import (
+    forbidden_capability,
+    is_broad_target,
+    target_matches,
+)
 
 logger = loguru.logger
 
@@ -61,22 +67,38 @@ class AegisEngine:
             "safe": not findings,
             "findings": findings,
             "risk": max([f["severity"] for f in findings], key=lambda s: {"low":0,"medium":1,"high":2,"critical":3}.get(s,0)) if findings else "low",
-            "analyzed_at": datetime.utcnow().isoformat(),
+            "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
         self.findings.extend(findings)
         return result
 
     # --- Component 2: Ethical Scope Verification ---
     def verify_scope(self, target: str, authorized_targets: List[str], action: str = "read") -> Dict[str, Any]:
-        """Verify a target is authorized before any defensive assessment."""
-        allowed = any(target.startswith(t) for t in authorized_targets)
+        """Verify a target against canonical WH-01/WH-02 policy.
+
+        ``authorized_targets`` must come from a signed Creator authorization;
+        prefix matching is never sufficient (``evil-example.com`` must not
+        inherit authority for ``example.com``).
+        """
+        capability = forbidden_capability(target) or forbidden_capability(action)
+        broad = is_broad_target(target)
+        allowed = (
+            not capability
+            and not broad
+            and any(target_matches(target, item) for item in authorized_targets or [])
+        )
+        reason = "target in authorized scope" if allowed else "target outside authorized scope — denied"
+        if broad:
+            reason = "wildcard or internet-wide targets are forbidden"
+        elif capability:
+            reason = f"prohibited capability: {capability}"
         result = {
             "target": target, "action": action,
             "permitted": allowed,
-            "reason": "target in authorized scope" if allowed else "target outside authorized scope — denied",
+            "reason": reason,
         }
         if not allowed:
-            self.actions.append({"action": "deny_scope", "target": target, "ts": datetime.utcnow().isoformat()})
+            self.actions.append({"action": "deny_scope", "target": target, "ts": datetime.now(timezone.utc).isoformat()})
         return result
 
     # --- Component 3: Defensive Vulnerability Research (safe file/dir checks) ---
@@ -99,7 +121,7 @@ class AegisEngine:
         except OSError as e:
             issues.append({"type": "stat_failed", "path": path, "severity": "low", "detail": str(e)[:120]})
         self.findings.extend(issues)
-        return {"path": path, "issues": issues, "checked_at": datetime.utcnow().isoformat()}
+        return {"path": path, "issues": issues, "checked_at": datetime.now(timezone.utc).isoformat()}
 
     # --- Component 4: Secure Remediation Engine ---
     def recommend_fix(self, finding_type: str) -> str:
@@ -136,7 +158,7 @@ class AegisEngine:
         result = {"url": url, "host": host, "permitted": permitted,
                   "reason": "allowed" if permitted else "host not in allowlist or is internal/metadata"}
         if not permitted:
-            self.actions.append({"action": "block_egress", "host": host, "ts": datetime.utcnow().isoformat()})
+            self.actions.append({"action": "block_egress", "host": host, "ts": datetime.now(timezone.utc).isoformat()})
         return result
 
     # --- Component 6: Threat Intelligence (shared data only) ---
@@ -156,7 +178,7 @@ class AegisEngine:
             "type": finding.get("type"),
             "severity": finding.get("severity"),
             "evidence_hash": digest,
-            "shared_at": datetime.utcnow().isoformat(),
+            "shared_at": datetime.now(timezone.utc).isoformat(),
             "note": "Only type, severity and an evidence hash are shared. No raw user data, private memory or credentials.",
         }
 
@@ -175,7 +197,7 @@ class AegisEngine:
             results.append({"text": text[:40], "expected_safe": expected_safe, "actual_safe": r["safe"],
                             "passed": r["safe"] == expected_safe})
         passed = all(r["passed"] for r in results)
-        return {"passed": passed, "cases": results, "tested_at": datetime.utcnow().isoformat()}
+        return {"passed": passed, "cases": results, "tested_at": datetime.now(timezone.utc).isoformat()}
 
     def report(self) -> Dict[str, Any]:
         return {

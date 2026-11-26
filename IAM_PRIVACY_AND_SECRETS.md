@@ -38,10 +38,18 @@ existing visitor, never trusted as a new identity.
 - Postgres integration check: visitor messages are stored with `enc:v1:` and are
   returned as plaintext through the inspect endpoint; correction and deletion pass.
 
+## Also completed
+
+- Redis-backed shared rate limiting (`RATE_LIMIT_BACKEND=redis`).
+- Creator email dead-letter queue and optional alert webhook.
+- Skill Runtime full log capture (streamed to the audit trail) and per-skill
+  invocation limits (shared through Redis when configured).
+- Knowledge contributions and the durable `GET /api/v1/events` SSE stream.
+- Overlapping-relationship `SAWarning`s in `worldmodel.py` resolved with `overlaps=`.
+
 ## Remaining
 
-- Redis-backed rate limiting for multi-replica deployments.
-- Outbox dead-letter/alerting after repeated retry failures.
-- Skill Runtime log streaming and per-skill invocation limits.
-- Placeholder services (autonomy reasoning, TTS/VAD, video frames, research verification).
-- `SAWarning`s in `worldmodel.py`.
+- Local-only media processing (TTS/VAD/video frames) still needs live provider/key verification.
+- Autonomy reasoning and research verification are implemented against the shared
+  inference resolver (`GET /api/v1/models/readiness`); no key means explicit
+  offline mode, never fabricated reasoning.

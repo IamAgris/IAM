@@ -7,14 +7,17 @@ and the script passes a final static inspection.
 
 from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.rate_limit import RateLimiter, RedisRateLimiter
 from app.models.skillforge import SkillPackage
-from app.models.skillruntime import SkillRuntimeExecution
+from app.models.security import AuditEvent
+from app.models.skillruntime import SkillRuntimeExecution, SkillRuntimeLog
 from app.services.skillforge.permissions import PermissionDenied
 from app.services.skillforge.service import SkillForgeService
 from app.services.skillruntime.adapters import (
@@ -26,6 +29,49 @@ from app.services.skillruntime.adapters import (
 
 class SkillRuntimeError(PermissionError):
     """Raised when a skill cannot be safely invoked."""
+
+
+class SkillRuntimeRateLimited(SkillRuntimeError):
+    """Raised when a skill has exceeded its per-skill invocation budget."""
+
+
+_skill_limiters: Dict[str, RateLimiter] = {}
+_shared_limiters: Dict[str, RedisRateLimiter] = {}
+
+
+def audit_log_chunks(
+    stream: str, content: str, chunk_size: Optional[int] = None
+) -> List[Dict[str, Any]]:
+    """Split execution output into bounded audit events without losing bytes."""
+    size = max(1, chunk_size or settings.skill_runtime_audit_log_chunk_chars)
+    return [
+        {
+            "event_type": "skill_runtime_log",
+            "stream": stream,
+            "sequence": index,
+            "content": content[start : start + size],
+        }
+        for index, start in enumerate(range(0, len(content), size))
+    ]
+
+
+async def check_invocation_limit(skill_id: str, caller: str) -> bool:
+    """Enforce the per-skill budget locally or across replicas via Redis."""
+    key = f"skill-runtime:{skill_id}:{caller}"
+    if settings.rate_limit_backend.lower() == "redis":
+        limiter = _shared_limiters.setdefault(
+            caller,
+            RedisRateLimiter(
+                settings.redis_url, settings.skill_runtime_per_skill_limit_per_minute
+            ),
+        )
+        allowed, _ = await limiter.check(key)
+        return allowed
+    limiter = _skill_limiters.setdefault(
+        caller, RateLimiter(settings.skill_runtime_per_skill_limit_per_minute)
+    )
+    allowed, _ = limiter.check(key)
+    return allowed
 
 
 class SkillRuntimeService:
@@ -55,6 +101,7 @@ class SkillRuntimeService:
         dry_run: bool,
         result: Dict[str, Any],
         error: Optional[str] = None,
+        network: bool = False,
     ) -> str:
         execution = SkillRuntimeExecution(
             skill_id=skill_id,
@@ -70,6 +117,21 @@ class SkillRuntimeService:
         )
         self.db.add(execution)
         await self.db.flush()
+        self.db.add(
+            AuditEvent(
+                event_type="skill_runtime_invocation",
+                actor=caller,
+                target=str(execution.id),
+                details={
+                    "skill_id": skill_id,
+                    "permission": permission,
+                    "adapter": adapter,
+                    "status": status,
+                    "network": "isolated" if network else "none",
+                    "error": error,
+                },
+            )
+        )
         return str(execution.id)
 
     async def capabilities(self, skill_id: str) -> Dict[str, Any]:
@@ -93,6 +155,12 @@ class SkillRuntimeService:
         try:
             if not settings.skill_runtime_enabled:
                 raise SkillRuntimeError("Skill Runtime is disabled")
+
+            if not await check_invocation_limit(skill_id, caller):
+                raise SkillRuntimeRateLimited(
+                    "per-skill invocation limit exceeded; retry shortly"
+                )
+
             package = await self._package(skill_id)
             if package.status != "active":
                 raise SkillRuntimeError(
@@ -104,9 +172,15 @@ class SkillRuntimeService:
                 raise SkillRuntimeError(
                     f"Permission '{permission}' is not in the skill's effective permissions"
                 )
-            if effective["network_access"]:
+            network_access = bool(effective["network_access"])
+            configured_network = (
+                settings.skill_runtime_network_name
+                if settings.skill_runtime_network_enabled
+                else None
+            )
+            if network_access and not configured_network:
                 raise SkillRuntimeError(
-                    "Network-enabled skill execution is not enabled in this deployment"
+                    "skill requires network_access but no restricted network is configured"
                 )
 
             expected = package.checksum
@@ -140,6 +214,7 @@ class SkillRuntimeService:
                 dry_run=True,
                 result={},
                 error=str(exc),
+                network=bool(locals().get("network_access", False)),
             )
             await self.db.commit()
             raise SkillRuntimeError(str(exc)) from exc
@@ -149,7 +224,8 @@ class SkillRuntimeService:
             skill_dir=directory,
             script=script,
             arguments=arguments,
-            network=False,
+            network=network_access,
+            network_name=configured_network if network_access else None,
             filesystem=effective["filesystem_access"],
             checksum=actual,
         )
@@ -167,6 +243,7 @@ class SkillRuntimeService:
                 dry_run=adapter_name != "docker",
                 result={},
                 error=str(exc),
+                network=network_access,
             )
             await self.db.commit()
             raise SkillRuntimeError(str(exc)) from exc
@@ -180,7 +257,36 @@ class SkillRuntimeService:
             status=outcome["status"],
             dry_run=bool(outcome.get("dry_run")),
             result=outcome,
+            network=network_access,
         )
+        for stream in ("stdout", "stderr"):
+            content = str(outcome.get(stream) or "")
+            if not content:
+                continue
+            # Full output goes to the durable audit trail in bounded chunks;
+            # the runtime table keeps only a preview for fast UI reads.
+            for chunk in audit_log_chunks(stream, content):
+                self.db.add(
+                    AuditEvent(
+                        event_type=chunk["event_type"],
+                        actor=caller,
+                        target=execution_id,
+                        details={
+                            "skill_id": skill_id,
+                            "execution_id": execution_id,
+                            "stream": chunk["stream"],
+                            "sequence": chunk["sequence"],
+                            "content": chunk["content"],
+                        },
+                    )
+                )
+            self.db.add(
+                SkillRuntimeLog(
+                    execution_id=UUID(execution_id),
+                    stream=stream,
+                    content=content[: settings.skill_runtime_max_log_chars],
+                )
+            )
         await self.db.commit()
         return {
             "skill_id": skill_id,
@@ -211,4 +317,15 @@ class SkillRuntimeService:
                 "created_at": e.created_at.isoformat() if e.created_at else None,
             }
             for e in result.scalars().all()
+        ]
+
+    async def logs(self, execution_id: str) -> List[Dict[str, Any]]:
+        result = await self.db.execute(
+            select(SkillRuntimeLog)
+            .where(SkillRuntimeLog.execution_id == UUID(execution_id))
+            .order_by(SkillRuntimeLog.id.asc())
+        )
+        return [
+            {"stream": row.stream, "content": row.content}
+            for row in result.scalars().all()
         ]

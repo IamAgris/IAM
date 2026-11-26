@@ -124,6 +124,16 @@ class FileSystemArtifactStore:
             if key.startswith(f"experiments/{experiment_id}/")
         ]
 
+    def keys(self, prefix: str = "") -> List[str]:
+        """Scan the store on disk so state survives a process restart."""
+        base = self.root.resolve()
+        return [
+            path.relative_to(base).as_posix()
+            for path in sorted(base.rglob("*"))
+            if path.is_file()
+            and (not prefix or path.relative_to(base).as_posix().startswith(prefix))
+        ]
+
 
 def persist_manifest(store: ArtifactStore, experiment_id: str, manifest: Dict) -> ResearchArtifact:
     payload = json.dumps(manifest, sort_keys=True, indent=2).encode("utf-8")

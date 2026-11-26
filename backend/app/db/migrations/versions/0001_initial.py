@@ -87,6 +87,23 @@ CREATE TABLE approval_policies (
 );
     ''')
     op.execute(r'''
+CREATE TABLE assistant_systems (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	vendor TEXT NOT NULL, 
+	official_docs_url TEXT NOT NULL, 
+	integration_method TEXT NOT NULL, 
+	public_capabilities JSON NOT NULL, 
+	terms_url TEXT, 
+	status TEXT NOT NULL, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_system_status CHECK (status IN ('studied', 'integration_available', 'replicated')), 
+	UNIQUE (name)
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE audit_events (
 	id UUID NOT NULL, 
 	event_type TEXT NOT NULL, 
@@ -228,6 +245,21 @@ CREATE TABLE conversations (
 );
     ''')
     op.execute(r'''
+CREATE TABLE creator_email_dead_letters (
+	id UUID NOT NULL, 
+	request_id TEXT NOT NULL, 
+	recipient TEXT NOT NULL, 
+	attempts INTEGER NOT NULL, 
+	last_error TEXT, 
+	failed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id)
+);
+    ''')
+    op.execute(r'''
+CREATE UNIQUE INDEX ix_creator_email_dead_letters_request_id ON creator_email_dead_letters (request_id);
+    ''')
+    op.execute(r'''
 CREATE TABLE creator_email_outbox (
 	id UUID NOT NULL, 
 	request_id TEXT NOT NULL, 
@@ -246,6 +278,27 @@ CREATE TABLE creator_email_outbox (
     ''')
     op.execute(r'''
 CREATE UNIQUE INDEX ix_creator_email_outbox_request_id ON creator_email_outbox (request_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE creator_messages (
+	id UUID NOT NULL, 
+	message_id TEXT NOT NULL, 
+	direction TEXT NOT NULL, 
+	purpose TEXT NOT NULL, 
+	subject TEXT NOT NULL, 
+	body TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	authority_bearing BOOLEAN NOT NULL, 
+	request_id TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_creator_message_direction CHECK (direction IN ('outbound', 'inbound')), 
+	CONSTRAINT ck_creator_message_purpose CHECK (purpose IN ('question', 'status_update', 'reply')), 
+	CONSTRAINT ck_creator_message_no_authority CHECK (authority_bearing = false)
+);
+    ''')
+    op.execute(r'''
+CREATE UNIQUE INDEX ix_creator_messages_message_id ON creator_messages (message_id);
     ''')
     op.execute(r'''
 CREATE TABLE creator_requests (
@@ -390,10 +443,19 @@ CREATE TABLE external_agents (
 	is_active BOOLEAN NOT NULL, 
 	discovered_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	last_contacted_at TIMESTAMP WITH TIME ZONE, 
+	claimed_identity TEXT, 
+	creator TEXT, 
+	operator TEXT, 
+	stated_purpose TEXT, 
+	identity_verification TEXT NOT NULL, 
+	verification_evidence JSON NOT NULL, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	expertise JSON NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_agent_protocol CHECK (protocol IN ('rest', 'mcp', 'a2a', 'websocket', 'webhook')), 
 	CONSTRAINT ck_agent_status CHECK (status IN ('discovered', 'contacted', 'trusted', 'blocked')), 
-	CONSTRAINT ck_agent_trust_score CHECK (trust_score BETWEEN 0 AND 1)
+	CONSTRAINT ck_agent_trust_score CHECK (trust_score BETWEEN 0 AND 1), 
+	CONSTRAINT ck_agent_identity_verification CHECK (identity_verification IN ('self-reported', 'verified'))
 );
     ''')
     op.execute(r'''
@@ -446,6 +508,84 @@ CREATE TABLE financial_transactions (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_transaction_type CHECK (type IN ('income', 'expense', 'transfer'))
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE free_sandbox_providers (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	provider_type TEXT NOT NULL, 
+	capabilities JSON NOT NULL, 
+	terms_url TEXT NOT NULL, 
+	docs_verified_at TIMESTAMP WITH TIME ZONE, 
+	headless BOOLEAN NOT NULL, 
+	registration_status TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	credential_env TEXT, 
+	config JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_free_sandbox_registration_status CHECK (registration_status IN ('candidate', 'registered', 'pending_creator_approval', 'unavailable')), 
+	UNIQUE (name)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE geo_data_files (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	data_format TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	data JSON NOT NULL, 
+	licence TEXT NOT NULL, 
+	source TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_geo_data_files_content_hash ON geo_data_files (content_hash);
+    ''')
+    op.execute(r'''
+CREATE TABLE geo_places (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	place_type TEXT NOT NULL, 
+	country_code TEXT, 
+	latitude FLOAT NOT NULL, 
+	longitude FLOAT NOT NULL, 
+	attributes JSON NOT NULL, 
+	source TEXT NOT NULL, 
+	source_url TEXT, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_geo_place_latitude CHECK (latitude BETWEEN -90 AND 90), 
+	CONSTRAINT ck_geo_place_longitude CHECK (longitude BETWEEN -180 AND 180), 
+	CONSTRAINT ck_geo_place_confidence CHECK (confidence BETWEEN 0 AND 1)
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_geo_places_name ON geo_places (name);
+    ''')
+    op.execute(r'''
+CREATE TABLE geo_providers (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	kind TEXT NOT NULL, 
+	base_url TEXT NOT NULL, 
+	licence TEXT NOT NULL, 
+	free_quota TEXT, 
+	requires_key BOOLEAN NOT NULL, 
+	is_paid BOOLEAN NOT NULL, 
+	paid_use_approved BOOLEAN NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	terms_url TEXT, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_geo_provider_kind CHECK (kind IN ('tile', 'geocoder', 'routing', 'dataset', 'live_feed')), 
+	UNIQUE (name)
 );
     ''')
     op.execute(r'''
@@ -515,6 +655,21 @@ CREATE TABLE integration_registry (
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE integrity_manifests (
+	id UUID NOT NULL, 
+	version TEXT NOT NULL, 
+	root_hash TEXT NOT NULL, 
+	manifest JSON NOT NULL, 
+	signed_by TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_integrity_manifests_root_hash ON integrity_manifests (root_hash);
     ''')
     op.execute(r'''
 CREATE TABLE internet_events (
@@ -602,6 +757,25 @@ CREATE TABLE language_profiles (
 );
     ''')
     op.execute(r'''
+CREATE TABLE legal_sources (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	authority_type TEXT NOT NULL, 
+	url TEXT NOT NULL, 
+	feed_url TEXT, 
+	reliability TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	last_checked_at TIMESTAMP WITH TIME ZONE, 
+	last_content_hash TEXT, 
+	terms_url TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_source_authority_type CHECK (authority_type IN ('government', 'parliament', 'court', 'regulator', 'central_bank', 'tax_authority', 'international', 'security_authority')), 
+	UNIQUE (name)
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE life_cycles (
 	id UUID NOT NULL, 
 	cycle_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
@@ -628,6 +802,39 @@ CREATE TABLE life_history (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_life_history_significance CHECK (significance BETWEEN 1 AND 10)
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE live_geo_feeds (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	category TEXT NOT NULL, 
+	source TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	refresh_seconds INTEGER NOT NULL, 
+	last_fetched_at TIMESTAMP WITH TIME ZONE, 
+	last_data_hash TEXT, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_live_geo_feed_category CHECK (category IN ('traffic', 'weather', 'transit', 'aviation', 'maritime', 'disaster', 'environment', 'satellite', 'infrastructure')), 
+	UNIQUE (name)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE location_permissions (
+	id UUID NOT NULL, 
+	subject TEXT NOT NULL, 
+	precision TEXT NOT NULL, 
+	purpose TEXT NOT NULL, 
+	granted_by TEXT NOT NULL, 
+	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_location_permission_precision CHECK (precision IN ('approximate', 'precise'))
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_location_permissions_subject ON location_permissions (subject);
     ''')
     op.execute(r'''
 CREATE TABLE memory_items (
@@ -737,6 +944,28 @@ CREATE TABLE operating_principles (
 );
     ''')
     op.execute(r'''
+CREATE TABLE owner_authorizations (
+	id UUID NOT NULL, 
+	action_type TEXT NOT NULL, 
+	max_authority_level VARCHAR(1) NOT NULL, 
+	spending_limit_usd NUMERIC(15, 4), 
+	can_create_accounts BOOLEAN NOT NULL, 
+	can_publish_externally BOOLEAN NOT NULL, 
+	can_modify_own_security BOOLEAN NOT NULL, 
+	scope JSON NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	granted_by TEXT NOT NULL, 
+	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_owner_auth_level CHECK (max_authority_level IN ('1', '2', '3', '4'))
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_owner_authorizations_action_type ON owner_authorizations (action_type);
+    ''')
+    op.execute(r'''
 CREATE TABLE project_portfolios (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -759,6 +988,40 @@ CREATE TABLE provider_usage (
 	period TEXT NOT NULL, 
 	recorded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE public_people (
+	id UUID NOT NULL, 
+	canonical_name TEXT NOT NULL, 
+	internal_public_id TEXT NOT NULL, 
+	notes TEXT, 
+	deanonymized BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_person_no_deanonymization CHECK (deanonymized = FALSE), 
+	UNIQUE (internal_public_id)
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_public_people_canonical_name ON public_people (canonical_name);
+    ''')
+    op.execute(r'''
+CREATE TABLE public_sources (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	category TEXT NOT NULL, 
+	url TEXT NOT NULL, 
+	access_condition TEXT NOT NULL, 
+	reliability TEXT NOT NULL, 
+	terms_url TEXT, 
+	last_verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_source_access_condition CHECK (access_condition IN ('public', 'requires_authority', 'restricted', 'paid', 'unknown')), 
+	CONSTRAINT ck_public_source_reliability CHECK (reliability IN ('official', 'independent', 'self_reported', 'unverified')), 
+	UNIQUE (name)
 );
     ''')
     op.execute(r'''
@@ -832,6 +1095,22 @@ CREATE TABLE registered_nodes (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_registered_node_trust_level CHECK (trust_level IN ('candidate', 'restricted', 'trusted', 'revoked')), 
 	CONSTRAINT ck_registered_node_contribution_ceiling CHECK (contribution_percent >= 0 AND contribution_percent <= 1)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE replication_experiments (
+	id UUID NOT NULL, 
+	capability TEXT NOT NULL, 
+	hypothesis TEXT NOT NULL, 
+	method TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	result TEXT NOT NULL, 
+	isolated BOOLEAN NOT NULL, 
+	production_adopted BOOLEAN NOT NULL, 
+	creator_approval_reference TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_replication_experiment_result CHECK (result IN ('planned', 'running', 'succeeded', 'failed'))
 );
     ''')
     op.execute(r'''
@@ -983,6 +1262,27 @@ CREATE TABLE security_incidents (
 );
     ''')
     op.execute(r'''
+CREATE TABLE skill_runtime_executions (
+	id UUID NOT NULL, 
+	skill_id TEXT NOT NULL, 
+	permission TEXT NOT NULL, 
+	script TEXT, 
+	caller TEXT NOT NULL, 
+	adapter TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	dry_run BOOLEAN NOT NULL, 
+	result JSON NOT NULL, 
+	error TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	completed_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_skill_runtime_status CHECK (status IN ('completed', 'denied', 'failed'))
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_skill_runtime_executions_skill_id ON skill_runtime_executions (skill_id);
+    ''')
+    op.execute(r'''
 CREATE TABLE skillforge_packages (
 	id UUID NOT NULL, 
 	skill_id TEXT NOT NULL, 
@@ -1076,6 +1376,26 @@ CREATE TABLE stored_objects (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_stored_object_size CHECK (size_bytes >= 0), 
 	UNIQUE (s3_key)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE tone_analyses (
+	id UUID NOT NULL, 
+	source_type TEXT NOT NULL, 
+	content_summary TEXT NOT NULL, 
+	tone TEXT NOT NULL, 
+	register TEXT NOT NULL, 
+	sentiment NUMERIC(3, 2) NOT NULL, 
+	confidence NUMERIC(3, 2) NOT NULL, 
+	signals JSON NOT NULL, 
+	manipulation_indicators JSON NOT NULL, 
+	interpretations JSON NOT NULL, 
+	caveat TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_tone_source_type CHECK (source_type IN ('message', 'article', 'post', 'comment', 'discussion', 'text')), 
+	CONSTRAINT ck_tone_confidence CHECK (confidence BETWEEN 0 AND 1), 
+	CONSTRAINT ck_tone_sentiment CHECK (sentiment BETWEEN -1 AND 1)
 );
     ''')
     op.execute(r'''
@@ -1202,6 +1522,21 @@ CREATE TABLE agent_interactions (
 );
     ''')
     op.execute(r'''
+CREATE TABLE agent_interviews (
+	id UUID NOT NULL, 
+	agent_id UUID NOT NULL, 
+	question TEXT NOT NULL, 
+	answer TEXT, 
+	provenance TEXT, 
+	risk_level TEXT NOT NULL, 
+	validated BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_interview_risk CHECK (risk_level IN ('low', 'medium', 'high')), 
+	FOREIGN KEY(agent_id) REFERENCES external_agents (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE agent_trust_records (
 	id UUID NOT NULL, 
 	agent_id UUID NOT NULL, 
@@ -1238,6 +1573,42 @@ CREATE TABLE asset_licences (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(asset_id) REFERENCES digital_assets (id) ON DELETE CASCADE
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE assistant_adapters (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	interface_type TEXT NOT NULL, 
+	endpoint_template TEXT, 
+	auth_method TEXT NOT NULL, 
+	requires_credential BOOLEAN NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	notes TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_adapter_interface CHECK (interface_type IN ('official_skill', 'app_intents', 'shortcuts', 'automation_studio', 'official_api', 'documentation_only')), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE assistant_research_notes (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	topic TEXT NOT NULL, 
+	observation TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	source_date TIMESTAMP WITH TIME ZONE, 
+	confidence FLOAT NOT NULL, 
+	status TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_note_status CHECK (status IN ('observation', 'verified', 'uncertain')), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_assistant_research_notes_assistant_id ON assistant_research_notes (assistant_id);
     ''')
     op.execute(r'''
 CREATE TABLE browser_actions (
@@ -1284,6 +1655,19 @@ CREATE TABLE capability_assessments (
 	CONSTRAINT ck_capability_assessment_level CHECK (proficiency_level BETWEEN 0 AND 100), 
 	CONSTRAINT ck_capability_assessment_method CHECK (assessment_method IN ('test', 'project', 'simulation', 'review')), 
 	FOREIGN KEY(capability_id) REFERENCES capability_definitions (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE capability_comparisons (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	capability TEXT NOT NULL, 
+	rating INTEGER NOT NULL, 
+	evidence_note TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_capability_comparison_rating CHECK (rating BETWEEN 0 AND 5), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
 );
     ''')
     op.execute(r'''
@@ -1428,6 +1812,46 @@ CREATE TABLE financial_ledger (
 );
     ''')
     op.execute(r'''
+CREATE TABLE free_sandbox_environments (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	external_id TEXT NOT NULL, 
+	task_id TEXT NOT NULL, 
+	capability TEXT NOT NULL, 
+	state TEXT NOT NULL, 
+	metadata JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_free_sandbox_environment_state CHECK (state IN ('discovered','registered','provisioning','running','stopped','completed','failed','deleted')), 
+	FOREIGN KEY(provider_id) REFERENCES free_sandbox_providers (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_free_sandbox_environments_task_id ON free_sandbox_environments (task_id);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_free_sandbox_environments_provider_id ON free_sandbox_environments (provider_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE free_sandbox_quota_snapshots (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	used_percent NUMERIC(5, 2), 
+	remaining NUMERIC, 
+	unit TEXT NOT NULL, 
+	resets_at TIMESTAMP WITH TIME ZONE, 
+	source_url TEXT, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	captured_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(provider_id) REFERENCES free_sandbox_providers (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_free_sandbox_quota_snapshots_provider_id ON free_sandbox_quota_snapshots (provider_id);
+    ''')
+    op.execute(r'''
 CREATE TABLE goal_lifecycles (
 	id UUID NOT NULL, 
 	goal_id UUID NOT NULL, 
@@ -1456,6 +1880,21 @@ CREATE TABLE identity_history (
 	reason TEXT, 
 	PRIMARY KEY (id), 
 	FOREIGN KEY(identity_id) REFERENCES ai_identity (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE identity_matches (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	other_person_id UUID NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	result TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_identity_match_result CHECK (result IN ('same', 'uncertain', 'rejected')), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE, 
+	FOREIGN KEY(other_person_id) REFERENCES public_people (id) ON DELETE CASCADE
 );
     ''')
     op.execute(r'''
@@ -1523,6 +1962,39 @@ CREATE TABLE learning_paths (
 );
     ''')
     op.execute(r'''
+CREATE TABLE legal_instruments (
+	id UUID NOT NULL, 
+	source_id UUID NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	title TEXT NOT NULL, 
+	authority_name TEXT NOT NULL, 
+	instrument_type TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	official_url TEXT NOT NULL, 
+	document_hash TEXT NOT NULL, 
+	summary TEXT, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	effective_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_instrument_type CHECK (instrument_type IN ('constitution', 'legislation', 'regulation', 'court_judgment', 'guidance', 'policy', 'bill', 'draft_regulation', 'treaty', 'standard', 'announcement')), 
+	CONSTRAINT ck_legal_instrument_status CHECK (status IN ('proposed', 'draft', 'enacted', 'guidance', 'announcement', 'repealed')), 
+	FOREIGN KEY(source_id) REFERENCES legal_sources (id) ON DELETE RESTRICT
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE map_tile_cache (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	tile_key TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	size_bytes INTEGER NOT NULL, 
+	fetched_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(provider_id) REFERENCES geo_providers (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE memory_embeddings (
 	id UUID NOT NULL, 
 	memory_item_id UUID NOT NULL, 
@@ -1571,6 +2043,26 @@ CREATE TABLE model_versions (
 );
     ''')
     op.execute(r'''
+CREATE TABLE node_attestations (
+	id UUID NOT NULL, 
+	node_id UUID NOT NULL, 
+	public_key TEXT NOT NULL, 
+	core_hash TEXT NOT NULL, 
+	platform_hash TEXT, 
+	signature TEXT NOT NULL, 
+	payload JSON NOT NULL, 
+	verified BOOLEAN NOT NULL, 
+	result TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_node_attestation_result CHECK (result IN ('candidate', 'restricted', 'trusted', 'revoked')), 
+	FOREIGN KEY(node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_node_attestations_node_id ON node_attestations (node_id);
+    ''')
+    op.execute(r'''
 CREATE TABLE node_resource_reports (
 	id UUID NOT NULL, 
 	node_id UUID NOT NULL, 
@@ -1601,6 +2093,73 @@ CREATE TABLE plans (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_plan_status CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')), 
 	FOREIGN KEY(goal_id) REFERENCES goals (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE public_profiles (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	source_name TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	source_domain TEXT NOT NULL, 
+	profile_type TEXT NOT NULL, 
+	stated_name TEXT, 
+	role TEXT, 
+	organization TEXT, 
+	bio TEXT, 
+	interests JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	retrieved_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_profile_status CHECK (status IN ('verified','self_reported','uncertain','corrected')), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_public_profiles_person_id ON public_profiles (person_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE public_records (
+	id UUID NOT NULL, 
+	source_id UUID NOT NULL, 
+	category TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	subject_name TEXT, 
+	title TEXT NOT NULL, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	retrieved_at TIMESTAMP WITH TIME ZONE, 
+	source_url TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	facts JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	legal_authority_reference TEXT, 
+	is_statistical BOOLEAN NOT NULL, 
+	is_correction BOOLEAN NOT NULL, 
+	supersedes_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_record_status CHECK (status IN ('verified', 'self_reported', 'uncertain', 'allegation', 'restricted')), 
+	CONSTRAINT ck_public_record_confidence CHECK (confidence >= 0 AND confidence <= 1), 
+	FOREIGN KEY(source_id) REFERENCES public_sources (id) ON DELETE RESTRICT
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE public_relationships (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	related_person_id UUID, 
+	organization_name TEXT, 
+	relationship_type TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE
 );
     ''')
     op.execute(r'''
@@ -1645,6 +2204,16 @@ CREATE TABLE signed_challenges (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(request_id) REFERENCES creator_requests (id) ON DELETE CASCADE, 
 	UNIQUE (nonce)
+);
+    ''')
+    op.execute(r'''
+CREATE TABLE skill_runtime_logs (
+	id UUID NOT NULL, 
+	execution_id UUID NOT NULL, 
+	stream TEXT NOT NULL, 
+	content TEXT NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(execution_id) REFERENCES skill_runtime_executions (id) ON DELETE CASCADE
 );
     ''')
     op.execute(r'''
@@ -1700,6 +2269,26 @@ CREATE TABLE skillforge_versions (
 	CONSTRAINT ck_skillforge_version_semver CHECK (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$'), 
 	FOREIGN KEY(package_id) REFERENCES skillforge_packages (id) ON DELETE CASCADE
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE sync_objects (
+	id UUID NOT NULL, 
+	publisher_node_id UUID NOT NULL, 
+	object_type TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	payload JSON NOT NULL, 
+	signature TEXT NOT NULL, 
+	verified BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(publisher_node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_sync_objects_publisher_node_id ON sync_objects (publisher_node_id);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_sync_objects_content_hash ON sync_objects (content_hash);
     ''')
     op.execute(r'''
 CREATE TABLE tool_permissions (
@@ -1847,6 +2436,101 @@ CREATE TABLE experiment_results (
 );
     ''')
     op.execute(r'''
+CREATE TABLE free_sandbox_results (
+	id UUID NOT NULL, 
+	environment_id UUID NOT NULL, 
+	payload JSON NOT NULL, 
+	artifacts JSON NOT NULL, 
+	error TEXT, 
+	collected_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(environment_id) REFERENCES free_sandbox_environments (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_free_sandbox_results_environment_id ON free_sandbox_results (environment_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE legal_changes (
+	id UUID NOT NULL, 
+	instrument_id UUID NOT NULL, 
+	change_type TEXT NOT NULL, 
+	severity TEXT NOT NULL, 
+	lifecycle_stage TEXT NOT NULL, 
+	authenticated BOOLEAN NOT NULL, 
+	evidence JSON NOT NULL, 
+	creator_approval_reference TEXT, 
+	professional_review_reference TEXT, 
+	implemented_at TIMESTAMP WITH TIME ZONE, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_change_type CHECK (change_type IN ('new', 'amendment', 'repeal', 'correction')), 
+	CONSTRAINT ck_legal_change_severity CHECK (severity IN ('critical', 'important', 'informational')), 
+	CONSTRAINT ck_legal_change_stage CHECK (lifecycle_stage IN ('discover','authenticate','understand','assess','recommend','authorise','implement','verify')), 
+	FOREIGN KEY(instrument_id) REFERENCES legal_instruments (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_legal_changes_instrument_id ON legal_changes (instrument_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE legal_versions (
+	id UUID NOT NULL, 
+	instrument_id UUID NOT NULL, 
+	version_label TEXT NOT NULL, 
+	document_hash TEXT NOT NULL, 
+	content JSON NOT NULL, 
+	valid_from TIMESTAMP WITH TIME ZONE, 
+	valid_to TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(instrument_id) REFERENCES legal_instruments (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_legal_versions_instrument_id ON legal_versions (instrument_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE presence_claims (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	profile_id UUID, 
+	claim_type TEXT NOT NULL, 
+	value JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	source_url TEXT, 
+	first_seen_at TIMESTAMP WITH TIME ZONE, 
+	last_seen_at TIMESTAMP WITH TIME ZONE, 
+	supersedes_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_presence_claim_confidence CHECK (confidence BETWEEN 0 AND 1), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE, 
+	FOREIGN KEY(profile_id) REFERENCES public_profiles (id) ON DELETE SET NULL
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_presence_claims_person_id ON presence_claims (person_id);
+    ''')
+    op.execute(r'''
+CREATE TABLE record_relationships (
+	id UUID NOT NULL, 
+	from_record_id UUID NOT NULL, 
+	to_record_id UUID NOT NULL, 
+	relation_type TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_record_relationship_type CHECK (relation_type IN ('same_entity', 'related_entity', 'conflict', 'correction')), 
+	CONSTRAINT ck_record_relationship_confidence CHECK (confidence >= 0 AND confidence <= 1), 
+	FOREIGN KEY(from_record_id) REFERENCES public_records (id) ON DELETE CASCADE, 
+	FOREIGN KEY(to_record_id) REFERENCES public_records (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
 CREATE TABLE request_jobs (
 	id UUID NOT NULL, 
 	session_id UUID, 
@@ -1919,6 +2603,25 @@ CREATE TABLE visitor_locations (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(session_id) REFERENCES visitor_sessions (id) ON DELETE CASCADE
 );
+    ''')
+    op.execute(r'''
+CREATE TABLE legal_impacts (
+	id UUID NOT NULL, 
+	change_id UUID NOT NULL, 
+	affected_system TEXT NOT NULL, 
+	assessment TEXT NOT NULL, 
+	risk_level TEXT NOT NULL, 
+	recommendation TEXT NOT NULL, 
+	obligations JSON NOT NULL, 
+	evidence JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_impact_risk_level CHECK (risk_level IN ('low', 'medium', 'high', 'critical')), 
+	FOREIGN KEY(change_id) REFERENCES legal_changes (id) ON DELETE CASCADE
+);
+    ''')
+    op.execute(r'''
+CREATE INDEX ix_legal_impacts_change_id ON legal_impacts (change_id);
     ''')
     op.execute(r'''
 CREATE TABLE sales_records (
@@ -2002,10 +2705,16 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS security_findings CASCADE")
     op.execute("DROP TABLE IF EXISTS security_engine_audit CASCADE")
     op.execute("DROP TABLE IF EXISTS sales_records CASCADE")
+    op.execute("DROP TABLE IF EXISTS legal_impacts CASCADE")
     op.execute("DROP TABLE IF EXISTS visitor_locations CASCADE")
     op.execute("DROP TABLE IF EXISTS tasks CASCADE")
     op.execute("DROP TABLE IF EXISTS security_engine_tasks CASCADE")
     op.execute("DROP TABLE IF EXISTS request_jobs CASCADE")
+    op.execute("DROP TABLE IF EXISTS record_relationships CASCADE")
+    op.execute("DROP TABLE IF EXISTS presence_claims CASCADE")
+    op.execute("DROP TABLE IF EXISTS legal_versions CASCADE")
+    op.execute("DROP TABLE IF EXISTS legal_changes CASCADE")
+    op.execute("DROP TABLE IF EXISTS free_sandbox_results CASCADE")
     op.execute("DROP TABLE IF EXISTS experiment_results CASCADE")
     op.execute("DROP TABLE IF EXISTS customers CASCADE")
     op.execute("DROP TABLE IF EXISTS conversation_threads CASCADE")
@@ -2017,26 +2726,37 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS visitor_memory_permissions CASCADE")
     op.execute("DROP TABLE IF EXISTS visitor_consents CASCADE")
     op.execute("DROP TABLE IF EXISTS tool_permissions CASCADE")
+    op.execute("DROP TABLE IF EXISTS sync_objects CASCADE")
     op.execute("DROP TABLE IF EXISTS skillforge_versions CASCADE")
     op.execute("DROP TABLE IF EXISTS skillforge_test_results CASCADE")
     op.execute("DROP TABLE IF EXISTS skillforge_permission_grants CASCADE")
     op.execute("DROP TABLE IF EXISTS skillforge_audit_events CASCADE")
+    op.execute("DROP TABLE IF EXISTS skill_runtime_logs CASCADE")
     op.execute("DROP TABLE IF EXISTS signed_challenges CASCADE")
     op.execute("DROP TABLE IF EXISTS security_engine_scopes CASCADE")
     op.execute("DROP TABLE IF EXISTS research_experiments CASCADE")
+    op.execute("DROP TABLE IF EXISTS public_relationships CASCADE")
+    op.execute("DROP TABLE IF EXISTS public_records CASCADE")
+    op.execute("DROP TABLE IF EXISTS public_profiles CASCADE")
     op.execute("DROP TABLE IF EXISTS plans CASCADE")
     op.execute("DROP TABLE IF EXISTS node_resource_reports CASCADE")
+    op.execute("DROP TABLE IF EXISTS node_attestations CASCADE")
     op.execute("DROP TABLE IF EXISTS model_versions CASCADE")
     op.execute("DROP TABLE IF EXISTS model_evaluations CASCADE")
     op.execute("DROP TABLE IF EXISTS memory_relationships CASCADE")
     op.execute("DROP TABLE IF EXISTS memory_embeddings CASCADE")
+    op.execute("DROP TABLE IF EXISTS map_tile_cache CASCADE")
+    op.execute("DROP TABLE IF EXISTS legal_instruments CASCADE")
     op.execute("DROP TABLE IF EXISTS learning_paths CASCADE")
     op.execute("DROP TABLE IF EXISTS knowledge_sources CASCADE")
     op.execute("DROP TABLE IF EXISTS ip_records CASCADE")
     op.execute("DROP TABLE IF EXISTS interaction_preferences CASCADE")
     op.execute("DROP TABLE IF EXISTS integration_permissions CASCADE")
+    op.execute("DROP TABLE IF EXISTS identity_matches CASCADE")
     op.execute("DROP TABLE IF EXISTS identity_history CASCADE")
     op.execute("DROP TABLE IF EXISTS goal_lifecycles CASCADE")
+    op.execute("DROP TABLE IF EXISTS free_sandbox_quota_snapshots CASCADE")
+    op.execute("DROP TABLE IF EXISTS free_sandbox_environments CASCADE")
     op.execute("DROP TABLE IF EXISTS financial_ledger CASCADE")
     op.execute("DROP TABLE IF EXISTS entity_relationships CASCADE")
     op.execute("DROP TABLE IF EXISTS deployment_records CASCADE")
@@ -2047,12 +2767,16 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS creator_approvals CASCADE")
     op.execute("DROP TABLE IF EXISTS conversation_messages CASCADE")
     op.execute("DROP TABLE IF EXISTS code_changes CASCADE")
+    op.execute("DROP TABLE IF EXISTS capability_comparisons CASCADE")
     op.execute("DROP TABLE IF EXISTS capability_assessments CASCADE")
     op.execute("DROP TABLE IF EXISTS business_projects CASCADE")
     op.execute("DROP TABLE IF EXISTS browser_actions CASCADE")
+    op.execute("DROP TABLE IF EXISTS assistant_research_notes CASCADE")
+    op.execute("DROP TABLE IF EXISTS assistant_adapters CASCADE")
     op.execute("DROP TABLE IF EXISTS asset_licences CASCADE")
     op.execute("DROP TABLE IF EXISTS ai_personality CASCADE")
     op.execute("DROP TABLE IF EXISTS agent_trust_records CASCADE")
+    op.execute("DROP TABLE IF EXISTS agent_interviews CASCADE")
     op.execute("DROP TABLE IF EXISTS agent_interactions CASCADE")
     op.execute("DROP TABLE IF EXISTS agent_collaborations CASCADE")
     op.execute("DROP TABLE IF EXISTS world_events CASCADE")
@@ -2062,11 +2786,13 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS visitor_rate_limits CASCADE")
     op.execute("DROP TABLE IF EXISTS upgrade_history CASCADE")
     op.execute("DROP TABLE IF EXISTS tool_registry CASCADE")
+    op.execute("DROP TABLE IF EXISTS tone_analyses CASCADE")
     op.execute("DROP TABLE IF EXISTS stored_objects CASCADE")
     op.execute("DROP TABLE IF EXISTS software_projects CASCADE")
     op.execute("DROP TABLE IF EXISTS social_profiles CASCADE")
     op.execute("DROP TABLE IF EXISTS skills CASCADE")
     op.execute("DROP TABLE IF EXISTS skillforge_packages CASCADE")
+    op.execute("DROP TABLE IF EXISTS skill_runtime_executions CASCADE")
     op.execute("DROP TABLE IF EXISTS security_incidents CASCADE")
     op.execute("DROP TABLE IF EXISTS security_engines CASCADE")
     op.execute("DROP TABLE IF EXISTS security_boundaries CASCADE")
@@ -2078,13 +2804,17 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS research_publications CASCADE")
     op.execute("DROP TABLE IF EXISTS research_hypotheses CASCADE")
     op.execute("DROP TABLE IF EXISTS request_usage CASCADE")
+    op.execute("DROP TABLE IF EXISTS replication_experiments CASCADE")
     op.execute("DROP TABLE IF EXISTS registered_nodes CASCADE")
     op.execute("DROP TABLE IF EXISTS regional_settings CASCADE")
     op.execute("DROP TABLE IF EXISTS reflection_entries CASCADE")
     op.execute("DROP TABLE IF EXISTS recovery_logs CASCADE")
     op.execute("DROP TABLE IF EXISTS published_content CASCADE")
+    op.execute("DROP TABLE IF EXISTS public_sources CASCADE")
+    op.execute("DROP TABLE IF EXISTS public_people CASCADE")
     op.execute("DROP TABLE IF EXISTS provider_usage CASCADE")
     op.execute("DROP TABLE IF EXISTS project_portfolios CASCADE")
+    op.execute("DROP TABLE IF EXISTS owner_authorizations CASCADE")
     op.execute("DROP TABLE IF EXISTS operating_principles CASCADE")
     op.execute("DROP TABLE IF EXISTS operating_expenses CASCADE")
     op.execute("DROP TABLE IF EXISTS online_accounts CASCADE")
@@ -2093,19 +2823,27 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS model_portability_exports CASCADE")
     op.execute("DROP TABLE IF EXISTS model_comparisons CASCADE")
     op.execute("DROP TABLE IF EXISTS memory_items CASCADE")
+    op.execute("DROP TABLE IF EXISTS location_permissions CASCADE")
+    op.execute("DROP TABLE IF EXISTS live_geo_feeds CASCADE")
     op.execute("DROP TABLE IF EXISTS life_history CASCADE")
     op.execute("DROP TABLE IF EXISTS life_cycles CASCADE")
+    op.execute("DROP TABLE IF EXISTS legal_sources CASCADE")
     op.execute("DROP TABLE IF EXISTS language_profiles CASCADE")
     op.execute("DROP TABLE IF EXISTS knowledge_items CASCADE")
     op.execute("DROP TABLE IF EXISTS internet_sessions CASCADE")
     op.execute("DROP TABLE IF EXISTS internet_resources CASCADE")
     op.execute("DROP TABLE IF EXISTS internet_permissions CASCADE")
     op.execute("DROP TABLE IF EXISTS internet_events CASCADE")
+    op.execute("DROP TABLE IF EXISTS integrity_manifests CASCADE")
     op.execute("DROP TABLE IF EXISTS integration_registry CASCADE")
     op.execute("DROP TABLE IF EXISTS incident_records CASCADE")
     op.execute("DROP TABLE IF EXISTS iam_identity_genesis CASCADE")
     op.execute("DROP TABLE IF EXISTS health_checks CASCADE")
     op.execute("DROP TABLE IF EXISTS goals CASCADE")
+    op.execute("DROP TABLE IF EXISTS geo_providers CASCADE")
+    op.execute("DROP TABLE IF EXISTS geo_places CASCADE")
+    op.execute("DROP TABLE IF EXISTS geo_data_files CASCADE")
+    op.execute("DROP TABLE IF EXISTS free_sandbox_providers CASCADE")
     op.execute("DROP TABLE IF EXISTS financial_transactions CASCADE")
     op.execute("DROP TABLE IF EXISTS financial_budgets CASCADE")
     op.execute("DROP TABLE IF EXISTS fallback_configs CASCADE")
@@ -2119,7 +2857,9 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS decision_records CASCADE")
     op.execute("DROP TABLE IF EXISTS daily_routines CASCADE")
     op.execute("DROP TABLE IF EXISTS creator_requests CASCADE")
+    op.execute("DROP TABLE IF EXISTS creator_messages CASCADE")
     op.execute("DROP TABLE IF EXISTS creator_email_outbox CASCADE")
+    op.execute("DROP TABLE IF EXISTS creator_email_dead_letters CASCADE")
     op.execute("DROP TABLE IF EXISTS conversations CASCADE")
     op.execute("DROP TABLE IF EXISTS conversation_contexts CASCADE")
     op.execute("DROP TABLE IF EXISTS communication_audit CASCADE")
@@ -2131,6 +2871,7 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS backup_verifications CASCADE")
     op.execute("DROP TABLE IF EXISTS authority_boundaries CASCADE")
     op.execute("DROP TABLE IF EXISTS audit_events CASCADE")
+    op.execute("DROP TABLE IF EXISTS assistant_systems CASCADE")
     op.execute("DROP TABLE IF EXISTS approval_policies CASCADE")
     op.execute("DROP TABLE IF EXISTS api_credentials CASCADE")
     op.execute("DROP TABLE IF EXISTS anonymous_visitors CASCADE")

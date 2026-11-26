@@ -24,6 +24,11 @@ import loguru
 
 logger = loguru.logger
 
+from app.services.whitehat_policy import (
+    WhiteHatPolicyError,
+    ensure_p2p_shareable,
+)
+
 
 def make_envelope(
     sender_id: str,
@@ -85,6 +90,10 @@ class P2PTransport:
 
     def accept(self, env: Dict[str, Any], peer_secret: Optional[str] = None) -> Dict[str, Any]:
         """Accept an inbound envelope: verify, dedup, replay-check, store."""
+        try:
+            ensure_p2p_shareable(str(env.get("topic", "")), env.get("payload") or {})
+        except (WhiteHatPolicyError, TypeError, ValueError):
+            return {"accepted": False, "reason": "offensive_tool_rejected"}
         secret = peer_secret or self.local_secret
         if not verify_envelope(env, secret):
             return {"accepted": False, "reason": "invalid_signature"}
@@ -115,6 +124,7 @@ class P2PTransport:
 
     async def broadcast(self, topic: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Gossip to all connected peers; queue the rest for later."""
+        ensure_p2p_shareable(topic, payload)
         env = make_envelope(self.node_id, topic, payload, self.next_seq(), self.local_secret)
         delivered, queued = [], []
         for peer_id, ws in list(self.connections.items()):
@@ -128,6 +138,7 @@ class P2PTransport:
         return {"envelope": env, "delivered": delivered, "queued": queued}
 
     async def send_to(self, peer_id: str, topic: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        ensure_p2p_shareable(topic, payload)
         env = make_envelope(self.node_id, topic, payload, self.next_seq(), self.local_secret, recipient=peer_id)
         ws = self.connections.get(peer_id)
         if ws:

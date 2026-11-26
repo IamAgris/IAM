@@ -50,10 +50,34 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await AuthService(db).verify_key(key)
 
     async def dispatch(self, request: Request, call_next):
+        required = required_scope(request.url.path)
+        # SDK protocol compatibility: reject a known-different version with 426.
+        # Missing headers are tolerated unless the deployment opts into strict mode.
+        if required is not None:
+            supplied = request.headers.get("x-iam-protocol-version")
+            if supplied is None and settings.iam_protocol_require_header:
+                return JSONResponse(
+                    status_code=426,
+                    content={
+                        "detail": "X-IAM-Protocol-Version header is required",
+                        "required_version": settings.iam_protocol_version,
+                    },
+                    headers={"Upgrade": f"IAM-Protocol-{settings.iam_protocol_version}"},
+                )
+            if supplied is not None and supplied.strip() != settings.iam_protocol_version:
+                return JSONResponse(
+                    status_code=426,
+                    content={
+                        "detail": "incompatible IAM protocol version",
+                        "required_version": settings.iam_protocol_version,
+                        "supplied_version": supplied.strip(),
+                    },
+                    headers={"Upgrade": f"IAM-Protocol-{settings.iam_protocol_version}"},
+                )
+
         if not settings.auth_enabled:
             return await call_next(request)
 
-        required = required_scope(request.url.path)
         if required is None:
             return await call_next(request)
 

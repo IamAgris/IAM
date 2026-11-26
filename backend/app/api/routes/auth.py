@@ -36,6 +36,17 @@ def _admin(request: Request) -> None:
         raise HTTPException(status_code=403, detail="Admin scope required")
 
 
+@router.get("/protocol")
+async def protocol():
+    """Advertise the protocol version enforced by the SDK contract."""
+    return {
+        "version": settings.iam_protocol_version,
+        "header": "X-IAM-Protocol-Version",
+        "require_header": settings.iam_protocol_require_header,
+        "incompatible_status": 426,
+    }
+
+
 @router.post("/bootstrap", status_code=201)
 async def bootstrap(
     request: Request,

@@ -166,6 +166,10 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET/POST/PATCH | `/languages/` | Language profiles |
 | GET/POST/PATCH | `/skills/` | Skills (proficiency registry) |
 | GET/POST | `/capabilities/` | Capability registry + assessments |
+| POST/GET | `/technology-registry/` | Doc 20 third-party technology registry (records only; no install/execute) |
+| GET | `/technology-registry/{id}` | Technology record detail |
+| PATCH | `/technology-registry/{id}/state` | Lifecycle transition (no direct researched → integrated) |
+| POST | `/technology-registry/{id}/benchmarks` | Record benchmark evidence |
 | GET | `/skill-forge/policy` | Skill classification, permission and transition policy |
 | GET | `/skill-forge/gaps` | Capability discovery — suggested native skills |
 | GET/POST | `/skill-forge/skills` | List/build skill packages (POST also creates new versions) |

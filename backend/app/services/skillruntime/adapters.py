@@ -7,6 +7,7 @@ mount, no new privileges, a non-root user and hard resource limits.
 
 import asyncio
 import json
+import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -29,6 +30,22 @@ class ExecutionPlan:
     network: bool
     filesystem: str
     checksum: str
+    network_name: Optional[str] = None
+
+
+_FORBIDDEN_NETWORKS = {"host", "bridge", "none"}
+_NETWORK_NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,126}")
+
+
+def validate_network_name(name: Optional[str]) -> str:
+    """Only an operator-preconfigured, restricted Docker network is allowed."""
+    if not name or name.lower() in _FORBIDDEN_NETWORKS:
+        raise SkillRuntimeAdapterError(
+            "a named, restricted Docker network is required for network-enabled skills"
+        )
+    if not _NETWORK_NAME_PATTERN.fullmatch(name):
+        raise SkillRuntimeAdapterError("invalid Docker network name")
+    return name
 
 
 class SkillRuntimeAdapter(ABC):
@@ -53,11 +70,18 @@ class StubAdapter(SkillRuntimeAdapter):
             "skill_id": plan.skill_id,
             "script": plan.script,
             "arguments": plan.arguments,
+            "network": "isolated" if plan.network else "none",
         }
 
 
 class DockerAdapter(SkillRuntimeAdapter):
-    """Runs one script in an isolated, network-less container."""
+    """Runs one script in a disposable container.
+
+    Network access is off by default. It can be enabled only for a skill that
+    publishes ``network_access`` in its effective permissions, and only when
+    the operator has opted in and named a pre-created, restricted Docker
+    network. The default posture remains ``--network none``.
+    """
 
     name = "docker"
 
@@ -73,11 +97,16 @@ class DockerAdapter(SkillRuntimeAdapter):
         return "/skill/" + path.as_posix()
 
     def _command(self, plan: ExecutionPlan) -> list:
-        if plan.network:
+        if plan.network and not settings.skill_runtime_network_enabled:
             raise SkillRuntimeAdapterError(
-                "network-enabled skill execution requires a separately configured "
-                "isolated network and is not enabled in this deployment"
+                "network-enabled skill execution is not enabled in this deployment"
             )
+        network_args = ["--network", "none"]
+        if plan.network:
+            network_args = [
+                "--network",
+                validate_network_name(plan.network_name or settings.skill_runtime_network_name),
+            ]
         container_script = self._container_script(plan.script)
         if not container_script:
             raise SkillRuntimeAdapterError("Docker adapter requires a script path")
@@ -88,13 +117,14 @@ class DockerAdapter(SkillRuntimeAdapter):
             "docker",
             "run",
             "--rm",
-            "--network",
-            "none",
+            *network_args,
             "--read-only",
             "--user",
             "65534:65534",
             "--security-opt",
             "no-new-privileges",
+            "--cap-drop",
+            "ALL",
             "--pids-limit",
             "64",
             "--memory",
@@ -130,8 +160,9 @@ class DockerAdapter(SkillRuntimeAdapter):
             "dry_run": False,
             "adapter": self.name,
             "exit_code": result.returncode,
-            "stdout": result.stdout[-4000:],
-            "stderr": result.stderr[-4000:],
+            "network": "isolated" if plan.network else "none",
+            "stdout": result.stdout,
+            "stderr": result.stderr,
         }
 
 

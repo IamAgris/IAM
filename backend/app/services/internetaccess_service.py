@@ -5,9 +5,11 @@ Public exploration is open. Consequential actions require owner authorization:
 - Gated: send messages, spend money, register accounts, publish, access private services.
 """
 
+import re
 import secrets
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -18,6 +20,11 @@ from app.models.internetaccess import (
 from app.services.browser_service import browser_service
 from app.services.search_service import search_service
 from app.services.creatorapproval_service import CreatorApprovalService
+
+
+ACCOUNT_ROTATE_ACTION = "internet.account_rotate"
+ACCOUNT_CLOSE_ACTION = "internet.account_close"
+_ENV_VAR_PATTERN = re.compile(r"[A-Z][A-Z0-9_]{1,63}")
 
 
 class InternetAccessService:
@@ -33,6 +40,8 @@ class InternetAccessService:
             ("search_web", "exploration", True, False, "Search public search engines"),
             ("read_public_content", "exploration", True, False, "Read articles, papers, documentation"),
             ("download_public_file", "exploration", True, False, "Download permitted public files"),
+            ("uwai_upload_file", "account", False, True, "Upload a file through browser automation"),
+            ("uwai_computer_use", "account", False, True, "Visual click/type control of a browser session"),
             ("call_public_api", "exploration", True, False, "Call public APIs"),
             ("send_message", "communication", False, True, "Send emails/messages via authorised services"),
             ("register_account", "account", False, True, "Register accounts on external platforms"),
@@ -193,6 +202,82 @@ class InternetAccessService:
             "platform": platform,
             "is_authorised": True,
         }
+
+    async def list_accounts(self) -> List[Dict[str, Any]]:
+        """List account metadata only — credential values are never stored or returned."""
+        result = await self.db.execute(select(OnlineAccount))
+        return [
+            {
+                "id": str(row.id),
+                "platform": row.platform,
+                "account_identifier": row.account_identifier,
+                "account_type": row.account_type,
+                "is_authorised": bool(row.is_authorised),
+                "credential_reference": row.credential_reference,
+                "credential_rotated_at": (
+                    row.credential_rotated_at.isoformat() if row.credential_rotated_at else None
+                ),
+                "revoked_at": row.revoked_at.isoformat() if row.revoked_at else None,
+            }
+            for row in result.scalars().all()
+        ]
+
+    async def _account(self, account_id: str) -> OnlineAccount:
+        try:
+            identifier = UUID(str(account_id))
+        except (ValueError, TypeError) as exc:
+            raise LookupError("online account not found") from exc
+        result = await self.db.execute(
+            select(OnlineAccount).where(OnlineAccount.id == identifier)
+        )
+        account = result.scalar_one_or_none()
+        if not account:
+            raise LookupError("online account not found")
+        return account
+
+    async def rotate_account_credential(
+        self, account_id: str, credential_reference: str, actor: str
+    ) -> Dict[str, Any]:
+        account = await self._account(account_id)
+        if not _ENV_VAR_PATTERN.fullmatch(credential_reference or ""):
+            raise PermissionError("credential_reference must be an environment-variable name")
+        authority = await CreatorApprovalService(self.db).check_authorization(
+            ACCOUNT_ROTATE_ACTION, requested_level="3", target_ref=str(account.id)
+        )
+        if not authority.get("authorized"):
+            raise PermissionError("signed Creator authorization required to rotate credentials")
+        account.credential_reference = credential_reference
+        account.credential_rotated_at = datetime.now(timezone.utc)
+        await self._log_event(
+            "account_credential_rotated",
+            account.platform,
+            "medium",
+            {"account_id": str(account.id), "authorization_id": authority["authorization_id"]},
+        )
+        await self.db.commit()
+        return {
+            "id": str(account.id),
+            "credential_reference": account.credential_reference,
+            "credential_rotated_at": account.credential_rotated_at.isoformat(),
+        }
+
+    async def close_account(self, account_id: str, actor: str) -> Dict[str, Any]:
+        account = await self._account(account_id)
+        authority = await CreatorApprovalService(self.db).check_authorization(
+            ACCOUNT_CLOSE_ACTION, requested_level="3", target_ref=str(account.id)
+        )
+        if not authority.get("authorized"):
+            raise PermissionError("signed Creator authorization required to close an account")
+        account.is_authorised = False
+        account.revoked_at = datetime.now(timezone.utc)
+        await self._log_event(
+            "account_closed",
+            account.platform,
+            "medium",
+            {"account_id": str(account.id), "authorization_id": authority["authorization_id"]},
+        )
+        await self.db.commit()
+        return {"id": str(account.id), "is_authorised": False, "revoked_at": account.revoked_at.isoformat()}
 
     async def publish_content(
         self,

@@ -207,6 +207,19 @@ export class IAM {
     alerts: (severity?: string) => Promise<Record<string, unknown>>;
     status: () => Promise<Record<string, unknown>>;
   };
+  digitalAssets: {
+    list: () => Promise<Record<string, unknown>>;
+    create: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    get: (id: string) => Promise<Record<string, unknown>>;
+    update: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    delete: (id: string) => Promise<Record<string, unknown>>;
+    licences: (id: string) => Promise<Record<string, unknown>>;
+    addLicence: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    ipRecords: (id: string) => Promise<Record<string, unknown>>;
+    addIp: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    domains: () => Promise<Record<string, unknown>>;
+    registerDomain: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
   publicRecords: {
     registerSource: (source: Record<string, unknown>) => Promise<Record<string, unknown>>;
     sources: () => Promise<Record<string, unknown>>;
@@ -464,6 +477,22 @@ export class IAM {
       status: () => this.transport.request("GET", `${law}/status`),
     };
 
+    const assets = "/api/v1/digital-assets";
+    this.digitalAssets = {
+      list: () => this.transport.request("GET", assets),
+      create: (payload) => this.transport.request("POST", assets, payload),
+      get: (id) => this.transport.request("GET", `${assets}/${id}`),
+      update: (id, payload) => this.transport.request("PATCH", `${assets}/${id}`, payload),
+      delete: (id) => this.transport.request("DELETE", `${assets}/${id}`),
+      licences: (id) => this.transport.request("GET", `${assets}/${id}/licences`),
+      addLicence: (id, payload) =>
+        this.transport.request("POST", `${assets}/${id}/licences`, payload),
+      ipRecords: (id) => this.transport.request("GET", `${assets}/${id}/ip`),
+      addIp: (id, payload) => this.transport.request("POST", `${assets}/${id}/ip`, payload),
+      domains: () => this.transport.request("GET", "/api/v1/domain-registrations"),
+      registerDomain: (payload) =>
+        this.transport.request("POST", "/api/v1/domain-registrations", payload),
+    };
     const pr = "/api/v1/public-records";
     this.publicRecords = {
       registerSource: (source) => this.transport.request("POST", `${pr}/sources`, source),

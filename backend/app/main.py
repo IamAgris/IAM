@@ -64,6 +64,30 @@ from app.api.routes import (
     freesandboxes,
     humanpresence,
     assistantlab,
+    events,
+    workspaces,
+    whitehat,
+    irwm,
+    modelindependence,
+    financial_adapters,
+    financial_intelligence,
+    digitalassets,
+    socialpresence,
+    assistance,
+    computer_use,
+    mobile,
+    websitecredentials,
+    mfa,
+    web_knowledge,
+    web_account,
+    digital_reputation,
+    web_consent,
+    digital_security,
+    autonomous_web_task,
+    browser_infrastructure,
+    ai_communication,
+    hbi,
+    technology_registry,
 )
 from app.workers.autonomy_worker import autonomy_worker
 from app.workers.creator_email_worker import creator_email_worker
@@ -185,6 +209,35 @@ app.include_router(geo.router)
 app.include_router(freesandboxes.router)
 app.include_router(humanpresence.router)
 app.include_router(assistantlab.router)
+app.include_router(events.router)
+app.include_router(workspaces.router)
+app.include_router(whitehat.router)
+app.include_router(irwm.router)
+app.include_router(modelindependence.router)
+app.include_router(financial_adapters.blockchain_router)
+app.include_router(financial_adapters.banking_router)
+app.include_router(financial_adapters.trading_router)
+app.include_router(financial_intelligence.prediction_markets_router)
+app.include_router(financial_intelligence.gaming_intelligence_router)
+app.include_router(financial_intelligence.investment_intelligence_router)
+app.include_router(financial_intelligence.provider_registry_router)
+app.include_router(digitalassets.router)
+app.include_router(socialpresence.router)
+app.include_router(assistance.router)
+app.include_router(computer_use.router)
+app.include_router(mobile.router)
+app.include_router(websitecredentials.router)
+app.include_router(mfa.router)
+app.include_router(ai_communication.router)
+app.include_router(web_knowledge.router)
+app.include_router(web_account.router)
+app.include_router(digital_reputation.router)
+app.include_router(web_consent.router)
+app.include_router(digital_security.router)
+app.include_router(autonomous_web_task.router)
+app.include_router(browser_infrastructure.router)
+app.include_router(hbi.router)
+app.include_router(technology_registry.router)
 
 
 # Global exception handler

@@ -94,15 +94,19 @@ async def plan(state: AutonomyState) -> dict:
 async def check_authority(state: AutonomyState) -> dict:
     """Verify authority before any consequential action."""
     from app.core.database import get_session_factory
-    from app.services.ownerauth_service import OwnerAuthService
-    action = "write_code_internal"  # default internal action
+    from app.services.governance_service import GovernanceService
+    action = "write_code_internal"  # routine internal action
     async with get_session_factory()() as db:
-        auth = await OwnerAuthService(db).check_authorization(action, "2")
-    # Internal actions are permitted by the authority ladder; consequential ones
-    # would need a signed owner grant. This node never self-escalates.
-    allowed = True  # internal execution is Level 2 autonomous
+        decision = await GovernanceService(db).check_authority(action, "2")
+    # Routine work is autonomous. Consequential actions need a signed Creator
+    # authorization; the retired standing-grant table is never consulted.
     return {
-        "authority_check": {"action": action, "permitted": allowed, "auth": auth},
+        "authority_check": {
+            "action": action,
+            "permitted": bool(decision.get("permitted")),
+            "decision": decision,
+            "authority_source": "governance_boundary_or_signed_creator",
+        },
         "steps": ["check_authority"],
     }
 

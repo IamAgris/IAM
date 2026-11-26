@@ -49,6 +49,84 @@ class CapabilityLimitationRequest(BaseModel):
     assessment_method: Optional[str] = None
 
 
+class TraverseRequest(BaseModel):
+    entity_id: str
+    depth: int = 2
+
+
+class ScenarioRequest(BaseModel):
+    trigger_entity_id: str
+    trigger_description: str
+    depth: int = 3
+
+
+@router.get("/entities/{entity_id}")
+async def get_entity(entity_id: str, db: AsyncSession = Depends(get_db_session)):
+    """Get a single world entity by ID."""
+    service = WorldModelService(db)
+    try:
+        return await service.get_entity(entity_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/relationships")
+async def list_relationships(
+    entity_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """List entity relationships, optionally filtered by a source or target entity."""
+    service = WorldModelService(db)
+    return await service.list_relationships(entity_id)
+
+
+@router.post("/traverse")
+async def traverse(request: TraverseRequest, db: AsyncSession = Depends(get_db_session)):
+    """Breadth-first traversal of entity relationships up to `depth` hops.
+
+    Returns visited entities and the edges between them, with cycle
+    protection. Read-only: no state is mutated.
+    """
+    service = WorldModelService(db)
+    try:
+        return await service.traverse(request.entity_id, request.depth)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/cause-effect")
+async def list_cause_effects(db: AsyncSession = Depends(get_db_session)):
+    """List all recorded cause-and-effect chains."""
+    service = WorldModelService(db)
+    return await service.list_cause_effects()
+
+
+@router.get("/events")
+async def list_world_events(db: AsyncSession = Depends(get_db_session)):
+    """List all recorded world events."""
+    service = WorldModelService(db)
+    return await service.list_world_events()
+
+
+@router.post("/project")
+async def project_scenario(request: ScenarioRequest, db: AsyncSession = Depends(get_db_session)):
+    """Deterministic scenario projection.
+
+    Starting from a trigger entity/description, project downstream effects
+    along recorded cause-effect chains up to `depth` hops. Each hop's
+    confidence is multiplied by the preceding confidence, and projected
+    outcomes are ranked by cumulative confidence. Read-only: no state is
+    mutated.
+    """
+    service = WorldModelService(db)
+    try:
+        return await service.project_scenario(
+            request.trigger_entity_id, request.trigger_description, request.depth
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/entities")
 async def create_entity(request: EntityRequest, db: AsyncSession = Depends(get_db_session)):
     """Create a world entity."""

@@ -22,6 +22,9 @@ jobs:
       - name: Unit tests
         working-directory: backend
         run: python -m unittest discover -s tests -p 'test_*.py' -q
+      - name: HBI acceptance gates (Doc 26)
+        working-directory: backend
+        run: python tests/hbi_acceptance_check.py
 
   backend-integration:
     runs-on: ubuntu-latest
@@ -39,12 +42,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
       POSTGRES_USER: aura
       POSTGRES_PASSWORD: aura
       DATABASE_URL: postgresql+asyncpg://aura:aura@localhost:5432/aura_integration_test
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

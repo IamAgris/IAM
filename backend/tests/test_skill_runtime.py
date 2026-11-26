@@ -3,12 +3,15 @@
 import asyncio
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from app.core.config import settings
 from app.services.skillruntime.adapters import (
     DockerAdapter,
     ExecutionPlan,
     SkillRuntimeAdapterError,
     StubAdapter,
+    validate_network_name,
 )
 
 
@@ -58,6 +61,45 @@ class DockerPlanTests(unittest.TestCase):
         self.assertIn("--read-only", command)
         self.assertIn("no-new-privileges", command)
         self.assertTrue(any(arg.endswith(":/skill:ro") for arg in command))
+        self.assertIn("--cap-drop", command)
+
+
+class IsolatedNetworkTests(unittest.TestCase):
+    def setUp(self):
+        self.adapter = DockerAdapter()
+
+    def test_network_name_validation(self):
+        self.assertEqual(validate_network_name("iam-skills-egress"), "iam-skills-egress")
+        for bad in ("", "host", "bridge", "none", "bad name", "-bad"):
+            with self.assertRaises(SkillRuntimeAdapterError):
+                validate_network_name(bad)
+
+    def test_opted_in_network_uses_named_restricted_network(self):
+        with patch.object(settings, "skill_runtime_network_enabled", True), patch.object(
+            settings, "skill_runtime_network_name", "iam-skills-egress"
+        ):
+            command = self.adapter._command(
+                plan(network=True, network_name="iam-skills-egress")
+            )
+        self.assertIn("--network", command)
+        self.assertEqual(
+            command[command.index("--network") + 1], "iam-skills-egress"
+        )
+        self.assertNotIn("none", command)
+        self.assertIn("--cap-drop", command)
+        self.assertIn("--read-only", command)
+
+    def test_enabled_flag_without_network_name_still_rejects(self):
+        with patch.object(settings, "skill_runtime_network_enabled", True), patch.object(
+            settings, "skill_runtime_network_name", ""
+        ):
+            with self.assertRaises(SkillRuntimeAdapterError):
+                self.adapter._command(plan(network=True))
+
+    def test_stub_simulates_network_execution(self):
+        result = asyncio.run(StubAdapter().execute(plan(network=True)))
+        self.assertEqual(result["network"], "isolated")
+        self.assertTrue(result["simulated"])
 
 
 if __name__ == "__main__":

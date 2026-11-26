@@ -41,6 +41,10 @@ class FineTuneSpec:
     max_seq_len: int = 512
     hardware: HardwareRequirement = field(default_factory=HardwareRequirement)
     notes: str = ""
+    dataset_sha256: str = ""
+    licence: str = ""
+    consent_recorded: bool = False
+    poisoning_scan_ref: str = ""
 
     def validate(self) -> None:
         if self.method not in TRAINING_METHODS:
@@ -51,6 +55,25 @@ class FineTuneSpec:
             raise InvalidResearchJob("training hyperparameters must be positive")
         if self.quantization not in ("4bit", "8bit", "none"):
             raise InvalidResearchJob("quantization must be 4bit, 8bit or none")
+
+    def validate_provenance(self) -> None:
+        """OD-40 safeguards: a dataset cannot be promoted without provenance."""
+        self.validate()
+        missing = [
+            name
+            for name, value in (
+                ("dataset_sha256", self.dataset_sha256),
+                ("licence", self.licence),
+                ("poisoning_scan_ref", self.poisoning_scan_ref),
+            )
+            if not value
+        ]
+        if not self.consent_recorded:
+            missing.append("consent_recorded")
+        if missing:
+            raise InvalidResearchJob(
+                "training dataset provenance is incomplete: " + ", ".join(missing)
+            )
 
     def to_job(self) -> ResearchJob:
         self.validate()

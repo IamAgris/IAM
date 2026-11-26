@@ -4,7 +4,7 @@ All financial operations respect: zero standing budget (OD-04), legal entity
 ownership (OD-02), double-entry ledger, and audited approvals.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -16,6 +16,21 @@ from app.models.business import (
     BusinessOpportunity, BusinessProject, BusinessPerformance,
     FinancialTransaction, FinancialLedger, FinancialBudget, OperatingExpense,
 )
+from app.models.security import AuditEvent
+from app.core.config import settings
+from app.services.financial_policy import (
+    MAX_TRANSACTION_LIMIT_USD,
+    MIN_TRANSACTION_LIMIT_USD,
+    SpendDenied,
+    authorize_transaction,
+    transaction_limit_usd,
+)
+from app.services.ledger_service import LedgerError, LedgerService
+
+
+def _actor(request: Request) -> str:
+    credential = getattr(request.state, "credential", None)
+    return credential.get("name", "iam") if credential else "iam"
 
 router = APIRouter(prefix="/api/v1", tags=["economy"])
 
@@ -56,6 +71,13 @@ class BudgetCreate(BaseModel):
     is_approved: bool = False
 
 
+class ReceiptCreate(BaseModel):
+    amount: float
+    source: str
+    reference: str
+    approval_id: Optional[str] = None
+
+
 @router.get("/economics/opportunities")
 async def list_opportunities(db: AsyncSession = Depends(get_db_session)):
     r = await db.execute(select(BusinessOpportunity).order_by(BusinessOpportunity.created_at.desc()))
@@ -78,17 +100,33 @@ async def create_opportunity(request: OpportunityCreate, db: AsyncSession = Depe
 async def list_projects(db: AsyncSession = Depends(get_db_session)):
     r = await db.execute(select(BusinessProject).order_by(BusinessProject.created_at.desc()))
     return [{"id": str(p.id), "name": p.name, "status": p.status,
+             "legal_entity": p.legal_entity,
              "revenue": float(p.revenue), "expenses": float(p.expenses)} for p in r.scalars().all()]
 
 
 @router.post("/economics/projects")
 async def create_project(request: ProjectCreate, db: AsyncSession = Depends(get_db_session)):
     p = BusinessProject(name=request.name, description=request.description,
-                        opportunity_id=request.opportunity_id)
+                        opportunity_id=request.opportunity_id,
+                        legal_entity=request.legal_entity)
     db.add(p)
     await db.commit()
     await db.refresh(p)
     return {"id": str(p.id), "name": p.name, "status": p.status}
+
+
+@router.get("/finance/policy")
+async def finance_policy():
+    """Current OD-04 caps — configured, not compiled into the spend check."""
+    return {
+        "per_transaction_limit_usd": transaction_limit_usd(),
+        "per_transaction_allowed_range_usd": [
+            MIN_TRANSACTION_LIMIT_USD,
+            MAX_TRANSACTION_LIMIT_USD,
+        ],
+        "monthly_limit_usd": float(settings.finance_monthly_limit_usd),
+        "zero_standing_budget": True,
+    }
 
 
 @router.get("/finance/transactions")
@@ -99,16 +137,53 @@ async def list_transactions(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/finance/transactions")
-async def create_transaction(request: TransactionCreate, db: AsyncSession = Depends(get_db_session)):
-    # Zero standing budget: financial actions require an approval reference
-    if not request.approval_id:
-        raise HTTPException(403, "Financial transactions require an owner approval_id (OD-04 zero standing budget)")
-    t = FinancialTransaction(amount=request.amount, type=request.type,
-                             description=request.description, reference_id=request.approval_id)
+async def create_transaction(
+    request: TransactionCreate,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Outgoing funds need a signed per-action authority and must fit the caps."""
+    try:
+        authority = await authorize_transaction(
+            db,
+            amount=request.amount,
+            transaction_type=request.type,
+            approval_id=request.approval_id,
+        )
+    except SpendDenied as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+    t = FinancialTransaction(
+        amount=request.amount,
+        type=request.type,
+        description=request.description,
+        reference_id=(
+            authority["authorization_id"] if authority else request.reference_id
+        ),
+    )
     db.add(t)
+    await db.flush()
+    db.add(
+        AuditEvent(
+            event_type="financial_transaction_recorded",
+            actor=_actor(http_request),
+            target=str(t.id),
+            details={
+                "type": request.type,
+                "amount": float(request.amount),
+                "authorization_id": authority["authorization_id"] if authority else None,
+                "signed_authority": bool(authority),
+            },
+        )
+    )
     await db.commit()
     await db.refresh(t)
-    return {"id": str(t.id), "amount": float(t.amount), "type": t.type}
+    return {
+        "id": str(t.id),
+        "amount": float(t.amount),
+        "type": t.type,
+        "signed_authority": bool(authority),
+    }
 
 
 @router.get("/finance/ledger")
@@ -139,10 +214,68 @@ async def list_budgets(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/finance/budgets")
-async def create_budget(request: BudgetCreate, db: AsyncSession = Depends(get_db_session)):
+async def create_budget(
+    request: BudgetCreate,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Budgets are always proposed; only a signed Creator action may approve."""
     b = FinancialBudget(category=request.category, amount=request.amount,
-                        period=request.period, is_approved=request.is_approved)
+                        period=request.period, is_approved=False)
     db.add(b)
+    await db.flush()
+    db.add(
+        AuditEvent(
+            event_type="finance_budget_proposed",
+            actor=_actor(http_request),
+            target=str(b.id),
+            details={"category": request.category, "amount": float(request.amount)},
+        )
+    )
     await db.commit()
     await db.refresh(b)
-    return {"id": str(b.id), "category": b.category, "is_approved": b.is_approved}
+    return {"id": str(b.id), "category": b.category, "is_approved": False}
+
+
+@router.get("/finance/reconciliation")
+async def reconciliation(db: AsyncSession = Depends(get_db_session)):
+    """Cross-check ledger entries against transactions (not just a list)."""
+    return await LedgerService(db).reconcile()
+
+
+@router.get("/finance/profit-and-loss")
+async def profit_and_loss(
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+):
+    try:
+        period_start = datetime.fromisoformat(start.replace("Z", "+00:00")) if start else None
+        period_end = datetime.fromisoformat(end.replace("Z", "+00:00")) if end else None
+    except ValueError as exc:
+        raise HTTPException(400, "start/end must be ISO-8601 dates") from exc
+    return await LedgerService(db).profit_and_loss(period_start, period_end)
+
+
+@router.post("/finance/receipts")
+async def record_receipt(
+    request: ReceiptCreate,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Incoming payments need their own signed authority, never spending budget."""
+    try:
+        return await LedgerService(db).record_receipt(
+            amount=request.amount,
+            source=request.source,
+            reference=request.reference,
+            approval_id=request.approval_id,
+            actor=_actor(http_request),
+        )
+    except LedgerError as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+
+@router.get("/finance/receipts")
+async def list_receipts(db: AsyncSession = Depends(get_db_session)):
+    return await LedgerService(db).receipts()

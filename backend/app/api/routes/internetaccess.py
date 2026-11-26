@@ -38,6 +38,10 @@ class AccountRequest(BaseModel):
     authorised_by: Optional[str] = None
 
 
+class RotateCredentialRequest(BaseModel):
+    credential_reference: str
+
+
 class PublishRequest(BaseModel):
     title: str
     content_type: str
@@ -142,6 +146,38 @@ async def register_account(request: AccountRequest, db=Depends(get_db_session)):
     if "error" in result:
         raise HTTPException(status_code=403, detail=result)
     return result
+
+
+@router.get("/accounts")
+async def list_accounts(db=Depends(get_db_session)):
+    """List account metadata; credential values are never returned."""
+    return await InternetAccessService(db).list_accounts()
+
+
+@router.post("/accounts/{account_id}/rotate")
+async def rotate_account_credential(
+    account_id: str,
+    request: RotateCredentialRequest,
+    db=Depends(get_db_session),
+):
+    try:
+        return await InternetAccessService(db).rotate_account_credential(
+            account_id, request.credential_reference, "sdk"
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.post("/accounts/{account_id}/close")
+async def close_account(account_id: str, db=Depends(get_db_session)):
+    try:
+        return await InternetAccessService(db).close_account(account_id, "sdk")
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
 
 
 @router.post("/publish")

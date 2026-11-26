@@ -62,9 +62,13 @@ Send the key as `Authorization: Bearer <key>` or `X-API-Key: <key>`.
 
 ## 5. Rate limiting
 
-In-process sliding window per credential + client IP, default 120 requests per
-minute. Exceeding it returns `429` with `Retry-After`. A Redis-backed limiter can
-replace `RateLimiter` without changing the middleware contract.
+Sliding window per credential + client IP, default 120 requests per minute.
+Exceeding it returns `429` with `Retry-After`.
+
+`RATE_LIMIT_BACKEND=memory` (default) uses in-process state; `redis` uses a shared
+Redis sorted-set window across replicas, with automatic fallback to local state if
+Redis is temporarily unavailable. The Redis path is exercised by the Postgres
+integration check when `REDIS_URL` is provided.
 
 ## 6. Verification
 
@@ -77,6 +81,16 @@ replace `RateLimiter` without changing the middleware contract.
 - The middleware is only as strong as the deployment boundary for
   `POST /api/v1/creator/gateway/decision` and `/api/v1/auth/bootstrap`; restrict
   both at the network/proxy layer.
+
+## 8. Retired legacy authority path (OD-03/OD-04)
+
+`/api/v1/owner/authorizations` is no longer an authority source. Creation of
+standing grants returns `410`; `POST /authorizations/check` always returns
+`authorized: false`; `GET /authorizations` is a historical read-only view and
+`DELETE` remains available for cleanup. All consequential actions use
+`CreatorApprovalService.check_authorization()` with an active Ed25519-signed
+Creator authorization scoped to the specific action/target. The autonomy graph
+uses `GovernanceService` rather than the retired grants.
 - Frontend calls to admin endpoints must supply an appropriately scoped key;
   the current user-facing pages are still placeholders. There is no Creator UI —
   all creator decisions arrive through the signed email gateway.

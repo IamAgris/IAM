@@ -111,6 +111,7 @@ class GovernanceService:
             ("write_code_internal", "2", False, "Write code in isolated environment"),
             ("publish_externally", "3", True, "Publish content to external platforms"),
             ("spend_approved_budget", "3", True, "Spend within pre-approved budget"),
+            ("receive_payment", "2", True, "Record incoming payment - separate from spending authority"),
             ("transfer_money", "4", True, "Transfer money - requires explicit authorization"),
             ("modify_security_boundaries", "4", True, "Modify security - immutable, human only"),
             ("grant_own_access", "4", True, "Self-authorization - always prohibited"),

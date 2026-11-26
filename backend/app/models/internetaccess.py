@@ -58,6 +58,8 @@ class OnlineAccount(Base):
     is_authorised = Column(Boolean, nullable=False, default=False)
     authorised_by = Column(Text, nullable=True)
     credential_reference = Column(Text, nullable=True)  # secret store reference, never raw secret
+    credential_rotated_at = Column(DateTime(timezone=True), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (

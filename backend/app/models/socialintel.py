@@ -39,6 +39,22 @@ class SocialProfile(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class SocialPresence(Base):
+    """Verified external social presence owned by a legal entity (OD-02/OD-30)."""
+
+    __tablename__ = "social_presences"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    platform = Column(Text, nullable=False)
+    handle = Column(Text, nullable=False)
+    profile_url = Column(Text, nullable=False)
+    owner_entity = Column(Text, nullable=False)
+    verified = Column(Boolean, nullable=False, default=False)
+    verification_ref = Column(Text, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class InteractionPreference(Base):
     """Communication preferences per entity."""
     __tablename__ = "interaction_preferences"

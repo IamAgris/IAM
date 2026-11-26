@@ -53,17 +53,26 @@ def main():
     except Exception as e:
         check("unapproved spend rejected", False, str(e))
 
-    # 4. Approved transaction
+    # 3b. A fake approval string must never authorise outgoing funds
+    try:
+        r = httpx.post(f"{BASE}/api/v1/finance/transactions", json={
+            "amount": 5, "type": "expense", "description": "fake approval",
+            "approval_id": "test-approval-001"
+        }, timeout=10)
+        check("unsigned expense rejected", r.status_code == 403)
+    except Exception as e:
+        check("unsigned expense rejected", False, str(e))
+
+    # 4. Income is autonomous (OD-25); no signed authority needed
     tx_id = None
     try:
         r = httpx.post(f"{BASE}/api/v1/finance/transactions", json={
-            "amount": 10, "type": "income", "description": "approved test",
-            "approval_id": "test-approval-001"
+            "amount": 10, "type": "income", "description": "autonomous income test"
         }, timeout=10)
         tx_id = r.json().get("id")
-        check("approved transaction recorded", r.status_code == 200 and tx_id is not None)
+        check("autonomous income recorded", r.status_code == 200 and tx_id is not None)
     except Exception as e:
-        check("approved transaction", False, str(e))
+        check("autonomous income", False, str(e))
 
     # 5. Double-entry ledger — unbalanced rejected
     if tx_id:

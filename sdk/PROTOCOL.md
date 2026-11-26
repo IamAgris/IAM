@@ -1,6 +1,6 @@
 # IAM Core SDK Protocol (version 1)
 
-**Status:** v1 draft for SDK scaffold · must match `IAM_API_CONTRACTS.md`
+**Status:** v1 · server rejects an incompatible `X-IAM-Protocol-Version` with `426` and advertises the current version at `GET /api/v1/auth/protocol` · strict header requirement is opt-in (`IAM_PROTOCOL_REQUIRE_HEADER`)
 
 All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this one protocol. They never access the database or implement their own intelligence/permission logic.
 
@@ -42,17 +42,22 @@ All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this 
 | Location permissions | POST/GET | `/geo/permissions`, `/geo/location` | implemented — no covert precise tracking |
 | Human public presence | POST/GET | `/human-presence/people`, `/profiles`, `/claims` | implemented — public only, no de-anonymisation |
 | Assistant interoperability lab | POST/GET | `/assistant-lab/systems`, `/notes`, `/experiments` | implemented — internal research only |
+| Digital assets / licences / IP | GET/POST/PATCH/DELETE | `/digital-assets`, `/digital-assets/{id}/licences`, `/digital-assets/{id}/ip` | implemented — owner entity required, no secrets |
+| Domain registrations | GET/POST | `/domain-registrations` | implemented — metadata only, no live registrar call |
 | Integrity status / manifest | GET/POST | `/integrity/status`, `/integrity/manifest` | implemented — best-effort, explicit approval |
-| Knowledge contribution | POST | `/knowledge/contributions` | reserved |
+| Knowledge contribution | POST | `/knowledge/contributions` | implemented — unverified, attributed, audited |
 | Sync objects/status | POST/GET | `/sync/objects`, `/sync/status` | implemented — signed, untrusted data |
 | Creator pending / challenge | GET | `/creator/requests`, `/creator/requests/{id}/challenge` | implemented — local review, no email |
 | Creator signed decision | POST | `/creator/requests/{id}/decide` | implemented — ED25519 over one-time challenge |
 | Creator messages | POST/GET | `/creator/messages/questions`, `/creator/messages` | implemented — informational only |
-| Events | GET (SSE) | `/events` | reserved |
+| Events | GET (SSE) | `/events` | implemented — durable audit trail with `?since=` replay |
 
 All clients may send optional `CF-Access-Client-Id` / `CF-Access-Client-Secret` headers when the Core is behind Cloudflare Access (transport only; never authority).
 
-Remaining reserved endpoints return `501` until implemented. SDKs surface a clear diagnostic rather than silently degrading.
+Contributions always enter as `unverified`; verification remains a separate,
+authorised operation. The SSE stream emits `audit` events with `id`,
+`event_type`, `actor`, `target`, `details` and `created_at`; reconnect using the
+last `created_at` as `?since=`. No reserved endpoints remain.
 
 ## Shared semantics
 

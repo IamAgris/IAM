@@ -209,6 +209,92 @@ Tests: `backend/tests/test_ai_research_phase4.py` — **6 passed** (A10 platform
 
 **Important limitation:** recovery, scheduling and lifecycle were tested against stub adapters, not live platform APIs. Real quota feeds and notebook drivers are still required.
 
+### Phase 5 — COMPLETE (25 November 2026)
+
+| Work package | Implementation | Acceptance |
+|--------------|----------------|------------|
+| WP14 registry | `registry.py` — `ModelVersion` register → approve → deploy → rollback with persisted artifacts, benchmark/profile evidence requirement, signed Creator approval gate for protected changes | A13 ✅ |
+| WP15 research memory | `memory.py` — `ExperimentRecord` persistence, failure/success indexes, `suggest_next()` turning diagnoses and tags into the next experiment's inputs | A15 ✅ |
+| Autonomy boundary | `governance.py` — `ActionKind` + `AutonomyGate`; routine work is autonomous, paid/binding/human-only/protected-core actions require `SignedApproval` | A16 ✅ |
+
+Tests: `backend/tests/test_ai_research_phase5.py` — **7 passed** (A13 approve/deploy/rollback, unapproved deployment blocked, protected change requires signed approval; A15 failure diagnosis feeds next plan, empty-history behaviour; A16 routine work without approval, authority actions require signed approval). Full backend suite: **173 passed**.
+
+**Implementation plan status: COMPLETE.** All P0/P1/P2 work packages WP0–WP16 have implementations and all acceptance tests A0–A16 pass in code. One externally changed config default (all adaptive tier aliases now `local-qwen-3b`) was left untouched; the affected test was made independent of config defaults.
+
+**Remaining real-world work (not code):** inject live platform drivers and credentials, install/execute vLLM and QLoRA on eligible GPUs, replace stub evaluators with `lm-evaluation-harness` scores, and populate capability profiles and the model registry with measured production results. Final deployment decisions still belong on the Contabo VPS.
+
+---
+
+## 8. Real-world integration readiness — started (25 November 2026)
+
+Readiness scan:
+- No platform credentials (`COLAB_TOKEN`, `KAGGLE_API_TOKEN`, `HF_TOKEN`, `LIGHTNING_API_KEY`, hosted inference keys) are configured in the environment or `.env`.
+- `vllm`, `torch`, `transformers` and `lm_eval` are not installed locally.
+- Local GPU exists (GTX 1660 Ti, 6 GB, compute capability 7.5) but vLLM is Linux/CUDA and only Python 3.15 on Windows is available — no local serving run was attempted.
+
+Prepared: `research/colab/IAM_vLLM_Qwen_Coder_3B.ipynb` (11 cells) plus `research/colab/README.md`. The notebook checks GPU capability >= 7.5, installs vLLM, serves `Qwen/Qwen2.5-Coder-3B-Instruct` with an OpenAI-compatible API, runs the unchanged IAM coding task, records latency/VRAM/tokens, and uploads to IAM S3 from Colab secrets. It is **authored but not executed**.
+
+---
+
+## 9. Self-improvement release gate (Phase 7, 26 November 2026)
+
+`backend/app/services/ai_research/release_gate.py` joins the existing evidence
+and authority pieces: `POST /api/v1/development/models/versions` registers a
+candidate with dataset SHA-256, licence, consent and poisoning-scan provenance;
+`POST /api/v1/development/models/{model}/versions/{version}/promote` requires two
+reproducible `BenchmarkResult` artifacts with a matching config hash, a declared
+minimum improvement via `TrainingService.validate_improvement`, complete
+provenance and an active signed `CreatorAuthorization`
+(`development.model_release`, scoped to `model@version`), then writes the DB
+model/evaluation/upgrade records and an audit event. `POST .../rollback` applies
+the same signed-authority gate. `ModelRegistry.hydrate()` restores versions and
+the active model after restart. Tests: `backend/tests/test_model_release.py`
+(6 passed). `backend/app/services/irwm.py` now enforces the OD-39 runtime policy: one
+resident model, one in-flight request, a hard RAM ceiling, the core-service
+reserve, bounded context, idle unload after keep-alive, and queue/delegate
+decisions instead of evicting core services. It is exposed at
+`/api/v1/irwm/{status,admit,release,sweep}`; `/models/router/select` can now
+pass `task_complexity` and `available_aliases` so adaptive selection is
+reachable via API. Tests: `backend/tests/test_irwm.py` (6 passed).
+`backend/app/services/model_independence.py` now activates the previously
+orphaned `model_comparisons`, `model_portability_exports` and
+`fallback_configs` tables: weighted OD-38 scoring, signed primary-model
+adoption, private-content-free portability exports (permanent ID, public name,
+goal/skill descriptors only) and signed fallback configuration. The previously
+hard-coded vision model is now `VISION_MODEL`-configurable. Tests:
+`backend/tests/test_model_independence.py` (7 passed). Target-hardware
+competition evidence and live serving/training remain externally bound work.
+
+Blockers before live experiments: supply free-platform credentials (or run the notebook manually in Colab), inject notebook drivers into the adapters, and replace stub evaluators with real `lm-evaluation-harness` results. Paid or protected actions still require signed Creator approval (A16).
+
 ### Implementation technology note (25 November 2026)
 
 The cross-cutting addendum `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` adopts a hybrid Python + Rust + TypeScript allocation. Research Phases 0–2 above remain Python and are **not** rewritten. Rust candidates in §2a apply from Phase 3 onward and to the base Phase 0/1 build, and each must pass A17–A20 before adoption.
+
+## 10. World model reasoning (Phase 10, 26 November 2026)
+
+`backend/app/services/worldmodel_service.py` and `backend/app/api/routes/worldmodel.py`
+activate the existing world-model tables: `GET/POST /api/v1/world/entities`,
+`GET/POST /api/v1/world/relationships`, `GET/POST /api/v1/world/cause-effect`,
+`GET/POST /api/v1/world/events`, `GET/POST /api/v1/world/capabilities`.
+
+New reasoning endpoints:
+- `GET /api/v1/world/entities/{id}` — single entity with properties and confidence.
+- `POST /api/v1/world/traverse` — breadth-first traversal of entity relationships
+  up to a bounded depth (max 5), with cycle protection.
+- `GET /api/v1/world/cause-effect` — all recorded cause-and-effect chains.
+- `GET /api/v1/world/events` — all recorded world events with relevance to IAM.
+- `POST /api/v1/world/project` — deterministic scenario projection: starting from
+  a trigger entity/description, project downstream effects along cause-effect
+  chains, multiplying confidence at each hop and ranking outcomes by projected
+  confidence. Read-only: no state is mutated.
+
+Tests: `backend/tests/test_worldmodel.py` (7 passed). Target-hardware evidence,
+live model serving and real research-platform drivers remain externally bound
+work.
+
+### MCP connection — configured, awaiting sign-in
+
+Global OpenCode config was migrated to V2 `mcp.servers` and now includes `colab` (`https://colaboratory.googleapis.com/mcp`) and `kaggle` (`https://kaggle.com/mcp`), preserving `cloudflare`. The `colab` server is live and exposes 10 tools; read-only calls currently return `Unauthorized` until the user completes `/mcps` → colab → Google sign-in. Kaggle is configured but its tools are not yet exposed here.
+
+Mapping and safety rules are documented in `research/mcp/README.md`. Once signed in, the next step is a `ColabMCPDriver` over `tools.colab.*` and a cell-by-cell vLLM serving run from `research/colab/IAM_vLLM_Qwen_Coder_3B.ipynb`. No runtime has been created and no paid tier has been enabled.

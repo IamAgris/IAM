@@ -18,9 +18,10 @@ python tests/integration_db_check.py
 regenerated from ORM metadata in foreign-key dependency order. Migrations
 `002_skillforge.sql`, `003_security_engines.sql`, `004_creator_email_approval.sql`,
 `005_retire_legacy_owner_authorizations.sql`, `006_creator_email_outbox.sql`,
-`007_api_credentials.sql`, `008_retire_legacy_approval_requests.sql` and
-`009_skill_runtime.sql` then apply cleanly (idempotently). 141 relations present,
-including `alembic_version`. `alembic downgrade base` also
+`007_api_credentials.sql`, `008_retire_legacy_approval_requests.sql`,
+`009_skill_runtime.sql`, `010_creator_email_dead_letter.sql` and
+`011_skill_runtime_logs.sql` then apply cleanly (idempotently). The current tree
+has 178 public relations, including `alembic_version`. `alembic downgrade base` also
 succeeds; the archived `legacy_owner_authorizations` table is deliberately retained.
 All lifecycle checks passed against real PostgreSQL:
 
@@ -32,6 +33,10 @@ All lifecycle checks passed against real PostgreSQL:
 - Governance: authority boundary → signed Creator authorization → permitted
 - Creator email retry worker: a failed outbox row was retried to `sent` by a worker cycle
 - Visitor data rights: inspect → correct → delete, with messages stored as `enc:v1:` ciphertext
+- Creator email dead-letter after the configured maximum failed attempts
+- Skill Runtime log query and per-skill invocation budget
+- Redis shared rate limiter (when `REDIS_URL` is set)
+- Multi-source research verification against a stored knowledge item
 - HTTP auth: unauthenticated admin path → 401, admin key → 200, user key → 403, public health → 200
 - External-presence integration: connect → email request → activation blocked → signed approval → activation allowed
 

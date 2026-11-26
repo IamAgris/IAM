@@ -30,6 +30,10 @@ async function main(): Promise<void> {
   iam dev test               Run local SDK contract tests
   iam storage status         Show core-authorised storage status
   iam sync status            Show synchronisation status
+  iam asset list             List owner-owned digital assets
+  iam asset register <json>  Register a digital asset
+  iam domain list            List recorded domain registrations
+  iam domain register <json> Record a domain registration (metadata only)
   iam sandbox status         Show free-sandbox policy and scheduler health
   iam sandbox providers      List free infrastructure providers
   iam sandbox discover       Discover eligible free providers
@@ -75,6 +79,20 @@ async function main(): Promise<void> {
       break;
     case "sync status":
       console.log(await iam.sync.status());
+      break;
+    case "asset list":
+      console.log(await iam.digitalAssets.list());
+      break;
+    case "asset register":
+      if (!rest[0]) fail("asset register requires a JSON payload");
+      console.log(await iam.digitalAssets.create(JSON.parse(rest[0])));
+      break;
+    case "domain list":
+      console.log(await iam.digitalAssets.domains());
+      break;
+    case "domain register":
+      if (!rest[0]) fail("domain register requires a JSON payload");
+      console.log(await iam.digitalAssets.registerDomain(JSON.parse(rest[0])));
       break;
     case "sandbox status":
       console.log(await iam.freeSandbox.status());

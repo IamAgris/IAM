@@ -1,15 +1,16 @@
 """Knowledge routes - verified knowledge items with source provenance"""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
 
 from app.core.database import get_db_session
 from app.models.memory import KnowledgeItem, KnowledgeSource
+from app.models.security import AuditEvent
 
 router = APIRouter(prefix="/api/v1/knowledge", tags=["knowledge"])
 
@@ -43,6 +44,37 @@ class KnowledgeItemResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class KnowledgeContributionCreate(BaseModel):
+    """A knowledge item contributed by a node or user.
+
+    Contributions can never set verification status: every contribution enters
+    as unverified and is reviewed through the existing verification route.
+    """
+
+    title: str
+    content: str
+    source_url: Optional[str] = None
+    topic: Optional[str] = None
+    confidence_level: float = 0.5
+    contributor: Optional[str] = None
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+
+
+class KnowledgeContributionResponse(KnowledgeItemResponse):
+    contribution_id: str
+    status: str = "pending_review"
+
+
+def validate_contribution(payload: KnowledgeContributionCreate) -> None:
+    """Shared validation for contributed knowledge (no database dependency)."""
+    if not payload.title.strip():
+        raise HTTPException(status_code=400, detail="title must not be empty")
+    if not payload.content.strip():
+        raise HTTPException(status_code=400, detail="content must not be empty")
+    if not 0 <= payload.confidence_level <= 1:
+        raise HTTPException(status_code=400, detail="confidence_level must be between 0 and 1")
 
 
 @router.get("/", response_model=List[KnowledgeItemResponse])
@@ -120,6 +152,82 @@ async def create_knowledge(
         topic=knowledge.topic,
         created_at=knowledge.created_at.isoformat() if knowledge.created_at else None,
         last_reviewed_at=knowledge.last_reviewed_at.isoformat() if knowledge.last_reviewed_at else None,
+    )
+
+
+@router.post("/contributions", response_model=KnowledgeContributionResponse)
+async def contribute_knowledge(
+    contribution: KnowledgeContributionCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Accept a contribution and record it, unverified, in the audit trail.
+
+    The endpoint is intentionally separate from ``POST /knowledge/``: direct
+    creation is IAM's own knowledge path, while contributions carry an explicit
+    contributor identity and provenance and always require review.
+    """
+    validate_contribution(contribution)
+
+    credential = getattr(request.state, "credential", None)
+    actor = contribution.contributor or (
+        credential.get("name", "unknown") if credential else "unknown"
+    )
+    metadata = {
+        "contribution": True,
+        "contributor": actor,
+        "provenance": contribution.provenance,
+    }
+    knowledge = KnowledgeItem(
+        title=contribution.title.strip(),
+        content=contribution.content.strip(),
+        source=contribution.source_url,
+        confidence_level=contribution.confidence_level,
+        verification_status="unverified",
+        topic=contribution.topic,
+        metadata_=metadata,
+    )
+    db.add(knowledge)
+    await db.flush()
+
+    if contribution.source_url:
+        db.add(
+            KnowledgeSource(
+                knowledge_item_id=knowledge.id,
+                url=contribution.source_url,
+                title=contribution.title,
+                credibility_score=contribution.confidence_level,
+            )
+        )
+
+    db.add(
+        AuditEvent(
+            event_type="knowledge_contribution",
+            actor=actor,
+            target=str(knowledge.id),
+            details={
+                "title": contribution.title[:200],
+                "source_url": contribution.source_url,
+                "topic": contribution.topic,
+                "provenance": contribution.provenance,
+                "verification_status": "unverified",
+            },
+        )
+    )
+    await db.commit()
+    await db.refresh(knowledge)
+
+    return KnowledgeContributionResponse(
+        id=str(knowledge.id),
+        title=knowledge.title,
+        content=knowledge.content,
+        source=knowledge.source,
+        confidence_level=float(knowledge.confidence_level),
+        verification_status=knowledge.verification_status,
+        topic=knowledge.topic,
+        created_at=knowledge.created_at.isoformat() if knowledge.created_at else None,
+        last_reviewed_at=knowledge.last_reviewed_at.isoformat() if knowledge.last_reviewed_at else None,
+        contribution_id=str(knowledge.id),
     )
 
 

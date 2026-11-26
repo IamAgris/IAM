@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any, Dict
+from typing import Any, AsyncIterator, Dict
+from urllib.parse import urlencode
 
 import httpx
 
@@ -16,8 +17,7 @@ class _Transport:
         self.base = options.endpoint.rstrip("/")
         self.options = options
 
-    async def request(self, method: str, path: str, body: Any = None) -> Any:
-        url = path if path.startswith("http") else f"{self.base}{path}"
+    def _headers(self, method: str) -> Dict[str, str]:
         headers = {
             "X-IAM-Protocol-Version": self.options.api_version,
             "Accept": "application/json",
@@ -29,6 +29,11 @@ class _Transport:
             headers["CF-Access-Client-Secret"] = self.options.access_client_secret
         if method == "POST":
             headers["Idempotency-Key"] = str(uuid.uuid4())
+        return headers
+
+    async def request(self, method: str, path: str, body: Any = None) -> Any:
+        url = path if path.startswith("http") else f"{self.base}{path}"
+        headers = self._headers(method)
 
         last: Exception | None = None
         for attempt in range(self.options.max_retries + 1):
@@ -601,6 +606,202 @@ class _FreeSandbox:
         )
 
 
+class _DigitalAssets:
+    """Owner-owned digital assets, licences, IP records and domain metadata."""
+
+    BASE = "/api/v1/digital-assets"
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def list(self) -> Any:
+        return await self._t.request("GET", self.BASE)
+
+    async def create(self, payload: Dict[str, Any]) -> Any:
+        return await self._t.request("POST", self.BASE, payload)
+
+    async def get(self, asset_id: str) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/{asset_id}")
+
+    async def update(self, asset_id: str, payload: Dict[str, Any]) -> Any:
+        return await self._t.request("PATCH", f"{self.BASE}/{asset_id}", payload)
+
+    async def delete(self, asset_id: str) -> Any:
+        return await self._t.request("DELETE", f"{self.BASE}/{asset_id}")
+
+    async def licences(self, asset_id: str) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/{asset_id}/licences")
+
+    async def add_licence(self, asset_id: str, payload: Dict[str, Any]) -> Any:
+        return await self._t.request("POST", f"{self.BASE}/{asset_id}/licences", payload)
+
+    async def ip_records(self, asset_id: str) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/{asset_id}/ip")
+
+    async def add_ip(self, asset_id: str, payload: Dict[str, Any]) -> Any:
+        return await self._t.request("POST", f"{self.BASE}/{asset_id}/ip", payload)
+
+    async def domains(self) -> Any:
+        return await self._t.request("GET", "/api/v1/domain-registrations")
+
+    async def register_domain(self, payload: Dict[str, Any]) -> Any:
+        return await self._t.request("POST", "/api/v1/domain-registrations", payload)
+
+
+class _Events:
+    """Server-sent audit event stream backed by the durable event route."""
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def stream(
+        self, since: str | None = None, limit: int = 100, interval: float = 2.0
+    ) -> AsyncIterator[Dict[str, Any]]:
+        params = {"limit": str(limit), "interval": str(interval)}
+        if since:
+            params["since"] = since
+        headers = self._t._headers("GET")
+        headers["Accept"] = "text/event-stream"
+        url = f"{self._t.base}/api/v1/events"
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream("GET", url, headers=headers, params=params) as response:
+                if not response.is_success:
+                    raise IAMError(
+                        f"event stream failed with HTTP {response.status_code}",
+                        response.status_code,
+                    )
+                event_name = "message"
+                data_lines: list[str] = []
+                async for line in response.aiter_lines():
+                    if line.startswith("event:"):
+                        event_name = line[6:].strip()
+                    elif line.startswith("data:"):
+                        data_lines.append(line[5:].strip())
+                    elif line == "":
+                        if data_lines:
+                            import json
+
+                            payload = json.loads("\n".join(data_lines))
+                            yield {"event": event_name, "data": payload}
+                        event_name, data_lines = "message", []
+
+
+class _HBIResearch:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def search(self, query: str, purpose: str, scope: str = "aggregate") -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/research/search",
+            {"query": query, "purpose": purpose, "scope": scope},
+        )
+
+    async def self_directed(self, query: str, purpose: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST",
+            "/api/v1/hbi/research/self-directed?" + urlencode({"query": query, "purpose": purpose}),
+        )
+
+
+class _HBIKnowledge:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def add(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", "/api/v1/hbi/knowledge/records", payload)
+
+    async def retrieve(self, keyword: str = "", **filters: Any) -> dict[str, Any]:
+        params = {"keyword": keyword, **filters}
+        return await self._t.request(
+            "GET", "/api/v1/hbi/knowledge/records?" + urlencode(params)
+        )
+
+    async def ingest(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", "/api/v1/hbi/knowledge/ingest", payload)
+
+
+class _HBIBehaviour:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def predict(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Probability distribution over scenarios; refused unless validated."""
+        return await self._t.request("POST", "/api/v1/hbi/behaviour/forecast", payload)
+
+    async def analyse(self, module_id: int, question: str, purpose: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", f"/api/v1/hbi/modules/{module_id}/analyse",
+            {"question": question, "purpose": purpose},
+        )
+
+
+class _HBIPrediction:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def evaluate(self, prediction: dict[str, Any], outcome: Any) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/predictions/evaluate",
+            {"prediction": prediction, "outcome": outcome},
+        )
+
+    async def performance(self, model_id: str, cases: list[dict[str, Any]]) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/backtest", {"model_id": model_id, "cases": cases}
+        )
+
+
+class _HBIHistory:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def analogy(self, current: dict[str, Any], precedent: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/history/analogy",
+            {"current": current, "precedent": precedent},
+        )
+
+    async def chronology(self, events: list[dict[str, Any]],
+                         conflicting_accounts: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/chronology/resolve",
+            {"events": events, "conflicting_accounts": conflicting_accounts or []},
+        )
+
+    async def analyse(self, module_id: int, question: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST",
+            f"/api/v1/hbi/history/modules/{module_id}/analyse?" + urlencode({"question": question}),
+        )
+
+
+class _HBI:
+    """Versioned Human Behaviour Intelligence interface for IAM's mainbrain."""
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+        self.research = _HBIResearch(transport)
+        self.knowledge = _HBIKnowledge(transport)
+        self.behaviour = _HBIBehaviour(transport)
+        self.prediction = _HBIPrediction(transport)
+        self.history = _HBIHistory(transport)
+
+    async def status(self) -> dict[str, Any]:
+        return await self._t.request("GET", "/api/v1/hbi/status")
+
+    async def analyse(self, question: str, purpose: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST", "/api/v1/hbi/analysis",
+            {"question": question, "purpose": purpose},
+        )
+
+    async def uncertainty(self, query: str, purpose: str) -> dict[str, Any]:
+        return await self._t.request(
+            "POST",
+            "/api/v1/hbi/uncertainty/assess?" + urlencode({"query": query, "purpose": purpose}),
+        )
+
+
 class IAM:
     """Connect local applications and nodes to the IAM Core."""
 
@@ -631,6 +832,9 @@ class IAM:
         self.assistant_lab = _AssistantLab(self._transport)
         self.creator = _Creator(self._transport)
         self.free_sandbox = _FreeSandbox(self._transport)
+        self.digital_assets = _DigitalAssets(self._transport)
+        self.events = _Events(self._transport)
+        self.hbi = _HBI(self._transport)
 
     async def connect(self) -> None:
         await self.core.status()

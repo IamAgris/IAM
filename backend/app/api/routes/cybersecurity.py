@@ -24,6 +24,12 @@ from app.services.cybersecurity.security_guard import (
     SecurityGuardDenied,
 )
 from app.services.cybersecurity.service import SecurityEngineService
+from app.services.security_policy import (
+    AUTHORIZATION_ACTION,
+    FORBIDDEN_CAPABILITIES,
+    AuthorisedTargetDenied,
+    AuthorisedTargetPolicy,
+)
 
 router = APIRouter(prefix="/api/v1/cybersecurity", tags=["iam-cybersecurity"])
 
@@ -90,8 +96,39 @@ async def policy():
             "unapproved or unauthorised operations",
             "public or non-loopback engine endpoints",
         ],
+        "forbidden_capabilities": sorted(FORBIDDEN_CAPABILITIES),
+        "authorization_action": AUTHORIZATION_ACTION,
         "engine_output_is_untrusted_data": True,
     }
+
+
+class TargetCheckRequest(BaseModel):
+    target: str
+    operation: str = "read"
+    target_type: Optional[str] = None
+    require_write: bool = False
+
+
+@router.post("/authorize-target")
+async def authorize_target(
+    payload: TargetCheckRequest,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """WH-01 gate: verify a target against active signed Creator authority.
+
+    This is the shared enforcement point for the security engine, Aegis reasoning
+    and any future workspace/tool gateway. It cannot be satisfied by a prompt
+    instruction or a plain email reply.
+    """
+    try:
+        return await AuthorisedTargetPolicy(db).verify(
+            payload.target,
+            payload.operation,
+            target_type=payload.target_type,
+            require_write=payload.require_write,
+        )
+    except AuthorisedTargetDenied as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 @router.get("/engines")

@@ -1,6 +1,6 @@
 # IAM Architecture — Document Index (AUTHORITATIVE)
 
-**Version:** 1.0 · 25 November 2026  
+**Version:** 1.1 · 26 November 2026  
 **Purpose:** Resolve duplicate/superseded documents. This is the single entry point to the frozen IAM architecture.
 
 ---
@@ -10,7 +10,7 @@
 | Priority | Document | Status |
 |----------|----------|--------|
 | **1** | `IAM_FINAL_CONSOLIDATION.md` | **AUTHORITATIVE** — master gap analysis, all systems, completion levels, roadmap |
-| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 41 locked decisions |
+| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 45 locked decisions (OD-01…OD-45) |
 | 2 | `canonical/IAM_DOC_01…04` | Frozen supplied documents 01–04 |
 | 2 | `IAM_DISTRIBUTED_ARCHITECTURE.md` | Document 05 |
 | 2 | `IAM_WHITEHAT_AND_WORKSPACE.md` | Document 06 |
@@ -31,19 +31,21 @@
 | 2 | `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` | Document 20 (AI SDK/framework/model research + Technology Capability Registry; OD-36) |
 | 2 | `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` | Document 21 (traffic, queues and distributed processing — extends system 13 / Doc 10; OD-37) |
 | 2 | `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` | Document 23 (locked initial foundation model, router, model competition and model development — extends Doc 02 / systems 2, 5, 11, 14; OD-38) |
+| 2 | `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` | Document 23-A — shared primary model for frontend and backend, hosted models as sub-agents, self-improvement → live inference bridge (amends OD-38 §1/§3 on local-model selection; OD-46, confirmed 26 November 2026) |
 | 2 | `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` | Intelligent Resource and Workload Manager (RAM/CPU control, model residency, node delegation — systems 2, 13, OD-37; OD-39) |
 | 2 | `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` | Model Evolution and Fine-Tuning Engine — MEFE (datasets, SFT/QLoRA, evaluation, registry — systems 5, 11, 14; OD-40) |
 | 2 | `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` | Parent architecture for autonomous model research/development/deployment — 14 engines + distributed free-compute research (OD-41; requirements frozen) |
 | 2 | `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md` | Implementation sequence, dependencies, priorities and acceptance tests for OD-41 |
 | 2 | `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` | Cross-cutting Python + Rust + TypeScript implementation allocation; not a new decision and does not reopen OD-01…OD-41 |
-| 2 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Document 24 (human behaviour, Equality of Existence, power and responsibility — extends Docs 17/14; proposed OD-43) |
-| 2 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Document 25 (income, crypto, trading and payments — extends Doc 09 / OD-23/24/25; proposed OD-44) |
+| 2 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Document 24 (human behaviour, Equality of Existence, power and responsibility — extends Docs 17/14; OD-43) |
+| 2 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Document 25 (income, crypto, trading, payments; Amendment A adds prediction markets, gaming intelligence, investments and provider ecosystem — extends Doc 09 / OD-23/24/25; OD-44) |
+| 2 | `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` | Document 26 — **HBI Master Specification v2.0** (38 modules in six divisions, 13 technical engines, eight advanced capabilities, expanded evolution/developmental/cultural/civilisational/crisis/leadership/trust/collective/resilience scope, historical chronology, full schemas/APIs/governance/testing — extends Docs 17/24/14; **OD-45 CONFIRMED 26 November 2026**). Part of the frozen baseline; does not change any earlier decision or system count. |
 | 3 | `sdk/` | SDK scaffolds: TypeScript, Python, CLI, shared protocol |
 | 2 | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
 | 2 | `IAM_COMPATIBILITY_MATRIX.md` | ARM64/x86-64 component matrix (OD-22) |
 | 2 | `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md` | Technical specifications |
 
-**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority.
+**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority. Document 26 (`IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md`) is **CONFIRMED** under OD-45 (26 November 2026) and part of the frozen baseline; it establishes 38 modules in six divisions + 13 technical engines inside existing systems, does not create a sixteenth top-level system, and does not change any earlier decision. It supersedes its own v1.0 draft. Document 23-A (`IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md`, OD-46) is **CONFIRMED** and part of the frozen baseline; it supersedes only OD-38 §1/§3 on local-model selection, making Qwen2.5-Coder 3B the shared primary. All other OD-38 provisions remain authoritative. The register now holds 46 decisions.
 
 ## Superseded documents (historical — do not use as source of truth)
 
@@ -59,3 +61,90 @@ These were early derived drafts. They are retained for history but **superseded*
 ## Naming note
 
 "AURA" is the engineering codename only. The system's permanent identity is **IAM — Intellectual Artificial Mainbrain**. "Marlow" refers only to the supplied HTML file name; the visual interface is IAM's.
+
+---
+
+## Repository map (navigation supplement — not an architecture decision)
+
+**Status:** Agent navigation aid, appended 27 November 2026. It does not add,
+amend or reinterpret any owner decision. The source-of-truth tables above remain
+authoritative. Generated details live in `tools/rkie/index/file-index.json`.
+
+### Top-level layout
+
+| Path | Contents | Search first with |
+|------|----------|-------------------|
+| `canonical/` | Frozen source documents 01–04 | `-Mode docs` |
+| Root `IAM_*.md`, `MASTER_SPECIFICATION.md` | 61 specification / analysis documents; see authority table above | `-Mode docs` |
+| `backend/app/api/routes/` | ~75 FastAPI route modules (API surface) | `-Mode api` |
+| `backend/app/services/` | ~90 service modules, incl. `ai_research/`, `hbi/`, `skillforge/`, `skillruntime/`, `workspaces/` | `-Mode content -Scope backend` |
+| `backend/app/models/` | SQLAlchemy ORM models | `-Mode db` |
+| `backend/app/db/migrations/` | 001–031 SQL + Alembic `0001_initial.py` | `-Mode db` |
+| `backend/app/core/` | Config, database, auth policy, rate limit, secrets | `-Mode content -Scope backend/app/core` |
+| `backend/app/orchestration/`, `backend/app/workers/` | LangGraph autonomy loop, ARQ workers | `-Mode content -Scope backend` |
+| `backend/tests/`, `tests/` | Unit, integration and Level 1–5 acceptance suites | `-Mode tests` |
+| `frontend/` | Next.js/TypeScript UI; has its own generated `AGENTS.md` | `-Mode content -Scope frontend` |
+| `sdk/` | TypeScript, Python, CLI scaffolds + `PROTOCOL.md` | `-Mode content -Scope sdk` |
+| `infra/` | LiteLLM config, Postgres init, gateway, CI/branch helpers | `-Mode content -Scope infra` |
+| `iam/skills/` | On-disk skill package store (runtime-managed) | `-Mode files -Scope iam` |
+| `research/` | Colab notebook + MCP notes | `-Mode files -Scope research` |
+| `scripts/` | Docker build, model key, Creator signer helpers | `-Mode files -Scope scripts` |
+| `tools/rkie/` | Local search toolkit and generated file index | `-Mode files -Scope tools` |
+
+Dominant implementation language is Python (≈422 `.py` files); TypeScript/React
+is a thin frontend and SDK layer. Deployment is Docker Compose.
+
+### Implementation → authority quick map
+
+| Subsystem | Representative files | Authoritative spec / decision |
+|-----------|----------------------|-------------------------------|
+| Model routing, selection, inference | `backend/app/api/routes/modelrouter.py`, `backend/app/services/intel_router_service.py`, `model_inference.py`, `serving_model.py`, `infra/litellm/config.yaml` | `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md`, `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (OD-38, OD-46) |
+| Human behaviour intelligence | `backend/app/services/hbi/`, `backend/app/api/routes/hbi.py`, `backend/app/models/hbi.py` | `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (OD-45) |
+| Autonomous research / development | `backend/app/services/ai_research/`, `backend/app/api/routes/development.py` | `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md`, `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md` (OD-41) |
+| Skills | `backend/app/services/skillforge/`, `skillruntime/`, `iam/skills/` | `IAM_SKILL_FORGE_SPEC.md`, `IAM_SKILL_RUNTIME_SPEC.md` |
+| Workspace / white-hat | `backend/app/services/workspaces/`, `whitehat_labs.py`, `whitehat_policy.py` | `IAM_WHITEHAT_AND_WORKSPACE.md` |
+| Finance, ledger, banking, trading | `backend/app/services/financial_intelligence/`, `ledger_service.py`, `models/financial_intelligence.py` | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` (OD-44) |
+| Memory, knowledge, world model | `backend/app/services/memory_service.py`, `worldmodel_service.py`, `reflection_service.py`, `api/routes/knowledge.py` | `IAM_DATABASE_DESIGN.md`, `IAM_FINAL_CONSOLIDATION.md` |
+| Auth, Creator authority, MFA | `backend/app/api/middleware/auth_middleware.py`, `core/auth_policy.py`, `routes/ownerauth.py`, `routes/creatorapproval.py` | `IAM_API_AUTH_SPEC.md`, `IAM_CREATOR_APPROVAL_SPEC.md` |
+| Frontend | `frontend/app/`, `frontend/components/iam/`, `frontend/lib/api.ts` | `IAM_FRONTEND_IMPLEMENTATION.md`, `canonical/IAM_DOC_04` |
+| SDK / protocol | `sdk/typescript/`, `sdk/python/`, `sdk/cli/`, `sdk/PROTOCOL.md` | `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (OD-29) |
+
+This mapping is declarative and editable in
+`tools/rkie/config/architecture-links.json`; regenerate the index with
+`./tools/rkie/Update-Index.ps1` after editing it.
+
+### Existing systems — do not duplicate
+
+Repository search is **separate** from IAM's runtime systems. Before adding any
+search, memory or knowledge code, inspect:
+
+- `backend/app/services/search_service.py` — external web search (Brave, Google, Wikipedia fallback).
+- `backend/app/services/memory_service.py` — pgvector semantic recall + ILIKE fallback.
+- `backend/app/services/research_service.py` — search/browse/extract/verify pipeline.
+- `backend/app/services/hbi/knowledge.py`, `hbi/hkg.py` — governed knowledge and historical knowledge graph.
+- `backend/app/services/worldmodel_service.py`, `web_knowledge_service.py`, `reflection_service.py`.
+- `backend/app/services/ai_research/memory.py` — failed-experiment memory.
+
+None of these index the repository itself; that gap is what `tools/rkie/` fills.
+
+### Local search toolkit
+
+```powershell
+./tools/rkie/Search-IAMRepo.ps1 -Query modelrouter -Mode files
+./tools/rkie/Search-IAMRepo.ps1 -Query "OD-46" -Mode docs -Json
+./tools/rkie/Search-IAMRepo.ps1 -Query "IntelligenceRouter" -Mode symbols
+./tools/rkie/Update-Index.ps1
+```
+
+`tools/rkie/README.md` documents all modes, switches, the standard investigation
+procedure and security rules. The root `AGENTS.md` is the agent-facing contract.
+`tools/rkie/RKIE_CAPABILITY_AUDIT.md` maps the frozen 26-domain RKIE target scope
+to evidence in this working tree and lists the prioritised implementation backlog.
+
+### Why local search is required
+
+GitHub code search indexes contents and splits on punctuation, so a file named
+`modelrouter.py` containing `model-router` / `model router` is not found by the
+token `modelrouter`. GitHub also cannot see uncommitted files. Local filename
+and content search address both failures without any external index or service.
+

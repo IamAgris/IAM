@@ -1,10 +1,30 @@
 """Application configuration using pydantic-settings"""
 
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 from typing import List, Optional
+
+# Fields that may be supplied through Docker secret files (<FIELD>_FILE).
+SECRET_FIELDS = (
+    "app_secret_key",
+    "session_secret",
+    "encryption_key",
+    "postgres_password",
+    "litellm_master_key",
+    "openai_api_key",
+    "anthropic_api_key",
+    "google_api_key",
+    "dashscope_api_key",
+    "nvidia_api_key",
+    "brave_api_key",
+    "s3_access_key",
+    "s3_secret_key",
+    "creator_public_key",
+    "creator_gateway_secret",
+)
 
 
 class Settings(BaseSettings):
@@ -38,9 +58,36 @@ class Settings(BaseSettings):
 
     # IAM SDK protocol (OD-29) and node contribution (OD-26)
     iam_protocol_version: str = "1"
+    iam_protocol_require_header: bool = False
     # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
     # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
-    iam_sdk_default_model: str = "nvidia-llama-3.3-70b"
+    iam_sdk_default_model: str = "nvidia-nemotron-3.5-lightning"
+
+    # One shared primary model for the whole IAM experience (frontend and
+    # backend). Hosted providers remain optional specialists reached only by
+    # explicit model id; see IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
+    # OD-46 (26 Nov 2026): Qwen2.5-Coder 3B is IAM's shared primary local brain.
+    iam_primary_model: str = "local-qwen-coder-3b"
+    iam_primary_local_tag: str = "qwen2.5-coder:3b"  # Ollama tag behind the alias
+
+    # A cache-cold local 3B on the 4 vCPU core can take minutes to load and
+    # produce first tokens. Keep these generous; the route still reports a
+    # real timeout explicitly (504) instead of hanging or inventing an answer.
+    inference_chat_timeout_seconds: float = 300.0
+    inference_stream_timeout_seconds: float = 300.0
+
+    # IAM context assembly — injects verified knowledge (and, only when
+    # explicitly requested and local, private memories) into chat requests.
+    iam_context_enabled: bool = True
+    iam_context_include_private_memory: bool = False
+    iam_context_share_with_hosted: bool = False
+
+    # API sub-agents are optional specialists, never IAM itself. Delegation is
+    # per-request opt-in and requires a signed Creator authorization because
+    # task text is sent to an external provider.
+    iam_delegation_enabled: bool = True
+    iam_delegation_action: str = "model.delegate"
+    iam_delegation_max_findings: int = 5
 
     # Provider API keys
     openai_api_key: Optional[str] = None
@@ -52,22 +99,32 @@ class Settings(BaseSettings):
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_free_only: bool = True  # Never incur charges unless explicitly disabled
 
-    # Ollama - local models (private / low-resource tasks)
+    # Ollama - local models (private / low-resource tasks). Opt-in so IAM never
+    # silently starts using a local model the operator did not approve.
+    ollama_enabled: bool = False
     ollama_base_url: str = "http://ollama:11434"
 
     # Adaptive model selection (OD-39 / OD-41) — hardware-aware local model choice.
     adaptive_model_enabled: bool = True
-    # OD-38 reopened by owner on 25 Nov 2026: only qwen2.5:3b is kept locally.
-    # All local tiers map to that single alias until another local model is approved.
-    adaptive_tiny_model: str = "local-qwen-3b"
-    adaptive_small_model: str = "local-qwen-3b"
-    adaptive_standard_model: str = "local-qwen-3b"
-    adaptive_large_model: str = "local-qwen-3b"
+    # OD-46: all local tiers map to the approved primary local model.
+    # qwen2.5:3b remains an approved secondary local model, not the default.
+    adaptive_tiny_model: str = "local-qwen-coder-3b"
+    adaptive_small_model: str = "local-qwen-coder-3b"
+    adaptive_standard_model: str = "local-qwen-coder-3b"
+    adaptive_large_model: str = "local-qwen-coder-3b"
     adaptive_delegate_model: str = "qwen3.5-9b"
     adaptive_delegate_node: Optional[str] = None
     adaptive_reserved_ram_mb: int = 1500  # protected core services (OD-39)
     adaptive_min_ram_mb_standard: int = 2500
     adaptive_min_ram_mb_large: int = 5500
+
+    # IRWM runtime enforcement (OD-39). One resident model, one request.
+    irwm_enabled: bool = True
+    irwm_hard_ceiling_mb: int = 6000
+    irwm_target_loaded_ram_mb: int = 5500
+    irwm_keep_alive_seconds: int = 120
+    irwm_max_concurrent: int = 1
+    irwm_context_tokens: int = 4096
 
     # OEDIE free infrastructure provider adapters (Doc 22) — default-disabled.
     # Values are environment-variable NAMES, never literal secrets.
@@ -99,6 +156,22 @@ class Settings(BaseSettings):
     encryption_key: str = "change-me-to-a-32-byte-base64-key"
     session_secret: str = "change-me-session-secret"
 
+    # Media services (optional, provider-independent)
+    voice_tts_url: str = ""
+    voice_tts_api_key_env: str = "VOICE_TTS_API_KEY"
+    voice_vad_sample_rate: int = 16000
+    voice_vad_threshold: float = 0.02
+    vision_ffmpeg_path: str = "ffmpeg"
+    vision_model: str = "qwen3.5-9b"
+
+    # UWAIE browser automation — one engine at a time, all sessions isolated.
+    uwai_browser_engine: str = "chromium"  # chromium | firefox | webkit
+    uwai_upload_root: str = ""  # empty => OS temp/iam-web-uploads
+    uwai_computer_use_enabled: bool = False
+    mobile_agent_enabled: bool = False
+    mobile_adb_path: str = "adb"
+    mobile_allowed_devices: str = ""  # comma-separated device serials
+
     # Skill Runtime — execution of approved Skill Forge packages
     skill_runtime_enabled: bool = False
     skill_runtime_adapter: str = "stub"  # stub | docker
@@ -108,6 +181,95 @@ class Settings(BaseSettings):
     skill_runtime_cpus: float = 0.5
     skill_runtime_per_skill_limit_per_minute: int = 60
     skill_runtime_max_log_chars: int = 200000
+    skill_runtime_audit_log_chunk_chars: int = 32000
+    # Network-enabled skills require explicit opt-in and a pre-created Docker
+    # network with restricted egress. Names 'host', 'bridge' and 'none' are
+    # rejected by the adapter (see skillruntime.adapters).
+    skill_runtime_network_enabled: bool = False
+    skill_runtime_network_name: str = ""
+
+    # Workspace manager (WS-01/WS-02) — default-off, provider-independent.
+    workspace_enabled: bool = False
+    workspace_adapter: str = "stub"  # stub | docker
+    workspace_root: str = ""  # empty => OS temp directory
+    workspace_image: str = "python:3.12-alpine"
+    workspace_timeout_seconds: int = 60
+    workspace_memory: str = "512m"
+    workspace_cpus: float = 1.0
+    # Provider replacement / continuity (WS-05/WS-06). Online providers are
+    # optional resources; 'local' is always the final fallback.
+    workspace_providers: str = "local,coder,codespaces"
+    workspace_coder_url: str = ""
+    workspace_coder_token_env: str = "WORKSPACE_CODER_TOKEN"
+    workspace_codespaces_repo: str = ""
+    workspace_codespaces_token_env: str = "WORKSPACE_CODESPACES_TOKEN"
+    # Per-workspace scoped credentials (WS-03) are short-lived and name-only.
+    workspace_credential_ttl_seconds: int = 3600
+    # Remote provider execution is opt-in. No external HTTP call is made until
+    # this is enabled and the named token environment variable is present.
+    workspace_remote_execution_enabled: bool = False
+    workspace_remote_timeout_seconds: int = 30
+    workspace_coder_template_id: str = ""
+    workspace_coder_create_path: str = "/api/v2/users/me/workspaces"
+    workspace_coder_start_path: str = "/api/v2/users/me/workspaces/{id}/start"
+    workspace_coder_destroy_path: str = "/api/v2/users/me/workspaces/{id}"
+    workspace_coder_execute_path: str = ""  # operator-provided command bridge
+    workspace_codespaces_api_base: str = "https://api.github.com"
+    workspace_codespaces_ref: str = "main"
+    workspace_codespaces_create_path: str = "/repos/{repo}/codespaces"
+    workspace_codespaces_start_path: str = "/repos/{repo}/codespaces/{id}/start"
+    workspace_codespaces_destroy_path: str = "/repos/{repo}/codespaces/{id}"
+    workspace_codespaces_execute_path: str = ""  # operator-provided command bridge
+
+    # Model release evidence store (OD-40 self-improvement gates)
+    model_release_artifact_root: str = ""
+
+    # OD-04 zero standing budget: configurable caps enforced at the spend path.
+    # Per-transaction approvals are capped to the $1–$10 band; deployment config
+    # chooses the value, nothing is hard-coded in the enforcement logic.
+    finance_monthly_limit_usd: float = 100.0
+    finance_transaction_limit_usd: float = 10.0
+
+    # OD-23 free-only blockchain adapter (testnets only, no paid plans).
+    blockchain_enabled: bool = False
+    blockchain_provider: str = "thirdweb"
+    blockchain_rpc_url: str = ""
+    blockchain_chain_id: str = "11155111"  # Sepolia testnet
+    blockchain_client_id_env: str = "THIRDWEB_CLIENT_ID"
+    blockchain_secret_env: str = "THIRDWEB_SECRET_KEY"
+    blockchain_allow_mainnet: bool = False
+
+    # OD-24 South African banking adapters — credentials are env-var names only.
+    banking_enabled: bool = False
+    banking_adapter: str = "stub"  # stub | sa_bank
+    banking_base_url: str = ""
+    banking_token_env: str = "BANKING_TOKEN"
+    banking_country: str = "ZA"
+
+    # Doc 25 paper trading — simulation only, never real orders.
+    trading_simulation_enabled: bool = False
+    trading_max_order_usd: float = 10.0
+    trading_daily_exposure_usd: float = 100.0
+    trading_max_loss_usd: float = 20.0
+    trading_stop_loss_pct: float = 10.0
+
+    # Doc 25 Amendment A — research-only intelligence departments. These flags
+    # enable research and record-keeping only; no execution, wagering or payment
+    # path is exposed by them. Default-off like every other external adapter.
+    prediction_markets_research_enabled: bool = False
+    # Public market-data adapter — default-off, GET-only, no wallet or trading.
+    # Base URLs are empty until an operator supplies and reviews them.
+    prediction_markets_data_adapter_enabled: bool = False
+    prediction_markets_gamma_url: str = ""
+    prediction_markets_clob_url: str = ""
+    prediction_markets_data_url: str = ""
+    prediction_markets_request_timeout_seconds: float = 10.0
+    prediction_markets_max_markets: int = 20
+    prediction_markets_book_depth: int = 5
+    prediction_markets_forecasting_enabled: bool = False
+    gaming_intelligence_enabled: bool = False
+    investment_intelligence_research_enabled: bool = False
+    financial_provider_registry_enabled: bool = False
 
     # API authentication and rate limiting
     auth_enabled: bool = True
@@ -139,6 +301,7 @@ class Settings(BaseSettings):
     # HMAC secret for the inbound signer/email gateway. Empty = gateway disabled.
     creator_gateway_secret: str = ""
     creator_email_worker_enabled: bool = True
+    creator_email_worker_backend: str = "loop"  # loop | arq (OD-08)
     creator_email_retry_interval_seconds: int = 300
     creator_email_max_attempts: int = 5
     creator_alert_webhook_url: str = ""
@@ -159,6 +322,23 @@ class Settings(BaseSettings):
 
     # Monitoring
     otel_exporter_otlp_endpoint: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _load_secret_files(cls, values):
+        """Docker secrets override plain environment values for secret fields."""
+        if not isinstance(values, dict):
+            return values
+        for field in SECRET_FIELDS:
+            path = os.environ.get(f"{field.upper()}_FILE")
+            if not path:
+                continue
+            try:
+                values[field] = Path(path).read_text(encoding="utf-8").strip()
+            except OSError:
+                # Keep the environment value; startup policy will reject placeholders.
+                pass
+        return values
 
     class Config:
         env_file = ".env"

@@ -24,10 +24,19 @@ creates or changes approval authority.
 Configuration:
 
 - `CREATOR_EMAIL_WORKER_ENABLED` (default `true`)
+- `CREATOR_EMAIL_WORKER_BACKEND` (`loop` default, or `arq` for OD-08)
 - `CREATOR_EMAIL_RETRY_INTERVAL_SECONDS` (default `300`)
 
-The HTTP endpoint `POST /api/v1/creator/outbox/retry` remains available for manual
-or on-demand retries.
+The ARQ worker is `app/workers/arq_creator_email.py`; run it separately with
+`docker compose --profile arq up -d` or `arq app.workers.arq_creator_email.WorkerSettings`.
+
+After `CREATOR_EMAIL_MAX_ATTEMPTS` failures, delivery is moved to
+`creator_email_dead_letters`, retried no further, logged as an error, and optionally
+reported to `CREATOR_ALERT_WEBHOOK_URL`. Inspect with
+`GET /api/v1/creator/outbox/dead-letters`. An operator can resolve an item with
+`POST /api/v1/creator/outbox/dead-letters/{request_id}/resolve`, which clears the
+dead letter and immediately re-queues delivery. `POST /api/v1/creator/outbox/retry`
+retries all non-dead-lettered entries.
 
 ## Docker adapter lab check
 

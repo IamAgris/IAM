@@ -215,7 +215,7 @@ class CommunicationAudit(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "channel IN ('creator_email', 'operational_email', 'private_user')",
+            "channel IN ('creator_email', 'creator_cli', 'creator_webhook', 'creator_node', 'creator_file', 'operational_email', 'private_user')",
             name="ck_communication_channel",
         ),
         CheckConstraint(

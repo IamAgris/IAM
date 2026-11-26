@@ -73,6 +73,22 @@ CREATE TABLE approval_policies (
 	CONSTRAINT ck_approval_policy_level CHECK (min_authority_level IN ('1', '2', '3', '4'))
 );
 
+CREATE TABLE assistant_systems (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	vendor TEXT NOT NULL, 
+	official_docs_url TEXT NOT NULL, 
+	integration_method TEXT NOT NULL, 
+	public_capabilities JSON NOT NULL, 
+	terms_url TEXT, 
+	status TEXT NOT NULL, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_system_status CHECK (status IN ('studied', 'integration_available', 'replicated')), 
+	UNIQUE (name)
+);
+
 CREATE TABLE audit_events (
 	id UUID NOT NULL, 
 	event_type TEXT NOT NULL, 
@@ -203,6 +219,19 @@ CREATE TABLE conversations (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE creator_email_dead_letters (
+	id UUID NOT NULL, 
+	request_id TEXT NOT NULL, 
+	recipient TEXT NOT NULL, 
+	attempts INTEGER NOT NULL, 
+	last_error TEXT, 
+	failed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ix_creator_email_dead_letters_request_id ON creator_email_dead_letters (request_id);
+
 CREATE TABLE creator_email_outbox (
 	id UUID NOT NULL, 
 	request_id TEXT NOT NULL, 
@@ -220,6 +249,25 @@ CREATE TABLE creator_email_outbox (
 );
 
 CREATE UNIQUE INDEX ix_creator_email_outbox_request_id ON creator_email_outbox (request_id);
+
+CREATE TABLE creator_messages (
+	id UUID NOT NULL, 
+	message_id TEXT NOT NULL, 
+	direction TEXT NOT NULL, 
+	purpose TEXT NOT NULL, 
+	subject TEXT NOT NULL, 
+	body TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	authority_bearing BOOLEAN NOT NULL, 
+	request_id TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_creator_message_direction CHECK (direction IN ('outbound', 'inbound')), 
+	CONSTRAINT ck_creator_message_purpose CHECK (purpose IN ('question', 'status_update', 'reply')), 
+	CONSTRAINT ck_creator_message_no_authority CHECK (authority_bearing = false)
+);
+
+CREATE UNIQUE INDEX ix_creator_messages_message_id ON creator_messages (message_id);
 
 CREATE TABLE creator_requests (
 	id UUID NOT NULL, 
@@ -353,10 +401,19 @@ CREATE TABLE external_agents (
 	is_active BOOLEAN NOT NULL, 
 	discovered_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	last_contacted_at TIMESTAMP WITH TIME ZONE, 
+	claimed_identity TEXT, 
+	creator TEXT, 
+	operator TEXT, 
+	stated_purpose TEXT, 
+	identity_verification TEXT NOT NULL, 
+	verification_evidence JSON NOT NULL, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	expertise JSON NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_agent_protocol CHECK (protocol IN ('rest', 'mcp', 'a2a', 'websocket', 'webhook')), 
 	CONSTRAINT ck_agent_status CHECK (status IN ('discovered', 'contacted', 'trusted', 'blocked')), 
-	CONSTRAINT ck_agent_trust_score CHECK (trust_score BETWEEN 0 AND 1)
+	CONSTRAINT ck_agent_trust_score CHECK (trust_score BETWEEN 0 AND 1), 
+	CONSTRAINT ck_agent_identity_verification CHECK (identity_verification IN ('self-reported', 'verified'))
 );
 
 CREATE TABLE external_integrations (
@@ -405,6 +462,78 @@ CREATE TABLE financial_transactions (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_transaction_type CHECK (type IN ('income', 'expense', 'transfer'))
+);
+
+CREATE TABLE free_sandbox_providers (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	provider_type TEXT NOT NULL, 
+	capabilities JSON NOT NULL, 
+	terms_url TEXT NOT NULL, 
+	docs_verified_at TIMESTAMP WITH TIME ZONE, 
+	headless BOOLEAN NOT NULL, 
+	registration_status TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	credential_env TEXT, 
+	config JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_free_sandbox_registration_status CHECK (registration_status IN ('candidate', 'registered', 'pending_creator_approval', 'unavailable')), 
+	UNIQUE (name)
+);
+
+CREATE TABLE geo_data_files (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	data_format TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	data JSON NOT NULL, 
+	licence TEXT NOT NULL, 
+	source TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE INDEX ix_geo_data_files_content_hash ON geo_data_files (content_hash);
+
+CREATE TABLE geo_places (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	place_type TEXT NOT NULL, 
+	country_code TEXT, 
+	latitude FLOAT NOT NULL, 
+	longitude FLOAT NOT NULL, 
+	attributes JSON NOT NULL, 
+	source TEXT NOT NULL, 
+	source_url TEXT, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_geo_place_latitude CHECK (latitude BETWEEN -90 AND 90), 
+	CONSTRAINT ck_geo_place_longitude CHECK (longitude BETWEEN -180 AND 180), 
+	CONSTRAINT ck_geo_place_confidence CHECK (confidence BETWEEN 0 AND 1)
+);
+
+CREATE INDEX ix_geo_places_name ON geo_places (name);
+
+CREATE TABLE geo_providers (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	kind TEXT NOT NULL, 
+	base_url TEXT NOT NULL, 
+	licence TEXT NOT NULL, 
+	free_quota TEXT, 
+	requires_key BOOLEAN NOT NULL, 
+	is_paid BOOLEAN NOT NULL, 
+	paid_use_approved BOOLEAN NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	terms_url TEXT, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_geo_provider_kind CHECK (kind IN ('tile', 'geocoder', 'routing', 'dataset', 'live_feed')), 
+	UNIQUE (name)
 );
 
 CREATE TABLE goals (
@@ -469,6 +598,19 @@ CREATE TABLE integration_registry (
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
 );
+
+CREATE TABLE integrity_manifests (
+	id UUID NOT NULL, 
+	version TEXT NOT NULL, 
+	root_hash TEXT NOT NULL, 
+	manifest JSON NOT NULL, 
+	signed_by TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE INDEX ix_integrity_manifests_root_hash ON integrity_manifests (root_hash);
 
 CREATE TABLE internet_events (
 	id UUID NOT NULL, 
@@ -548,6 +690,24 @@ CREATE TABLE language_profiles (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE legal_sources (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	authority_type TEXT NOT NULL, 
+	url TEXT NOT NULL, 
+	feed_url TEXT, 
+	reliability TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	last_checked_at TIMESTAMP WITH TIME ZONE, 
+	last_content_hash TEXT, 
+	terms_url TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_source_authority_type CHECK (authority_type IN ('government', 'parliament', 'court', 'regulator', 'central_bank', 'tax_authority', 'international', 'security_authority')), 
+	UNIQUE (name)
+);
+
 CREATE TABLE life_cycles (
 	id UUID NOT NULL, 
 	cycle_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
@@ -573,6 +733,36 @@ CREATE TABLE life_history (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_life_history_significance CHECK (significance BETWEEN 1 AND 10)
 );
+
+CREATE TABLE live_geo_feeds (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	category TEXT NOT NULL, 
+	source TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	refresh_seconds INTEGER NOT NULL, 
+	last_fetched_at TIMESTAMP WITH TIME ZONE, 
+	last_data_hash TEXT, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_live_geo_feed_category CHECK (category IN ('traffic', 'weather', 'transit', 'aviation', 'maritime', 'disaster', 'environment', 'satellite', 'infrastructure')), 
+	UNIQUE (name)
+);
+
+CREATE TABLE location_permissions (
+	id UUID NOT NULL, 
+	subject TEXT NOT NULL, 
+	precision TEXT NOT NULL, 
+	purpose TEXT NOT NULL, 
+	granted_by TEXT NOT NULL, 
+	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_location_permission_precision CHECK (precision IN ('approximate', 'precise'))
+);
+
+CREATE INDEX ix_location_permissions_subject ON location_permissions (subject);
 
 CREATE TABLE memory_items (
 	id UUID NOT NULL, 
@@ -673,6 +863,26 @@ CREATE TABLE operating_principles (
 	CONSTRAINT ck_operating_principle_category CHECK (category IN ('safety', 'legal', 'security', 'operational', 'personal'))
 );
 
+CREATE TABLE owner_authorizations (
+	id UUID NOT NULL, 
+	action_type TEXT NOT NULL, 
+	max_authority_level VARCHAR(1) NOT NULL, 
+	spending_limit_usd NUMERIC(15, 4), 
+	can_create_accounts BOOLEAN NOT NULL, 
+	can_publish_externally BOOLEAN NOT NULL, 
+	can_modify_own_security BOOLEAN NOT NULL, 
+	scope JSON NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	granted_by TEXT NOT NULL, 
+	granted_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_owner_auth_level CHECK (max_authority_level IN ('1', '2', '3', '4'))
+);
+
+CREATE INDEX ix_owner_authorizations_action_type ON owner_authorizations (action_type);
+
 CREATE TABLE project_portfolios (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -694,6 +904,37 @@ CREATE TABLE provider_usage (
 	period TEXT NOT NULL, 
 	recorded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
+);
+
+CREATE TABLE public_people (
+	id UUID NOT NULL, 
+	canonical_name TEXT NOT NULL, 
+	internal_public_id TEXT NOT NULL, 
+	notes TEXT, 
+	deanonymized BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_person_no_deanonymization CHECK (deanonymized = FALSE), 
+	UNIQUE (internal_public_id)
+);
+
+CREATE INDEX ix_public_people_canonical_name ON public_people (canonical_name);
+
+CREATE TABLE public_sources (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	category TEXT NOT NULL, 
+	url TEXT NOT NULL, 
+	access_condition TEXT NOT NULL, 
+	reliability TEXT NOT NULL, 
+	terms_url TEXT, 
+	last_verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_source_access_condition CHECK (access_condition IN ('public', 'requires_authority', 'restricted', 'paid', 'unknown')), 
+	CONSTRAINT ck_public_source_reliability CHECK (reliability IN ('official', 'independent', 'self_reported', 'unverified')), 
+	UNIQUE (name)
 );
 
 CREATE TABLE published_content (
@@ -762,6 +1003,21 @@ CREATE TABLE registered_nodes (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_registered_node_trust_level CHECK (trust_level IN ('candidate', 'restricted', 'trusted', 'revoked')), 
 	CONSTRAINT ck_registered_node_contribution_ceiling CHECK (contribution_percent >= 0 AND contribution_percent <= 1)
+);
+
+CREATE TABLE replication_experiments (
+	id UUID NOT NULL, 
+	capability TEXT NOT NULL, 
+	hypothesis TEXT NOT NULL, 
+	method TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	result TEXT NOT NULL, 
+	isolated BOOLEAN NOT NULL, 
+	production_adopted BOOLEAN NOT NULL, 
+	creator_approval_reference TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_replication_experiment_result CHECK (result IN ('planned', 'running', 'succeeded', 'failed'))
 );
 
 CREATE TABLE request_usage (
@@ -901,6 +1157,25 @@ CREATE TABLE security_incidents (
 	CONSTRAINT ck_incident_status CHECK (status IN ('open', 'investigating', 'resolved', 'closed'))
 );
 
+CREATE TABLE skill_runtime_executions (
+	id UUID NOT NULL, 
+	skill_id TEXT NOT NULL, 
+	permission TEXT NOT NULL, 
+	script TEXT, 
+	caller TEXT NOT NULL, 
+	adapter TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	dry_run BOOLEAN NOT NULL, 
+	result JSON NOT NULL, 
+	error TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	completed_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_skill_runtime_status CHECK (status IN ('completed', 'denied', 'failed'))
+);
+
+CREATE INDEX ix_skill_runtime_executions_skill_id ON skill_runtime_executions (skill_id);
+
 CREATE TABLE skillforge_packages (
 	id UUID NOT NULL, 
 	skill_id TEXT NOT NULL, 
@@ -989,6 +1264,25 @@ CREATE TABLE stored_objects (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_stored_object_size CHECK (size_bytes >= 0), 
 	UNIQUE (s3_key)
+);
+
+CREATE TABLE tone_analyses (
+	id UUID NOT NULL, 
+	source_type TEXT NOT NULL, 
+	content_summary TEXT NOT NULL, 
+	tone TEXT NOT NULL, 
+	register TEXT NOT NULL, 
+	sentiment NUMERIC(3, 2) NOT NULL, 
+	confidence NUMERIC(3, 2) NOT NULL, 
+	signals JSON NOT NULL, 
+	manipulation_indicators JSON NOT NULL, 
+	interpretations JSON NOT NULL, 
+	caveat TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_tone_source_type CHECK (source_type IN ('message', 'article', 'post', 'comment', 'discussion', 'text')), 
+	CONSTRAINT ck_tone_confidence CHECK (confidence BETWEEN 0 AND 1), 
+	CONSTRAINT ck_tone_sentiment CHECK (sentiment BETWEEN -1 AND 1)
 );
 
 CREATE TABLE tool_registry (
@@ -1105,6 +1399,20 @@ CREATE TABLE agent_interactions (
 	FOREIGN KEY(agent_id) REFERENCES external_agents (id) ON DELETE CASCADE
 );
 
+CREATE TABLE agent_interviews (
+	id UUID NOT NULL, 
+	agent_id UUID NOT NULL, 
+	question TEXT NOT NULL, 
+	answer TEXT, 
+	provenance TEXT, 
+	risk_level TEXT NOT NULL, 
+	validated BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_interview_risk CHECK (risk_level IN ('low', 'medium', 'high')), 
+	FOREIGN KEY(agent_id) REFERENCES external_agents (id) ON DELETE CASCADE
+);
+
 CREATE TABLE agent_trust_records (
 	id UUID NOT NULL, 
 	agent_id UUID NOT NULL, 
@@ -1139,6 +1447,39 @@ CREATE TABLE asset_licences (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(asset_id) REFERENCES digital_assets (id) ON DELETE CASCADE
 );
+
+CREATE TABLE assistant_adapters (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	interface_type TEXT NOT NULL, 
+	endpoint_template TEXT, 
+	auth_method TEXT NOT NULL, 
+	requires_credential BOOLEAN NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	notes TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_adapter_interface CHECK (interface_type IN ('official_skill', 'app_intents', 'shortcuts', 'automation_studio', 'official_api', 'documentation_only')), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
+);
+
+CREATE TABLE assistant_research_notes (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	topic TEXT NOT NULL, 
+	observation TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	source_date TIMESTAMP WITH TIME ZONE, 
+	confidence FLOAT NOT NULL, 
+	status TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_assistant_note_status CHECK (status IN ('observation', 'verified', 'uncertain')), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_assistant_research_notes_assistant_id ON assistant_research_notes (assistant_id);
 
 CREATE TABLE browser_actions (
 	id UUID NOT NULL, 
@@ -1182,6 +1523,18 @@ CREATE TABLE capability_assessments (
 	CONSTRAINT ck_capability_assessment_level CHECK (proficiency_level BETWEEN 0 AND 100), 
 	CONSTRAINT ck_capability_assessment_method CHECK (assessment_method IN ('test', 'project', 'simulation', 'review')), 
 	FOREIGN KEY(capability_id) REFERENCES capability_definitions (id) ON DELETE CASCADE
+);
+
+CREATE TABLE capability_comparisons (
+	id UUID NOT NULL, 
+	assistant_id UUID NOT NULL, 
+	capability TEXT NOT NULL, 
+	rating INTEGER NOT NULL, 
+	evidence_note TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_capability_comparison_rating CHECK (rating BETWEEN 0 AND 5), 
+	FOREIGN KEY(assistant_id) REFERENCES assistant_systems (id) ON DELETE CASCADE
 );
 
 CREATE TABLE code_changes (
@@ -1314,6 +1667,41 @@ CREATE TABLE financial_ledger (
 	FOREIGN KEY(transaction_id) REFERENCES financial_transactions (id) ON DELETE CASCADE
 );
 
+CREATE TABLE free_sandbox_environments (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	external_id TEXT NOT NULL, 
+	task_id TEXT NOT NULL, 
+	capability TEXT NOT NULL, 
+	state TEXT NOT NULL, 
+	metadata JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_free_sandbox_environment_state CHECK (state IN ('discovered','registered','provisioning','running','stopped','completed','failed','deleted')), 
+	FOREIGN KEY(provider_id) REFERENCES free_sandbox_providers (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_free_sandbox_environments_task_id ON free_sandbox_environments (task_id);
+
+CREATE INDEX ix_free_sandbox_environments_provider_id ON free_sandbox_environments (provider_id);
+
+CREATE TABLE free_sandbox_quota_snapshots (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	used_percent NUMERIC(5, 2), 
+	remaining NUMERIC, 
+	unit TEXT NOT NULL, 
+	resets_at TIMESTAMP WITH TIME ZONE, 
+	source_url TEXT, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	captured_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(provider_id) REFERENCES free_sandbox_providers (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_free_sandbox_quota_snapshots_provider_id ON free_sandbox_quota_snapshots (provider_id);
+
 CREATE TABLE goal_lifecycles (
 	id UUID NOT NULL, 
 	goal_id UUID NOT NULL, 
@@ -1341,6 +1729,20 @@ CREATE TABLE identity_history (
 	reason TEXT, 
 	PRIMARY KEY (id), 
 	FOREIGN KEY(identity_id) REFERENCES ai_identity (id) ON DELETE CASCADE
+);
+
+CREATE TABLE identity_matches (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	other_person_id UUID NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	result TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_identity_match_result CHECK (result IN ('same', 'uncertain', 'rejected')), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE, 
+	FOREIGN KEY(other_person_id) REFERENCES public_people (id) ON DELETE CASCADE
 );
 
 CREATE TABLE integration_permissions (
@@ -1402,6 +1804,37 @@ CREATE TABLE learning_paths (
 	FOREIGN KEY(capability_id) REFERENCES capability_definitions (id) ON DELETE CASCADE
 );
 
+CREATE TABLE legal_instruments (
+	id UUID NOT NULL, 
+	source_id UUID NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	title TEXT NOT NULL, 
+	authority_name TEXT NOT NULL, 
+	instrument_type TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	official_url TEXT NOT NULL, 
+	document_hash TEXT NOT NULL, 
+	summary TEXT, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	effective_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_instrument_type CHECK (instrument_type IN ('constitution', 'legislation', 'regulation', 'court_judgment', 'guidance', 'policy', 'bill', 'draft_regulation', 'treaty', 'standard', 'announcement')), 
+	CONSTRAINT ck_legal_instrument_status CHECK (status IN ('proposed', 'draft', 'enacted', 'guidance', 'announcement', 'repealed')), 
+	FOREIGN KEY(source_id) REFERENCES legal_sources (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE map_tile_cache (
+	id UUID NOT NULL, 
+	provider_id UUID NOT NULL, 
+	tile_key TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	size_bytes INTEGER NOT NULL, 
+	fetched_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(provider_id) REFERENCES geo_providers (id) ON DELETE CASCADE
+);
+
 CREATE TABLE memory_embeddings (
 	id UUID NOT NULL, 
 	memory_item_id UUID NOT NULL, 
@@ -1446,6 +1879,24 @@ CREATE TABLE model_versions (
 	FOREIGN KEY(model_id) REFERENCES model_registry (id) ON DELETE CASCADE
 );
 
+CREATE TABLE node_attestations (
+	id UUID NOT NULL, 
+	node_id UUID NOT NULL, 
+	public_key TEXT NOT NULL, 
+	core_hash TEXT NOT NULL, 
+	platform_hash TEXT, 
+	signature TEXT NOT NULL, 
+	payload JSON NOT NULL, 
+	verified BOOLEAN NOT NULL, 
+	result TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_node_attestation_result CHECK (result IN ('candidate', 'restricted', 'trusted', 'revoked')), 
+	FOREIGN KEY(node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_node_attestations_node_id ON node_attestations (node_id);
+
 CREATE TABLE node_resource_reports (
 	id UUID NOT NULL, 
 	node_id UUID NOT NULL, 
@@ -1474,6 +1925,69 @@ CREATE TABLE plans (
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_plan_status CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')), 
 	FOREIGN KEY(goal_id) REFERENCES goals (id) ON DELETE CASCADE
+);
+
+CREATE TABLE public_profiles (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	source_name TEXT NOT NULL, 
+	source_url TEXT NOT NULL, 
+	source_domain TEXT NOT NULL, 
+	profile_type TEXT NOT NULL, 
+	stated_name TEXT, 
+	role TEXT, 
+	organization TEXT, 
+	bio TEXT, 
+	interests JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	retrieved_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_profile_status CHECK (status IN ('verified','self_reported','uncertain','corrected')), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_public_profiles_person_id ON public_profiles (person_id);
+
+CREATE TABLE public_records (
+	id UUID NOT NULL, 
+	source_id UUID NOT NULL, 
+	category TEXT NOT NULL, 
+	jurisdiction TEXT NOT NULL, 
+	subject_name TEXT, 
+	title TEXT NOT NULL, 
+	published_at TIMESTAMP WITH TIME ZONE, 
+	retrieved_at TIMESTAMP WITH TIME ZONE, 
+	source_url TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	facts JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	legal_authority_reference TEXT, 
+	is_statistical BOOLEAN NOT NULL, 
+	is_correction BOOLEAN NOT NULL, 
+	supersedes_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_public_record_status CHECK (status IN ('verified', 'self_reported', 'uncertain', 'allegation', 'restricted')), 
+	CONSTRAINT ck_public_record_confidence CHECK (confidence >= 0 AND confidence <= 1), 
+	FOREIGN KEY(source_id) REFERENCES public_sources (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE public_relationships (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	related_person_id UUID, 
+	organization_name TEXT, 
+	relationship_type TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE
 );
 
 CREATE TABLE research_experiments (
@@ -1515,6 +2029,15 @@ CREATE TABLE signed_challenges (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(request_id) REFERENCES creator_requests (id) ON DELETE CASCADE, 
 	UNIQUE (nonce)
+);
+
+CREATE TABLE skill_runtime_logs (
+	id UUID NOT NULL, 
+	execution_id UUID NOT NULL, 
+	stream TEXT NOT NULL, 
+	content TEXT NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(execution_id) REFERENCES skill_runtime_executions (id) ON DELETE CASCADE
 );
 
 CREATE TABLE skillforge_audit_events (
@@ -1566,6 +2089,23 @@ CREATE TABLE skillforge_versions (
 	CONSTRAINT ck_skillforge_version_semver CHECK (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$'), 
 	FOREIGN KEY(package_id) REFERENCES skillforge_packages (id) ON DELETE CASCADE
 );
+
+CREATE TABLE sync_objects (
+	id UUID NOT NULL, 
+	publisher_node_id UUID NOT NULL, 
+	object_type TEXT NOT NULL, 
+	content_hash TEXT NOT NULL, 
+	payload JSON NOT NULL, 
+	signature TEXT NOT NULL, 
+	verified BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(publisher_node_id) REFERENCES registered_nodes (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_sync_objects_publisher_node_id ON sync_objects (publisher_node_id);
+
+CREATE INDEX ix_sync_objects_content_hash ON sync_objects (content_hash);
 
 CREATE TABLE tool_permissions (
 	id UUID NOT NULL, 
@@ -1700,6 +2240,92 @@ CREATE TABLE experiment_results (
 	FOREIGN KEY(experiment_id) REFERENCES research_experiments (id) ON DELETE CASCADE
 );
 
+CREATE TABLE free_sandbox_results (
+	id UUID NOT NULL, 
+	environment_id UUID NOT NULL, 
+	payload JSON NOT NULL, 
+	artifacts JSON NOT NULL, 
+	error TEXT, 
+	collected_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(environment_id) REFERENCES free_sandbox_environments (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_free_sandbox_results_environment_id ON free_sandbox_results (environment_id);
+
+CREATE TABLE legal_changes (
+	id UUID NOT NULL, 
+	instrument_id UUID NOT NULL, 
+	change_type TEXT NOT NULL, 
+	severity TEXT NOT NULL, 
+	lifecycle_stage TEXT NOT NULL, 
+	authenticated BOOLEAN NOT NULL, 
+	evidence JSON NOT NULL, 
+	creator_approval_reference TEXT, 
+	professional_review_reference TEXT, 
+	implemented_at TIMESTAMP WITH TIME ZONE, 
+	verified_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_change_type CHECK (change_type IN ('new', 'amendment', 'repeal', 'correction')), 
+	CONSTRAINT ck_legal_change_severity CHECK (severity IN ('critical', 'important', 'informational')), 
+	CONSTRAINT ck_legal_change_stage CHECK (lifecycle_stage IN ('discover','authenticate','understand','assess','recommend','authorise','implement','verify')), 
+	FOREIGN KEY(instrument_id) REFERENCES legal_instruments (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_legal_changes_instrument_id ON legal_changes (instrument_id);
+
+CREATE TABLE legal_versions (
+	id UUID NOT NULL, 
+	instrument_id UUID NOT NULL, 
+	version_label TEXT NOT NULL, 
+	document_hash TEXT NOT NULL, 
+	content JSON NOT NULL, 
+	valid_from TIMESTAMP WITH TIME ZONE, 
+	valid_to TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(instrument_id) REFERENCES legal_instruments (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_legal_versions_instrument_id ON legal_versions (instrument_id);
+
+CREATE TABLE presence_claims (
+	id UUID NOT NULL, 
+	person_id UUID NOT NULL, 
+	profile_id UUID, 
+	claim_type TEXT NOT NULL, 
+	value JSON NOT NULL, 
+	status TEXT NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	source_url TEXT, 
+	first_seen_at TIMESTAMP WITH TIME ZONE, 
+	last_seen_at TIMESTAMP WITH TIME ZONE, 
+	supersedes_id UUID, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_presence_claim_confidence CHECK (confidence BETWEEN 0 AND 1), 
+	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE, 
+	FOREIGN KEY(profile_id) REFERENCES public_profiles (id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_presence_claims_person_id ON presence_claims (person_id);
+
+CREATE TABLE record_relationships (
+	id UUID NOT NULL, 
+	from_record_id UUID NOT NULL, 
+	to_record_id UUID NOT NULL, 
+	relation_type TEXT NOT NULL, 
+	evidence JSON NOT NULL, 
+	confidence FLOAT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_record_relationship_type CHECK (relation_type IN ('same_entity', 'related_entity', 'conflict', 'correction')), 
+	CONSTRAINT ck_record_relationship_confidence CHECK (confidence >= 0 AND confidence <= 1), 
+	FOREIGN KEY(from_record_id) REFERENCES public_records (id) ON DELETE CASCADE, 
+	FOREIGN KEY(to_record_id) REFERENCES public_records (id) ON DELETE CASCADE
+);
+
 CREATE TABLE request_jobs (
 	id UUID NOT NULL, 
 	session_id UUID, 
@@ -1769,6 +2395,23 @@ CREATE TABLE visitor_locations (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(session_id) REFERENCES visitor_sessions (id) ON DELETE CASCADE
 );
+
+CREATE TABLE legal_impacts (
+	id UUID NOT NULL, 
+	change_id UUID NOT NULL, 
+	affected_system TEXT NOT NULL, 
+	assessment TEXT NOT NULL, 
+	risk_level TEXT NOT NULL, 
+	recommendation TEXT NOT NULL, 
+	obligations JSON NOT NULL, 
+	evidence JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_legal_impact_risk_level CHECK (risk_level IN ('low', 'medium', 'high', 'critical')), 
+	FOREIGN KEY(change_id) REFERENCES legal_changes (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_legal_impacts_change_id ON legal_impacts (change_id);
 
 CREATE TABLE sales_records (
 	id UUID NOT NULL, 

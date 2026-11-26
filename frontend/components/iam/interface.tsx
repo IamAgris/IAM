@@ -1,11 +1,33 @@
 "use client";
 
 import React from "react";
-import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip } from "lucide-react";
-import { PresenceSphere, IAMState, MemoryNode } from "./presence-sphere";
+import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip, Copy, Wand2, Settings2, Trash2, Activity, Minus, ChevronDown } from "lucide-react";
+import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo } from "./presence-sphere";
 import { api } from "@/lib/api";
 
 type Mode = "focus" | "recall" | "create";
+
+interface ProvenanceSource {
+  title: string;
+  url: string | null;
+  domain: string;
+  node_id: string | null;
+  credibility: number;
+}
+
+interface ProvenanceItem {
+  title: string;
+  summary: string;
+  confidence: number;
+  created_at: string | null;
+  sources: ProvenanceSource[];
+}
+
+interface ProvenanceResponse {
+  cluster: string;
+  items: ProvenanceItem[];
+  claim: string;
+}
 
 const MODE_CONFIG: Record<Mode, {
   hue: number;
@@ -51,6 +73,54 @@ interface SessionData {
 
 const STORAGE_KEY = "iam_session";
 
+function InlineText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**"))
+          return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+        if (part.startsWith("`") && part.endsWith("`"))
+          return <code key={i} className="rounded bg-white/10 px-1 py-0.5 text-[0.85em]">{part.slice(1, -1)}</code>;
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+}
+
+/** Lightweight, safe response formatting — no raw HTML from model output. */
+function FormattedResponse({ text }: { text: string }) {
+  const lines = text.split("\n");
+  let inCode = false;
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        if (line.trim().startsWith("```")) {
+          inCode = !inCode;
+          return null;
+        }
+        if (inCode)
+          return (
+            <pre key={i} className="overflow-x-auto rounded-xl border border-[var(--line)] bg-black/25 p-3 text-left text-[0.8em] font-mono leading-snug">
+              {line}
+            </pre>
+          );
+        if (!line.trim()) return <div key={i} className="h-1" />;
+        const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+        const numbered = line.match(/^\s*\d+\.\s+(.*)$/);
+        const heading = line.match(/^\s*#{2,4}\s+(.*)$/);
+        if (bullet)
+          return <div key={i} className="ml-5 list-disc text-left"><InlineText text={bullet[1]} /></div>;
+        if (numbered)
+          return <div key={i} className="ml-5 list-decimal text-left"><InlineText text={numbered[1]} /></div>;
+        if (heading)
+          return <div key={i} className="font-semibold text-left"><InlineText text={heading[1]} /></div>;
+        return <div key={i} className="text-left"><InlineText text={line} /></div>;
+      })}
+    </div>
+  );
+}
+
 export function IAMInterface() {
   const [mode, setMode] = React.useState<Mode>("focus");
   const [state, setState] = React.useState<IAMState>("idle");
@@ -62,7 +132,7 @@ export function IAMInterface() {
   const [suggestions, setSuggestions] = React.useState<string[]>(MODE_CONFIG.focus.suggestions);
   const [session, setSession] = React.useState<SessionData | null>(null);
   const [showHistory, setShowHistory] = React.useState(false);
-  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
+  const [theme, setTheme] = React.useState<"dark" | "light">("light");
   const [listening, setListening] = React.useState(false);
   const [voiceEnabled, setVoiceEnabled] = React.useState(false);
   const [attachment, setAttachment] = React.useState<File | null>(null);
@@ -70,6 +140,23 @@ export function IAMInterface() {
   const [connected, setConnected] = React.useState<boolean | null>(null);
   const [lastQuery, setLastQuery] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
+  const [showOptions, setShowOptions] = React.useState(false);
+  const [modelChoice, setModelChoice] = React.useState<"primary" | "hosted">("primary");
+  const [inference, setInference] = React.useState<{ mode: string; model: string | null; available: boolean } | null>(null);
+  const [copied, setCopied] = React.useState(false);
+  const [responseMinimized, setResponseMinimized] = React.useState(false);
+  const [responseDismissed, setResponseDismissed] = React.useState(false);
+  const [activity, setActivity] = React.useState<SphereActivity | null>(null);
+  const [sources, setSources] = React.useState<SourceNode[]>([]);
+  const [connections, setConnections] = React.useState<KnowledgeConnection[]>([]);
+  const [clusters, setClusters] = React.useState<KnowledgeCluster[]>([]);
+  const [graphConnections, setGraphConnections] = React.useState<KnowledgeConnection[]>([]);
+  const [freshness, setFreshness] = React.useState<Record<string, FreshnessInfo>>({});
+  const [hoveredSource, setHoveredSource] = React.useState<{ node: SourceNode; x: number; y: number } | null>(null);
+  const [selectedSource, setSelectedSource] = React.useState<SourceNode | null>(null);
+  const [provenance, setProvenance] = React.useState<ProvenanceResponse | null>(null);
+  const [provenanceLoading, setProvenanceLoading] = React.useState(false);
+  const compactResponse = response.length > 0 && response.length < 160 && !response.includes("\n");
   const recognitionRef = React.useRef<any>(null);
   const sessionRef = React.useRef<SessionData | null>(null);
   React.useEffect(() => { sessionRef.current = session; }, [session]);
@@ -83,6 +170,8 @@ export function IAMInterface() {
       try {
         const r = await api.get("/health", { timeout: 4000 });
         setConnected(r.status === 200);
+        const m = await api.get("/api/v1/models/readiness", { timeout: 4000 });
+        setInference({ mode: m.data.mode, model: m.data.model, available: m.data.available });
       } catch { setConnected(false); }
     };
     check();
@@ -90,10 +179,132 @@ export function IAMInterface() {
     return () => window.clearInterval(t);
   }, []);
 
+  // Live, privacy-filtered IAM activity from the public event stream.
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    const handle = (dataStr: string) => {
+      try {
+        const payload = JSON.parse(dataStr);
+        const d = payload.details || {};
+        const source = d.source;
+        const now = Date.now();
+        const nodeState: SourceNode["state"] =
+          payload.event_type === "research.memory_stored" ? "stored"
+          : payload.event_type === "research.source_extracted" ? "extracted"
+          : payload.event_type === "research.page_opened" ? "opened"
+          : "discovered";
+
+        setActivity({
+          event_type: payload.event_type,
+          label: d.label,
+          sourceCount: d.source_count,
+          memoryCount: d.result_count,
+          activityId: d.activity_id,
+          sourceId: source?.node_id,
+          updatedAt: now,
+        });
+
+        if (payload.event_type === "research.started") {
+          setSources((prev) => prev.map((s) => ({ ...s, recalled: false })));
+        }
+
+        if (payload.event_type === "memory.retrieved" && Array.isArray(d.nodes)) {
+          setSources((prev) => {
+            const next = new Map(prev.map((s) => [s.id, { ...s, recalled: false }]));
+            for (const item of d.nodes) {
+              if (!item?.node_id) continue;
+              next.set(item.node_id, {
+                id: item.node_id,
+                title: item.domain || "Recalled source",
+                domain: item.domain || "",
+                url: "",
+                state: "stored",
+                recalled: true,
+              });
+            }
+            return Array.from(next.values()).slice(-12);
+          });
+        }
+
+        if (source?.node_id) {
+          setSources((prev) => {
+            const next = new Map(prev.map((s) => [s.id, s]));
+            next.set(source.node_id, {
+              id: source.node_id,
+              title: source.title || source.domain || "Source",
+              domain: source.domain || "",
+              url: source.url || "",
+              state: nodeState,
+            });
+            return Array.from(next.values()).slice(-12);
+          });
+        }
+
+        if (payload.event_type === "knowledge.connected" && d.from_node && d.to_node) {
+          setConnections((prev) => [
+            ...prev.filter((c) => !(c.from === d.from_node && c.to === d.to_node)),
+            { from: d.from_node, to: d.to_node },
+          ].slice(-20));
+        }
+
+        // Keep the completed trace visible until the next user query.
+      } catch {}
+    };
+
+    // The Next dev rewrite proxy buffers infinite SSE streams. Poll a finite
+    // activity snapshot instead; the backend stream remains available for
+    // production clients that connect directly.
+    let cursor = new Date(Date.now() - 5 * 60_000).toISOString();
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/v1/interface/activity`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ since: cursor }),
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const item of data.events || []) {
+          handle(JSON.stringify(item));
+          if (item.created_at) cursor = item.created_at;
+        }
+      } catch {}
+    };
+    poll();
+    const timer = window.setInterval(poll, 2000);
+
+    return () => {
+      window.clearInterval(timer);
+      controller.abort();
+    };
+  }, []);
+
+  // Persistent knowledge graph — verified public clusters and discovered links.
+  React.useEffect(() => {
+    let live = true;
+    const load = async () => {
+      try {
+        const [c, g, f] = await Promise.all([
+          api.get("/api/v1/interface/clusters"),
+          api.get("/api/v1/interface/connections"),
+          api.get("/api/v1/interface/freshness"),
+        ]);
+        if (!live) return;
+        setClusters(c.data?.clusters || []);
+        setGraphConnections(g.data?.connections || []);
+        setFreshness(f.data?.nodes || {});
+      } catch {}
+    };
+    load();
+    return () => { live = false; };
+  }, []);
+
   // Initialize theme
   React.useEffect(() => {
     const stored = (typeof localStorage !== "undefined" && localStorage.getItem("iam_theme")) as "dark" | "light" | null;
-    const initial = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    const initial = stored === "dark" ? "dark" : "light";
     setTheme(initial);
     document.documentElement.dataset.theme = initial;
     document.documentElement.style.setProperty("color-scheme", initial);
@@ -205,6 +416,8 @@ export function IAMInterface() {
   const handleAttachment = async (file: File) => {
     setAttachment(file);
     setResponse("");
+    setResponseMinimized(false);
+    setResponseDismissed(false);
     setShowHistory(false);
     setState("thinking");
     setStatus("Analysing…");
@@ -235,6 +448,19 @@ export function IAMInterface() {
     }
   };
 
+  const loadProvenance = async (cluster: string) => {
+    setProvenanceLoading(true);
+    setSelectedSource(null);
+    try {
+      const res = await api.get("/api/v1/interface/provenance", { params: { cluster } });
+      setProvenance(res.data as ProvenanceResponse);
+    } catch {
+      setProvenance({ cluster, items: [], claim: "provenance_unavailable" });
+    } finally {
+      setProvenanceLoading(false);
+    }
+  };
+
   const stopGeneration = () => {
     abortRef.current?.abort();
     timersRef.current.forEach((t) => window.clearTimeout(t));
@@ -249,6 +475,9 @@ export function IAMInterface() {
     if (!query) return;
     setInput("");
     setResponse("");
+    setResponseMinimized(false);
+    setResponseDismissed(false);
+    setActivity(null);
     setShowHistory(false);
     setState("thinking");
     setStatus("Thinking…");
@@ -286,12 +515,15 @@ export function IAMInterface() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "qwen3.5-9b",
           messages: [
             { role: "system", content: cfg.systemPrompt },
             ...historyMessages,
           ],
           temperature: mode === "create" ? 0.8 : 0.6,
+          // Primary is the shared local brain; hosted is an explicit specialist.
+          ...(modelChoice === "hosted"
+            ? { model: "nvidia-nemotron-3.5-lightning" }
+            : {}),
         }),
         signal: abortRef.current?.signal,
       });
@@ -391,7 +623,22 @@ export function IAMInterface() {
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden">
-      <PresenceSphere state={state} mode={mode} nodes={nodes} />
+      <PresenceSphere
+        state={state}
+        mode={mode}
+        nodes={nodes}
+        activity={activity}
+        sourceNodes={sources}
+        connections={connections}
+        clusters={clusters}
+        graphConnections={graphConnections}
+        freshness={freshness}
+        onNodeHover={(node, x, y) => setHoveredSource(node && x !== undefined && y !== undefined ? { node, x, y } : null)}
+        onNodeSelect={(node) => {
+          if (node.kind === "cluster" && node.clusterName) void loadProvenance(node.clusterName);
+          else setSelectedSource(node);
+        }}
+      />
 
       {/* Top bar */}
       <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-3 p-5 pointer-events-none">
@@ -426,6 +673,128 @@ export function IAMInterface() {
         </div>
       </header>
 
+      {/* Live intelligence activity — driven by real IAM events */}
+      {activity && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5 text-[11px] backdrop-blur-xl pointer-events-none"
+          style={{ background: "var(--glass)", color: "var(--mute)" }}>
+          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "var(--accent)" }} />
+          <span className="uppercase tracking-wider opacity-60">Live activity</span>
+          <span>{activity.label || "Working"}</span>
+          {typeof activity.sourceCount === "number" && (
+            <span className="opacity-60">{activity.sourceCount} sources</span>
+          )}
+          {typeof activity.memoryCount === "number" && (
+            <span className="opacity-60">{activity.memoryCount} memories</span>
+          )}
+        </div>
+      )}
+
+      {/* Source node detail — stays on the same screen */}
+      {(selectedSource || hoveredSource) && (() => {
+        const node = selectedSource || hoveredSource!.node;
+        const x = Math.min(hoveredSource?.x ?? window.innerWidth / 2, window.innerWidth - 280);
+        const y = Math.min(hoveredSource?.y ?? 180, window.innerHeight - 220);
+        return (
+          <div className="fixed z-30 w-[250px] rounded-2xl border border-[var(--line)] p-3 backdrop-blur-2xl pointer-events-auto"
+            style={{ background: "var(--glass)", left: Math.max(12, x + 16), top: Math.max(80, y + 12) }}>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <p className="text-xs font-medium leading-snug">{node.title}</p>
+              {selectedSource && (
+                <button onClick={() => setSelectedSource(null)} aria-label="Close source details" className="opacity-50 hover:opacity-100">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2">{node.domain}</p>
+            <div className="flex items-center gap-2 text-[10px] opacity-70">
+              <span className="rounded-full border border-[var(--line)] px-2 py-0.5 capitalize">
+                {node.kind === "cluster" ? "cluster" : node.recalled ? "recalled" : node.state}
+              </span>
+              <span>{node.kind === "cluster" ? "Verified knowledge" : "Public research"}</span>
+            </div>
+            {node.freshnessLabel ? (
+              <p className="mt-2 text-[10px] opacity-60">{node.freshnessLabel}</p>
+            ) : null}
+            {node.url ? (
+              <a href={node.url} target="_blank" rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100">
+                Open source <ArrowRight size={11} />
+              </a>
+            ) : null}
+            {node.kind === "cluster" && node.clusterName ? (
+              <button onClick={() => void loadProvenance(node.clusterName!)}
+                className="mt-2 inline-flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100">
+                View provenance <ArrowRight size={11} />
+              </button>
+            ) : null}
+            <p className="mt-2 text-[9px] leading-relaxed opacity-40">
+              Provenance only. Public sources are not automatically trusted facts.
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* Provenance path — sources behind a clicked cluster */}
+      {provenance && (
+        <div className="fixed left-4 right-4 top-28 z-30 w-auto max-h-[55vh] overflow-y-auto rounded-2xl border border-[var(--line)] p-4 backdrop-blur-2xl pointer-events-auto md:left-24 md:right-auto md:w-[330px]"
+          style={{ background: "var(--glass)" }}>
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h2 className="text-sm font-medium">Provenance</h2>
+              <p className="text-[10px] uppercase tracking-wider opacity-50">{provenance.cluster}</p>
+            </div>
+            <button onClick={() => setProvenance(null)} aria-label="Close provenance" className="opacity-50 hover:opacity-100">
+              <X size={14} />
+            </button>
+          </div>
+          {provenanceLoading ? (
+            <p className="text-xs opacity-60">Tracing sources…</p>
+          ) : provenance.items.length === 0 ? (
+            <p className="text-xs opacity-60 leading-relaxed">
+              No verified public records are attached to this cluster yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {provenance.items.map((item, i) => (
+                <div key={i} className="rounded-xl border border-[var(--line)] p-2.5 text-xs"
+                  style={{ background: "rgba(255,255,255,.035)" }}>
+                  <div className="flex justify-between gap-2">
+                    <span className="font-medium leading-snug">{item.title}</span>
+                    <span className="opacity-50">{Math.round(item.confidence * 100)}%</span>
+                  </div>
+                  <p className="mt-1 opacity-60 leading-snug">{item.summary}</p>
+                  <div className="mt-2 space-y-1">
+                    {item.sources.map((source, j) => (
+                      <div key={j} className="flex items-center gap-2 text-[11px]">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--accent)" }} />
+                        {source.url ? (
+                          <a href={source.url} target="_blank" rel="noopener noreferrer"
+                            className="truncate opacity-70 hover:opacity-100">
+                            {source.title} · {source.domain}
+                          </a>
+                        ) : (
+                          <span className="opacity-60">{source.title}</span>
+                        )}
+                        {source.node_id && freshness[source.node_id] ? (
+                          <span className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[9px] capitalize"
+                            style={{ color: freshness[source.node_id].state === "contradicted" ? "#f87171" : undefined }}>
+                            {freshness[source.node_id].state.replace("_", " ")}
+                          </span>
+                        ) : null}
+                        <span className="ml-auto opacity-40">{Math.round(source.credibility * 100)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-3 text-[9px] leading-relaxed opacity-40">
+            Provenance only. Sources are not automatically trusted facts.
+          </p>
+        </div>
+      )}
+
       {/* Theme + history controls */}
       <div className="fixed right-5 bottom-28 z-10 flex flex-col gap-2 pointer-events-auto">
         <button
@@ -435,6 +804,15 @@ export function IAMInterface() {
           style={{ background: "var(--glass)" }}
         >
           {showHistory ? <X size={16} /> : <History size={16} />}
+        </button>
+        <button
+          onClick={() => setShowOptions(!showOptions)}
+          aria-label="IAM options"
+          aria-pressed={showOptions}
+          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          style={{ background: showOptions ? "var(--accent)" : "var(--glass)", color: showOptions ? "var(--bg2)" : undefined }}
+        >
+          {showOptions ? <X size={16} /> : <Settings2 size={16} />}
         </button>
         <button
           onClick={toggleTheme}
@@ -476,18 +854,134 @@ export function IAMInterface() {
         </div>
       )}
 
+      {/* In-screen options — no extra pages, no navigation */}
+      {showOptions && (
+        <div className="fixed right-20 top-24 z-20 w-[min(340px,calc(100vw-120px))] rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-4 pointer-events-auto"
+          style={{ background: "var(--glass)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-[var(--mute)]">IAM options</h2>
+            <button onClick={() => setShowOptions(false)} aria-label="Close options" className="opacity-60 hover:opacity-100">
+              <X size={15} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--line)] px-3 py-2 mb-3 text-xs"
+            style={{ background: "rgba(255,255,255,.04)" }}>
+            <Activity size={13} />
+            <span className="opacity-70">Inference</span>
+            <span className="ml-auto capitalize">
+              {inference ? `${inference.mode}${inference.model ? ` · ${inference.model}` : ""}` : "checking…"}
+            </span>
+          </div>
+
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model</p>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {(["primary", "hosted"] as const).map((choice) => (
+              <button key={choice} onClick={() => setModelChoice(choice)}
+                className="rounded-lg border px-2 py-2 text-xs transition-colors capitalize"
+                style={{
+                  borderColor: modelChoice === choice ? "var(--accent)" : "var(--line)",
+                  background: modelChoice === choice ? "rgba(143,166,255,.16)" : "transparent",
+                }}>
+                {choice === "primary" ? "Local primary" : "Hosted specialist"}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">
+            Knowledge graph
+          </p>
+          <div className="mb-3 max-h-32 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+            style={{ background: "rgba(255,255,255,.035)" }}>
+            <div className="opacity-60">{clusters.length} clusters · {graphConnections.length + connections.length} links</div>
+            {clusters.slice(0, 6).map((c) => (
+              <div key={c.node_id} className="flex justify-between gap-2">
+                <span className="truncate">{c.name}</span>
+                <span className="opacity-50">{c.count}</span>
+              </div>
+            ))}
+            {graphConnections.slice(0, 4).map((link, i) => (
+              <div key={link.id || i} className="truncate opacity-60">
+                {link.from_cluster || link.from} → {link.to_cluster || link.to}
+              </div>
+            ))}
+          </div>
+
+          {clusters[0] ? (
+            <button onClick={() => { void loadProvenance(clusters[0].name); setShowOptions(false); }}
+              className="w-full mb-3 rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:border-[var(--accent)] transition-colors">
+              Inspect {clusters[0].name} provenance <ArrowRight size={12} />
+            </button>
+          ) : null}
+
+          <button
+            onClick={() => { setMessages([]); setResponse(""); setLastQuery(""); setShowOptions(false); }}
+            className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center gap-2 justify-center hover:border-[var(--accent)] transition-colors"
+          >
+            <Trash2 size={13} /> Clear this conversation view
+          </button>
+          <p className="mt-3 text-[10px] leading-relaxed opacity-50 text-[var(--mute)]">
+            Everything stays on this one screen. Responses are formatted, scrollable and copyable.
+          </p>
+        </div>
+      )}
+
       {/* Center response + input */}
       <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-4 pb-6 pointer-events-none">
-        <div
-          className="say max-w-[600px] text-center leading-relaxed min-h-[1.5em] transition-opacity duration-300"
-          style={{ fontSize: "clamp(19px, 2.6vw, 25px)", fontWeight: 300, opacity: response ? 1 : 0 }}
-          aria-live="polite"
-        >
-          {response}
-        </div>
+        {!responseDismissed && (
+          <div
+            className={`say w-full max-w-[720px] leading-relaxed min-h-[1.5em] transition-opacity duration-300 overflow-y-auto pointer-events-auto ${
+              compactResponse ? "text-center" : "rounded-2xl border border-[var(--line)] p-4 text-left"
+            }`}
+            style={{
+              fontSize: compactResponse ? "clamp(19px, 2.6vw, 25px)" : "clamp(14px, 1.35vw, 16px)",
+              fontWeight: compactResponse ? 300 : 400,
+              opacity: response ? 1 : 0,
+              maxHeight: responseMinimized ? "auto" : compactResponse ? "30vh" : "42vh",
+              background: compactResponse ? undefined : "var(--glass)",
+              backdropFilter: compactResponse ? undefined : "blur(18px)",
+            }}
+            aria-live="polite"
+          >
+            {response && !compactResponse && !responseMinimized ? (
+              <div className="flex justify-end gap-1.5 mb-2">
+                <button
+                  onClick={() => setResponseMinimized(true)}
+                  aria-label="Minimize response"
+                  className="w-6 h-6 rounded-full border border-[var(--line)] grid place-items-center opacity-50 hover:opacity-100"
+                >
+                  <Minus size={12} />
+                </button>
+                <button
+                  onClick={() => setResponseDismissed(true)}
+                  aria-label="Close response"
+                  className="w-6 h-6 rounded-full border border-[var(--line)] grid place-items-center opacity-50 hover:opacity-100"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ) : null}
+            {responseMinimized ? (
+              <button
+                onClick={() => setResponseMinimized(false)}
+                aria-label="Expand response"
+                className="w-full flex items-center gap-2 text-left opacity-70 hover:opacity-100"
+                style={{ fontSize: 13 }}
+              >
+                <ChevronDown size={13} className="rotate-180 shrink-0" />
+                <span className="truncate">{response.slice(0, 90)}{response.length > 90 ? "…" : ""}</span>
+              </button>
+            ) : (
+              <>
+                {response ? <FormattedResponse text={response} /> : null}
+                {generating && <span className="ml-0.5 animate-pulse opacity-70">▍</span>}
+              </>
+            )}
+          </div>
+        )}
 
-        {(generating || (response && !generating)) && (
-          <div className="flex gap-2 pointer-events-auto">
+        {(generating || (response && !generating && !responseDismissed)) && (
+          <div className="flex flex-wrap justify-center gap-2 pointer-events-auto">
             {generating && (
               <button
                 onClick={stopGeneration}
@@ -498,20 +992,40 @@ export function IAMInterface() {
                 <Square size={12} /> Stop
               </button>
             )}
-            {!generating && response && (
-              <button
-                onClick={() => ask(lastQuery)}
-                aria-label="Retry"
-                className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
-                style={{ background: "var(--glass)", color: "var(--mute)" }}
-              >
-                <RotateCcw size={12} /> Retry
-              </button>
+            {!generating && response && !responseMinimized && (
+              <>
+                <button
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(response); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch {}
+                  }}
+                  aria-label="Copy response"
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <Copy size={12} /> {copied ? "Copied" : "Copy"}
+                </button>
+                <button
+                  onClick={() => ask("Explain that last answer more simply.")}
+                  aria-label="Simplify response"
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <Wand2 size={12} /> Simplify
+                </button>
+                <button
+                  onClick={() => ask(lastQuery)}
+                  aria-label="Retry"
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <RotateCcw size={12} /> Retry
+                </button>
+              </>
             )}
           </div>
         )}
 
-        {!response && (
+        {(!response || responseDismissed) && (
           <div className="ghost flex gap-2 flex-wrap justify-center pointer-events-auto">
             {suggestions.map((s) => (
               <button

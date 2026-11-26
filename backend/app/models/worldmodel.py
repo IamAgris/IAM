@@ -27,8 +27,8 @@ class WorldEntity(Base):
         CheckConstraint("entity_type IN ('person', 'organisation', 'country', 'technology', 'concept', 'event')", name="ck_world_entity_type"),
     )
 
-    relationships_as_source = relationship("EntityRelationship", foreign_keys="EntityRelationship.source_entity_id", cascade="all, delete-orphan")
-    relationships_as_target = relationship("EntityRelationship", foreign_keys="EntityRelationship.target_entity_id", cascade="all, delete-orphan")
+    relationships_as_source = relationship("EntityRelationship", foreign_keys="EntityRelationship.source_entity_id", cascade="all, delete-orphan", overlaps="source_entity")
+    relationships_as_target = relationship("EntityRelationship", foreign_keys="EntityRelationship.target_entity_id", cascade="all, delete-orphan", overlaps="target_entity")
 
 
 class EntityRelationship(Base):
@@ -47,8 +47,8 @@ class EntityRelationship(Base):
         CheckConstraint("strength BETWEEN 0 AND 1", name="ck_entity_relationship_strength"),
     )
 
-    source_entity = relationship("WorldEntity", foreign_keys=[source_entity_id])
-    target_entity = relationship("WorldEntity", foreign_keys=[target_entity_id])
+    source_entity = relationship("WorldEntity", foreign_keys=[source_entity_id], overlaps="relationships_as_source")
+    target_entity = relationship("WorldEntity", foreign_keys=[target_entity_id], overlaps="relationships_as_target")
 
 
 class CauseEffectChain(Base):

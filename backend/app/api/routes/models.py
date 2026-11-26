@@ -10,6 +10,10 @@ import loguru
 
 from app.core.config import settings
 from app.core.database import get_db_session
+from app.services import delegation as delegation_service
+from app.services import serving_model
+from app.services.iam_context import assemble_context, with_context
+from app.services.model_inference import InferenceUnavailable, inference_service
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = loguru.logger
@@ -23,10 +27,47 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    model: str
+    model: Optional[str] = None
     messages: List[ChatMessage]
     temperature: Optional[float] = 0.7
     max_tokens: Optional[int] = None
+    # Private memory is never injected by default: the chat routes are public.
+    include_memory: bool = False
+    # Optional hosted specialist: explicit opt-in, signed authorization required.
+    delegate: bool = False
+    delegate_model: Optional[str] = None
+
+
+def _plain_messages(request: ChatRequest) -> List[Dict[str, str]]:
+    return [{"role": m.role, "content": m.content} for m in request.messages]
+
+
+async def _prepare_messages(
+    request: ChatRequest, db: AsyncSession, status
+) -> tuple[List[Dict[str, str]], Optional[Dict[str, Any]]]:
+    """Add IAM context and, when requested, an authorized specialist's findings."""
+    messages = _plain_messages(request)
+    query = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+    if not query:
+        return messages, None
+    bundle = await assemble_context(
+        db,
+        query,
+        local=status.mode == "ollama",
+        include_memory=request.include_memory,
+    )
+    messages = with_context(messages, bundle.as_system_message())
+    if not request.delegate:
+        return messages, None
+
+    result = await delegation_service.run(
+        db,
+        query,
+        model=request.delegate_model,
+        context=bundle.knowledge_message(),
+        actor="chat",
+    )
+    return with_context(messages, result.context_message()), result.as_dict()
 
 
 class ModelInfo(BaseModel):
@@ -56,48 +97,66 @@ async def list_models():
         raise HTTPException(status_code=502, detail=f"LiteLLM unavailable: {str(e)}")
 
 
+@router.get("/readiness")
+async def model_readiness():
+    """Report whether real inference is available. Never exposes provider keys."""
+    return (await inference_service.resolve()).as_dict()
+
+
+@router.get("/primary")
+async def primary_model():
+    """The single primary model IAM uses for frontend and backend intelligence.
+
+    Hosted models are listed as optional delegates/specialists. Callers should
+    omit the ``model`` field in chat requests to use this shared primary.
+    """
+    active = serving_model.current()
+    status = await inference_service.resolve()
+    return {
+        "primary": active.model,
+        "source": active.source,
+        "version": active.version,
+        "resolved_model": status.model,
+        "mode": status.mode,
+        "available": status.available,
+        "reason": status.reason,
+        "local_alias": settings.iam_primary_model,
+        "local_tag": settings.iam_primary_local_tag,
+        "delegates": [settings.adaptive_delegate_model],
+    }
+
+
 @router.post("/chat")
-async def chat_completion(request: ChatRequest, db: AsyncSession = Depends(get_db_session)):
-    """Proxy chat completion through LiteLLM gateway with routing and logging."""
+async def chat_completion(
+    request: ChatRequest, db: AsyncSession = Depends(get_db_session)
+):
+    """Chat completion with IAM context through the resolved provider."""
+    status = await inference_service.resolve()
+    messages, delegation = await _prepare_messages(request, db, status)
     try:
-        # Convert Pydantic models to dicts for LiteLLM
-        messages = [{"role": m.role, "content": m.content} for m in request.messages]
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.litellm_base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {settings.litellm_master_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": request.model,
-                    "messages": messages,
-                    "temperature": request.temperature,
-                    "max_tokens": request.max_tokens,
-                },
-                timeout=120.0,
-            )
-
-            if response.status_code != 200:
-                logger.error(f"LiteLLM error: {response.status_code} {response.text}")
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Model inference failed: {response.text}",
-                )
-
-            return response.json()
-
+        result = await inference_service.chat(
+            messages,
+            model=request.model,
+            temperature=request.temperature or 0.7,
+            max_tokens=request.max_tokens,
+        )
+        if delegation is not None:
+            result["iam_delegation"] = delegation
+        return result
+    except InferenceUnavailable as exc:
+        logger.warning(f"Inference unavailable: {exc}")
+        raise HTTPException(status_code=503, detail=str(exc))
     except httpx.TimeoutException:
-        logger.error("LiteLLM request timed out")
         raise HTTPException(status_code=504, detail="Model inference timed out")
-    except Exception as e:
-        logger.error(f"Model inference failed: {e}")
-        raise HTTPException(status_code=502, detail=f"Model inference failed: {str(e)}")
+    except Exception as exc:
+        logger.error(f"Model inference failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"Model inference failed: {exc}")
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(
+    request: ChatRequest, db: AsyncSession = Depends(get_db_session)
+):
     """Streaming chat via Server-Sent Events (SSE).
 
     Event schema (see IAM_API_CONTRACTS.md):
@@ -107,81 +166,40 @@ async def chat_stream(request: ChatRequest):
       event: error  -> {code, message}
     """
     request_id = str(__import__("uuid").uuid4())
+    status = await inference_service.resolve()
+    messages, delegation = await _prepare_messages(request, db, status)
 
     async def generate() -> AsyncGenerator[str, None]:
-        import asyncio
         def evt(event: str, data: dict) -> str:
             return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
-        # If no provider keys configured, stream a graceful informational response
-        has_key = any([
-            settings.nvidia_api_key, settings.dashscope_api_key,
-            settings.openai_api_key, settings.anthropic_api_key,
-        ])
-        if not has_key:
+        if not status.available:
             yield evt("start", {"request_id": request_id, "model": "offline"})
             msg = (
-                "I am IAM, and I am running without a model provider key. "
-                "My memory, research and decision systems are active, but live language "
-                "generation needs an API key (NVIDIA or Dashscope) in the environment. "
-                "Everything else you see is real."
+                "I am IAM. Live language generation is not configured: "
+                f"{status.reason}. Memory, research and decision systems remain active."
             )
             for word in msg.split(" "):
                 yield evt("delta", {"text": word + " "})
-                await asyncio.sleep(0.02)
             yield evt("done", {"finish_reason": "stop", "offline": True})
             return
 
-        # Try real LiteLLM stream first
         try:
-            messages = [{"role": m.role, "content": m.content} for m in request.messages]
-            yield evt("start", {"request_id": request_id, "model": request.model})
-
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                async with client.stream(
-                    "POST",
-                    f"{settings.litellm_base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {settings.litellm_master_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": request.model,
-                        "messages": messages,
-                        "temperature": request.temperature,
-                        "max_tokens": request.max_tokens,
-                        "stream": True,
-                    },
-                ) as resp:
-                    if resp.status_code != 200:
-                        body = ""
-                        async for chunk in resp.aiter_text():
-                            body += chunk
-                        yield evt("error", {"code": "provider_error", "message": body[:400]})
-                        yield evt("done", {"finish_reason": "error"})
-                        return
-
-                    async for line in resp.aiter_lines():
-                        if not line.startswith("data:"):
-                            continue
-                        payload = line[5:].strip()
-                        if payload == "[DONE]":
-                            break
-                        try:
-                            obj = json.loads(payload)
-                            delta = obj.get("choices", [{}])[0].get("delta", {})
-                            text = delta.get("content")
-                            if text:
-                                yield evt("delta", {"text": text})
-                        except Exception:
-                            continue
-
-            yield evt("done", {"finish_reason": "stop"})
-            return
-
-        except Exception as e:
-            logger.error(f"Stream error: {e}")
-            yield evt("error", {"code": "stream_error", "message": str(e)[:300]})
+            async for item in inference_service.stream(
+                messages,
+                model=request.model,
+                temperature=request.temperature or 0.7,
+                max_tokens=request.max_tokens,
+            ):
+                data = dict(item["data"])
+                if item["event"] == "start":
+                    data["request_id"] = request_id
+                    if delegation is not None:
+                        data["delegation"] = delegation
+                yield evt(item["event"], data)
+        except Exception as exc:
+            logger.error(f"Stream error: {exc}")
+            yield evt("error", {"code": "stream_error", "message": str(exc)[:300]})
             yield evt("done", {"finish_reason": "error"})
 
     return StreamingResponse(

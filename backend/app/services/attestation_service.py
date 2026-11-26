@@ -11,6 +11,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -296,11 +297,15 @@ class AttestationService:
             raise AttestationError(
                 "publisher_node_id, object_type, payload and signature are required"
             )
+        try:
+            publisher_uuid = UUID(publisher)
+        except (ValueError, AttributeError) as exc:
+            raise AttestationError("publisher is not a trusted node") from exc
 
         attestation_result = await self.db.execute(
             select(NodeAttestation)
             .where(
-                NodeAttestation.node_id == publisher,
+                NodeAttestation.node_id == publisher_uuid,
                 NodeAttestation.verified.is_(True),
                 NodeAttestation.result == "trusted",
             )

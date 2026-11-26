@@ -12,27 +12,17 @@ model_list:
   # ---------------------------------------------------------------------------
   # NVIDIA NIM / build.nvidia.com (free endpoints, OpenAI-compatible)
   # ---------------------------------------------------------------------------
-  - model_name: nvidia-llama-3.3-70b
+  # Verified live on 26 Nov 2026 via /v1/models with the configured key.
+  # Older Llama/Qwen/DeepSeek NIM aliases reached end-of-life (HTTP 410).
+  - model_name: nvidia-nemotron-3.5-lightning
     litellm_params:
-      model: openai/meta/llama-3.3-70b-instruct
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
       api_key: os.environ/NVIDIA_API_KEY
       api_base: https://integrate.api.nvidia.com/v1
 
-  - model_name: nvidia-qwen-2.5-72b
+  - model_name: nvidia-nemotron-3-nano
     litellm_params:
-      model: openai/qwen/qwen2.5-72b-instruct
-      api_key: os.environ/NVIDIA_API_KEY
-      api_base: https://integrate.api.nvidia.com/v1
-
-  - model_name: nvidia-deepseek-r1
-    litellm_params:
-      model: openai/deepseek-ai/deepseek-r1
-      api_key: os.environ/NVIDIA_API_KEY
-      api_base: https://integrate.api.nvidia.com/v1
-
-  - model_name: nvidia-nemotron
-    litellm_params:
-      model: openai/nvidia/llama-3.3-nemotron-super-49b-v1
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       api_key: os.environ/NVIDIA_API_KEY
       api_base: https://integrate.api.nvidia.com/v1
 
@@ -58,17 +48,23 @@ model_list:
 
   # ---------------------------------------------------------------------------
   # Local inference (Ollama) - private, no API key, no spend
-  # OD-38 reopened by owner on 25 Nov 2026: only qwen2.5:3b is kept locally.
-  # Pull first: docker exec aura-ollama ollama pull qwen2.5:3b
+  # OD-46 (26 Nov 2026): Qwen2.5-Coder 3B is IAM's shared primary local brain.
+  # Pull first: docker exec aura-ollama ollama pull qwen2.5-coder:3b
+  # qwen2.5:3b remains an approved secondary local model (OD-38).
   # Additional local models require an owner decision before being pulled or routed.
   # ---------------------------------------------------------------------------
+  - model_name: local-qwen-coder-3b
+    litellm_params:
+      model: ollama/qwen2.5-coder:3b
+      api_base: http://ollama:11434
+
   - model_name: local-qwen-3b
     litellm_params:
       model: ollama/qwen2.5:3b
       api_base: http://ollama:11434
 
   # ---------------------------------------------------------------------------
-  # Adaptive selection tiers (OD-39 / OD-41) map to the single approved local
+  # Adaptive selection tiers (OD-39 / OD-41) map to the approved primary local
   # alias above. Other tier aliases are intentionally unavailable.
   # ---------------------------------------------------------------------------
 

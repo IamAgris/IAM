@@ -25,7 +25,8 @@ export interface ChatMessage {
 }
 
 export interface ModelChatRequest {
-  model: string;
+  // Omitted by IAM clients so the backend applies the shared primary model.
+  model?: string;
   messages: ChatMessage[];
   temperature?: number;
   max_tokens?: number;

@@ -458,7 +458,7 @@ specific permission (Doc 14 §2.3).
 | Python | 3.15.2 |
 | Git | 2.45.1.windows.1 |
 | Ollama on host | Not installed as a host command |
-| Ollama in Docker | Running container `aura-ollama`; owner direction 25 Nov 2026 keeps **only `qwen2.5:3b`** (`qwen3.5:4b` and `qwen2.5-coder:3b` removed) |
+| Ollama in Docker | Running container `aura-ollama`; OD-46 (26 Nov 2026) makes **`qwen2.5-coder:3b`** the shared primary, with `qwen2.5:3b` retained as a secondary alias (`qwen3.5:4b` remains inactive) |
 | Disk | 15.4 GB free on D: |
 | Cloud budget | Minimal / under $10 monthly |
 | Programming experience | Beginner |

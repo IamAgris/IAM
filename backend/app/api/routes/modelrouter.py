@@ -18,6 +18,8 @@ class SelectRequest(BaseModel):
     required_capabilities: Optional[List[str]] = None
     prefer_provider: Optional[str] = None
     allow_paid: bool = False
+    task_complexity: Optional[int] = None
+    available_aliases: Optional[List[str]] = None
 
 
 @router.post("/initialize")
@@ -61,6 +63,10 @@ async def select_model(request: SelectRequest, db=Depends(get_db_session)):
         request.required_capabilities,
         request.prefer_provider,
         request.allow_paid,
+        task_complexity=request.task_complexity,
+        available_aliases=(
+            set(request.available_aliases) if request.available_aliases is not None else None
+        ),
     )
 
 

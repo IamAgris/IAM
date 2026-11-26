@@ -2,12 +2,13 @@
 
 import base64
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.services.deployment_preflight import check_deployment
 
 
@@ -43,6 +44,17 @@ class PreflightTests(unittest.TestCase):
         serialised = repr(report)
         self.assertNotIn(secret, serialised)
         self.assertNotIn("bootstrap-secret", serialised)
+
+    def test_docker_secret_file_is_loaded(self):
+        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
+            tmp.write("secret-from-file\n")
+            path = tmp.name
+        try:
+            with patch.dict(os.environ, {"APP_SECRET_KEY_FILE": path}):
+                loaded = Settings()
+            self.assertEqual(loaded.app_secret_key, "secret-from-file")
+        finally:
+            os.unlink(path)
 
     def test_smtp_requires_password_environment(self):
         with (

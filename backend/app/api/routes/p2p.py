@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 import json
 
 from app.services.p2p_transport import transport
+from app.services.whitehat_policy import WhiteHatPolicyError
 
 router = APIRouter(prefix="/api/v1/p2p", tags=["p2p"])
 
@@ -24,13 +25,19 @@ class BroadcastRequest(BaseModel):
 @router.post("/send")
 async def send(request: SendRequest):
     """Send a signed message to a peer (queued if offline)."""
-    return await transport.send_to(request.peer_id, request.topic, request.payload)
+    try:
+        return await transport.send_to(request.peer_id, request.topic, request.payload)
+    except WhiteHatPolicyError as exc:
+        raise HTTPException(403, str(exc)) from exc
 
 
 @router.post("/broadcast")
 async def broadcast(request: BroadcastRequest):
     """Gossip a message to all connected peers."""
-    return await transport.broadcast(request.topic, request.payload)
+    try:
+        return await transport.broadcast(request.topic, request.payload)
+    except WhiteHatPolicyError as exc:
+        raise HTTPException(403, str(exc)) from exc
 
 
 @router.get("/outbox/{peer_id}")

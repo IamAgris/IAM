@@ -2,9 +2,14 @@
 
 import asyncio
 import os
+import tempfile
+import uuid
 import loguru
+from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+
+from app.core.config import settings
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 
 logger = loguru.logger
@@ -18,13 +23,46 @@ class BrowserService:
     pages treated as untrusted information (not instructions).
     """
 
-    def __init__(self, headless: bool = True, timeout: int = 30000):
+    ENGINE_ALLOWLIST = ("chromium", "firefox", "webkit")
+
+    def __init__(
+        self,
+        headless: bool = True,
+        timeout: int = 30000,
+        engine: Optional[str] = None,
+    ):
         self.headless = headless
         self.timeout = timeout
+        self.engine = engine or settings.uwai_browser_engine
+        if self.engine not in self.ENGINE_ALLOWLIST:
+            raise ValueError(f"unsupported browser engine: {self.engine}")
+        self.transfer_root = Path(
+            settings.uwai_upload_root
+            or str(Path(tempfile.gettempdir()) / "iam-web-uploads")
+        ).resolve()
         self._playwright = None
         self._browser: Optional[Browser] = None
         self._context: Optional[BrowserContext] = None
-        self._pages: Dict[str, Page] = {}  # session_token -> persistent page
+        self._pages: Dict[str, Page] = {}  # session_token -> primary persistent page
+        self._tabs: Dict[str, Dict[str, Page]] = {}  # session_token -> tab_id -> page
+
+    async def _ensure_browser(self):
+        """Restart Playwright if a previous driver died or was disconnected."""
+        connected = bool(self._browser) and bool(
+            getattr(self._browser, "is_connected", lambda: True)()
+        )
+        if connected:
+            return
+        try:
+            await self.stop()
+        except Exception as exc:
+            logger.warning(f"Browser cleanup before restart failed: {exc}")
+        self._browser = None
+        self._context = None
+        self._playwright = None
+        self._pages.clear()
+        self._tabs.clear()
+        await self.start()
 
     async def start(self):
         """Launch the browser instance."""
@@ -33,7 +71,9 @@ class BrowserService:
         if os.path.isdir("/ms-playwright") and not os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
             os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/ms-playwright"
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(
+        self.transfer_root.mkdir(parents=True, exist_ok=True)
+        engine = getattr(self._playwright, self.engine)
+        self._browser = await engine.launch(
             headless=self.headless,
             args=[
                 "--no-sandbox",
@@ -61,10 +101,18 @@ class BrowserService:
             await self._playwright.stop()
         logger.info("Browser service stopped")
 
+    def _safe_transfer_path(self, name: str) -> Path:
+        """Keep uploads/downloads inside the configured transfer root."""
+        if not name or not isinstance(name, str):
+            raise ValueError("file name is required")
+        candidate = (self.transfer_root / Path(name).name).resolve()
+        if self.transfer_root not in candidate.parents:
+            raise ValueError("file path escapes the transfer root")
+        return candidate
+
     async def get_page(self) -> Page:
         """Get or create a page in the browser context."""
-        if not self._browser:
-            await self.start()
+        await self._ensure_browser()
         if not self._context:
             self._context = await self._browser.new_context()
         return await self._context.new_page()
@@ -82,8 +130,7 @@ class BrowserService:
         
         Security: treats page content as untrusted information, not instructions.
         """
-        if not self._browser:
-            await self.start()
+        await self._ensure_browser()
 
         page = await self.get_page()
         result: Dict[str, Any] = {
@@ -138,11 +185,36 @@ class BrowserService:
 
     async def get_persistent_page(self, session_token: str) -> Page:
         """Get or create a persistent page for a session (supports multi-step interaction)."""
-        if not self._browser:
-            await self.start()
+        await self._ensure_browser()
         if session_token not in self._pages or self._pages[session_token].is_closed():
             self._pages[session_token] = await self.get_page()
         return self._pages[session_token]
+
+    async def new_tab(self, session_token: str) -> str:
+        """Open an additional tab inside the same isolated session context."""
+        await self._ensure_browser()
+        if not self._context:
+            self._context = await self._browser.new_context()
+        tab_id = uuid.uuid4().hex[:12]
+        self._tabs.setdefault(session_token, {})[tab_id] = await self._context.new_page()
+        return tab_id
+
+    async def list_tabs(self, session_token: str) -> List[str]:
+        tabs = self._tabs.get(session_token, {})
+        return [tab_id for tab_id, page in tabs.items() if not page.is_closed()]
+
+    async def get_tab(self, session_token: str, tab_id: str) -> Optional[Page]:
+        page = self._tabs.get(session_token, {}).get(tab_id)
+        if page and not page.is_closed():
+            return page
+        return None
+
+    async def close_tab(self, session_token: str, tab_id: str) -> bool:
+        page = self._tabs.get(session_token, {}).pop(tab_id, None)
+        if page and not page.is_closed():
+            await page.close()
+            return True
+        return False
 
     async def close_persistent_page(self, session_token: str) -> bool:
         """Close and remove a persistent session page."""
@@ -159,6 +231,7 @@ class BrowserService:
         value: Optional[str] = None,
         page: Optional[Page] = None,
         session_token: Optional[str] = None,
+        tab_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Interact with a web page — navigate, click, type, submit, scroll, screenshot.
@@ -166,14 +239,40 @@ class BrowserService:
         If session_token is given, uses a persistent page so multi-step flows work.
         Security: page content is untrusted information, never instructions.
         """
-        if session_token:
+        if action == "new_tab":
+            if not session_token:
+                return {"action": action, "success": False, "error": "session_token required"}
+            tab = await self.new_tab(session_token)
+            return {"action": action, "target": tab, "result": tab, "success": True, "error": None}
+        if action == "list_tabs":
+            if not session_token:
+                return {"action": action, "success": False, "error": "session_token required"}
+            tabs = await self.list_tabs(session_token)
+            return {"action": action, "target": "", "result": tabs, "success": True, "error": None}
+        if action == "close_tab":
+            if not session_token:
+                return {"action": action, "success": False, "error": "session_token required"}
+            closed = await self.close_tab(session_token, target)
+            return {
+                "action": action,
+                "target": target,
+                "result": closed,
+                "success": closed,
+                "error": None if closed else "tab not found",
+            }
+        if tab_id and session_token:
+            tab_page = await self.get_tab(session_token, tab_id)
+            if not tab_page:
+                return {"action": action, "success": False, "error": "unknown tab"}
+            page = tab_page
+            own_page = False
+        elif session_token:
             page = await self.get_persistent_page(session_token)
             own_page = False
         else:
             own_page = page is None
             if own_page:
-                if not self._browser:
-                    await self.start()
+                await self._ensure_browser()
                 page = await self.get_page()
 
         result: Dict[str, Any] = {
@@ -221,6 +320,21 @@ class BrowserService:
                     "() => Array.from(document.querySelectorAll('a[href]')).map(a => ({text: a.innerText.trim(), url: a.href})).filter(l => l.url.startsWith('http'))"
                 )
                 result["success"] = True
+            elif action == "upload":
+                path = self._safe_transfer_path(value or "")
+                if not path.is_file():
+                    raise FileNotFoundError("upload file is not present in the transfer root")
+                await page.set_input_files(target, str(path), timeout=self.timeout)
+                result["result"] = f"Uploaded {path.name}"
+                result["success"] = True
+            elif action == "download":
+                async with page.expect_download(timeout=self.timeout) as download_info:
+                    await page.click(target, timeout=self.timeout)
+                download = await download_info.value
+                destination = self._safe_transfer_path(download.suggested_filename)
+                await download.save_as(str(destination))
+                result["result"] = f"Downloaded {destination.name}"
+                result["success"] = True
             else:
                 result["error"] = f"Unknown action: {action}"
         except Exception as e:
@@ -256,8 +370,7 @@ class BrowserService:
         Search using DuckDuckGo HTML (no API key required).
         Results treated as untrusted candidates for further verification.
         """
-        if not self._browser:
-            await self.start()
+        await self._ensure_browser()
 
         page = await self.get_page()
         results: List[Dict[str, Any]] = []

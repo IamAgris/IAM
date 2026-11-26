@@ -8,17 +8,23 @@ than fixed screen coordinates.
 
 import re
 from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.digital_access import AssistanceRequest
 from app.models.internetaccess import InternetSession
 from app.models.security import AuditEvent
 from app.models.uwaie import WebsiteWorkflow
 from app.services.browser_service import browser_service
 from app.services.internetaccess_service import InternetAccessService
+from app.services.creatorapproval_service import CreatorApprovalService
 
-ALLOWED_ACTIONS = {"navigate", "click", "type", "submit", "scroll", "text", "links", "url"}
+ALLOWED_ACTIONS = {
+    "navigate", "click", "type", "submit", "scroll", "text", "links", "url",
+    "upload", "download", "new_tab", "list_tabs", "close_tab",
+}
 BLOCKED_TARGETS = re.compile(
     r"captcha|recaptcha|hcaptcha|cf-challenge|challenge-platform|paywall| Turnstile",
     re.IGNORECASE,
@@ -105,6 +111,7 @@ class UWAIEService:
         learn: bool = False,
         workflow_name: Optional[str] = None,
         actor: str = "sdk",
+        recover: bool = True,
     ) -> Dict[str, Any]:
         """Run an explicit, caller-supplied workflow. Page content never adds steps."""
         if not steps:
@@ -133,6 +140,7 @@ class UWAIEService:
                 target=target,
                 value=step.get("value"),
                 session_token=session_token,
+                tab_id=step.get("tab_id"),
             )
             self.db.add(
                 AuditEvent(
@@ -172,6 +180,26 @@ class UWAIEService:
             )
         )
 
+        recovery = None
+        if recover and any(not item["success"] for item in outcomes):
+            recovery_url = next(
+                (str(item.get("target") or "") for item in steps if item.get("action") == "navigate"),
+                None,
+            )
+            if recovery_url:
+                try:
+                    recovery = await self.inspect(recovery_url, actor)
+                except UWAIEError as exc:
+                    recovery = {"error": str(exc), "human_handover": True}
+                self.db.add(
+                    AuditEvent(
+                        event_type="uwaie_recovery",
+                        actor=actor,
+                        target=recovery_url[:500],
+                        details={"re_inspected": bool(recovery and "error" not in recovery)},
+                    )
+                )
+
         saved = None
         if learn and verified and workflow_name:
             saved = await self._save_workflow(
@@ -184,6 +212,7 @@ class UWAIEService:
             "verified": verified,
             "verification_reason": reason,
             "workflow": saved,
+            "recovery": recovery,
             "credentials_stored": False,
         }
 
@@ -204,6 +233,101 @@ class UWAIEService:
             for w in result.scalars().all()
         ]
 
+    async def _workflow(self, workflow_id: str) -> WebsiteWorkflow:
+        try:
+            identifier = UUID(str(workflow_id))
+        except (ValueError, TypeError) as exc:
+            raise LookupError("workflow not found") from exc
+        result = await self.db.execute(
+            select(WebsiteWorkflow).where(WebsiteWorkflow.id == identifier)
+        )
+        workflow = result.scalar_one_or_none()
+        if not workflow:
+            raise LookupError("workflow not found")
+        return workflow
+
+    async def approve_workflow(
+        self, workflow_id: str, approval_id: str, actor: str
+    ) -> Dict[str, Any]:
+        """Stored workflows are inert until a signed Creator approves them."""
+        workflow = await self._workflow(workflow_id)
+        authority = await CreatorApprovalService(self.db).check_authorization(
+            "uwaie.workflow_approve", requested_level="3", target_ref=str(workflow.id)
+        )
+        if not authority.get("authorized"):
+            raise UWAIEError("no signed Creator authorization covers this workflow")
+        if approval_id and authority.get("authorization_id") != approval_id:
+            raise UWAIEError("approval_id does not match the active signed authorization")
+        workflow.is_approved = True
+        self.db.add(
+            AuditEvent(
+                event_type="uwaie_workflow_approved",
+                actor=actor,
+                target=str(workflow.id),
+                details={"authorization_id": authority["authorization_id"]},
+            )
+        )
+        await self.db.commit()
+        return {
+            "id": str(workflow.id),
+            "is_approved": True,
+            "authorization_id": authority["authorization_id"],
+        }
+
+    async def reuse_workflow(
+        self,
+        workflow_id: str,
+        url: str,
+        session_token: Optional[str],
+        actor: str,
+    ) -> Dict[str, Any]:
+        """Replay an approved workflow with its recorded verification gate."""
+        workflow = await self._workflow(workflow_id)
+        if not workflow.is_approved:
+            raise UWAIEError("workflow must be approved before reuse")
+        pattern = str(workflow.url_pattern)
+        if pattern and pattern not in url:
+            raise UWAIEError("url does not match the approved workflow pattern")
+        return await self.execute(
+            steps=workflow.steps or [],
+            verification=workflow.verification or {},
+            session_token=session_token,
+            learn=False,
+            workflow_name=workflow.name,
+            actor=actor,
+        )
+
+    async def request_handover(
+        self, url: str, reason: str, actor: str
+    ) -> Dict[str, Any]:
+        """Hand a sensitive step to a human; IAM takes no autonomous action."""
+        if not url or not reason:
+            raise UWAIEError("url and reason are required for a handover")
+        handover_id = str(uuid4())
+        self.db.add(
+            AssistanceRequest(
+                level="2",
+                reason=reason[:2000],
+                context={"url": url, "handover_id": handover_id},
+                task_ref=handover_id,
+                status="pending",
+            )
+        )
+        self.db.add(
+            AuditEvent(
+                event_type="uwaie_human_handover_requested",
+                actor=actor,
+                target=url,
+                details={"handover_id": handover_id, "reason": reason[:1000]},
+            )
+        )
+        await self.db.commit()
+        return {
+            "handover_id": handover_id,
+            "status": "pending_human",
+            "autonomous_action_taken": False,
+        }
+
     async def _check_steps(self, steps: List[Dict[str, Any]]) -> None:
         access = self.access
         checked: Dict[str, Dict[str, Any]] = {}
@@ -218,6 +342,8 @@ class UWAIEService:
                 required = "access_private_service"
             elif action == "submit":
                 required = "publish_content"
+            elif action == "upload":
+                required = "uwai_upload_file"
             else:
                 required = "browse_public"
             if required not in checked:

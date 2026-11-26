@@ -74,7 +74,17 @@ Base path `/api/v1/skill-runtime` (admin scope):
 
 1. ~~Docker adapter lab test~~ — `backend/tests/docker_adapter_lab_check.py` ran a real
    script in the no-network container and verified an outbound connection was blocked.
-2. Add a narrowly scoped, explicitly configured isolated network for skills that
-   legitimately need network access.
-3. Stream execution logs to the audit trail rather than storing truncated output.
-4. Add per-skill invocation limits to `RateLimiter`.
+2. ~~Isolated network for skills that legitimately need network access~~ —
+   opt-in with `SKILL_RUNTIME_NETWORK_ENABLED=true` and a pre-created,
+   operator-restricted Docker network named by `SKILL_RUNTIME_NETWORK_NAME`.
+   Only skills whose published permissions include `network_access` may use it;
+   `host`, `bridge` and `none` are rejected and every invocation is audited with
+   its network mode. Default posture remains `--network none`.
+3. ~~Full execution logs~~ — stdout/stderr are streamed into the durable audit
+   trail (`skill_runtime_log` events, bounded by
+   `SKILL_RUNTIME_AUDIT_LOG_CHUNK_CHARS`) and surfaced through `GET /api/v1/events`;
+   a preview remains in `skill_runtime_logs` for fast UI reads via
+   `GET /api/v1/skill-runtime/executions/{id}/logs`.
+4. ~~Per-skill invocation limits~~ — enforced with a sliding window keyed by
+   skill + caller (shared through Redis when `RATE_LIMIT_BACKEND=redis`); returns
+   HTTP 429 via `SKILL_RUNTIME_PER_SKILL_LIMIT_PER_MINUTE`.

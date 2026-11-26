@@ -4,20 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg1: #0B0F26;
-  --bg2: #03040B;
-  --ink: #E9EDFF;
-  --mute: #8D96C4;
-  --glass: rgba(18, 22, 52, .55);
-  --line: rgba(160, 175, 255, .22);
-  --accent: #8FA6FF;
-  color-scheme: dark;
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
+/* Registered color variables can be transitioned, so theme changes interpolate
+   instead of snapping between two complete palettes. */
+@property --bg1 { syntax: "<color>"; inherits: true; initial-value: #FFFFFF; }
+@property --bg2 { syntax: "<color>"; inherits: true; initial-value: #DDE2F5; }
+@property --ink { syntax: "<color>"; inherits: true; initial-value: #141A3A; }
+@property --mute { syntax: "<color>"; inherits: true; initial-value: #5A6394; }
+@property --glass { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.65); }
+@property --line { syntax: "<color>"; inherits: true; initial-value: rgba(40,55,140,.2); }
+@property --accent { syntax: "<color>"; inherits: true; initial-value: #3A4FD8; }
 
+:root,
 :root[data-theme="light"] {
   --bg1: #FFFFFF;
   --bg2: #DDE2F5;
@@ -27,6 +24,12 @@
   --line: rgba(40, 55, 140, .2);
   --accent: #3A4FD8;
   color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: --bg1 .38s ease, --bg2 .38s ease, --ink .38s ease,
+              --mute .38s ease, --glass .38s ease, --line .38s ease,
+              --accent .38s ease;
 }
 
 :root[data-theme="dark"] {

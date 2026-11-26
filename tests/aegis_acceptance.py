@@ -44,6 +44,10 @@ def main():
         check("authorized target permitted", r.get("permitted") is True)
         r2 = post("/api/v1/aegis/verify-scope", {"target": "https://evil.com", "authorized_targets": ["https://example.com"]})
         check("unauthorized target denied", r2.get("permitted") is False)
+        r3 = post("/api/v1/aegis/verify-scope", {"target": "https://evil-example.com", "authorized_targets": ["https://example.com"]})
+        check("prefix-spoofed target denied", r3.get("permitted") is False)
+        r4 = post("/api/v1/aegis/verify-scope", {"target": "https://example.com", "authorized_targets": ["https://example.com"], "action": "exploit_target"})
+        check("offensive action denied", r4.get("permitted") is False)
     except Exception as e:
         check("scope verification", False, str(e))
 

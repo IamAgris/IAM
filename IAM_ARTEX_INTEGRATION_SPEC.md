@@ -89,6 +89,9 @@ Every action passes these checks before a tool call is constructed:
 Defaults: `enabled=False`, `dry_run=True`, `allowed_scopes=["read"]`,
 `allow_execution=False`, `allow_private_network=False`.
 
+A loopback-only authorized lab template is `infra/artex-lab/docker-compose.yml`.
+Set `ARTEX_IMAGE` to a verified fork image and never expose ports 8787/8788 publicly.
+
 ---
 
 ## 4. Task flow

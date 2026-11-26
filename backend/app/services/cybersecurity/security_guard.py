@@ -10,11 +10,11 @@ import re
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urlparse
 
-FORBIDDEN_OPERATION_TOKENS = re.compile(
-    r"(?i)\b(exploit|persistence|persist|evade|evasion|bypass|reverse[_-]?shell|"
-    r"privilege[_-]?escalation|mass[_-]?scan|internet[_-]?wide|ddos|"
-    r"destructive|wipe|ransom|crime|unauthori[sz]ed)\b"
-)
+from app.services.security_policy import FORBIDDEN_OPERATION_PATTERN
+
+# Single canonical taxonomy (WH-02); the same pattern is used by Aegis and the
+# authorised-target policy service.
+FORBIDDEN_OPERATION_TOKENS = FORBIDDEN_OPERATION_PATTERN
 
 READ_TOOLS = frozenset(
     {

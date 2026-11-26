@@ -1,5 +1,13 @@
 # Deployment Configuration
 
+## Docker secrets
+
+Secret settings can be supplied as files instead of literal environment values:
+set `<FIELD>_FILE` to a mounted secret path (for example
+`APP_SECRET_KEY_FILE=/run/secrets/app_secret_key`). `Settings` loads these at
+startup; plain environment values remain the fallback. Secret values are never
+logged or returned by any endpoint.
+
 ## Preflight
 
 Run this before enabling any external integration:
@@ -30,11 +38,30 @@ and status only — never secret values.
 ## API credentials
 
 1. Set `IAM_BOOTSTRAP_API_KEY`.
-2. `POST /api/v1/auth/bootstrap` with `X-Bootstrap-Key` to create the first
-   admin credential.
-3. Create a **user** credential for the open frontend and place it in
-   `frontend/.env.local` as `IAM_USER_API_KEY`.
-4. Never give the frontend an operator or admin key.
+2. Run `python backend/scripts/bootstrap_credentials.py`. It creates the first
+   admin credential, then a `user` credential, and writes only the user key to
+   `frontend/.env.local`. Secrets are never printed.
+3. Never give the frontend an operator or admin key.
+
+## Proxy boundary
+
+`infra/gateway/nginx.conf` restricts `/api/v1/creator/gateway/decision` to the
+email/signer gateway network and `/api/v1/auth/bootstrap` to the operator
+network. Add the real CIDRs before deploying; everything else passes through to
+the open user frontend.
+
+## Authorized ARTEX lab
+
+`infra/artex-lab/docker-compose.yml` is a loopback-only template for a lab you
+own or are explicitly authorized to test. Set `ARTEX_IMAGE` to a verified fork
+image, keep `ARTEX_DRY_RUN=true` initially, and never expose ports 8787/8788
+publicly.
+
+## Media and reasoning
+
+- `ffmpeg` is installed in the backend image; `VISION_FFMPEG_PATH` defaults to it.
+- Set `VOICE_TTS_URL` (and optionally `VOICE_TTS_API_KEY`) for speech output.
+- LiteLLM is already wired in `docker-compose.yml` for autonomy and vision.
 
 ## Optional: Skill Runtime
 

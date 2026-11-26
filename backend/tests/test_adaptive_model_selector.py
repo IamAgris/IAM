@@ -34,10 +34,10 @@ def test_light_coding_uses_1_5b():
     assert decision["context_tokens"] == 2048
 
 
-def test_regular_coding_uses_locked_3b_baseline():
+def test_regular_coding_uses_od46_primary_local_model():
     decision = AdaptiveModelSelector(snapshot(6000)).select(3, ALL)
     assert decision["tier"] == "3b"
-    assert decision["model"] == "local-qwen-3b"
+    assert decision["model"] == settings.iam_primary_model
     assert decision["max_concurrent"] == 1
 
 
@@ -70,8 +70,8 @@ def test_core_services_reserve_is_protected():
 
 
 def test_unavailable_alias_never_selected():
-    decision = AdaptiveModelSelector(snapshot(9000)).select(
-        3, {settings.adaptive_tiny_model}
-    )
-    # Tiny cannot handle complexity 3, so delegation is required.
+    # An alias that is not configured anywhere cannot be selected, regardless
+    # of how much RAM/CPU is available.
+    decision = AdaptiveModelSelector(snapshot(9000)).select(3, {"alias-not-configured"})
     assert decision["delegate"] is True
+    assert "RAM" in decision["reason"] or "capability" in decision["reason"]

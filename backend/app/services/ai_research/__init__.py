@@ -15,6 +15,7 @@ from .artifacts import (
     sha256_bytes,
 )
 from .base import (
+    CreatorApprovalRequired,
     CredentialLeak,
     DigestMismatch,
     InvalidResearchJob,
@@ -24,6 +25,7 @@ from .base import (
     PrivateDataLeak,
     ResearchError,
 )
+from .colab_mcp_driver import ColabMCPDriver, MCPToolCaller
 from .benchmarks import (
     BenchmarkResult,
     BenchmarkRunner,
@@ -44,6 +46,9 @@ from .coordinator import METHOD_CAPABILITY, ResearchCoordinator, ResearchRun
 from .credentials import CredentialRef, CredentialVault
 from .jobs import HardwareRequirement, ResearchJob, ResearchMethod, new_job, validate_job
 from .quotas import ResearchQuotaGuard, ResearchQuotaSnapshot
+from .governance import ActionKind, AutonomyGate, SignedApproval
+from .memory import ExperimentRecord, ResearchMemory
+from .registry import ModelNotApproved, ModelRegistry, ModelVersion
 from .lifecycle import (
     ACTIVE,
     DEGRADED,
@@ -75,8 +80,12 @@ from .security import (
     wrap_research_output,
 )
 from .service import PreparedJob, prepare_job
+from .release_gate import MODEL_RELEASE_ACTION, ModelReleaseError, ModelReleaseService
+from .continuous_improvement import ContinuousImprovement, ContinuousRunResult
 
 __all__ = [
+    "ColabMCPDriver",
+    "MCPToolCaller",
     "BenchmarkResult",
     "BenchmarkRunner",
     "BenchmarkSpec",
@@ -87,6 +96,15 @@ __all__ = [
     "NoCapableModel",
     "NoImprovement",
     "UnknownModel",
+    "ActionKind",
+    "AutonomyGate",
+    "CreatorApprovalRequired",
+    "ExperimentRecord",
+    "ModelNotApproved",
+    "ModelRegistry",
+    "ModelVersion",
+    "ResearchMemory",
+    "SignedApproval",
     "ACTIVE",
     "DEGRADED",
     "DISCOVERED",
@@ -152,4 +170,9 @@ __all__ = [
     "validate_job",
     "verify_digest",
     "wrap_research_output",
+    "MODEL_RELEASE_ACTION",
+    "ModelReleaseError",
+    "ModelReleaseService",
+    "ContinuousImprovement",
+    "ContinuousRunResult",
 ]

@@ -1,7 +1,9 @@
 # IAM — Independent AI Entity
 
 **Project Codename:** AURA (Autonomous Unified Reasoning Architecture) — engineering codename only  
+**Real inference:** `GET /api/v1/models/readiness` reports hosted-provider or opt-in Ollama availability; chat and autonomy share the same resolver. Hosted keys stay free-only; no key means explicit offline mode, never fabricated output.  
 **Status:** Architecture frozen — 16 documents, 41 decisions, 7 resolved specs. All 5 acceptance levels passed (with a scoped admin API credential). Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation, signed sync, evidence-based public-records/vital/estate research the 8-stage legal-intelligence lifecycle, provider-independent geospatial knowledge with live-map freshness and location privacy, evidence-based human public-presence research and the internal assistant-interoperability learning lab are implemented.  
+**Recently closed gaps:** attributed/unverified knowledge contributions, durable `GET /api/v1/events` SSE stream, audit-streamed Skill Runtime logs, an explicitly configured isolated network for permissioned skills, shared Redis rate limiting, Creator email dead-letter/alerting, the Phase 6 blocking white-hat gates (WH-01 authorised-target verification, WH-02 forbidden-capability taxonomy) WS-04 (signed approval + tested-change gate for protected deployments), and an isolation-first workspace manager (WS-01/WS-02: create/start/execute/save/destroy, no core access, no default network), short-lived host-scoped workspace credentials (WS-03), local fallback when an online provider is unavailable (WS-06), the remaining white-hat gates (WH-03…WH-09: isolated labs, remediation validation, P2P tool exclusion, structured audit, defensive study plan and learning≠capability), and opt-in, fail-closed Coder/Codespaces provider adapters are implemented. Outgoing spend now requires a signed per-action Creator authorization and configurable OD-04 caps ($1–$10 per transaction, $100 monthly); budgets cannot self-approve; business projects bind a legal entity; ledger reconciliation, P&L and separately authorised incoming receipts are implemented. Free-only blockchain and consent-gated banking adapters and risk-limited paper trading are available, all fail-closed without external credentials. The legacy standing owner-grant path is retired: it cannot create or grant authority, and all checks route through signed Creator authority. Protocol versions are enforced, workflows require approval before reuse, and external presence and accounts are signed and revocable, browser automation is API-independent with multi-engine/multi-tab sessions, bounded file transfer and recovery/re-inspection, and is backed by HAIS human handover, opt-in visual/ADB agents and an encrypted website credential vault. No reserved API endpoints remain.  
 **Interface:** The supplied HTML is the visual source of truth; displayed identity is **IAM** (Intellectual Artificial Mainbrain).  
 **Native skill system:** IAM Skill Forge — [specification](IAM_SKILL_FORGE_SPEC.md)  
 **External security engines:** ARTEX connector — [specification](IAM_ARTEX_INTEGRATION_SPEC.md)  
@@ -11,7 +13,9 @@
 **Frontend:** home + suggestions only; all other functions are backend/email — [scope note](IAM_FRONTEND_IMPLEMENTATION.md)  
 **CI & workers:** [pipeline and background jobs](IAM_CI_AND_WORKERS.md)  
 **Deployment:** [configuration and preflight](IAM_DEPLOYMENT_CONFIG.md)  
-**Privacy:** [secrets, encryption and data rights](IAM_PRIVACY_AND_SECRETS.md)
+**Privacy:** [secrets, encryption and data rights](IAM_PRIVACY_AND_SECRETS.md)  
+**Media & research:** [voice, vision and verification](IAM_MEDIA_AND_RESEARCH.md)  
+**External modules:** [P2P/Aegis review](IAM_EXTERNAL_MODULES_REVIEW.md)
 
 ---
 
@@ -188,6 +192,7 @@ python tests/legal_smoke.py          # legal monitoring + lifecycle gates
 python tests/geo_smoke.py            # maps, GIS, freshness, location privacy
 python tests/human_presence_smoke.py # public-only research, no de-anonymisation
 python tests/assistant_lab_smoke.py  # internal assistant technology learning
+python tests/model_inference_smoke.py # provider resolution (offline/hosted/Ollama)
 
 # 6. Open the UI
 # http://localhost:3000
@@ -243,13 +248,13 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - **`IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`** — OD-41 work packages, dependencies, priorities and acceptance tests
 - **`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`** — hybrid Python + Rust + TypeScript implementation allocation (cross-cutting; not a new decision)
 - **`IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`** — Document 24 : human behaviour research, Equality of Existence and responsibility (OD-43)
-- **`IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`** — Document 25 : income, crypto, trading and payments amendment (OD-44)
+- **`IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`** — Document 25 : financial intelligence amendment (income, crypto, trading, payments; Amendment A adds prediction markets, gaming intelligence and investments) (OD-44)
 - `IAM_DATABASE_DESIGN.md` — canonical ERD and migration strategy
 - `IAM_DATABASE_INTEGRATION_REPORT.md` — live Postgres verification, fixes and remaining migration issues
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
 - `IAM_OWNER_DECISIONS.md` — 44 owner decisions (ALL LOCKED)
-- `IAM_OPENAPI.json` — generated OpenAPI schema (113 paths, 103 schemas)
+- `IAM_OPENAPI.json` — generated OpenAPI schema (505 paths, 320 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 
 **Pre-implementation phase complete. Ready for Phase 0/1 build.**
@@ -274,8 +279,8 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 | 3 | Autonomous goals and task execution ✅ |
 | 4 | Internet, research and language learning ✅ |
 | 5 | Voice, vision and multimodal capabilities ✅ |
-| 6 | Computer environment and software development (specified) |
-| 7 | Self-improvement and model independence (specified) |
-| 8 | Businesses, financial systems and economic independence (specified) |
-| 9 | Digital presence and ecosystem integrations ✅ |
-| 10 | Advanced research, world modelling and continued evolution (specified) |
+| 6 | Computer environment and software development ✅ |
+| 7 | Self-improvement and model independence (signed release gate, IRWM enforcement, portable identity/exports and signed fallback adopted; target-hardware/live-model evidence pending) |
+| 8 | Businesses, financial systems and economic independence ✅ (signed spend authority, configurable OD-04 caps, ledger/P&L, receipts, free-only blockchain and consent-gated banking adapters, risk-limited paper trading, and single signed authority path; live external adapters pending) |
+| 9 | Digital presence and ecosystem integrations ✅ (digital assets, protocol enforcement, multi-engine/multi-tab browser automation, visual and ADB agents, HAIS, encrypted credential vault, WebAuthn passkeys and TOTP MFA, verified social presence and account lifecycle; live connectors pending) |
+| 10 | Advanced research, world modelling and continued evolution (world model entities/relationships/cause-effect with traversal and scenario projection; continuous-improvement research loop; web knowledge base, website account lifecycle, digital reputation & trust, website consent, digital security incidents, autonomous web tasks, browser infrastructure; live model evidence pending) |

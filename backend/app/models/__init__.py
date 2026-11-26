@@ -16,7 +16,7 @@ from app.models.development import (
 )
 from app.models.business import (
     BusinessOpportunity, BusinessProject, BusinessPerformance,
-    FinancialLedger, FinancialBudget, FinancialTransaction,
+    FinancialLedger, FinancialBudget, FinancialTransaction, IncomingReceipt,
     CryptoActivity, OperatingExpense,
 )
 from app.models.security import (
@@ -29,8 +29,9 @@ from app.models.worldmodel import (
 )
 from app.models.resilience import HealthCheck, RecoveryLog, BackupVerification, IncidentRecord, CredentialRotation
 from app.models.capability import CapabilityDefinition, CapabilityAssessment, LearningPath
+from app.models.technology import TechnologyCapability
 from app.models.researchlab import ResearchHypothesis, ResearchExperiment, ExperimentResult, ResearchPublication
-from app.models.socialintel import ConversationContext, SocialProfile, InteractionPreference, ToneAnalysis, ScamDetectionLog
+from app.models.socialintel import ConversationContext, SocialProfile, SocialPresence, InteractionPreference, ToneAnalysis, ScamDetectionLog
 from app.models.businessengine import BusinessBudget, CustomerRecord, SalesRecord, BusinessReport, ProjectPortfolio
 from app.models.digitalassets import DigitalAsset, AssetLicence, DomainRegistration, IPRecord
 from app.models.modelindependence import ModelComparison, ModelPortabilityExport, FallbackConfig
@@ -65,7 +66,8 @@ from app.models.securityengines import (
     SecurityFinding,
     SecurityEngineAudit,
 )
-from app.models.skillruntime import SkillRuntimeExecution
+from app.models.p2p_skills import P2PSkillCandidate
+from app.models.skillruntime import SkillRuntimeExecution, SkillRuntimeLog
 from app.models.auth import ApiCredential
 from app.models.creatorapproval import (
     CreatorRequest,
@@ -99,6 +101,32 @@ from app.models.assistantlab import (
     AssistantSystem, AssistantResearchNote, AssistantAdapter,
     ReplicationExperiment, CapabilityComparison,
 )
+from app.models.workspaces import WorkspaceEnvironment
+from app.models.workspace_credentials import WorkspaceCredential
+from app.models.security_labs import SecurityWorkSession
+from app.models.banking import BankingConsent
+from app.models.trading import PaperOrder, PaperPortfolio
+from app.models.financial_intelligence import (
+    PredictionMarket,
+    ProbabilityEstimate,
+    ForecastRun,
+    GamingResearchRecord,
+    InvestmentResearchRecord,
+    ProviderRegistryEntry,
+)
+from app.models.digital_access import AssistanceRequest, WebsiteCredential
+from app.models.mfa import PasskeyCredential, TotpEnrollment, WebAuthnChallenge
+from app.models.web_knowledge import (
+    WebsiteKnowledge, WebsiteSession, WebsiteAccountLifecycle,
+    DigitalReputation, WebsiteConsent, DigitalSecurityIncident,
+    AutonomousWebTask, BrowserInfrastructure,
+)
+from app.models.ai_communication import (
+    AIIdentityRegistry, AICapabilityRegistry, AIConversationThread,
+    AIConversationMessage, AIContextExchange, AIResponseVerification,
+    AIReputationRecord, AICommunicationPermission,
+    HumanCommunicationBridge, AICommunicationAudit,
+)
 
 __all__ = [
     # Identity
@@ -115,7 +143,7 @@ __all__ = [
     "SoftwareProject", "CodeChange", "DeploymentRecord", "ResourceMetric", "UpgradeHistory",
     # Business
     "BusinessOpportunity", "BusinessProject", "BusinessPerformance",
-    "FinancialLedger", "FinancialBudget", "FinancialTransaction",
+    "FinancialLedger", "FinancialBudget", "FinancialTransaction", "IncomingReceipt",
     "CryptoActivity", "OperatingExpense",
     # Security
     "IntegrationRegistry", "IntegrationPermission",
@@ -131,7 +159,7 @@ __all__ = [
     # Research Lab
     "ResearchHypothesis", "ResearchExperiment", "ExperimentResult", "ResearchPublication",
     # Social Intelligence
-    "ConversationContext", "SocialProfile", "InteractionPreference", "ScamDetectionLog",
+    "ConversationContext", "SocialProfile", "SocialPresence", "InteractionPreference", "ScamDetectionLog",
     # Business Engine
     "BusinessBudget", "CustomerRecord", "SalesRecord", "BusinessReport", "ProjectPortfolio",
     # Digital Assets
@@ -169,7 +197,7 @@ __all__ = [
     # Owner authorization
     "OwnerAuthorization",
     # Skill Runtime
-    "SkillRuntimeExecution",
+    "SkillRuntimeExecution", "SkillRuntimeLog", "P2PSkillCandidate",
     # Node registry (OD-26)
     "RegisteredNode", "NodeResourceReport",
     # Storage and website interaction
@@ -192,4 +220,19 @@ __all__ = [
     # OEDIE free infrastructure adapters (Doc 22)
     "FreeSandboxProvider", "FreeSandboxQuotaSnapshot",
     "FreeSandboxEnvironment", "FreeSandboxResult",
+    # Workspace manager
+    "WorkspaceEnvironment", "WorkspaceCredential", "SecurityWorkSession",
+    "BankingConsent", "PaperOrder", "PaperPortfolio", "AssistanceRequest", "WebsiteCredential",
+    "PredictionMarket", "ProbabilityEstimate", "ForecastRun", "GamingResearchRecord",
+    "InvestmentResearchRecord", "ProviderRegistryEntry",
+    "WebAuthnChallenge", "PasskeyCredential", "TotpEnrollment",
+    # Website knowledge & universal web interaction
+    "WebsiteKnowledge", "WebsiteSession", "WebsiteAccountLifecycle",
+    "DigitalReputation", "WebsiteConsent", "DigitalSecurityIncident",
+    "AutonomousWebTask", "BrowserInfrastructure",
+    # AI communication & collaboration
+    "AIIdentityRegistry", "AICapabilityRegistry", "AIConversationThread",
+    "AIConversationMessage", "AIContextExchange", "AIResponseVerification",
+    "AIReputationRecord", "AICommunicationPermission",
+    "HumanCommunicationBridge", "AICommunicationAudit",
 ]

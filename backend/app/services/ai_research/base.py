@@ -31,3 +31,7 @@ class DigestMismatch(ResearchError):
 
 class NoImprovement(ResearchError):
     """Post-training evaluation did not improve on the recorded baseline."""
+
+
+class CreatorApprovalRequired(ResearchError):
+    """A paid, binding, human-only or protected-core action needs Creator authority."""
