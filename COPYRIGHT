@@ -1,0 +1,26 @@
+Copyright (c) [YEAR] [LICENSOR NAME]
+
+All rights reserved.
+
+IAM and its original source code, including but not limited to:
+- IAM core
+- IAM intelligence and reasoning
+- IAM memory and knowledge systems
+- Native inference engine
+- Training and fine-tuning engine
+- Research and development tools
+
+are the exclusive intellectual property of the Licensor.
+
+Use of IAM is governed by the IAM Controlled Community Licence
+(LICENSES/IAM-COMMUNITY-LICENSE.md). Commercial use requires a
+separate commercial licence (LICENSES/COMMERCIAL-LICENSING.md).
+
+Contributions are governed by the IAM Contributor Licence Agreement (CLA.md).
+Contributors retain copyright in their own contributions unless otherwise
+agreed in writing.
+
+Third-party dependencies retain their original licences
+(LICENSES/THIRD-PARTY-LICENSES.md).
+
+*This is a proposed template. Replace [YEAR] and [LICENSOR NAME] before publication.*
