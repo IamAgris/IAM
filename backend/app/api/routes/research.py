@@ -4,6 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
+from app.core.database import get_db_session
+from app.services.model_policy import (
+    ModelPolicyDenied,
+    SEARCH_ACTION,
+    require_authorization,
+)
 from app.services.research_service import research_service
 from app.services.browser_service import browser_service
 from app.services.search_service import search_service
@@ -63,8 +69,19 @@ async def research_topic(request: ResearchRequest):
 
 
 @router.post("/search")
-async def search_web(request: SearchRequest):
-    """Search the web using configured provider."""
+async def search_web(request: SearchRequest, db: Any = Depends(get_db_session)) -> Any:
+    """Search the web using configured provider.
+
+    Paid providers (Brave/Google) require a signed Creator authorization; the
+    Wikipedia fallback is free and needs none.
+    """
+    if request.provider in {"brave", "google"}:
+        try:
+            await require_authorization(
+                db, SEARCH_ACTION, target_ref=request.provider
+            )
+        except ModelPolicyDenied as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
     result = await search_service.search(
         query=request.query,
         max_results=request.max_results,

@@ -65,7 +65,7 @@ A cross-cutting implementation addendum (`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM
 | 24 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Human behaviour research, Equality of Existence and responsibility (OD-43) |
 | 25 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Financial intelligence amendment: income, crypto, trading, payments; expanded to prediction markets, gaming intelligence and investments (OD-44, Amendment A) |
 | — | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
-| — | `IAM_OPENAPI.json` | Generated schema (565 paths, 352 schemas) |
+| — | `IAM_OPENAPI.json` | Generated schema (708 paths, 435 schemas) |
 
 ---
 

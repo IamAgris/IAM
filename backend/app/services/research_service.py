@@ -50,6 +50,7 @@ class ResearchService:
         store_as_memory: bool = True,
         store_as_knowledge: bool = False,
         max_results: int = 10,
+        governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Full research workflow for a topic.
@@ -63,6 +64,13 @@ class ResearchService:
         
         Returns comprehensive research record with source provenance.
         """
+        if governance_context and governance_context.get("source_id"):
+            from app.services.iplci.gateway import get_gateway
+
+            await get_gateway().enforce_collection(
+                source_id=governance_context["source_id"],
+                agent_id=governance_context.get("agent_id", "main"),
+            )
         research_record = {
             "query": query,
             "started_at": datetime.utcnow().isoformat(),
@@ -225,6 +233,7 @@ class ResearchService:
                                 "research_query": query,
                                 "source_index": idx,
                                 "discovered_via": "autonomous_research",
+                                "iam_review": "research_output",
                             },
                         )
                         db.add(knowledge)

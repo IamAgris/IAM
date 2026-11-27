@@ -66,7 +66,9 @@ class ToolAuthorizationTests(unittest.IsolatedAsyncioTestCase):
             await authorize_tool_call(FakeDB(tool(), permission("explicit")), "demo")
         self.assertEqual(caught.exception.code, "approval_required")
         granted = await authorize_tool_call(
-            FakeDB(tool(), permission("explicit")), "demo", approval_granted=True
+            FakeDB(tool(), permission("explicit")),
+            "demo",
+            signed_authorization={"authorized": True, "authorization_id": "auth-1"},
         )
         self.assertEqual(granted, "explicit")
 
@@ -77,9 +79,27 @@ class ToolAuthorizationTests(unittest.IsolatedAsyncioTestCase):
         granted = await authorize_tool_call(
             FakeDB(tool(), permission("authorized", True)),
             "demo",
-            approval_granted=True,
+            signed_authorization={"authorized": True, "authorization_id": "auth-2"},
         )
         self.assertEqual(granted, "authorized")
+
+    async def test_bare_approval_boolean_is_not_signed_authority(self):
+        from unittest.mock import AsyncMock, patch
+
+        from app.services.creatorapproval_service import CreatorApprovalService
+
+        with patch.object(
+            CreatorApprovalService,
+            "check_authorization",
+            new=AsyncMock(return_value={"authorized": False}),
+        ):
+            with self.assertRaises(ToolAuthorizationError) as caught:
+                await authorize_tool_call(
+                    FakeDB(tool(), permission("explicit")),
+                    "demo",
+                    approval_granted=True,
+                )
+        self.assertEqual(caught.exception.code, "approval_required")
 
     async def test_autonomous_tool_is_allowed(self):
         self.assertEqual(

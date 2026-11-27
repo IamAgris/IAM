@@ -4,13 +4,16 @@ Run: python tests/p2p_acceptance.py
 Tests: signed envelopes, replay protection, dedup, store-and-forward, broadcast.
 """
 import sys
+import os
 import httpx
 import asyncio
 import json
 import websockets
 
-BASE = "http://localhost:8000"
-API_KEY = "iam_g8nQAJVaY-IcXnkkYnaF-Ih-lYlcC4opVD8Mpg9RyqM"
+BASE = os.environ.get("IAM_API_URL", "http://localhost:8000")
+API_KEY = os.environ.get("IAM_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit("IAM_API_KEY (admin scope) is required for P2P acceptance tests")
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 results = []
 
@@ -43,7 +46,7 @@ def main():
     # 3. Store-and-forward to offline peer
     try:
         r = httpx.post(f"{BASE}/api/v1/p2p/send", headers=HEADERS, json={
-            "peer_id": "offline-peer-1", "topic": "knowledge", "payload": {"msg": "queued"}
+            "peer_id": "offline-peer-1", "topic": "research", "payload": {"msg": "queued"}
         }, timeout=10)
         d = r.json()
         check("offline peer message queued", r.status_code == 200 and d.get("queued") is True)
@@ -56,7 +59,7 @@ def main():
     # 4. Broadcast
     try:
         r = httpx.post(f"{BASE}/api/v1/p2p/broadcast", headers=HEADERS, json={
-            "topic": "threat", "payload": {"type": "test"}
+            "topic": "finding", "payload": {"type": "test"}
         }, timeout=10)
         check("broadcast endpoint", r.status_code == 200 and "envelope" in r.json())
     except Exception as e:
@@ -70,7 +73,7 @@ def main():
                 from app.services.p2p_transport import make_envelope
                 import time as _time, secrets as _sec
                 seq = int(_time.time() * 1000) + int.from_bytes(_sec.token_bytes(3), "big")
-                env = make_envelope("peer-A", "knowledge", {"hello": "world", "t": _time.time()}, seq, "shared-secret")
+                env = make_envelope("peer-A", "research", {"hello": "world", "t": _time.time()}, seq, "shared-secret")
                 await a.send(json.dumps(env))
                 ack = json.loads(await asyncio.wait_for(a.recv(), 3))
                 check("ws ack returned", "ack" in ack)

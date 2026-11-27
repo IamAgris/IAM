@@ -9,8 +9,12 @@ from app.services.hbi import (
     uncertainty, validation,
 )
 from app.services.hbi.corpus import ingest_corpus as load_corpus
+from app.core.config import settings
 from app.services.hbi.corpus_gate import CorpusGovernance
 from app.services.hbi.permission_engine import PermissionEngine
+from app.services.hbi.research_ecosystem import ResearchEcosystem
+from app.services.hbi.research_lab import ResearchLab
+from app.services.hbi.translation import TranslationService
 from app.services.hbi.chronology import resolve as resolve_chronology
 from app.services.hbi.cross_disciplinary import fuse as fuse_disciplines
 from app.services.hbi.evolution import deprecate as deprecate_record, lineage as record_lineage, revise as revise_record
@@ -37,8 +41,17 @@ from app.services.hbi.schemas import (
     DPIASignoffRequest,
     LegalContextVerificationRequest,
     PartnershipRequest,
+    ContributionRequest,
+    FederatedApprovalRequest,
+    FederatedRequest,
+    LabProjectRequest,
+    TargetVerificationRequest,
     TrainingApprovalRequest,
     TrainingRequest,
+    TransformationRequest,
+    TranslationRequest,
+    StudyCreateRequest,
+    StudyResponseRequest,
     ForecastRequest,
     ChronologyInput,
     CrossDisciplinaryRequest,
@@ -49,8 +62,11 @@ from app.services.hbi.schemas import (
     KnowledgeRecordInput,
     ManipulationRequest,
     MultilingualIngestRequest,
+    MultilingualSemanticsRequest,
     ModuleAnalysisRequest,
     OversightRequest,
+    ParticipantConsentRequest,
+    ParticipantWithdrawalRequest,
     PredictionEvaluationRequest,
     PredictionRequest,
     ResearchDocumentInput,
@@ -63,6 +79,7 @@ from app.services.hbi.schemas import (
 )
 from app.services.hbi.sources import AuthorisedSource, LiveSourceRegistry
 from app.services.hbi.prediction import PredictionService
+from app.services.model_inference import InferenceService
 
 
 class HBIService:
@@ -77,6 +94,9 @@ class HBIService:
         self.graph = HistoricalKnowledgeGraph(db_session)
         self.corpus_governance = CorpusGovernance()
         self.permission_engine = PermissionEngine(self.corpus_governance)
+        self.ecosystem = ResearchEcosystem(self.corpus_governance, self.permission_engine)
+        self.translation = TranslationService(inference=InferenceService())
+        self.lab = ResearchLab()
         self.dpia_signoffs: List[Dict[str, Any]] = []
         self.predictor = PredictionService()
         self.predictor.register("baseline", EvidenceForecaster())
@@ -516,6 +536,79 @@ class HBIService:
 
     def permission_audit(self) -> Dict[str, Any]:
         return self.permission_engine.audit_history()
+
+    def acquisition_channels(self) -> Dict[str, Any]:
+        return self.ecosystem.channels()
+
+    def discovery_targets(self) -> Dict[str, Any]:
+        return self.ecosystem.discovery_targets()
+
+    def verify_target(self, payload: TargetVerificationRequest) -> Dict[str, Any]:
+        return self.ecosystem.verify_target(payload.name, payload.verified_by, payload.reference)
+
+    def source_classification(self, source_id: str) -> Dict[str, Any]:
+        return self.ecosystem.classify_source(source_id)
+
+    def enforce(self, source_id: str, action: str) -> Dict[str, Any]:
+        return self.ecosystem.enforce(source_id, action)
+
+    @staticmethod
+    def _payload_dict(payload: Any) -> Dict[str, Any]:
+        return payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+
+    def add_contribution(self, payload: ContributionRequest) -> Dict[str, Any]:
+        return self.ecosystem.add_contribution(self._payload_dict(payload))
+
+    def list_contributions(self) -> Dict[str, Any]:
+        return self.ecosystem.list_contributions()
+
+    def federated_request(self, payload: FederatedRequest) -> Dict[str, Any]:
+        return self.ecosystem.federated_request(self._payload_dict(payload))
+
+    def federated_approve(self, payload: FederatedApprovalRequest) -> Dict[str, Any]:
+        return self.ecosystem.federated_approve(payload.institution, payload.approver, payload.reference)
+
+    def lab_project(self, payload: LabProjectRequest) -> Dict[str, Any]:
+        return self.ecosystem.lab_project(self._payload_dict(payload))
+
+    def transform(self, payload: TransformationRequest) -> Dict[str, Any]:
+        return self.ecosystem.transform(payload.source_ids, payload.output_type)
+
+    def ecosystem_audit(self) -> Dict[str, Any]:
+        return self.ecosystem.audit_history()
+
+    async def translate(self, payload: TranslationRequest) -> Dict[str, Any]:
+        """Local-first model translation; the original text is always preserved."""
+        return await self.translation.translate(
+            payload.text, payload.target_language, payload.source_language,
+            model=payload.model or settings.iam_primary_model,
+        )
+
+    async def multilingual_semantics(self, payload: MultilingualSemanticsRequest) -> Dict[str, Any]:
+        return await self.translation.multilingual_semantics(
+            payload.text, payload.language, payload.region
+        )
+
+    def create_study(self, payload: StudyCreateRequest) -> Dict[str, Any]:
+        return self.lab.create_study(payload)
+
+    def record_consent(self, payload: ParticipantConsentRequest) -> Dict[str, Any]:
+        return self.lab.record_consent(payload)
+
+    def collect_response(self, payload: StudyResponseRequest) -> Dict[str, Any]:
+        return self.lab.collect(payload)
+
+    def withdraw_participant(self, payload: ParticipantWithdrawalRequest) -> Dict[str, Any]:
+        return self.lab.withdraw(payload)
+
+    def delete_study_responses(self, study_id: str, participant_ref: str) -> Dict[str, Any]:
+        return self.lab.delete_responses(study_id, participant_ref)
+
+    def study_report(self, study_id: str) -> Dict[str, Any]:
+        return self.lab.report(study_id)
+
+    def lab_audit(self) -> Dict[str, Any]:
+        return self.lab.audit_history()
 
     def status(self) -> Dict[str, Any]:
         return {

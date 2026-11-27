@@ -107,18 +107,28 @@ def activate(
     return _write(entry, actor)
 
 
-def rollback() -> ServingModel:
-    """Restore the model that was serving before the active override."""
+def rollback(target_version: Optional[str] = None) -> ServingModel:
+    """Restore the model that was serving before the active override.
+
+    ``previous`` is cleared on purpose: a second rollback must not toggle back
+    to the model that was just rolled back from. When the caller names a target,
+    it must match the recorded previous version.
+    """
     prior = current()
-    if prior.previous:
-        entry = ServingModel(
-            model=prior.previous,
-            source=ROLLBACK_SOURCE,
-            version=prior.previous_version,
-            previous=prior.model,
-            previous_version=prior.version,
-            activated_at=datetime.now(timezone.utc).isoformat(),
+    if target_version and prior.version == target_version:
+        return prior  # already serving the requested target
+    if not prior.previous:
+        return _write(_configured())
+    if target_version and target_version != prior.previous_version:
+        raise ValueError(
+            f"rollback target {target_version} does not match the served previous version"
         )
-        return _write(entry)
-    # Nothing to restore (already on the configured primary): reset to config.
-    return _write(_configured())
+    entry = ServingModel(
+        model=prior.previous,
+        source=ROLLBACK_SOURCE,
+        version=prior.previous_version,
+        previous=None,
+        previous_version=None,
+        activated_at=datetime.now(timezone.utc).isoformat(),
+    )
+    return _write(entry)

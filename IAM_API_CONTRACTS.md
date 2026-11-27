@@ -149,8 +149,17 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET | `/models/router/models?provider=` | List discovered models |
 | POST | `/models/router/select` | `{task_type, capabilities, allow_paid}` → selected model |
 | GET | `/models/router/history` | Routing decisions |
+| POST | `/models/discovery/{provider}` | Dual-source discovery (provider catalogue + Models.dev metadata); returns registry entries, not verified endpoints |
+| POST | `/models/credentials` | Register an encrypted provider connection key (signed authorization required; never returns the secret) |
+| GET | `/models/credentials/health?provider=` | Read-only key health summary; no ciphertext or plaintext |
+| POST | `/models/credentials/{key_id}/disable` | Disable a connection (signed authorization required) |
+| POST | `/models/credentials/{key_id}/rotate` | Rotate an encrypted connection secret (signed authorization required) |
+| POST | `/models/credentials/{key_id}/health?healthy=` | Mark a connection healthy/unhealthy for per-key failover |
 
 **Rule:** `allow_paid` defaults false; true requires a signed Creator authorization record.
+**Rule (OD-51):** paid inference additionally requires a fail-closed usage decision — signed authorization, a determinable cost and a positive remaining limit. No browser ever receives a credential.
+**Vault registration:** `POST /models/credentials` requires an active signed Creator authorization for action `model.provider_key_manage` (create via `POST /creator/requests`, sign the challenge with the OD-03 hardware signer, then `POST /creator/requests/{id}/decide`). Provider-side NVIDIA keys are separate: they live only in LiteLLM config via `os.environ/NVIDIA_API_KEY` / `NVIDIA_API_KEY_1…4` and are never handled by the browser or the IAM vault.
+**Rule (OD-51 §4.4):** `POST /models/chat` and `/models/chat/stream` accept optional `delegation_tasks: [{task, model?, role?}]`. Fan-out is bounded to 3 concurrent agents, 120 s per agent, 512 MB per agent and 4 calls per request. Each tasks requires its own signed `model.delegate` authorization; results are independently reviewed by the local primary and only accepted findings are returned as labelled, unverified context. No private memory is sent to specialists.
 
 ---
 

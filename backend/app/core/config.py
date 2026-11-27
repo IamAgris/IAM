@@ -24,6 +24,16 @@ SECRET_FIELDS = (
     "s3_secret_key",
     "creator_public_key",
     "creator_gateway_secret",
+    # Proposed Doc 30 / OD-50 — credentials are Docker secrets, never values in config.
+    "thirdweb_secret_key",
+    "bitcoin_rpc_cookie",
+    "lnd_macaroon",
+    "cln_rune",
+    "lnd_tls_cert",
+    "cln_ca_cert",
+    # Separate write-scoped credentials for approval-gated execution.
+    "lnd_write_macaroon",
+    "cln_write_rune",
 )
 
 
@@ -69,6 +79,10 @@ class Settings(BaseSettings):
     # IAM SDK protocol (OD-29) and node contribution (OD-26)
     iam_protocol_version: str = "1"
     iam_protocol_require_header: bool = False
+    # Stable P2P identity. Without an explicit secret the transport generates a
+    # random one per process, so peers cannot reconnect after a restart.
+    iam_node_id: str = "local-iam"
+    iam_p2p_secret: Optional[str] = None
     # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
     # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     iam_sdk_default_model: str = "nvidia-nemotron-3.5-lightning"
@@ -76,15 +90,32 @@ class Settings(BaseSettings):
     # One shared primary model for the whole IAM experience (frontend and
     # backend). Hosted providers remain optional specialists reached only by
     # explicit model id; see IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
-    # OD-46 (26 Nov 2026): Qwen2.5-Coder 3B is IAM's shared primary local brain.
-    iam_primary_model: str = "local-qwen-coder-3b"
-    iam_primary_local_tag: str = "qwen2.5-coder:3b"  # Ollama tag behind the alias
+    # Owner-directed reopening of OD-46 (27 Nov 2026): Qwen2.5-3B is IAM's
+    # shared primary local brain. Qwen2.5-Coder 3B remains an optional secondary.
+    iam_primary_model: str = "local-qwen-3b"
+    iam_primary_local_tag: str = "qwen2.5:3b"  # Ollama tag behind the alias
 
     # A cache-cold local 3B on the 4 vCPU core can take minutes to load and
     # produce first tokens. Keep these generous; the route still reports a
     # real timeout explicitly (504) instead of hanging or inventing an answer.
     inference_chat_timeout_seconds: float = 300.0
     inference_stream_timeout_seconds: float = 300.0
+    # Aegis input inspection runs on every inference request; disable only for
+    # explicitly trusted operator diagnostics, never for public traffic.
+    inference_aegis_enabled: bool = True
+    # OD-06 disaster recovery: real pg_dump backups and isolated restore drills.
+    backup_directory: str = "/tmp/iam-backups"
+    backup_retention_count: int = 7
+    backup_rpo_hours: int = 24
+    backup_rto_hours: int = 4
+    backup_pg_dump_bin: str = "pg_dump"
+    backup_pg_restore_bin: str = "pg_restore"
+    backup_psql_bin: str = "psql"
+    # When set (e.g. "postgres"), pg_dump/pg_restore/psql and hash/stat run via
+    # `docker compose exec -T <service>` so a host without Postgres clients can
+    # still execute a real backup and isolated restore drill.
+    backup_container_service: str = ""
+    backup_container_dsn: str = ""
 
     # IAM context assembly — injects verified knowledge (and, only when
     # explicitly requested and local, private memories) into chat requests.
@@ -92,12 +123,29 @@ class Settings(BaseSettings):
     iam_context_include_private_memory: bool = False
     iam_context_share_with_hosted: bool = False
 
+    # Always-on live-information policy (proposed Doc 32). Automatic retrieval
+    # uses free providers only; paid search stays fail-closed under OD-04/OD-25.
+    iam_live_info_enabled: bool = True
+    iam_live_info_max_results: int = 3
+    iam_live_info_timeout_seconds: float = 20.0
+    iam_live_info_use_browser: bool = False
+    # Conditional escalation: ordinary chats never start a browser, but a
+    # triggered live-information request that gets no suitable evidence (for
+    # example the Wikipedia fallback) may escalate to browser retrieval.
+    iam_live_info_escalate_to_browser: bool = True
+
     # API sub-agents are optional specialists, never IAM itself. Delegation is
     # per-request opt-in and requires a signed Creator authorization because
     # task text is sent to an external provider.
     iam_delegation_enabled: bool = True
     iam_delegation_action: str = "model.delegate"
     iam_delegation_max_findings: int = 5
+    # OD-51 §4.4: bounded parallel delegation. These are the confirmed starting
+    # values; changing them is a decision under change control, not a config tweak.
+    iam_delegation_max_parallel: int = 3
+    iam_delegation_timeout_seconds: float = 120.0
+    iam_delegation_memory_limit_mb: int = 512
+    iam_delegation_max_calls_per_request: int = 4
 
     # Provider API keys
     openai_api_key: Optional[str] = None
@@ -108,6 +156,13 @@ class Settings(BaseSettings):
     nvidia_api_key: Optional[str] = None
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_free_only: bool = True  # Never incur charges unless explicitly disabled
+    # OD-52 Phase B: metadata catalogue. Models.dev supplies specifications and
+    # capabilities; it is not a source of endpoint availability.
+    models_dev_api_url: str = "https://models.dev/api.json?type=all"
+    models_dev_timeout_seconds: float = 20.0
+    # OD-04: free endpoints only by default. Paid models are refused even with
+    # a signed authorization until an operator explicitly disables this switch.
+    free_models_only: bool = True
 
     # Ollama - local models (private / low-resource tasks). Opt-in so IAM never
     # silently starts using a local model the operator did not approve.
@@ -116,12 +171,12 @@ class Settings(BaseSettings):
 
     # Adaptive model selection (OD-39 / OD-41) — hardware-aware local model choice.
     adaptive_model_enabled: bool = True
-    # OD-46: all local tiers map to the approved primary local model.
-    # qwen2.5:3b remains an approved secondary local model, not the default.
-    adaptive_tiny_model: str = "local-qwen-coder-3b"
-    adaptive_small_model: str = "local-qwen-coder-3b"
-    adaptive_standard_model: str = "local-qwen-coder-3b"
-    adaptive_large_model: str = "local-qwen-coder-3b"
+    # Owner-directed reopening of OD-46 (27 Nov 2026): all local tiers map to
+    # the approved primary local model qwen2.5:3b.
+    adaptive_tiny_model: str = "local-qwen-3b"
+    adaptive_small_model: str = "local-qwen-3b"
+    adaptive_standard_model: str = "local-qwen-3b"
+    adaptive_large_model: str = "local-qwen-3b"
     adaptive_delegate_model: str = "qwen3.5-9b"
     adaptive_delegate_node: Optional[str] = None
     adaptive_reserved_ram_mb: int = 1500  # protected core services (OD-39)
@@ -176,6 +231,15 @@ class Settings(BaseSettings):
 
     # UWAIE browser automation — one engine at a time, all sessions isolated.
     uwai_browser_engine: str = "chromium"  # chromium | firefox | webkit
+    browser_enabled: bool = True
+    browser_visible_mode_enabled: bool = False
+    browser_isolated_mode_enabled: bool = True
+    browser_max_concurrent_sessions: int = 3
+    browser_session_ttl_seconds: int = 1800
+    browser_profile_root: str = ""  # empty => temp dir
+    browser_evidence_dir: str = ""  # empty => temp dir
+    browser_task_worker_backend: str = "loop"  # loop | arq
+    browser_ocr_enabled: bool = False  # opt-in: local Tesseract OCR on screenshots
     uwai_upload_root: str = ""  # empty => OS temp/iam-web-uploads
     uwai_computer_use_enabled: bool = False
     mobile_agent_enabled: bool = False
@@ -233,6 +297,20 @@ class Settings(BaseSettings):
 
     # Model release evidence store (OD-40 self-improvement gates)
     model_release_artifact_root: str = ""
+    # Durable research artifacts: "local" (temp/filesystem) or "s3" (MinIO/S3).
+    research_artifact_store: str = "local"
+    research_artifact_prefix: str = "research"
+
+    # Trusted local evaluator for benchmark evidence. Empty path fails closed.
+    lm_eval_dataset_path: str = "app/services/ai_research/eval_sets/basic.jsonl"
+    lm_eval_suite_enabled: bool = True
+    lm_eval_timeout_seconds: float = 300.0
+
+    # Post-deployment regression monitoring. Auto-rollback still needs a signed
+    # authorization, so disabled by default.
+    post_deploy_monitor_enabled: bool = False
+    post_deploy_regression_threshold: float = 0.05
+    post_deploy_auto_rollback_enabled: bool = False
 
     # OD-04 zero standing budget: configurable caps enforced at the spend path.
     # Per-transaction approvals are capped to the $1–$10 band; deployment config
@@ -248,6 +326,41 @@ class Settings(BaseSettings):
     blockchain_client_id_env: str = "THIRDWEB_CLIENT_ID"
     blockchain_secret_env: str = "THIRDWEB_SECRET_KEY"
     blockchain_allow_mainnet: bool = False
+
+    # Proposed Doc 30 / OD-50 — Web3 and node adapters. All flags default-off.
+    # These flags enable READ and PREPARE paths only; none enables execution.
+    # Creator approval integration for execution is a separate later work item.
+    web3_registry_enabled: bool = False
+    web3_audit_enabled: bool = False
+    web3_transaction_preparation_enabled: bool = False
+    thirdweb_read_enabled: bool = False
+    bitcoin_core_read_enabled: bool = False
+    lnd_read_enabled: bool = False
+    cln_read_enabled: bool = False
+    thirdweb_base_url: str = ""       # free-tier RPC/API base, operator reviewed
+    bitcoin_core_connector_url: str = ""  # in-Umbrel read-only connector
+    bitcoin_core_cookie_env: str = "BITCOIN_RPC_COOKIE"
+    lnd_rest_url: str = ""
+    lnd_tls_cert_env: str = "LND_TLS_CERT"
+    lnd_macaroon_env: str = "LND_MACAROON"
+    cln_rest_url: str = ""
+    cln_ca_cert_env: str = "CLN_CA_CERT"
+    cln_rune_env: str = "CLN_RUNE"
+    web3_request_timeout_seconds: float = 10.0
+    # Approval-gated execution. Default-off; every call still requires a verified
+    # signed Creator authorization. No signing key is ever held by IAM.
+    web3_execution_enabled: bool = False
+    web3_executor_url: str = ""  # protected signer / Engine endpoint, operator reviewed
+    lnd_write_enabled: bool = False
+    lnd_write_macaroon_env: str = "LND_WRITE_MACAROON"
+    cln_write_enabled: bool = False
+    cln_write_rune_env: str = "CLN_WRITE_RUNE"
+    # Production gates. The owner-decision flag may be set only after OD-50 is
+    # signed; a configuration value is not itself authority.
+    web3_owner_decision_confirmed: bool = False
+    web3_testnet_evidence_ref: str = ""
+    web3_monitoring_enabled: bool = False
+    web3_monitoring_stuck_minutes: int = 30
 
     # OD-24 South African banking adapters — credentials are env-var names only.
     banking_enabled: bool = False

@@ -18,21 +18,28 @@ from app.services.hbi.schemas import (
     ChronologyInput,
     CorpusIngestRequest,
     CorpusRestrictionRequest,
+    ContributionRequest,
     CorpusReviewRequest,
     CrossDisciplinaryRequest,
     DPIASignoffRequest,
     DeprecateRequest,
     DualUseRequest,
+    FederatedApprovalRequest,
+    FederatedRequest,
     ForecastRequest,
     GraphEdgeRequest,
     GraphNodeRequest,
     KnowledgeRecordInput,
+    LabProjectRequest,
     LegalContextVerificationRequest,
     ManipulationRequest,
     PartnershipRequest,
     ModuleAnalysisRequest,
     MultilingualIngestRequest,
+    MultilingualSemanticsRequest,
     OversightRequest,
+    ParticipantConsentRequest,
+    ParticipantWithdrawalRequest,
     PredictionEvaluationRequest,
     PredictionRequest,
     ResearchDocumentInput,
@@ -41,9 +48,14 @@ from app.services.hbi.schemas import (
     SourceCalibrationRequest,
     Scope,
     SourceRegisterRequest,
+    TargetVerificationRequest,
     TemporalRequest,
+    TransformationRequest,
     TrainingApprovalRequest,
     TrainingRequest,
+    TranslationRequest,
+    StudyCreateRequest,
+    StudyResponseRequest,
     TheoryComparisonRequest,
 )
 from app.services.hbi.sources import SourceNotAuthorised
@@ -581,3 +593,127 @@ async def rollback_drill(model_id: str = "ensemble",
                          service: HBIService = Depends(_service)):
     """Exercise rollback without promoting an unvalidated model."""
     return service.rollback_drill(model_id)
+
+
+@router.get("/ecosystem/channels")
+async def channels(service: HBIService = Depends(_service)):
+    """The twelve acquisition channels."""
+    return service.acquisition_channels()
+
+
+@router.get("/ecosystem/targets")
+async def targets(service: HBIService = Depends(_service)):
+    """Discovery targets; all terms unverified until counsel review."""
+    return service.discovery_targets()
+
+
+@router.post("/ecosystem/targets/verify")
+async def verify_target(request: TargetVerificationRequest,
+                        service: HBIService = Depends(_service)):
+    return service.verify_target(request)
+
+
+@router.get("/ecosystem/classify/{source_id}")
+async def classify_source(source_id: str, service: HBIService = Depends(_service)):
+    """Classify a source as A training / B research / C retrieval / D restricted / E prohibited."""
+    return service.source_classification(source_id)
+
+
+@router.get("/ecosystem/enforce/{source_id}")
+async def enforce(source_id: str, action: str, service: HBIService = Depends(_service)):
+    """Central legal enforcement gate for a specific action."""
+    return service.enforce(source_id, action)
+
+
+@router.post("/ecosystem/contributions")
+async def add_contribution(request: ContributionRequest,
+                           service: HBIService = Depends(_service)):
+    return service.add_contribution(request)
+
+
+@router.get("/ecosystem/contributions")
+async def list_contributions(service: HBIService = Depends(_service)):
+    return service.list_contributions()
+
+
+@router.post("/ecosystem/federated")
+async def federated_request(request: FederatedRequest,
+                            service: HBIService = Depends(_service)):
+    """Request analysis in place; raw source data is never transferred."""
+    return service.federated_request(request)
+
+
+@router.post("/ecosystem/federated/approve")
+async def federated_approve(request: FederatedApprovalRequest,
+                            service: HBIService = Depends(_service)):
+    return service.federated_approve(request)
+
+
+@router.post("/ecosystem/lab")
+async def lab_project(request: LabProjectRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Research laboratory project; human-participant studies need ethics approval."""
+    return service.lab_project(request)
+
+
+@router.post("/ecosystem/transform")
+async def transform(request: TransformationRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Assess rights before producing derived knowledge products."""
+    return service.transform(request)
+
+
+@router.get("/ecosystem/audit")
+async def ecosystem_audit(service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    return service.ecosystem_audit()
+
+
+@router.post("/knowledge/translate")
+async def translate(request: TranslationRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Translate with a local-first model; original text is always preserved."""
+    return await service.translate(request)
+
+
+@router.post("/knowledge/multilingual/analyse")
+async def multilingual(request: MultilingualSemanticsRequest,
+                       service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Language detection, translation and cross-lingual claim comparison."""
+    return await service.multilingual_semantics(request)
+
+
+@router.post("/research/lab/studies")
+async def create_study(request: StudyCreateRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Create a study; human-participant work is blocked without ethics approval."""
+    return service.create_study(request)
+
+
+@router.post("/research/lab/consent")
+async def record_consent(request: ParticipantConsentRequest,
+                         service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    return service.record_consent(request)
+
+
+@router.post("/research/lab/responses")
+async def collect_response(request: StudyResponseRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Store a pseudonymous response only under active consent."""
+    return service.collect_response(request)
+
+
+@router.post("/research/lab/withdraw")
+async def withdraw(request: ParticipantWithdrawalRequest, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    return service.withdraw_participant(request)
+
+
+@router.post("/research/lab/delete")
+async def delete_responses(study_id: str, participant_ref: str,
+                           service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Delete stored responses after withdrawal."""
+    return service.delete_study_responses(study_id, participant_ref)
+
+
+@router.get("/research/lab/report")
+async def study_report(study_id: str, service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    return service.study_report(study_id)
+
+
+@router.get("/research/lab/audit")
+async def lab_audit(service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    return service.lab_audit()

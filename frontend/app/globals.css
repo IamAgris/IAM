@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -55,9 +55,18 @@ html, body {
 body {
   background: radial-gradient(120% 90% at 50% 38%, var(--bg1), var(--bg2));
   color: var(--ink);
-  font: 300 16px/1.5 "Space Grotesk", system-ui, sans-serif;
+  font: 300 16px/1.65 "Space Grotesk", system-ui, sans-serif;
   overflow: hidden;
   transition: background .4s ease, color .4s ease;
+}
+
+h1, h2, h3, .say {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+.say {
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 button {

@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.deps import get_db_session
 from app.api.middleware import AuthMiddleware
+from app.api.middleware.request_context import RequestContextMiddleware
 from app.api.routes import (
     identity,
     conversations,
@@ -42,11 +43,16 @@ from app.api.routes import (
     creator_keys,
     internetaccess,
     modelrouter,
+    modelcredentials,
+    modeldiscovery,
     skillforge,
     cybersecurity,
     creatorapproval,
     auth,
     skillruntime,
+    browser,
+    browser_intelligence,
+    browser_security,
     deployment,
     bootstrap,
     suggestions,
@@ -59,6 +65,7 @@ from app.api.routes import (
     publicrecords,
     tone,
     legal,
+    iplci,
     creator_communication,
     geo,
     freesandboxes,
@@ -88,8 +95,10 @@ from app.api.routes import (
     browser_infrastructure,
     ai_communication,
     hbi,
+    iics,
     technology_registry,
     freenodes,
+    web3,
 )
 from app.workers.autonomy_worker import autonomy_worker
 from app.workers.creator_email_worker import creator_email_worker
@@ -104,8 +113,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Project AURA backend...")
 
     from app.core.secrets import enforce_secret_policy
+    from app.services.p2p_transport import transport
 
     enforce_secret_policy()
+    transport.configure(settings.iam_node_id, settings.iam_p2p_secret)
+    logger.info(f"P2P node identity configured: {settings.iam_node_id}")
 
     # Development convenience only: production schema comes from Alembic.
     if settings.create_all_enabled:
@@ -146,6 +158,9 @@ app = FastAPI(
     openapi_url="/api/v1/openapi.json",
     lifespan=lifespan,
 )
+
+# Correlation id first so CORS and auth responses carry X-Request-ID.
+app.add_middleware(RequestContextMiddleware)
 
 # CORS middleware
 app.add_middleware(
@@ -191,11 +206,16 @@ app.include_router(aegis.router)
 app.include_router(creator_keys.router)
 app.include_router(internetaccess.router)
 app.include_router(modelrouter.router)
+app.include_router(modelcredentials.router)
+app.include_router(modeldiscovery.router)
 app.include_router(skillforge.router)
 app.include_router(cybersecurity.router)
 app.include_router(creatorapproval.router)
 app.include_router(auth.router)
 app.include_router(skillruntime.router)
+app.include_router(browser.router)
+app.include_router(browser_intelligence.router)
+app.include_router(browser_security.router)
 app.include_router(deployment.router)
 app.include_router(bootstrap.router)
 app.include_router(suggestions.router)
@@ -208,6 +228,7 @@ app.include_router(integrity.router)
 app.include_router(publicrecords.router)
 app.include_router(tone.router)
 app.include_router(legal.router)
+app.include_router(iplci.router)
 app.include_router(creator_communication.router)
 app.include_router(geo.router)
 app.include_router(freesandboxes.router)
@@ -241,8 +262,11 @@ app.include_router(digital_security.router)
 app.include_router(autonomous_web_task.router)
 app.include_router(browser_infrastructure.router)
 app.include_router(hbi.router)
+app.include_router(iics.router)
 app.include_router(technology_registry.router)
 app.include_router(freenodes.router)
+app.include_router(web3.web3_router)
+app.include_router(web3.nodes_router)
 
 # Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
 app.include_router(ops.router)

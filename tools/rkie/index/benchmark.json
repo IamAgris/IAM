@@ -1,0 +1,49 @@
+{
+  "hits": 5,
+  "mean_latency_ms": 118.515,
+  "p95_latency_ms": 206.089,
+  "queries": 5,
+  "recall_at_20": 1.0,
+  "rows": [
+    {
+      "expected": "backend/app/api/routes/modelrouter.py",
+      "hit": true,
+      "kind": "filename",
+      "latency_ms": 204.328,
+      "query": "modelrouter",
+      "rank": 2
+    },
+    {
+      "expected": "backend/app/services/intel_router_service.py",
+      "hit": true,
+      "kind": "symbol",
+      "latency_ms": 206.089,
+      "query": "IntelligenceRouter",
+      "rank": 1
+    },
+    {
+      "expected": "backend/app/api/routes/memory.py",
+      "hit": true,
+      "kind": "fts",
+      "latency_ms": 66.686,
+      "query": "/api/v1/memory",
+      "rank": 5
+    },
+    {
+      "expected": "IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "hit": true,
+      "kind": "fts",
+      "latency_ms": 53.43,
+      "query": "OD-46",
+      "rank": 3
+    },
+    {
+      "expected": "backend/app/models/memory.py",
+      "hit": true,
+      "kind": "symbol",
+      "latency_ms": 62.043,
+      "query": "KnowledgeItem",
+      "rank": 1
+    }
+  ]
+}

@@ -50,13 +50,43 @@ def placeholder_secrets() -> List[str]:
     return bad
 
 
+def web3_secret_gaps() -> List[str]:
+    """Missing/invalid secrets for Web3 features that are actually enabled.
+
+    Disabled features never block startup. Credentials are read from Docker
+    secret files through ``read_secret``; values are never returned or logged.
+    """
+    required: List[str] = []
+    if settings.thirdweb_read_enabled:
+        required.extend(
+            [settings.blockchain_client_id_env, settings.blockchain_secret_env]
+        )
+    if settings.bitcoin_core_read_enabled:
+        required.append(settings.bitcoin_core_cookie_env)
+    if settings.lnd_read_enabled:
+        required.extend([settings.lnd_macaroon_env, settings.lnd_tls_cert_env])
+    if settings.cln_read_enabled:
+        required.extend([settings.cln_rune_env, settings.cln_ca_cert_env])
+    if settings.web3_execution_enabled:
+        required.append(settings.blockchain_secret_env)
+    if settings.lnd_write_enabled:
+        required.append(settings.lnd_write_macaroon_env)
+    if settings.cln_write_enabled:
+        required.append(settings.cln_write_rune_env)
+    return sorted(
+        name
+        for name in required
+        if not read_secret(name) or any(p in str(read_secret(name)).lower() for p in PLACEHOLDERS)
+    )
+
+
 def enforce_secret_policy() -> None:
     """Fail closed if a production deployment still uses placeholder secrets."""
     if settings.app_env.lower() != "production":
         return
-    bad = placeholder_secrets()
+    bad = placeholder_secrets() + web3_secret_gaps()
     if bad:
         raise RuntimeError(
             "Production startup blocked: replace placeholder secrets before running: "
-            + ", ".join(sorted(bad))
+            + ", ".join(sorted(set(bad)))
         )

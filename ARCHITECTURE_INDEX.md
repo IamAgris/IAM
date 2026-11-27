@@ -1,6 +1,6 @@
 # IAM Architecture — Document Index (AUTHORITATIVE)
 
-**Version:** 1.1 · 26 November 2026  
+**Version:** 1.2 · 27 November 2026  
 **Purpose:** Resolve duplicate/superseded documents. This is the single entry point to the frozen IAM architecture.
 
 ---
@@ -10,7 +10,7 @@
 | Priority | Document | Status |
 |----------|----------|--------|
 | **1** | `IAM_FINAL_CONSOLIDATION.md` | **AUTHORITATIVE** — master gap analysis, all systems, completion levels, roadmap |
-| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 45 locked decisions (OD-01…OD-45) |
+| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 50 locked decisions (OD-01…OD-51; OD-47 remains proposed) |
 | 2 | `canonical/IAM_DOC_01…04` | Frozen supplied documents 01–04 |
 | 2 | `IAM_DISTRIBUTED_ARCHITECTURE.md` | Document 05 |
 | 2 | `IAM_WHITEHAT_AND_WORKSPACE.md` | Document 06 |
@@ -39,13 +39,19 @@
 | 2 | `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` | Cross-cutting Python + Rust + TypeScript implementation allocation; not a new decision and does not reopen OD-01…OD-41 |
 | 2 | `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md` | Document 24 (human behaviour, Equality of Existence, power and responsibility — extends Docs 17/14; OD-43) |
 | 2 | `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` | Document 25 (income, crypto, trading, payments; Amendment A adds prediction markets, gaming intelligence, investments and provider ecosystem — extends Doc 09 / OD-23/24/25; OD-44) |
+| 2 | `IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md` | Document 28 — **IP & Legal Intelligence (IPLCI)** (20 capability areas, 7 enforcement engines, mandatory legal gateway, fail-closed ownership posture, tamper-evident audit; extends Docs 14/15; **OD-48 CONFIRMED 27 November 2026**). Part of the frozen baseline; governance layer inside existing systems, not a new top-level system, not legal advice. |
+| 2 — **PROPOSED** | `IAM_RESEARCH_ACQUISITION_AND_LEGAL_INTELLIGENCE_SPEC.md` | Document 27 (Research Acquisition & Legal Intelligence: five acquisition routes, three separated pipelines, expanded manifest, independent training approval, research partnerships, legal-context registry — proposed OD-47). **Creator approval requested via SMTP email on a private domain (risk 4), pending signed decision — not part of the frozen baseline.** |
 | 2 | `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` | Document 26 — **HBI Master Specification v2.0** (38 modules in six divisions, 13 technical engines, eight advanced capabilities, expanded evolution/developmental/cultural/civilisational/crisis/leadership/trust/collective/resilience scope, historical chronology, full schemas/APIs/governance/testing — extends Docs 17/24/14; **OD-45 CONFIRMED 26 November 2026**). Part of the frozen baseline; does not change any earlier decision or system count. |
+| 2 | `IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md` | Document 30 — **Voice & Hearing System** (60 capabilities in seven review categories, 12-component architecture) — **CONFIRMED** under **OD-50** (27 November 2026) as capability scope only. Companion to Doc 04 and Doc 12 (OD-28); no implementation claim, no new top-level system, and no change to the system count or any earlier decision. |
+| 2 | `IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md` | Document 29 — **Browser Intelligence & Web Operations Master Specification** (BIWOS + TIPS + Browser Security Gateway + Web Knowledge Integration as four logical components, not four deployments; browser API, permission matrix, Tor/onion privacy, adversarial QA, eight implementation phases — extends Docs 11/14/15; **OD-49 CONFIRMED 27 November 2026**). Part of the frozen baseline; architecture frozen at design level, **not** an implementation claim. |
+| 2 | `IAM_BROWSER_PHASE1_IMPLEMENTATION_PLAN.md` | Document 29a — **Phase 1 implementation plan** for Doc 29 (evidence baseline, seven work packages, ARQ task queue, task/evidence/attribution contract, opt-in live smoke test, exit checklist). Planning document only; no implementation or migration is claimed. |
+| 2 | `IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md` | Document 31 — **Multi-Model Intelligence** (repository audit + governance gate: encrypted backend provider-key vault, provider/key isolation, fail-closed usage accounting, bounded parallel delegation) — **CONFIRMED** under **OD-51** (27 November 2026) for clauses §4.1–§4.4 and the starting bounds; §4.5 paid NVIDIA usage explicitly **not authorised**. Companion to Docs 23/23-A; no new top-level system, no implementation claim, no change to identity/primary model/LiteLLM/single-sphere frontend. |
 | 3 | `sdk/` | SDK scaffolds: TypeScript, Python, CLI, shared protocol |
 | 2 | `IAM_OPEN_SPECS_RESOLVED.md` | Resolved specs A–G |
 | 2 | `IAM_COMPATIBILITY_MATRIX.md` | ARM64/x86-64 component matrix (OD-22) |
 | 2 | `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md` | Technical specifications |
 
-**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority. Document 26 (`IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md`) is **CONFIRMED** under OD-45 (26 November 2026) and part of the frozen baseline; it establishes 38 modules in six divisions + 13 technical engines inside existing systems, does not create a sixteenth top-level system, and does not change any earlier decision. It supersedes its own v1.0 draft. Document 23-A (`IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md`, OD-46) is **CONFIRMED** and part of the frozen baseline; it supersedes only OD-38 §1/§3 on local-model selection, making Qwen2.5-Coder 3B the shared primary. All other OD-38 provisions remain authoritative. The register now holds 46 decisions.
+**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority. Document 26 (`IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md`) is **CONFIRMED** under OD-45 (26 November 2026) and part of the frozen baseline; it establishes 38 modules in six divisions + 13 technical engines inside existing systems, does not create a sixteenth top-level system, and does not change any earlier decision. It supersedes its own v1.0 draft. Document 23-A (`IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md`, OD-46) is **CONFIRMED** and part of the frozen baseline; it supersedes only OD-38 §1/§3 on local-model selection. Owner-directed reopening 27 Nov 2026: **Qwen2.5-3B (`local-qwen-3b`) is the shared primary**; the 26 Nov Qwen2.5-Coder 3B choice is superseded and the coder remains an optional secondary. All other OD-38 provisions remain authoritative. Document 29 (`IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`) is **CONFIRMED** under OD-49 (27 November 2026) and part of the frozen baseline; it establishes BIWOS and TIPS as core browser capabilities organised into four logical components inside existing systems, does not create a new top-level system, and is **not** an implementation claim. OD-48 is **CONFIRMED** (27 November 2026) and part of the frozen baseline; proposed OD-47 remains unconfirmed. Document 30 (`IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md`) is **CONFIRMED** under OD-50 (27 November 2026) and part of the frozen baseline; it freezes the Voice & Hearing System capability scope (60 capabilities, 12 components) without creating a new top-level system and is **not** an implementation claim. Document 31 (`IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md`) is **CONFIRMED** under OD-51 (27 November 2026) for clauses §4.1–§4.4 and the parallel-delegation starting bounds; §4.5 paid NVIDIA usage is **not authorised**. It creates no new top-level system. The register now holds 50 decisions.
 
 ## Superseded documents (historical — do not use as source of truth)
 
@@ -107,6 +113,7 @@ is a thin frontend and SDK layer. Deployment is Docker Compose.
 | Memory, knowledge, world model | `backend/app/services/memory_service.py`, `worldmodel_service.py`, `reflection_service.py`, `api/routes/knowledge.py` | `IAM_DATABASE_DESIGN.md`, `IAM_FINAL_CONSOLIDATION.md` |
 | Auth, Creator authority, MFA | `backend/app/api/middleware/auth_middleware.py`, `core/auth_policy.py`, `routes/ownerauth.py`, `routes/creatorapproval.py` | `IAM_API_AUTH_SPEC.md`, `IAM_CREATOR_APPROVAL_SPEC.md` |
 | Frontend | `frontend/app/`, `frontend/components/iam/`, `frontend/lib/api.ts` | `IAM_FRONTEND_IMPLEMENTATION.md`, `canonical/IAM_DOC_04` |
+| Voice and media | `backend/app/services/voice_service.py`, `backend/app/api/routes/voice.py` | `IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md`, `IAM_MEDIA_AND_RESEARCH.md`, `IAM_API_CONTRACTS.md`, Doc 12 (OD-28) |
 | SDK / protocol | `sdk/typescript/`, `sdk/python/`, `sdk/cli/`, `sdk/PROTOCOL.md` | `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (OD-29) |
 
 This mapping is declarative and editable in
@@ -147,4 +154,15 @@ GitHub code search indexes contents and splits on punctuation, so a file named
 `modelrouter.py` containing `model-router` / `model router` is not found by the
 token `modelrouter`. GitHub also cannot see uncommitted files. Local filename
 and content search address both failures without any external index or service.
+
+### Pending proposals (navigation only — not architecture decisions)
+
+Appended 27 November 2026. These entries provide navigation to proposals that
+are **not** part of the frozen baseline. They do not amend, reinterpret or add
+to the authority tables or the Owner Decision Register.
+
+| Path | Status |
+|------|--------|
+| `IAM_IICS_GAP_CLOSURE_ADDENDUM.md` | Proposed overlay: nine IICS gap closures mapped to existing systems. Navigation only; not part of the frozen baseline, no owner decision, no new top-level system or queue. |
+| `IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md` | Document 32 — **PROPOSED** Universal Model Provider & Intelligence Orchestration System: repository audit, one-key dynamic catalog registration via LiteLLM, dual discovery (NVIDIA + Models.dev), availability monitor, capability-based sub-agent assignment, financial governance and implementation phases A–H; proposed OD-52. **Awaiting owner decision — not part of the frozen baseline; no implementation or paid access authorised.** |
 

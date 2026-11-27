@@ -97,6 +97,8 @@ file set, so uncommitted work is searchable too.
    `.github/workflows/{openapi-drift,supply-chain,quality-gates,rkie-tests}.yml`;
    locally: `python tools/api/print_openapi.py --check`,
    `python tools/api/check_migrations.py`, `python -m ruff check backend`,
+   `python -m mypy --config-file backend/mypy.ini`,
+   `python tools/quality/check_mypy_ratchet.py`,
    `python -m pytest backend/tests -q --cov=app --cov-fail-under=60`.
 6. **Record** — if the investigation produced reusable knowledge, add it to
    `tools/rkie/notes/` as a short Markdown note with the files and commit/date it

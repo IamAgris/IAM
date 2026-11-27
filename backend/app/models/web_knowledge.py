@@ -1,6 +1,6 @@
 """Website knowledge base models (Universal Web Intelligence)."""
 
-from sqlalchemy import Column, String, Text, JSON, Boolean, Integer, DateTime, CheckConstraint, ForeignKey
+from sqlalchemy import Column, String, Text, JSON, Boolean, Integer, BigInteger, DateTime, CheckConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
@@ -253,3 +253,81 @@ class BrowserInfrastructure(Base):
     concurrent_session_limit = Column(Integer, nullable=False, default=1)
     active_session_count = Column(Integer, nullable=False, default=0)
     is_available = Column(Boolean, nullable=False, default=True)
+
+
+class BrowserTaskRun(Base):  # type: ignore[misc]
+    """Doc 29 WP-03: browser task execution record with actor attribution.
+
+    A run is linked to an AutonomousWebTask by its external ``task_id`` and
+    carries the permission scope, mode and verified state of the browser work.
+    """
+
+    __tablename__ = "browser_task_runs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id = Column(Text, nullable=False, index=True)
+    session_id = Column(Text, nullable=True, index=True)
+    actor = Column(Text, nullable=False)
+    actor_type = Column(Text, nullable=False, default="agent")
+    permission_scope = Column(Text, nullable=True)
+    mode = Column(Text, nullable=False, default="headless")
+    engine = Column(Text, nullable=True)
+    state = Column(Text, nullable=False, default="queued")
+    priority = Column(Integer, nullable=False, default=5)
+    deadline = Column(DateTime(timezone=True), nullable=True)
+    retries = Column(Integer, nullable=False, default=0)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    result_ref = Column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("actor_type IN ('agent','creator')",
+                        name="ck_browser_task_run_actor_type"),
+        CheckConstraint("mode IN ('headless','visible','isolated')",
+                        name="ck_browser_task_run_mode"),
+        CheckConstraint(
+            "state IN ('queued','running','awaiting_approval','verifying',"
+            "'completed','failed','cancelled','timed_out')",
+            name="ck_browser_task_run_state"),
+    )
+
+
+class BrowserEvidence(Base):  # type: ignore[misc]
+    """Doc 29 WP-03: preserved evidence package for a browser task."""
+
+    __tablename__ = "browser_evidence"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id = Column(Text, nullable=False, index=True)
+    session_id = Column(Text, nullable=True)
+    url = Column(Text, nullable=True)
+    screenshot_ref = Column(Text, nullable=True)
+    excerpt = Column(Text, nullable=True)
+    source_metadata = Column(JSON, nullable=False, default=dict)
+    sha256 = Column(Text, nullable=False)
+    timestamp_ms = Column(BigInteger, nullable=False)
+    retention_until = Column(DateTime(timezone=True), nullable=True)
+
+
+class BrowserAudit(Base):  # type: ignore[misc]
+    """Doc 29 WP-03: append-only browser action attribution log.
+
+    No update or delete path is provided by the service; secret values are
+    redacted before a row is written.
+    """
+
+    __tablename__ = "browser_audit"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id = Column(Text, nullable=False, index=True)
+    actor = Column(Text, nullable=False)
+    actor_type = Column(Text, nullable=False, default="agent")
+    action = Column(Text, nullable=False)
+    target = Column(Text, nullable=True)
+    outcome = Column(JSON, nullable=False, default=dict)
+    timestamp_ms = Column(BigInteger, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("actor_type IN ('agent','creator')",
+                        name="ck_browser_audit_actor_type"),
+    )

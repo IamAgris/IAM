@@ -151,6 +151,10 @@ class IntelligenceRouter:
             decision = AdaptiveModelSelector().select(
                 task_complexity or 3, set(available_aliases), task_type
             )
+            if decision.get("delegate"):
+                from app.services.model_policy import require_paid_authorization
+
+                await require_paid_authorization(self.db, decision.get("model"))
             self.db.add(RoutingDecision(
                 task_type=task_type,
                 required_capabilities=required_capabilities,

@@ -1,9 +1,14 @@
 """Unit tests for the externally added P2P transport and Aegis engine."""
 
+import asyncio
+import json
 import unittest
 
+from fastapi import WebSocketDisconnect
+
+from app.api.routes.p2p import peer_socket
 from app.services.aegis import AegisEngine
-from app.services.p2p_transport import P2PTransport, make_envelope, verify_envelope
+from app.services.p2p_transport import P2PTransport, make_envelope, transport, verify_envelope
 
 
 class P2PEnvelopeTests(unittest.TestCase):
@@ -41,6 +46,43 @@ class P2PEnvelopeTests(unittest.TestCase):
         result = self.transport.accept(env, "shared-secret")
         self.assertFalse(result["accepted"])
         self.assertEqual(result["reason"], "offensive_tool_rejected")
+
+
+class FakeWebSocket:
+    def __init__(self, frames):
+        self.frames = list(frames)
+        self.sent = []
+        self.accepted = False
+        self.headers = {}
+
+    async def accept(self):
+        self.accepted = True
+
+    async def receive_text(self):
+        if not self.frames:
+            raise WebSocketDisconnect(code=1000)
+        return json.dumps(self.frames.pop(0))
+
+    async def send_json(self, payload):
+        self.sent.append(payload)
+
+
+class WebSocketRouteTests(unittest.TestCase):
+    def test_peer_socket_accepts_and_acks_signed_envelope(self):
+        envelope = make_envelope(
+            "ws-test-sender",
+            "finding",
+            {"summary": "defensive finding", "confidence": 0.8},
+            101,
+            transport.local_secret,
+        )
+        socket = FakeWebSocket([envelope])
+
+        asyncio.run(peer_socket(socket, "ws-test-peer"))
+
+        self.assertTrue(socket.accepted)
+        self.assertTrue(any(item.get("ack") is True for item in socket.sent))
+        self.assertNotIn("ws-test-peer", transport.connections)
 
 
 class AegisTests(unittest.TestCase):

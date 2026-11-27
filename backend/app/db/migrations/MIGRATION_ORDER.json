@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "purpose": "Explicit apply order for numbered SQL migrations. Duplicate numeric prefixes are sanctioned here with distinct sequence values.",
+  "purpose": "Explicit apply order for numbered SQL migrations. Numeric prefixes are unique identifiers; sequence defines the apply order.",
   "files": [
     {
       "sequence": 1,
@@ -48,19 +48,9 @@
       "path": "009_nodes_and_resource_reports.sql"
     },
     {
-      "sequence": 10,
-      "number": 9,
-      "path": "009_skill_runtime.sql"
-    },
-    {
       "sequence": 11,
       "number": 10,
       "path": "010_creator_email_dead_letter.sql"
-    },
-    {
-      "sequence": 12,
-      "number": 10,
-      "path": "010_storage_and_uwaie.sql"
     },
     {
       "sequence": 13,
@@ -68,19 +58,9 @@
       "path": "011_integration_creator_approval.sql"
     },
     {
-      "sequence": 14,
-      "number": 11,
-      "path": "011_skill_runtime_logs.sql"
-    },
-    {
       "sequence": 15,
       "number": 12,
       "path": "012_integrity_attestation_sync.sql"
-    },
-    {
-      "sequence": 16,
-      "number": 12,
-      "path": "012_p2p_skill_candidates.sql"
     },
     {
       "sequence": 17,
@@ -98,19 +78,9 @@
       "path": "015_creator_messages.sql"
     },
     {
-      "sequence": 20,
-      "number": 15,
-      "path": "015_public_records.sql"
-    },
-    {
       "sequence": 21,
       "number": 16,
       "path": "016_creator_channels_audit.sql"
-    },
-    {
-      "sequence": 22,
-      "number": 16,
-      "path": "016_legal_intelligence.sql"
     },
     {
       "sequence": 23,
@@ -118,29 +88,9 @@
       "path": "017_business_projects_legal_entity.sql"
     },
     {
-      "sequence": 24,
-      "number": 17,
-      "path": "017_free_sandboxes.sql"
-    },
-    {
-      "sequence": 25,
-      "number": 17,
-      "path": "017_geospatial.sql"
-    },
-    {
       "sequence": 26,
       "number": 18,
       "path": "018_human_presence.sql"
-    },
-    {
-      "sequence": 27,
-      "number": 18,
-      "path": "018_technology_capabilities.sql"
-    },
-    {
-      "sequence": 28,
-      "number": 18,
-      "path": "018_workspaces.sql"
     },
     {
       "sequence": 29,
@@ -148,19 +98,14 @@
       "path": "019_assistant_interoperability.sql"
     },
     {
-      "sequence": 30,
-      "number": 19,
-      "path": "019_free_node_candidates.sql"
-    },
-    {
-      "sequence": 31,
-      "number": 19,
-      "path": "019_workspace_credentials.sql"
+      "sequence": 51,
+      "number": 20,
+      "path": "020_provider_registry_gates_reviewed.sql"
     },
     {
       "sequence": 32,
-      "number": 20,
-      "path": "020_security_work_sessions.sql"
+      "number": 55,
+      "path": "055_security_work_sessions.sql"
     },
     {
       "sequence": 33,
@@ -213,14 +158,129 @@
       "path": "030_financial_intelligence.sql"
     },
     {
-      "sequence": 43,
-      "number": 30,
-      "path": "030_hbi_history_graph.sql"
-    },
-    {
       "sequence": 44,
       "number": 31,
       "path": "031_hbi_governance.sql"
+    },
+    {
+      "sequence": 10,
+      "number": 32,
+      "path": "032_skill_runtime.sql"
+    },
+    {
+      "sequence": 12,
+      "number": 33,
+      "path": "033_storage_and_uwaie.sql"
+    },
+    {
+      "sequence": 14,
+      "number": 34,
+      "path": "034_skill_runtime_logs.sql"
+    },
+    {
+      "sequence": 16,
+      "number": 35,
+      "path": "035_p2p_skill_candidates.sql"
+    },
+    {
+      "sequence": 20,
+      "number": 36,
+      "path": "036_public_records.sql"
+    },
+    {
+      "sequence": 22,
+      "number": 37,
+      "path": "037_legal_intelligence.sql"
+    },
+    {
+      "sequence": 24,
+      "number": 38,
+      "path": "038_free_sandboxes.sql"
+    },
+    {
+      "sequence": 25,
+      "number": 39,
+      "path": "039_geospatial.sql"
+    },
+    {
+      "sequence": 27,
+      "number": 40,
+      "path": "040_technology_capabilities.sql"
+    },
+    {
+      "sequence": 28,
+      "number": 41,
+      "path": "041_workspaces.sql"
+    },
+    {
+      "sequence": 30,
+      "number": 42,
+      "path": "042_free_node_candidates.sql"
+    },
+    {
+      "sequence": 31,
+      "number": 43,
+      "path": "043_workspace_credentials.sql"
+    },
+    {
+      "sequence": 43,
+      "number": 44,
+      "path": "044_hbi_history_graph.sql"
+    },
+    {
+      "sequence": 45,
+      "number": 45,
+      "path": "045_iplci.sql"
+    },
+    {
+      "sequence": 46,
+      "number": 46,
+      "path": "046_iplci_p2.sql"
+    },
+    {
+      "sequence": 47,
+      "number": 47,
+      "path": "047_iplci_p3.sql"
+    },
+    {
+      "sequence": 48,
+      "number": 48,
+      "path": "048_iplci_p4.sql"
+    },
+    {
+      "sequence": 49,
+      "number": 49,
+      "path": "049_browser_substrate.sql"
+    },
+    {
+      "sequence": 50,
+      "number": 50,
+      "path": "050_iplci_p5.sql"
+    },
+    {
+      "sequence": 52,
+      "number": 52,
+      "path": "052_model_provider_keys.sql"
+    },
+    {
+      "sequence": 53,
+      "number": 53,
+      "path": "053_iplci_p6.sql"
+    },
+    {
+      "sequence": 54,
+      "number": 54,
+      "path": "054_web3_and_nodes.sql"
+    },
+    {
+      "sequence": 55,
+      "number": 60,
+      "path": "060_model_catalog.sql"
+    },
+    {
+      "sequence": 56,
+      "number": 57,
+      "path": "057_iics_foundation.sql"
     }
   ]
 }

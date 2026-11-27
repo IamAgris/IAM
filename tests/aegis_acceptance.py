@@ -1,9 +1,12 @@
 """IAM Aegis acceptance tests — defensive engine only."""
+import os
 import sys
 import httpx
 
-BASE = "http://localhost:8000"
-API_KEY = "iam_qdb8re1TAdsotTnG9SmjJzRNHzrpESZeoAeMpOpE-MA"
+BASE = os.environ.get("IAM_API_URL", "http://localhost:8000")
+API_KEY = os.environ.get("IAM_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit("IAM_API_KEY is required for Aegis acceptance tests")
 H = {"Authorization": f"Bearer {API_KEY}"}
 results = []
 

@@ -76,7 +76,11 @@ async def peer_socket(websocket: WebSocket, peer_id: str, secret: Optional[str] 
     ?secret= sets the shared signing secret for this peer's messages.
     """
     await websocket.accept()
-    peer_secret = secret or transport.local_secret
+    peer_secret = (
+        secret
+        or websocket.headers.get("x-peer-secret")
+        or transport.local_secret
+    )
     transport.register_ws(peer_id, websocket)
 
     # Deliver anything queued while this peer was offline

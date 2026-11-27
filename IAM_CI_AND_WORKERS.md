@@ -54,9 +54,46 @@ blocked by `--network none`.
 
 Result: `IAM_RUNTIME_LAB_OK` printed, `NETWORK_BLOCKED` printed.
 
+## Browser task worker (Doc 29 / OD-49)
+
+`backend/app/workers/arq_browser_worker.py` executes queued UWAIE tasks under OD-08. It checks
+the run's terminal state before execution (`job_id=task_id` gives idempotency), enforces the
+deadline, and records failures with a bounded retry count. Failed external actions are never
+silently replayed.
+
+```bash
+docker compose --profile browser-arq up -d        # browser-task-worker
+```
+
+Set `BROWSER_TASK_WORKER_BACKEND=arq` to queue through ARQ; the default `loop` backend executes
+through `POST /api/v1/browser/tasks` inline. The browser API is admin-scoped
+(`/api/v1/browser` in `auth_policy.py`).
+
+Local OCR is provided by `pytesseract` plus the `tesseract-ocr` packages installed in the image.
+It is opt-in via `BROWSER_OCR_ENABLED` (default `false`). When enabled, page understanding reports
+`ocr.available`; a missing library or binary produces `{available: false, reason}`, never empty
+text presented as a successful OCR pass. The Windows host has the Python binding but no Tesseract
+binary, so OCR there reports unavailable until a binary is installed; rebuild the image for the
+container path.
+
+## Live browser smoke (opt-in)
+
+`tests/browser_substrate_smoke.py` is a live-stack smoke test, not a CI gate:
+
+```powershell
+$env:IAM_BROWSER_SMOKE = "1"
+python tests/browser_substrate_smoke.py
+```
+
+It opens a headless session, navigates to a public page through `/api/v1/browser`, checks the
+task ID, evidence refs and attribution, confirms a CAPTCHA target is rejected, and closes the
+session. Success prints `IAM_BROWSER_P1_OK`; skipped runs print `SKIPPED` and never count as a
+pass. `IAM_API_KEY` and an admin-scoped credential are required.
+
 ## Verification
 
-- 91 unit tests pass.
-- Postgres integration check passes (including a worker retry cycle).
+- Backend unit suite passes (662 tests at the time of this update).
+- Browser evidence/API/worker tests pass; ruff clean on Doc 29 files.
+- Postgres integration check passes (including browser run/evidence persistence).
 - Docker adapter lab check passes.
 - Frontend build passes with five dynamic user pages.

@@ -10,7 +10,8 @@ import hashlib
 import json
 import math
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+from xml.sax.saxutils import escape
 
 import httpx
 from sqlalchemy import select
@@ -140,6 +141,10 @@ class GeoService:
         await self.db.commit()
         await self.db.refresh(place)
         return self.place_dict(place)
+
+    async def all_places(self, limit: int = 200) -> List[Dict[str, Any]]:
+        result = await self.db.execute(select(GeoPlace).limit(min(limit, 500)))
+        return [self.place_dict(p) for p in result.scalars().all()]
 
     async def places(self, query: str, country_code: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
         statement = select(GeoPlace).where(GeoPlace.name.ilike(f"%{query}%"))
@@ -498,6 +503,55 @@ class GeoService:
             "is_active": provider.is_active,
             "terms_url": provider.terms_url,
         }
+
+    @staticmethod
+    def render_svg(
+        places: List[Dict[str, Any]], width: int = 800, height: int = 400
+    ) -> str:
+        """Render a provider-neutral SVG map fragment from place records.
+
+        This is backend rendering support only — no frontend page, no external
+        tile provider and no executable JavaScript. Coordinates use a simple
+        equirectangular projection; untrusted labels are XML-escaped.
+        """
+        lines = [
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+            'role="img" aria-label="IAM geospatial overview">',
+            '<rect width="100%" height="100%" fill="#0B0F26"/>',
+        ]
+        for fraction in (0.25, 0.5, 0.75):
+            y = int(height * fraction)
+            x = int(width * fraction)
+            lines.append(
+                f'<line x1="0" y1="{y}" x2="{width}" y2="{y}" stroke="#2A3260" '
+                'stroke-width="1"/>'
+            )
+            lines.append(
+                f'<line x1="{x}" y1="0" x2="{x}" y2="{height}" stroke="#2A3260" '
+                'stroke-width="1"/>'
+            )
+        for place in places[:200]:
+            raw_lat = place.get("latitude")
+            raw_lon = place.get("longitude")
+            if raw_lat is None or raw_lon is None:
+                continue
+            try:
+                lat = float(raw_lat)
+                lon = float(raw_lon)
+            except (TypeError, ValueError):
+                continue
+            px = (lon + 180) / 360 * width
+            py = (90 - lat) / 180 * height
+            label = escape(str(place.get("name") or "place")[:80])
+            lines.append(
+                f'<circle cx="{px:.1f}" cy="{py:.1f}" r="5" fill="#8FA6FF"/>'
+            )
+            lines.append(
+                f'<text x="{px + 8:.1f}" y="{py - 8:.1f}" fill="#E9EDFF" '
+                f'font-size="12">{label}</text>'
+            )
+        lines.append("</svg>")
+        return "\n".join(lines)
 
     @staticmethod
     def place_dict(place: GeoPlace) -> Dict[str, Any]:

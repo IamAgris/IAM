@@ -1206,5 +1206,168 @@ class HBIPermissionEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("SRC-PERM", self.service.training_approved()["sources"])
 
 
+class HBIResearchEcosystemTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.service = HBIService()
+
+    def _manifest(self):
+        from app.services.hbi.schemas import CorpusSourceManifest
+        return CorpusSourceManifest(
+            source_id="ECO-1", rights_holder="Institute",
+            acquisition_method="open_access",
+            source={"title": "Study", "origin": "https://example.org",
+                    "collection_date": "2026-11-27"},
+            licensing={
+                "licence_id": "CC-BY-4.0",
+                "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+                "permission_evidence": "licence",
+                "ingestion_allowed": True, "storage_allowed": True,
+                "analysis_allowed": True, "derivative_allowed": True,
+                "model_training_allowed": True,
+            },
+            permitted_purposes=["research", "historical", "aggregate_analysis"],
+        )
+
+    async def _approved_source(self):
+        from app.services.hbi.schemas import CorpusReviewRequest
+        return self.service.review_corpus_source(CorpusReviewRequest(
+            manifest=self._manifest(), approved_by="ingestion-reviewer",
+        ))
+
+    async def test_channels_and_targets(self):
+        from app.services.hbi.schemas import TargetVerificationRequest
+        self.assertEqual(self.service.acquisition_channels()["count"], 12)
+        targets = self.service.discovery_targets()
+        self.assertTrue(all(t["terms_status"] == "requires_verification" for t in targets["targets"]))
+        verified = self.service.verify_target(TargetVerificationRequest(
+            name="openalex", verified_by="counsel", reference="terms review 2026",
+        ))
+        self.assertEqual(verified["terms_status"], "verified")
+
+    async def test_classification_and_enforcement(self):
+        from app.services.hbi.schemas import (
+            TrainingApprovalRequest, TrainingRequest,
+        )
+        await self._approved_source()
+        self.assertEqual(self.service.source_classification("ECO-1")["classification"], "B")
+        self.assertFalse(self.service.enforce("ECO-1", "training")["permitted"])
+        self.assertTrue(self.service.enforce("ECO-1", "analysis")["permitted"])
+        self.service.request_training(TrainingRequest(source_id="ECO-1", intended_model="m"))
+        self.service.approve_training(TrainingApprovalRequest(
+            source_id="ECO-1", approver="training-reviewer",
+            decision="approved", basis="training rights granted",
+        ))
+        self.assertEqual(self.service.source_classification("ECO-1")["classification"], "A")
+        self.assertTrue(self.service.enforce("ECO-1", "training")["permitted"])
+
+    async def test_contribution_and_lab_ethics(self):
+        from app.services.hbi.schemas import ContributionRequest, LabProjectRequest
+        contribution = self.service.add_contribution(ContributionRequest(
+            contributor="researcher", material_type="scenario",
+            personal_data_present=True,
+        ))
+        self.assertEqual(contribution["status"], "quarantined")
+        self.assertTrue(contribution["requires_ethics_review"])
+        lab = self.service.lab_project(LabProjectRequest(
+            title="Decision study", research_question="How do people decide?",
+            human_participants=True,
+        ))
+        self.assertEqual(lab["status"], "blocked")
+        self.assertIn("ethics_approval_required", lab["reason"])
+
+    async def test_federated_analysis_is_result_only(self):
+        from app.services.hbi.schemas import FederatedApprovalRequest, FederatedRequest
+        request = self.service.federated_request(FederatedRequest(
+            institution="university", analysis_description="aggregate statistics",
+        ))
+        self.assertFalse(request["raw_data_transfer"])
+        self.assertTrue(request["result_only"])
+        approved = self.service.federated_approve(FederatedApprovalRequest(
+            institution="university", approver="reviewer", reference="agreement",
+        ))
+        self.assertEqual(approved["status"], "approved")
+
+    async def test_transformation_respects_classification(self):
+        from app.services.hbi.schemas import TransformationRequest
+        result = self.service.transform(TransformationRequest(
+            source_ids=["unknown"], output_type="knowledge_graph",
+        ))
+        self.assertFalse(result["permitted"])
+        self.assertIn("unknown", result["blocked_sources"])
+
+
+class HBITranslationLabTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.service = HBIService()
+
+    async def test_translation_preserves_original_and_provenance(self):
+        from app.services.hbi.schemas import TranslationRequest
+        self.service.translation.translator = lambda text, source, target: f"[{target}] {text}"
+        result = await self.service.translate(TranslationRequest(
+            text="People in the community trusted the announcement.",
+            source_language="en", target_language="fr", purpose="research",
+        ))
+        self.assertEqual(result["status"], "translated")
+        self.assertEqual(result["engine"], "injected_translator")
+        self.assertTrue(result["original_preserved"].startswith("People"))
+
+    async def test_translation_fails_closed_without_engine(self):
+        from app.services.hbi.schemas import TranslationRequest
+        self.service.translation.inference = None
+        result = await self.service.translate(TranslationRequest(
+            text="People responded together.", purpose="research",
+        ))
+        self.assertEqual(result["status"], "not_performed")
+        self.assertEqual(result["reason"], "no_translation_engine_configured")
+
+    async def test_multilingual_semantics(self):
+        from app.services.hbi.schemas import MultilingualSemanticsRequest
+        self.service.translation.translator = lambda text, source, target: (
+            "Community trust increased after the programme and people cooperated."
+        )
+        result = await self.service.multilingual_semantics(MultilingualSemanticsRequest(
+            text="Die gemeenskap se vertroue het toegeneem en mense het saamgewerk.",
+            region="south_africa", purpose="research",
+        ))
+        self.assertIn("south_african_context", result["cultural_tags"])
+        self.assertTrue(result["translated_claims"])
+
+    async def test_study_lifecycle_with_consent_and_deletion(self):
+        from app.services.hbi.schemas import (
+            ParticipantConsentRequest, ParticipantWithdrawalRequest,
+            StudyCreateRequest, StudyResponseRequest,
+        )
+        blocked = self.service.create_study(StudyCreateRequest(
+            title="Study", research_question="How do people decide?",
+        ))
+        self.assertEqual(blocked["status"], "blocked")
+        study = self.service.create_study(StudyCreateRequest(
+            title="Study", research_question="How do people decide?",
+            ethics_reference="ethics-1",
+        ))
+        sid = study["study_id"]
+        denied = self.service.collect_response(StudyResponseRequest(
+            study_id=sid, participant_ref="p1", response="I trusted the message.",
+        ))
+        self.assertEqual(denied["status"], "rejected")
+        consent = self.service.record_consent(ParticipantConsentRequest(
+            study_id=sid, participant_ref="p1", purposes=["research"],
+        ))
+        self.assertEqual(consent["status"], "active")
+        response = self.service.collect_response(StudyResponseRequest(
+            study_id=sid, participant_ref="p1", response="I trusted the message.",
+        ))
+        self.assertEqual(response["status"], "stored")
+        self.assertNotEqual(response["pseudonym"], "p1")
+        withdrawal = self.service.withdraw_participant(ParticipantWithdrawalRequest(
+            study_id=sid, participant_ref="p1",
+        ))
+        self.assertTrue(withdrawal["deletion_required"])
+        deleted = self.service.delete_study_responses(sid, "p1")
+        self.assertEqual(deleted["responses_removed"], 1)
+        report = self.service.study_report(sid)
+        self.assertEqual(report["deleted_responses"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

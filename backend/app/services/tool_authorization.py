@@ -6,10 +6,14 @@ deterministic gate: unknown, inactive, blocked and approval-required tools are
 refused before any action is taken.
 """
 
+from typing import Any, Dict, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.autonomy import ToolPermission, ToolRegistry
+
+TOOL_ACTION = "tool.invoke"
 
 
 class ToolAuthorizationError(Exception):
@@ -26,14 +30,32 @@ async def authorize_tool_call(
     tool_name: str,
     *,
     approval_granted: bool = False,
+    signed_authorization: Optional[Dict[str, Any]] = None,
+    governance_context: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Return the granted permission level or raise ToolAuthorizationError.
 
-    ``approval_granted`` must come from a signed Creator/authority decision;
-    it is never inferred from the model's own plan.
+    A bare ``approval_granted`` boolean is never sufficient. Explicit or
+    human-approval tools require a signed Creator authorization record, either
+    supplied by the caller or verified against CreatorApprovalService.
     """
     if not tool_name:
         raise ToolAuthorizationError("tool_name_required", "tool_name_required")
+
+    if governance_context and governance_context.get("source_id"):
+        from app.services.iplci.gateway import GovernanceRefusal
+        from app.services.iplci.integration import enforce_agent_request
+
+        try:
+            await enforce_agent_request(
+                db,
+                action=TOOL_ACTION,
+                source_id=governance_context["source_id"],
+                agent_id=str(governance_context.get("agent_id") or "main"),
+                jurisdiction=governance_context.get("jurisdiction"),
+            )
+        except GovernanceRefusal as exc:
+            raise ToolAuthorizationError(str(exc), exc.code)
 
     result = await db.execute(
         select(ToolRegistry).where(
@@ -55,11 +77,19 @@ async def authorize_tool_call(
     level = permission.permission_level
     if level == "blocked":
         raise ToolAuthorizationError("tool_is_blocked", "tool_blocked")
-    if level == "explicit" and not approval_granted:
-        raise ToolAuthorizationError("explicit_approval_required", "approval_required")
-    if permission.requires_human_approval and not approval_granted:
-        raise ToolAuthorizationError("human_approval_required", "approval_required")
+    if level == "explicit" or permission.requires_human_approval:
+        authority = signed_authorization
+        if authority is None and approval_granted:
+            from app.services.creatorapproval_service import CreatorApprovalService
+
+            authority = await CreatorApprovalService(db).check_authorization(
+                TOOL_ACTION, target_ref=tool_name
+            )
+        if not authority or not authority.get("authorized"):
+            raise ToolAuthorizationError(
+                "signed_authorization_required", "approval_required"
+            )
     if level not in ("autonomous", "authorized", "explicit"):
         raise ToolAuthorizationError("unknown_permission_level", "tool_blocked")
 
-    return level
+    return str(level)

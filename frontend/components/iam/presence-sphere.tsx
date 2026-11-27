@@ -27,6 +27,8 @@ export interface KnowledgeConnection {
   id?: string;
   from: string;
   to: string;
+  from_node?: string;
+  to_node?: string;
   from_cluster?: string | null;
   to_cluster?: string | null;
   relation?: string;
@@ -414,11 +416,32 @@ export function PresenceSphere({
         const a = clusterPositions[link.from_cluster || link.from];
         const b = clusterPositions[link.to_cluster || link.to];
         if (!a || !b) return;
-        ctx.strokeStyle = `hsla(${hue + 35},85%,${L}%,0.28)`;
-        ctx.lineWidth = 1.3;
+        ctx.strokeStyle = `hsla(${hue + 35},90%,${L}%,0.55)`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 24, b.x, b.y);
+        ctx.stroke();
+        ctx.fillStyle = `hsla(${hue + 35},90%,${L}%,0.6)`;
+        ctx.beginPath();
+        ctx.arc((a.x + b.x) / 2, (a.y + b.y) / 2 - 12, 2, 0, 6.2832);
+        ctx.fill();
+      });
+
+      // Source → cluster provenance is drawn only where a stored link records
+      // that relationship. Proximity alone is never presented as evidence.
+      graphRef.current.forEach((link) => {
+        const sourceId = link.from_node || link.to_node;
+        const clusterName = link.from_cluster || link.to_cluster;
+        const ss = sourceId ? sourceStates[sourceId] : null;
+        const cluster = clusterName ? clusterPositions[clusterName] : null;
+        if (!ss || !cluster) return;
+        ctx.strokeStyle = `hsla(${hue},80%,${L}%,0.28)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.quadraticCurveTo((ss.x + cluster.x) / 2, (ss.y + cluster.y) / 2 - 10, cluster.x, cluster.y);
         ctx.stroke();
       });
 
@@ -428,7 +451,8 @@ export function PresenceSphere({
         const a = sourceStates[c.from];
         const b = sourceStates[c.to];
         if (!a || !b) return;
-        ctx.strokeStyle = `hsla(${hue},85%,${L}%,0.18)`;
+        ctx.strokeStyle = `hsla(${hue},90%,${L}%,0.42)`;
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 18, b.x, b.y);

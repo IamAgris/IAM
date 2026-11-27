@@ -4,13 +4,14 @@ Multi-step web task management: task decomposition, checkpoints, retry logic,
 dependency management, scheduled execution, progress reporting, cancellation.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.web_knowledge import AutonomousWebTask, WebsiteKnowledge
+from app.services.browser_evidence_service import BrowserEvidenceService, build_envelope
 
 
 class AutonomousWebTaskError(PermissionError):
@@ -49,6 +50,11 @@ class AutonomousWebTaskService:
         max_retries: int = 3,
         is_background: bool = False,
         actor: str,
+        actor_type: str = "agent",
+        permission_scope: Optional[str] = None,
+        session_id: Optional[str] = None,
+        mode: str = "headless",
+        engine: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new autonomous web task."""
         valid_types = (
@@ -59,6 +65,10 @@ class AutonomousWebTaskService:
             raise AutonomousWebTaskError(f"Invalid task type: {task_type}")
         if not 1 <= priority <= 10:
             raise AutonomousWebTaskError("Priority must be between 1 and 10")
+        if actor_type not in ("agent", "creator"):
+            raise AutonomousWebTaskError("Invalid actor type")
+        if mode not in ("headless", "visible", "isolated"):
+            raise AutonomousWebTaskError("Invalid browser mode")
 
         # Verify the website knowledge exists if provided
         if website_knowledge_id:
@@ -93,7 +103,38 @@ class AutonomousWebTaskService:
         self.db.add(row)
         await self.db.flush()
         await self.db.commit()
-        return self._row_dict(row)
+        # Doc 29 WP-03: every task has an attributed browser run and envelope.
+        run = await BrowserEvidenceService(self.db).start_run(
+            task_id=str(row.id),
+            actor=actor,
+            actor_type=actor_type,
+            permission_scope=permission_scope,
+            session_id=session_id,
+            mode=mode,
+            engine=engine,
+            priority=priority,
+        )
+        result = self._row_dict(row)
+        result.update({
+            "task_id": run["task_id"],
+            "session_id": run["session_id"],
+            # Legacy task status stays authoritative for existing callers;
+            # the browser run state is exposed separately under WP-03.
+            "run_state": run["state"],
+            "evidence_refs": [],
+            "actor": run["actor"],
+            "actor_type": run["actor_type"],
+            "permission_scope": run["permission_scope"],
+            "envelope": build_envelope(
+                task_id=run["task_id"],
+                session_id=run["session_id"],
+                status=run["state"],
+                actor=run["actor"],
+                actor_type=run["actor_type"],
+                permission_scope=run["permission_scope"],
+            ),
+        })
+        return result
 
     async def get(self, task_id: str) -> Dict[str, Any]:
         row = await self._task(task_id)
@@ -163,21 +204,33 @@ class AutonomousWebTaskService:
 
     async def cancel(self, task_id: str, actor: str) -> Dict[str, Any]:
         """Cancel a pending or executing task."""
-        row = await self._task(task_id)
+        row = cast(Any, await self._task(task_id))
         if row.status in ("completed", "cancelled"):
             raise AutonomousWebTaskError(
                 f"Cannot cancel task with status: {row.status}"
             )
         row.status = "cancelled"
         from datetime import datetime, timezone
-        row.cancelled_at = None  # set by caller if desired
+        row.cancelled_at = datetime.now(timezone.utc)
         await self.db.commit()
+        evidence = BrowserEvidenceService(self.db)
+        try:
+            await evidence.set_state(str(row.id), "cancelled")
+            await evidence.append_audit(
+                str(row.id), actor=actor, action="task.cancel",
+                target=str(row.id), outcome={"status": "cancelled"},
+            )
+        except PermissionError:
+            # A task created before WP-03 has no attributed run; the task
+            # cancellation itself still succeeds.
+            pass
         return self._row_dict(row)
 
     @staticmethod
     def _row_dict(row: AutonomousWebTask) -> Dict[str, Any]:
         return {
             "id": str(row.id),
+            "task_id": str(row.id),
             "title": row.title,
             "description": row.description,
             "website_knowledge_id": (

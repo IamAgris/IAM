@@ -2,7 +2,7 @@
 
 **Document:** 27 (proposed addendum to Documents 01–26)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **PROPOSED** — awaiting owner confirmation. Does not alter the frozen baseline or any locked decision.  
+**Status:** **PROPOSED — Creator approval requested via the email carrier, pending signed decision.** Owner selected **SMTP delivery to a private domain**. The request script supports `IAM_CREATOR_CHANNEL=creator_email` (risk level 4) and `scripts/creator_email_preflight.py` validates the carrier without printing secrets. Email is a **carrier only**: a chat message or a plain email reply is not authority. OD-47 becomes CONFIRMED only after `CreatorApprovalService.decide()` verifies an ED25519 signature over the one-time challenge. The local environment currently has no Creator email, public key or gateway secret configured, so approval cannot be completed here. Does not alter the frozen baseline or any locked decision until then.  
 **Parent:** `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (Doc 26 / OD-45), `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (Doc 14 / OD-30)  
 **Related:** `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` (Doc 25 / OD-44), `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (Doc 15), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `tools/rkie/notes/hbi-implementation.md`  
 **Proposed decision:** OD-47 (Research Acquisition & Legal Intelligence)  
@@ -180,6 +180,76 @@ Code implementation: `backend/app/services/hbi/permission_engine.py`, expanded m
 
 ---
 
+## 13. Twelve acquisition channels
+
+| # | Channel | Default posture |
+|---|---------|-----------------|
+| 1 | Open-access research | Preferred; per-article licence check |
+| 2 | Public-domain collections | Preferred; verify status per work |
+| 3 | Government open data | Per-portal terms and data rights |
+| 4 | University partnerships | Agreement with explicit rights |
+| 5 | Author and publisher permissions | Written permission evidence |
+| 6 | Research APIs | API terms plus underlying rights |
+| 7 | Institutional repositories | Per-item licence; author self-archiving |
+| 8 | Licensed commercial datasets | Explicit licence; budget approval |
+| 9 | Research contributions and donations | Contributor agreement |
+| 10 | Original synthetic datasets | IAM provenance; own rights |
+| 11 | IAM's own research laboratory | Ethics, consent and privacy gates |
+| 12 | Federated research partnerships | Analyse in place; result-only release |
+
+## 14. Source classification (A–E)
+
+| Class | Meaning | Permitted use |
+|-------|---------|---------------|
+| A — Training approved | Explicit training rights | Analysis, retention, training |
+| B — Research approved | Analysis permitted | Analysis and knowledge extraction; no training |
+| C — Retrieval approved | Reference/retrieval only | Bounded retrieval under stated conditions |
+| D — Restricted | Special permission or safeguards | No use until conditions met |
+| E — Prohibited | No authorised acquisition or use | Blocked |
+
+Classification is recomputed from the manifest and governance decisions. Access never implies ownership, and ingestion approval never implies training approval.
+
+## 15. Eight ecosystem components
+
+1. **Global Research Discovery** — institutions, archives, publications, APIs and datasets.
+2. **Rights Registry** — licences, permissions, ownership and restrictions.
+3. **Privacy & Ethics** — POPIA, GDPR, consent and research safeguards.
+4. **Acquisition Engine** — downloads, APIs, partnerships and contributions.
+5. **Research Partnerships** — universities, institutions and independent researchers.
+6. **Knowledge Processing Engine** — extraction, indexing, analysis, graphs, synthesis.
+7. **Knowledge Base** — approved research and retrieval resources.
+8. **Model Training Pipeline** — training-approved data, evaluation, candidate models.
+
+A **central legal enforcement gate** applies to every component: source-specific permissions, restrictions, revocation conditions and jurisdictional requirements override component behaviour.
+
+## 16. Federated research and contribution network
+
+Federated analysis runs approved processes where data is held; only privacy-protected results leave the environment. It reduces transfer of sensitive source data but does not remove copyright, privacy or contractual restrictions.
+
+Contributions require an agreement covering ownership, usage rights, training rights, commercial use, attribution, withdrawal and whether personal information may be included. Ownership remains with the contributor unless expressly transferred.
+
+## 17. IAM research laboratory
+
+The laboratory identifies questions, reviews literature, finds gaps, designs experiments, generates hypotheses, prepares questionnaires, recruits consenting participants through approved processes, analyses results and produces original reports and appropriately licensed datasets. Human-participant research requires ethics oversight, consent, privacy protection and institutional arrangements.
+
+## 18. Legal knowledge transformation and jurisdictional checks
+
+Original summaries, cross-study comparisons, statistics, knowledge graphs, taxonomies, timelines, behavioural models, educational material and experiment proposals are permitted only after assessing source rights and output nature. Derived works can still carry restrictions.
+
+TDM sources to investigate (all unverified until counsel): EU DSM Directive Articles 3 (scientific research by qualifying organisations) and 4 (general TDM with rights reservations); US section 107 fair use case by case; UK text-and-data-analysis exceptions with commercial restrictions; South Africa's existing Copyright Act and the status of pending amendments. **Correction:** the Constitutional Court's June 2026 judgment did not itself bring the Copyright Amendment Bill into force; proposed section 12A must not be treated as operative law. Also assess neighbouring rights, database rights, confidentiality, trade secrets and website/API terms.
+
+## 19. Never assume legal
+
+Scraping public pages, removing copyright notices, bypassing paywalls, ignoring machine-readable TDM reservations, training on leaked datasets, reusing participant data without authorisation and training on purchased books are not legitimate acquisition routes without independent rights and provenance checks.
+
+## 20. Discovery targets (all require per-source rights assessment)
+
+OpenAlex, Europe PMC, Crossref, Semantic Scholar, Wikidata, CORE, BASE, DOAJ, OpenAIRE, Harvard Dataverse, ICPSR, UK Data Service, Data.gov.za, UNESCO, World Bank Open Data, arXiv, PsyArXiv, SocArXiv, bioRxiv, Internet Archive, Google Patents, institutional repositories, government portals and museum/cultural-heritage digitisation collections. Preprints are not automatically open for commercial training.
+
+## 21. Implementation and verification
+
+Implemented in `backend/app/services/hbi/research_ecosystem.py` with registries for discovery targets, sources, contributions, federated analyses and laboratory projects; classification A–E; a central legal enforcement gate; `translation.py` (local-first model translation with preserved originals); and `research_lab.py` (ethics-gated, consented studies with pseudonymous responses, withdrawal and deletion). Verification: §17 of Doc 26 and `tools/rkie/notes/hbi-implementation.md`.
+
 ## 12. Owner decision required (proposed OD-47)
 
-Confirm: (a) the five acquisition routes; (b) three-pipeline separation; (c) independent training approval; (d) expanded manifest fields; (e) partnership programme; (f) legal-context registry as unverified until counsel review; (g) propagation of restrictions to training. Until confirmed, this document is a proposal and changes no locked decision.
+Creator decision requested for: (a) the five acquisition routes; (b) three-pipeline separation; (c) independent training approval; (d) expanded manifest fields; (e) partnership programme; (f) legal-context registry as unverified until counsel review; (g) propagation of restrictions to training. The signed request is prepared at `scripts/creator_request_od47.py`; its challenge hash and expiry come from the live `CreatorApprovalService`, not from this document. Until the signature verifies, this document is a proposal and changes no locked decision. IAM does not self-approve.

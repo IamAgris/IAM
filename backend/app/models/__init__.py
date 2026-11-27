@@ -51,7 +51,11 @@ from app.models.internetaccess import (
     InternetSession, BrowserAction, OnlineAccount, PublishedContent,
     MonitoredTarget, RetrievedFile, InternetPermission, InternetEvent,
 )
+from app.models.iics import (
+    IICSSource, IICSClaim, IICSAction, IICSBenchmarkResult,
+)
 from app.models.modelrouter import AIProvider, DiscoveredModel, RoutingDecision, ProviderUsage
+from app.models.model_provider_key import ModelProviderKey
 from app.models.skillforge import (
     SkillPackage,
     SkillVersion,
@@ -92,6 +96,18 @@ from app.models.freesandbox import (
 from app.models.freenode import FreeNodeCandidate
 from app.models.publicrecords import PublicSource, PublicRecord, RecordRelationship
 from app.models.legal import LegalSource, LegalInstrument, LegalVersion, LegalChange, LegalImpact
+from app.models.ip_legal import (
+    IPLegalParty, IPLegalSource, IPLegalLicence, IPLegalPermission,
+    IPLegalAssessment, IPLegalIPAsset, IPLegalDatasetProvenance, IPLegalAuditEvent,
+    IPLegalTrademark, IPLegalPatent, IPLegalDesignRight, IPLegalDependency,
+    IPLegalSbom, IPLegalRiskDecision, IPLegalCollectionCheck,
+    IPLegalPrivacyRecord, IPLegalTrainingApproval, IPLegalModelLineage,
+    IPLegalJurisdictionRule, IPLegalOfficialSource, IPLegalKnowledgeVerification,
+    IPLegalObligation, IPLegalBusinessReview, IPLegalEthicsReview,
+    IPLegalDisputeCase, IPLegalIncidentCase, IPLegalLegalHold,
+    IPLegalRightsContact, IPLegalComplianceDeadline, IPLegalEvidenceRecord,
+    IPLegalContinuityRecord, IPLegalPolicy,
+)
 from app.models.geo import (
     GeoProvider, GeoPlace, GeoDataFile, LiveGeoFeed, MapTileCache, LocationPermission,
 )
@@ -127,6 +143,12 @@ from app.models.ai_communication import (
     AIConversationMessage, AIContextExchange, AIResponseVerification,
     AIReputationRecord, AICommunicationPermission,
     HumanCommunicationBridge, AICommunicationAudit,
+)
+from app.models.web3 import (
+    Web3Network, Web3Wallet, Web3Transaction, Web3Asset, Web3Contract,
+    NodeConnection, NodeWalletBalance, BitcoinUtxo, LightningChannel,
+    LightningPeer, LightningInvoice, LightningPayment, LightningEvent,
+    Web3ProviderHealth, BlockchainAuditLog,
 )
 
 __all__ = [
@@ -175,6 +197,8 @@ __all__ = [
     "AnonymousVisitor", "VisitorSession", "VisitorLocation", "ConversationThread",
     "VisitorMessage", "VisitorPreference", "VisitorConsent", "VisitorMemoryPermission",
     "RequestJob", "RequestUsage", "VisitorRateLimit", "RegionalSetting",
+    # Multi-model provider credentials (OD-51)
+    "ModelProviderKey",
     # AI Network
     "ExternalAgent", "AgentInteraction", "AgentTrustRecord", "AgentCollaboration",
     "ExternalIntegration", "InternetResource", "CloudWorkload",
@@ -182,7 +206,7 @@ __all__ = [
     "InternetSession", "BrowserAction", "OnlineAccount", "PublishedContent",
     "MonitoredTarget", "RetrievedFile", "InternetPermission", "InternetEvent",
     # Model Router
-    "AIProvider", "DiscoveredModel", "RoutingDecision", "ProviderUsage",
+    "AIProvider", "DiscoveredModel", "RoutingDecision", "ProviderUsage", "ModelProviderKey",
     # IAM Skill Forge
     "SkillPackage", "SkillVersion", "SkillTestResult", "SkillAuditEvent",
     "SkillPermissionGrant",
@@ -229,6 +253,8 @@ __all__ = [
     "PredictionMarket", "ProbabilityEstimate", "ForecastRun", "GamingResearchRecord",
     "InvestmentResearchRecord", "ProviderRegistryEntry",
     "WebAuthnChallenge", "PasskeyCredential", "TotpEnrollment",
+    # IICS foundation overlay (pending proposal)
+    "IICSSource", "IICSClaim", "IICSAction", "IICSBenchmarkResult",
     # Website knowledge & universal web interaction
     "WebsiteKnowledge", "WebsiteSession", "WebsiteAccountLifecycle",
     "DigitalReputation", "WebsiteConsent", "DigitalSecurityIncident",
@@ -238,4 +264,9 @@ __all__ = [
     "AIConversationMessage", "AIContextExchange", "AIResponseVerification",
     "AIReputationRecord", "AICommunicationPermission",
     "HumanCommunicationBridge", "AICommunicationAudit",
+    # Proposed Doc 30 — Web3 and self-hosted node records (metadata only)
+    "Web3Network", "Web3Wallet", "Web3Transaction", "Web3Asset", "Web3Contract",
+    "NodeConnection", "NodeWalletBalance", "BitcoinUtxo", "LightningChannel",
+    "LightningPeer", "LightningInvoice", "LightningPayment", "LightningEvent",
+    "Web3ProviderHealth", "BlockchainAuditLog",
 ]

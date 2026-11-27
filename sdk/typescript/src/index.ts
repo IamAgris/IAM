@@ -123,6 +123,35 @@ export class IAM {
     execute: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
     workflows: () => Promise<Record<string, unknown>>;
   };
+  tone: {
+    analyze: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    discussion: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    records: () => Promise<Record<string, unknown>>;
+    addRecord: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
+  aiNetwork: {
+    agents: () => Promise<Record<string, unknown>>;
+    registerAgent: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    setAgentStatus: (id: string, status: string) => Promise<Record<string, unknown>>;
+    message: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    interactions: () => Promise<Record<string, unknown>>;
+    recordTrust: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    collaborations: () => Promise<Record<string, unknown>>;
+    collaborate: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    verify: (id: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    profile: (id: string) => Promise<Record<string, unknown>>;
+  };
+  financial: {
+    get: (path: string) => Promise<Record<string, unknown>>;
+    post: (path: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
+  freeNodes: {
+    candidates: () => Promise<Record<string, unknown>>;
+    createCandidate: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    verifyTerms: (id: string) => Promise<Record<string, unknown>>;
+    setStatus: (id: string, status: string) => Promise<Record<string, unknown>>;
+    migrationPlan: (id: string) => Promise<Record<string, unknown>>;
+  };
   assistantLab: {
     boundaries: () => Promise<Record<string, unknown>>;
     registerSystem: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
@@ -413,6 +442,42 @@ export class IAM {
         this.transport.request("DELETE", `${fs}/environments/${encodeURIComponent(id)}`),
       results: (id) =>
         this.transport.request("POST", `${fs}/environments/${encodeURIComponent(id)}/results`),
+    };
+
+    this.tone = {
+      analyze: (payload) => this.transport.request("POST", "/api/v1/tone/analyze", payload),
+      discussion: (payload) => this.transport.request("POST", "/api/v1/tone/discussion", payload),
+      records: () => this.transport.request("GET", "/api/v1/tone/records"),
+      addRecord: (payload) => this.transport.request("POST", "/api/v1/tone/records", payload),
+    };
+    const net = "/api/v1/network";
+    this.aiNetwork = {
+      agents: () => this.transport.request("GET", `${net}/agents`),
+      registerAgent: (payload) => this.transport.request("POST", `${net}/agents`, payload),
+      setAgentStatus: (id, status) =>
+        this.transport.request("PATCH", `${net}/agents/${id}/status`, { status }),
+      message: (id, payload) =>
+        this.transport.request("POST", `${net}/agents/${id}/message`, payload),
+      interactions: () => this.transport.request("GET", `${net}/interactions`),
+      recordTrust: (payload) => this.transport.request("POST", `${net}/trust`, payload),
+      collaborations: () => this.transport.request("GET", `${net}/collaborations`),
+      collaborate: (payload) => this.transport.request("POST", `${net}/collaborations`, payload),
+      verify: (id, payload) =>
+        this.transport.request("POST", `${net}/agents/${id}/verify`, payload),
+      profile: (id) => this.transport.request("GET", `${net}/agents/${id}/profile`),
+    };
+    this.financial = {
+      get: (path) => this.transport.request("GET", path),
+      post: (path, payload) => this.transport.request("POST", path, payload),
+    };
+    const fn = "/api/v1/free-nodes";
+    this.freeNodes = {
+      candidates: () => this.transport.request("GET", fn),
+      createCandidate: (payload) => this.transport.request("POST", fn, payload),
+      verifyTerms: (id) => this.transport.request("POST", `${fn}/${id}/verify-terms`),
+      setStatus: (id, status) =>
+        this.transport.request("PATCH", `${fn}/${id}/status`, { status }),
+      migrationPlan: (id) => this.transport.request("POST", `${fn}/${id}/migration-plan`),
     };
 
     const lab = "/api/v1/assistant-lab";

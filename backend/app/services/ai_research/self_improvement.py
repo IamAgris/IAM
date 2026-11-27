@@ -8,7 +8,7 @@ gate and its serving bridge remain the only way a model becomes primary.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,12 @@ from .coordinator import ResearchCoordinator
 from .dataset_engine import DatasetBuildRequest, DatasetBuildResult, TRAINING_CONSENT_TYPES, build as build_dataset
 from .base import InvalidResearchJob
 from .jobs import HardwareRequirement, ResearchMethod
+from .lm_eval import (
+    default_eval_suite,
+    default_lm_eval_driver,
+    eval_config,
+    eval_suite_config,
+)
 from .profiles import CapabilityRegistry
 from .release_gate import ModelReleaseService, default_release_store
 from .training import FineTuneSpec, TrainingService
@@ -31,6 +37,10 @@ class CandidateRequest:
     experiment_id: str
     licence: str
     base_model: str = settings.iam_primary_model
+    # The served alias/tag of the trained checkpoint. A checkpoint artifact is
+    # not executable; benchmarking the base model here would attribute base
+    # scores to the candidate.
+    candidate_model: str = ""
     version: str = "candidate"
     task_type: str = "coding"
     checkpoint_ref: str = ""
@@ -53,13 +63,44 @@ async def prepare_candidate(
     adapters: Iterable[Any] = (),
     credentials: Iterable[Any] = (),
     evaluate: Optional[Callable[[BenchmarkSpec, str], float]] = None,
+    lm_eval_driver=None,
     actor: str = "iam",
+    governance_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Prepare a benchmarked candidate version. Never promotes it."""
+    if governance_context and governance_context.get("source_id"):
+        from app.services.iplci.gateway import get_gateway
+
+        await get_gateway().enforce_training(
+            source_id=governance_context["source_id"],
+            dataset_id=governance_context.get("dataset_id"),
+            approval_id=governance_context.get("approval_id"),
+            agent_id=governance_context.get("agent_id", actor),
+        )
     store = store or default_release_store()
     adapters = list(adapters)
     if not request.checkpoint_ref.strip():
         raise InvalidResearchJob("checkpoint_ref is required before benchmarking")
+    candidate_model = request.candidate_model.strip()
+    if not candidate_model:
+        raise InvalidResearchJob(
+            "candidate_model is required: the trained checkpoint must be served "
+            "under a model alias before it can be benchmarked"
+        )
+    if request.baseline_score <= 0:
+        raise InvalidResearchJob(
+            "a measured baseline_score greater than zero is required; "
+            "an unmeasured baseline cannot prove improvement"
+        )
+    eval_suite = None
+    if evaluate is None and lm_eval_driver is None:
+        # Default to the representative multi-domain suite; the old five-item
+        # set remains available only as an explicitly injected driver.
+        eval_suite = default_eval_suite()
+        if eval_suite is not None:
+            evaluate = eval_suite.evaluate
+    if lm_eval_driver is not None:
+        evaluate = lm_eval_driver.evaluate
     if evaluate is None:
         raise InvalidResearchJob("a trusted evaluate callable is required")
     if not adapters:
@@ -105,11 +146,30 @@ async def prepare_candidate(
         task_type=request.task_type,
         repetitions=2,
     )
+    if lm_eval_driver is not None:
+        benchmark_spec = replace(
+            benchmark_spec,
+            config={**benchmark_spec.config, **eval_config(lm_eval_driver)},
+        )
+    elif eval_suite is not None:
+        benchmark_spec = replace(
+            benchmark_spec,
+            config={**benchmark_spec.config, **eval_suite_config(eval_suite)},
+        )
+    benchmark_spec = replace(
+        benchmark_spec,
+        config={
+            **benchmark_spec.config,
+            "base_model": request.base_model,
+            "candidate_model": candidate_model,
+            "checkpoint_ref": request.checkpoint_ref,
+        },
+    )
     runner = BenchmarkRunner(store)
     results: List[BenchmarkResult] = [
         runner.run(
             benchmark_spec,
-            request.base_model,
+            candidate_model,
             request.experiment_id,
             hardware={"checkpoint_ref": request.checkpoint_ref},
             evaluate=evaluate,
@@ -139,7 +199,7 @@ async def prepare_candidate(
         )
         benchmark_refs.append(ref)
     registered = await ModelReleaseService(db, store).register(
-        model=request.base_model,
+        model=candidate_model,
         version=request.version,
         checkpoint_ref=request.checkpoint_ref,
         capability_profile=profile,
@@ -155,7 +215,8 @@ async def prepare_candidate(
     )
     return {
         "status": "candidate",
-        "model": request.base_model,
+        "model": candidate_model,
+        "base_model": request.base_model,
         "version": request.version,
         "experiment_id": request.experiment_id,
         "dataset": dataset.as_dict(),

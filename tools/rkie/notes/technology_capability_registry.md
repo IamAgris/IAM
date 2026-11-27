@@ -17,7 +17,7 @@ This registry is **distinct** from:
 | `backend/app/models/technology.py` | `TechnologyCapability` table (licence, cost, architecture, lifecycle, benchmarks) |
 | `backend/app/services/technology_registry_service.py` | Register/list/get/state/benchmark; lifecycle gate forbids direct researched→integrated |
 | `backend/app/api/routes/technology_registry.py` | `/api/v1/technology-registry/*` |
-| `backend/app/db/migrations/018_technology_capabilities.sql` | DB table + indexes |
+| `backend/app/db/migrations/040_technology_capabilities.sql` | DB table + indexes |
 | `backend/tests/test_technology_registry.py` | 7 unit tests (no DB) |
 | `IAM_API_CONTRACTS.md` | Endpoint contracts |
 

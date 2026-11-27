@@ -732,12 +732,12 @@ All eight items were confirmed by the owner on 26 November 2026 and recorded as 
 | `.github/workflows/ci.yml` | HBI acceptance step added to `backend-unit` |
 | `backend/tests/integration_db_check.py` | HBI migrations 029/030, graded persistence, hydration, acceptance gates and authenticated `/hbi/status` check |
 | `backend/app/api/routes/hbi.py` | Forty-one versioned `hbi.*` endpoints |
-| `backend/app/db/migrations/029_hbi.sql`, `030_hbi_history_graph.sql` | Persistent memory and historical graph tables |
+| `backend/app/db/migrations/029_hbi.sql`, `044_hbi_history_graph.sql` | Persistent memory and historical graph tables |
 | `backend/tests/test_hbi.py` | 46 tests: all previous areas plus module 27, multilingual/script detection, duplicate screening and acceptance gates |
 
 **Verification:** 46/46 HBI tests pass; FastAPI OpenAPI registers all forty-one `/api/v1/hbi/*` paths; dedicated CI acceptance gate passes all 10 gates locally. Full backend suite previously: 284 tests, one pre-existing environment failure (`test_ownerauth_reconciliation` → blocked `_xxhash` DLL, unrelated).
 
-**Production readiness (26 November 2026):** the mainbrain interface is exposed as `iam.hbi.*` in the official Python SDK; HBI API dependencies commit knowledge and audit writes on success and roll back on failure, so records and audit events are durable in PostgreSQL; startup `Base.metadata.create_all` creates the HBI tables, with `029_hbi.sql` and `030_hbi_history_graph.sql` available for explicit migration paths.
+**Production readiness (26 November 2026):** the mainbrain interface is exposed as `iam.hbi.*` in the official Python SDK; HBI API dependencies commit knowledge and audit writes on success and roll back on failure, so records and audit events are durable in PostgreSQL; startup `Base.metadata.create_all` creates the HBI tables, with `029_hbi.sql` and `044_hbi_history_graph.sql` available for explicit migration paths.
 
 **Evidence and validation (26 November 2026):** licensed corpus ingestion is available via manifest; 12 leakage-safe backtest cases ship as explicitly labelled illustrative fixtures (not real historical evidence); empirical source reliability replaces heuristic priors where n≥3; module 14 is integrated into the 38-module framework as well as its dedicated defensive endpoint. Module 15 now has a dedicated evaluation surface (`evaluation_module.py`): model registry states, bias/drift flags and calibration evidence, with no promotion authority. All 38 modules are registered and implemented at framework level.
 
@@ -745,7 +745,9 @@ All eight items were confirmed by the owner on 26 November 2026 and recorded as 
 
 **Provenance integrity (27 November 2026):** every knowledge record now declares `provenance_kind`; illustrative fixtures are explicitly excluded from validation. `corpus_readiness()` and `/validation/corpus-readiness` report whether licensed records (not fixtures) are available. A corpus manifest template and `hbi_validation_check.py` support licensed-corpus acquisition and honest reporting. The current check reports **not_validated** with `insufficient_real_backtest_cases` — no scientific validation is claimed without real evidence.
 
-**Not yet implemented:** acquisition of real licensed historical corpora, model-based translation and deep multilingual semantics (translator is injectable, not bundled), deep models for source grading and language detection, . `iam.hbi.*` bindings exist in both the Python and TypeScript SDKs. Prediction requires **both** A8 context approval and explicit model validation; either failure returns a structured refusal. The full local backend suite still has one unrelated environment failure (`test_ownerauth_reconciliation` → blocked `_xxhash` DLL); CI runs on Ubuntu and is unaffected.
+**Translation and research lab (27 November 2026):** `translation.py` provides local-first model translation (local model preferred, hosted optional) with original-text preservation, language/script detection, cultural tagging and cross-lingual claim comparison. `research_lab.py` implements consented studies: ethics approval required for human participants, pseudonymous response storage, consent-scope enforcement, withdrawal and deletion. `iam.hbi.*` bindings exist in both the Python and TypeScript SDKs.
+
+**Not yet implemented:** acquisition of real licensed historical corpora, deep models for source grading and language detection, and actual studies with real participants (the lifecycle exists; no study has been run). Prediction requires **both** A8 context approval and explicit model validation; either failure returns a structured refusal. The full local backend suite still has one unrelated environment failure (`test_ownerauth_reconciliation` → blocked `_xxhash` DLL); CI runs on Ubuntu and is unaffected.
 
 **Governance and human protection (26 November 2026):** dual-use review gate, structured DPIA input and human-oversight gate are implemented and documented in §18; consequential decisions are always referred to an accountable human.
 
@@ -801,7 +803,7 @@ Activation is a **no-go until all blockers are cleared**; IAM cannot self-approv
 | DPIA reviewed and signed | `POST /api/v1/hbi/governance/dpia/signoff` with an authorised reviewer, decision and basis |
 | No prohibited dual-use decisions | Audit log contains no `PROHIBITED` dual-use outcome |
 | SDK interface registered | `iam.hbi.*` present in the official Python SDK |
-| Migrations applied | `029_hbi.sql`, `030_hbi_history_graph.sql`, `031_hbi_governance.sql`, or `create_all` at startup |
+| Migrations applied | `029_hbi.sql`, `044_hbi_history_graph.sql`, `031_hbi_governance.sql`, or `create_all` at startup |
 | Audit durable | API dependency commits knowledge and audit writes on success |
 | Rollback tested | Previous model/knowledge versions restorable under OD-40 rules |
 

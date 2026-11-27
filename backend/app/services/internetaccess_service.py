@@ -286,8 +286,16 @@ class InternetAccessService:
         target_platform: Optional[str] = None,
         url: Optional[str] = None,
         authorised_by: Optional[str] = None,
+        governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Publish content — requires owner authorization."""
+        if governance_context and governance_context.get("source_id"):
+            from app.services.iplci.gateway import get_gateway
+
+            await get_gateway().enforce_publication(
+                source_id=governance_context["source_id"],
+                agent_id=governance_context.get("agent_id", "main"),
+            )
         permission = await self.check_permission("publish_content")
         if not permission["permitted"]:
             return {"error": permission["reason"], "authorization_required": True}

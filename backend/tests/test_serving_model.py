@@ -35,6 +35,22 @@ class ServingModelTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restored.model, "local-qwen-3b")
         self.assertEqual(restored.source, "rollback")
 
+    async def test_second_rollback_does_not_toggle_back(self):
+        serving_model.activate("local-qwen-coder-3b", version="v2", actor="test")
+        serving_model.activate("local-qwen-coder-3b", version="v3", actor="test")
+        serving_model.rollback(target_version="v2")
+        first = serving_model.current()
+        self.assertEqual(first.version, "v2")
+        self.assertEqual(first.previous, None)
+
+        serving_model.rollback(target_version="v2")
+        self.assertEqual(serving_model.current().model, first.model)
+
+    async def test_rollback_target_must_match_recorded_version(self):
+        serving_model.activate("local-qwen-coder-3b", version="v5", actor="test")
+        with self.assertRaises(ValueError):
+            serving_model.rollback(target_version="v9")
+
     async def test_local_primary_wins_over_configured_hosted_key(self):
         service = InferenceService()
         with (
@@ -91,7 +107,9 @@ class ServingModelTests(unittest.IsolatedAsyncioTestCase):
             patch.object(
                 service,
                 "_ollama_models",
-                new=AsyncMock(return_value=["qwen2.5:3b"]),
+                # Deliberately exclude the OD-46 primary local tag so this
+                # scenario really is "primary missing".
+                new=AsyncMock(return_value=["unrelated-local-model:7b"]),
             ),
         ):
             status = await service.resolve()

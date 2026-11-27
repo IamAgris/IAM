@@ -26,11 +26,11 @@ def dataset_result(licence="CC-BY-4.0"):
     )
 
 
-def benchmark(mean):
+def benchmark(mean, model="local-qwen-coder-3b-v2"):
     return BenchmarkResult(
         spec_name="coding-regression",
         task_type="coding",
-        model="local-qwen-coder-3b",
+        model=model,
         experiment_id="exp_test",
         scores=[mean, mean],
         mean=mean,
@@ -53,6 +53,7 @@ class PipelineTests(unittest.IsolatedAsyncioTestCase):
             experiment_id="exp_test",
             licence="CC-BY-4.0",
             base_model="local-qwen-coder-3b",
+            candidate_model="local-qwen-coder-3b-v2",
             checkpoint_ref="ckpt",
             baseline_score=0.5,
             min_improvement=0.01,
@@ -108,12 +109,20 @@ class PipelineTests(unittest.IsolatedAsyncioTestCase):
         result = await self._run()
         self.assertEqual(result["status"], "candidate")
         self.assertEqual(result["promoted"], False)
+        self.assertEqual(result["model"], "local-qwen-coder-3b-v2")
+        self.assertEqual(result["base_model"], "local-qwen-coder-3b")
         self.assertEqual(result["post_score"], 0.8)
         self.assertEqual(len(result["benchmark_refs"]), 2)
         self.assertNotEqual(result["benchmark_refs"][0], result["benchmark_refs"][1])
 
     async def test_missing_evaluator_fails_closed(self):
-        with self.assertRaises(InvalidResearchJob):
+        with (
+            patch.object(
+                self_improvement, "default_lm_eval_driver", return_value=None
+            ),
+            patch.object(self_improvement, "default_eval_suite", return_value=None),
+            self.assertRaises(InvalidResearchJob),
+        ):
             await self_improvement.prepare_candidate(
                 FakeDB(), self.request, store=self.store, adapters=[object()]
             )
@@ -126,6 +135,62 @@ class PipelineTests(unittest.IsolatedAsyncioTestCase):
                 store=self.store,
                 adapters=[],
                 evaluate=lambda _spec, _model: 0.8,
+            )
+
+    async def test_benchmark_measures_candidate_not_base_model(self):
+        with (
+            patch.object(
+                self_improvement,
+                "build_dataset",
+                new=AsyncMock(return_value=dataset_result()),
+            ),
+            patch.object(
+                self_improvement.TrainingService,
+                "submit",
+                new=AsyncMock(
+                    return_value=(
+                        SimpleNamespace(job=SimpleNamespace(experiment_id="exp_test")),
+                        SimpleNamespace(experiment_id="exp_test"),
+                    )
+                ),
+            ),
+            patch.object(
+                self_improvement.BenchmarkRunner,
+                "run",
+                side_effect=[benchmark(0.8), benchmark(0.8)],
+            ) as run,
+            patch.object(
+                self_improvement.CapabilityRegistry,
+                "record",
+                return_value=SimpleNamespace(to_dict=lambda: {"coding": 0.8}),
+            ),
+            patch.object(
+                self_improvement.ModelReleaseService,
+                "register",
+                new=AsyncMock(return_value={"status": "candidate"}),
+            ),
+        ):
+            await self_improvement.prepare_candidate(
+                FakeDB(),
+                self.request,
+                store=self.store,
+                adapters=[object()],
+                evaluate=lambda _spec, _model: 0.8,
+            )
+        measured = [call.args[1] for call in run.call_args_list]
+        self.assertEqual(measured, ["local-qwen-coder-3b-v2", "local-qwen-coder-3b-v2"])
+
+    async def test_unserved_candidate_fails_closed(self):
+        request = self_improvement.CandidateRequest(
+            experiment_id="exp_test",
+            licence="CC-BY-4.0",
+            base_model="local-qwen-coder-3b",
+            checkpoint_ref="ckpt",
+            baseline_score=0.5,
+        )
+        with self.assertRaises(InvalidResearchJob):
+            await self_improvement.prepare_candidate(
+                FakeDB(), request, store=self.store, adapters=[object()]
             )
 
     async def test_incomplete_provenance_fails_before_submission(self):

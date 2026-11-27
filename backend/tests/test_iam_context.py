@@ -35,6 +35,7 @@ class FakeDB:
 
 def item(title, content, *, private=False, topic="crypto"):
     return SimpleNamespace(
+        id="item-1",
         title=title,
         content=content,
         source="https://example.invalid/source",

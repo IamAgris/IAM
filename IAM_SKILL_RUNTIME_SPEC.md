@@ -51,7 +51,7 @@ changing the policy gates.
 | --- | --- |
 | Service and gates | `backend/app/services/skillruntime/service.py` |
 | Adapters | `backend/app/services/skillruntime/adapters.py` |
-| Model / DDL | `backend/app/models/skillruntime.py`, `009_skill_runtime.sql` |
+| Model / DDL | `backend/app/models/skillruntime.py`, `032_skill_runtime.sql` |
 | API | `backend/app/api/routes/skillruntime.py` |
 | Tests | `backend/tests/test_skill_runtime.py`, integration check |
 

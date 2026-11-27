@@ -177,9 +177,102 @@ that way.
 
 ---
 
-## Deliberately out of scope for Phase 1
+## Phase 2 — code intelligence features
 
-AST/symbol graph, call graph, FTS5 full-text database, embeddings, hybrid
-ranking, investigation-memory automation, git hooks and background indexing.
-Those are later phases and should be added only after this foundation is used
-and measured.
+All of these are local, deterministic Python features under `tools/rkie/`:
+
+```powershell
+python tools/rkie/repo_intel.py build                         # AST + SQLite FTS5 indexes
+python tools/rkie/repo_intel.py --json symbol IntelligenceRouter
+python tools/rkie/repo_intel.py --json search "modelrouter"
+python tools/rkie/repo_intel.py --json impact backend/app/api/routes/modelrouter.py
+python tools/rkie/repo_intel.py --json health
+python tools/rkie/repo_intel.py --json history "OD-46"
+python tools/rkie/repo_intel.py --json git changelog --from-ref HEAD~5
+python tools/rkie/repo_intel.py --json memory record auth --files AGENTS.md
+python tools/rkie/repo_intel.py --json memory verify auth
+python tools/rkie/repo_intel.py --json benchmark
+python tools/rkie/agent_api.py plan --input '{"question":"who calls X?"}'
+```
+
+| Feature | Implementation |
+|---------|----------------|
+| AST index | `intel_core.CodeIndex` — definitions, imports, calls, routes, ORM models, spec/decision links |
+| Hybrid search | `intel_core.HybridSearch` — exact symbols > filenames > SQLite FTS5 > fuzzy fallback |
+| Impact analysis | `change_impact()` — changed symbols → call sites, importers, routes, models, tests, specs |
+| Repository health | cycles, dead-symbol candidates, sources without tests, broken doc references |
+| Git intelligence | pickaxe, blame, diff stat, changelog between refs |
+| Investigation memory | `notes/memory/*.json` with file hashes; `verify` marks evidence stale |
+| Search benchmark | fixed query set, recall@20 and latency recorded in `index/benchmark.json` |
+| Agent interface | `agent_api.py` — `search`, `symbol`, `impact`, `history`, `remember`, `verify_memory`, `health`, `benchmark`, `plan` |
+
+`agent_api.py` is the stable model-independent interface: Qwen2.5:3B may call
+it, but indexing, ranking and verification stay deterministic tools.
+
+Current benchmark: **recall@20 = 1.0** on five fixed queries. Current health
+report lists real broken documentation references and dead-symbol candidates;
+those are findings, not false alarms to suppress.
+
+## Additional Phase 2 services
+
+```powershell
+python tools/rkie/index_migrations.py --check --json
+python tools/rkie/watch_index.py --once --json
+python tools/rkie/multi_repo.py list --json
+python tools/rkie/agent_coordination.py status --json
+python tools/quality/mypy_debt.py --top 10
+python tools/quality/check_workflows.py --json
+```
+
+- **Semantic retrieval** — `semantic.py` builds a local TF-IDF vector index
+  (`index/semantic.sqlite`) and returns cosine-ranked results labelled
+  `source: semantic`. It supplements exact/FTS results, never replaces them.
+  It is deliberately lexical-semantic and local; a neural embedding model can
+  be swapped in behind the same interface later.
+- **Index schema migrations** — `index_migrations.py` versions the index
+  contract (`index/INDEX_SCHEMA.json`) and checks/rebuilds derived indexes.
+- **Background indexing** — `watch_index.py` polls file hashes and rebuilds
+  only on change; `--once` is the CI-safe mode, without it the process loops.
+- **Multi-repository registry** — `config/repositories.json` marks each repo's
+  role and authority. External research results are labelled `authority:
+  external` and are never treated as implementation evidence.
+- **Persistent agent coordination** — `agent_coordination.py` stores topic
+  claims with leases in `index/agent-coordination.json` so parallel agents do
+  not duplicate investigations or collide on files.
+- **Quality tracking** — `tools/quality/mypy_debt.py` ranks typing debt;
+  `check_workflows.py` statically validates all workflow YAML and script
+  references.
+
+## Local models, watchers and external sync
+
+```powershell
+python tools/rkie/embeddings.py
+python tools/rkie/watch_index.py --watch-os --interval 30
+python tools/rkie/external_sync.py --apply --json
+python tools/rkie/external_sync.py --verify --json
+python tools/quality/run_local_ci.py --only workflows
+```
+
+- `embeddings.py` is a **local-only adapter** for Ollama embeddings. It is
+  enabled against a locally running Ollama instance with `nomic-embed-text`
+  (768 dimensions). `neural.py` lazily embeds only the shortlist from exact/FTS
+  retrieval and caches vectors by file hash in `index/neural-cache.sqlite`;
+  results are labelled `source: neural_rerank` and never replace exact/filename
+  hits. If the endpoint is unreachable it fails closed and the TF-IDF index
+  remains authoritative. Check with `python tools/rkie/neural.py status --json`. No content is sent externally.
+- `watch_index.py --watch-os` uses `watchdog` for OS-level file events;
+  the default mode still polls hashes and works without that dependency.
+- `external_sync.py` synchronises metadata from registered external sources
+  into `index/external-knowledge.json`, always labelled `authority: external`.
+  It performs no network access and never merges external text into the
+  authoritative implementation index.
+- `tools/quality/run_local_ci.py` runs the deterministic gates locally in CI
+  order. It is a simulation, not GitHub Actions.
+
+## Still not implemented
+
+Neural embeddings on machines without a local Ollama model (the adapter is
+enabled here and fails closed elsewhere), actual reduction of the ~2,000-error mypy baseline
+(the ratchet and debt tracker exist; a libcst codemod is provided but Windows
+App Control blocks libcst's native extension on this host), and execution of
+workflows on GitHub Actions (only static validation is possible locally).

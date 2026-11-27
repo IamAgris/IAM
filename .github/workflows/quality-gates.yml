@@ -23,6 +23,85 @@ jobs:
       - name: Blocking lint rules
         run: python -m ruff check backend
 
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install mypy
+        run: python -m pip install mypy
+      - name: Strict typing for new modules
+        working-directory: backend
+        run: python -m mypy --config-file mypy.ini
+      - name: Full-repository strict typing ratchet
+        run: python tools/quality/check_mypy_ratchet.py
+
+  repo-intel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Repository intelligence tests
+        run: python -m pytest tools/rkie/tests -q
+      - name: Search quality benchmark
+        run: python tools/rkie/repo_intel.py benchmark --json
+      - name: Agent interface smoke check
+        run: python tools/rkie/agent_api.py plan --input '{"question":"who calls IntelligenceRouter?"}'
+      - name: Semantic retrieval smoke check
+        run: python tools/rkie/repo_intel.py --json search "hybrid retrieval"
+      - name: Multi-repository registry
+        run: python tools/rkie/multi_repo.py list --json
+      - name: Agent coordination state
+        run: python tools/rkie/agent_coordination.py status --json
+      - name: Index schema check
+        run: python tools/rkie/index_migrations.py --check --json
+      - name: Background indexer single cycle
+        run: python tools/rkie/watch_index.py --once --json
+      - name: External knowledge sync check
+        run: python tools/rkie/external_sync.py --verify --json
+      - name: Local embedding adapter status
+        run: python tools/rkie/embeddings.py
+
+  workflow-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install YAML parser
+        run: python -m pip install pyyaml
+      - name: Validate workflow files
+        run: python tools/quality/check_workflows.py --json
+      - name: MyPy debt report
+        run: python tools/quality/mypy_debt.py --top 10
+
+  sdk-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: TypeScript SDK contract tests
+        working-directory: sdk/typescript
+        run: |
+          npm ci
+          npm run build
+          npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python SDK contract tests
+        working-directory: sdk/python
+        run: |
+          python -m pip install -e .
+          python -m pytest tests -q
+
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -39,10 +118,17 @@ jobs:
         run: python -m pytest tests -q --cov=app --cov-report=term --cov-fail-under=60
 
   acceptance:
-    # Needs a live stack on http://localhost:8000 (the scripts hardcode BASE),
-    # so this is manual-only until compose startup is wired into the job.
-    if: github.event_name == 'workflow_dispatch'
+    # Runs on every PR and push: starts the minimum live stack itself,
+    # bootstraps a scoped credential, then runs Level 1-5.
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: postgresql+asyncpg://aura:change-me-securely@localhost:5433/aura_db
+      REDIS_URL: redis://localhost:6379/0
+      LITELLM_MASTER_KEY: change-me-securely
+      IAM_BOOTSTRAP_API_KEY: ci-acceptance-bootstrap-key
+      IAM_API_URL: http://localhost:8000
+      AUTH_ENABLED: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,8 +136,18 @@ jobs:
           python-version: '3.12'
       - name: Install acceptance dependencies
         run: python -m pip install httpx
+      - name: Start minimum IAM stack
+        run: docker compose up -d --wait postgres redis litellm backend
+      - name: Bootstrap admin acceptance credential
+        run: |
+          KEY=$(python backend/scripts/bootstrap_acceptance_admin.py)
+          test -n "$KEY"
+          echo "IAM_API_KEY=$KEY" >> "$GITHUB_ENV"
       - name: Run Level 1-5 acceptance suites
         run: |
           for level in 1 2 3 4 5; do
             python tests/level${level}_acceptance.py
           done
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v

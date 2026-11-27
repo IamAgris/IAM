@@ -27,7 +27,7 @@ Unify the model used by IAM's frontend and backend under one shared primary, and
 
 | Role | Current alias/id | Where | Authority |
 |------|------------------|-------|-----------|
-| Shared primary | `local-qwen-coder-3b` → `qwen2.5-coder:3b` | Local Ollama, opt-in via `OLLAMA_ENABLED` | Default for all IAM chat and reasoning |
+| Shared primary | `local-qwen-3b` → `qwen2.5:3b` | Local Ollama, opt-in via `OLLAMA_ENABLED` | Default for all IAM chat and reasoning; owner reopened OD-46 on 27 Nov 2026 |
 | Secondary local model | `local-qwen-3b` → `qwen2.5:3b` | Local Ollama | Approved alternative, not the default |
 | Fallback / general specialist | `qwen3.5-9b` | Hosted DashScope (LiteLLM) | Explicit sub-agent or fallback when local unavailable |
 | Further hosted specialists | NVIDIA NIM, Gemini (gated) | Hosted, replaceable | Optional, explicit id only |
@@ -101,11 +101,11 @@ Returns the single shared primary and its resolution state:
 
 ## 8. Decision resolved — local model variant (OD-46)
 
-OD-38 (25 November 2026) had removed `qwen2.5-coder:3b` from the local set and kept only `qwen2.5:3b`. On 26 November 2026 the owner reopened that choice: **Qwen2.5-Coder 3B is the shared primary local model**, with `qwen2.5:3b` retained as an approved secondary local model. Recorded as OD-46 in `IAM_OWNER_DECISIONS.md`.
+OD-38 (25 November 2026) had removed `qwen2.5-coder:3b` from the local set and kept only `qwen2.5:3b`. On 26 November 2026 the owner reopened that choice to **Qwen2.5-Coder 3B**; on **27 November 2026 the owner reopened it again to Qwen2.5-3B** (`qwen2.5:3b`, alias `local-qwen-3b`), with `qwen2.5-coder:3b` retained as an optional secondary local model. Recorded as OD-46 in `IAM_OWNER_DECISIONS.md`.
 
 Evidence relied on: `tests/model_competition/RESULTS.md` — weighted score 4.10 for `local-qwen-coder-3b` versus 3.83 for `local-qwen-3b` and 2.87 for `local-qwen3.5-4b` (`think=false`), with measured cold/warm latency and RAM profiles on the 4 vCPU / 8 GB target. The previous primary remains available for rollback.
 
-Configuration applied: `IAM_PRIMARY_MODEL=local-qwen-coder-3b`, `IAM_PRIMARY_LOCAL_TAG=qwen2.5-coder:3b`, the `local-qwen-coder-3b` alias in `infra/litellm/config.yaml`, and `OLLAMA_ENABLED=true`. Local inference remains opt-in by design; if it is disabled or the tag is not pulled, the hosted fallback serves requests and reports that fact.
+Configuration applied after the 27 Nov 2026 reopening: `IAM_PRIMARY_MODEL=local-qwen-3b`, `IAM_PRIMARY_LOCAL_TAG=qwen2.5:3b`, the `local-qwen-3b` alias in `infra/litellm/config.yaml`, and `OLLAMA_ENABLED=true`. The coder alias remains an optional secondary, not the default. Local inference remains opt-in by design; if it is disabled or the tag is not pulled, the hosted fallback serves requests and reports that fact.
 
 ## 9. Implementation references
 

@@ -11,14 +11,21 @@ import loguru
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.services import delegation as delegation_service
+from app.services import delegation_orchestrator
 from app.services import serving_model
 from app.services.iam_context import assemble_context, with_context
+from app.services.live_information_policy import (
+    SearchTriggerClassifier,
+    collect_live_evidence,
+    with_live_policy,
+)
 from app.services.model_inference import InferenceUnavailable, inference_service
 from app.services.model_policy import (
     PAID_ACTION,
     SKILL_ACTION,
     ModelPolicyDenied,
     require_authorization,
+    require_paid_authorization,
 )
 from app.services.skillruntime.service import SkillRuntimeService
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +40,12 @@ class ChatMessage(BaseModel):
     content: str
 
 
+class DelegationTaskRequest(BaseModel):
+    task: str
+    model: Optional[str] = None
+    role: str = "specialist"
+
+
 class ChatRequest(BaseModel):
     model: Optional[str] = None
     messages: List[ChatMessage]
@@ -43,6 +56,9 @@ class ChatRequest(BaseModel):
     # Optional hosted specialist: explicit opt-in, signed authorization required.
     delegate: bool = False
     delegate_model: Optional[str] = None
+    # OD-51 §4.4: bounded parallel specialist tasks. Each still needs its own
+    # signed authorization inside delegation.run.
+    delegation_tasks: List[DelegationTaskRequest] = Field(default_factory=list)
     # Paid inference and skill execution need a signed authorization too.
     allow_paid: bool = False
     skill: Optional[str] = None
@@ -57,11 +73,18 @@ def _plain_messages(request: ChatRequest) -> List[Dict[str, str]]:
 async def _prepare_messages(
     request: ChatRequest, db: AsyncSession, status
 ) -> tuple[List[Dict[str, str]], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-    """Add IAM context, an authorized specialist's findings and gated skill output."""
-    messages = _plain_messages(request)
+    """Add IAM context, live web evidence, specialist findings and gated skill output."""
+    # Standing behaviour: the live-information policy is present on every chat
+    # request, regardless of whether a search is needed (proposed Doc 32 §2).
+    messages = with_live_policy(_plain_messages(request))
     query = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
     if request.allow_paid:
         await require_authorization(db, PAID_ACTION)
+    # An explicit paid model or a paid hosted fallback must be authorized even
+    # when the caller did not set allow_paid.
+    for candidate in (request.model, status.model):
+        if candidate:
+            await require_paid_authorization(db, candidate)
 
     action: Optional[Dict[str, Any]] = None
     if request.skill:
@@ -94,8 +117,6 @@ async def _prepare_messages(
                 "reason": str(exc)[:200],
             }
 
-    if not query:
-        return messages, None, action
     bundle = await assemble_context(
         db,
         query,
@@ -103,6 +124,36 @@ async def _prepare_messages(
         include_memory=request.include_memory,
     )
     messages = with_context(messages, bundle.as_system_message())
+
+    # Automatic search: the deterministic classifier decides that live
+    # information is needed; the Web Intelligence Engine performs retrieval
+    # through the existing free-provider search stack. Qwen analyses the result.
+    if settings.iam_live_info_enabled:
+        trigger = SearchTriggerClassifier().classify(query)
+        if trigger.needs_search:
+            evidence = await collect_live_evidence(query, trigger=trigger)
+            messages = evidence.inject(messages)
+
+    if request.delegation_tasks:
+        # Bounded OD-51 fan-out. No private memory is passed to any specialist;
+        # only IAM-accepted findings return as labelled, unverified context.
+        orchestration = await delegation_orchestrator.run_parallel(
+            db,
+            [
+                delegation_orchestrator.DelegationTask(
+                    task=item.task, model=item.model, role=item.role
+                )
+                for item in request.delegation_tasks
+            ],
+            actor="chat",
+        )
+        context = orchestration.context_message()
+        if context:
+            messages = with_context(messages, context)
+        return messages, orchestration.as_dict(), action
+
+    if not query:
+        return messages, None, action
     if not request.delegate:
         return messages, None, action
 
@@ -188,6 +239,7 @@ async def chat_completion(
             model=request.model,
             temperature=request.temperature or 0.7,
             max_tokens=request.max_tokens,
+            db=db,
         )
         if delegation is not None:
             result["iam_delegation"] = delegation
@@ -244,6 +296,7 @@ async def chat_stream(
                 model=request.model,
                 temperature=request.temperature or 0.7,
                 max_tokens=request.max_tokens,
+                db=db,
             ):
                 data = dict(item["data"])
                 if item["event"] == "start":

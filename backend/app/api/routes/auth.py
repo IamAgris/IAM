@@ -7,7 +7,7 @@ remains email + signed challenge and is never issued as an API key.
 
 import hmac
 import os
-from typing import List
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -37,7 +37,7 @@ def _admin(request: Request) -> None:
 
 
 @router.get("/protocol")
-async def protocol():
+async def protocol() -> dict[str, Any]:
     """Advertise the protocol version enforced by the SDK contract."""
     return {
         "version": settings.iam_protocol_version,
@@ -52,7 +52,7 @@ async def bootstrap(
     request: Request,
     payload: BootstrapRequest,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> dict[str, Any]:
     """Create the first credential using the environment bootstrap key."""
     expected = os.environ.get(settings.auth_bootstrap_key_env, "")
     provided = request.headers.get("X-Bootstrap-Key", "")
@@ -78,7 +78,7 @@ async def bootstrap(
 
 
 @router.get("/me")
-async def me(request: Request):
+async def me(request: Request) -> Any:
     credential = getattr(request.state, "credential", None)
     if not credential:
         raise HTTPException(status_code=401, detail="No credential on request")
@@ -90,7 +90,7 @@ async def create_credential(
     request: Request,
     payload: CredentialRequest,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> dict[str, Any]:
     _admin(request)
     if payload.scope not in SCOPE_RANK:
         raise HTTPException(status_code=400, detail=f"Unknown scope: {payload.scope}")
@@ -109,7 +109,7 @@ async def create_credential(
 @router.get("/credentials")
 async def list_credentials(
     request: Request, db: AsyncSession = Depends(get_db_session)
-):
+) -> Any:
     _admin(request)
     return await AuthService(db).list_credentials()
 
@@ -117,7 +117,7 @@ async def list_credentials(
 @router.post("/credentials/{name}/revoke")
 async def revoke_credential(
     name: str, request: Request, db: AsyncSession = Depends(get_db_session)
-):
+) -> dict[str, Any]:
     _admin(request)
     if not await AuthService(db).revoke_credential(name):
         raise HTTPException(status_code=404, detail="Credential not found")

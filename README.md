@@ -15,7 +15,8 @@
 **Deployment:** [configuration and preflight](IAM_DEPLOYMENT_CONFIG.md)  
 **Privacy:** [secrets, encryption and data rights](IAM_PRIVACY_AND_SECRETS.md)  
 **Media & research:** [voice, vision and verification](IAM_MEDIA_AND_RESEARCH.md)  
-**External modules:** [P2P/Aegis review](IAM_EXTERNAL_MODULES_REVIEW.md)
+**External modules:** [P2P/Aegis review](IAM_EXTERNAL_MODULES_REVIEW.md)  
+**Browser/geo backend:** [UWAIE phase 1 slice](IAM_BROWSER_AND_GEO_BACKEND.md)
 
 ---
 
@@ -101,7 +102,7 @@ project-aura/
 ├── docker-compose.yml         # Infrastructure stack
 ├── .env.example              # Environment template
 ├── backend/                  # Python + FastAPI (119 ORM tables, 41 routes)
-├── frontend/                 # Immersive IAM interface + /voice + /vision (no dashboard)
+├── frontend/                 # Single immersive IAM interface at / (no other pages)
 ├── tests/                    # Level 1–5 acceptance suites
 └── infra/                    # LiteLLM config, Postgres init
 ```
@@ -147,10 +148,10 @@ project-aura/
 
 ## Frontend Pages
 
-`/`, `/conversations`, `/identity`, `/memory`, `/research`, `/voice`, `/vision`,
-`/development`, `/autonomy`, `/learning`, `/businesses`, `/finances`, `/resources`,
-`/security`, `/external-presence`, `/external-presence/vibecircle`, `/life`, `/world`,
-`/resilience`, `/capabilities`, `/governance`, `/reflection`
+`/` only. Voice, vision, tone, AI network, suggestions and infrastructure views are
+capabilities invoked from the single screen, not separate pages — their reusable
+implementations live in `frontend/components/iam/panels/`. `/iam-proxy/*` is a
+backend API route handler, not a page.
 
 ---
 
@@ -254,7 +255,7 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
 - `IAM_OWNER_DECISIONS.md` — 44 owner decisions (ALL LOCKED)
-- `IAM_OPENAPI.json` — generated OpenAPI schema (565 paths, 352 schemas)
+- `IAM_OPENAPI.json` — generated OpenAPI schema (708 paths, 435 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 
 **Pre-implementation phase complete. Ready for Phase 0/1 build.**

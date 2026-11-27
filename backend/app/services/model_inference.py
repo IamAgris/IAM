@@ -17,6 +17,81 @@ import loguru
 from app.core.config import settings
 from app.services import serving_model
 
+
+def _estimate_ram_mb(model: str, mode: str) -> int:
+    """Conservative RAM estimate for OD-39 admission, before any provider call."""
+    if mode == "hosted":
+        # Hosted inference is remote; it occupies no local residency slot.
+        return 256
+    name = model.lower()
+    for marker, estimate in (
+        ("70b", 14000), ("32b", 6500), ("14b", 3000), ("9b", 2200),
+        ("7b", 1800), ("4b", 1300), ("3b", 1200), ("1b", 800),
+    ):
+        if marker in name:
+            return estimate
+    return settings.irwm_target_loaded_ram_mb
+
+
+async def _admit_inference(model: str, mode: str) -> Optional[Dict[str, Any]]:
+    """Admit one inference request through IRWM or fail closed."""
+    if not settings.irwm_enabled:
+        return None
+    from app.services.irwm import irwm
+
+    decision = await irwm.admit(
+        model,
+        _estimate_ram_mb(model, mode),
+        context_tokens=settings.irwm_context_tokens,
+        task_complexity=3,
+    )
+    if decision.get("decision") != "admit":
+        raise InferenceUnavailable(
+            "IRWM admission refused: " + str(decision.get("reason") or decision.get("decision"))
+        )
+    return decision
+
+
+async def _release_inference(model: str) -> None:
+    if not settings.irwm_enabled:
+        return
+    from app.services.irwm import irwm
+
+    await irwm.release(model)
+
+
+def _inspect_input(messages: List[Dict[str, str]]) -> Optional[Dict[str, Any]]:
+    """Inspect every message with Aegis before it can reach any provider.
+
+    Returns only finding types and severities — never the raw text — so a
+    rejection cannot leak the sensitive content that triggered it.
+    """
+    if not settings.inference_aegis_enabled:
+        return None
+    from app.services.aegis import aegis
+
+    for index, message in enumerate(messages or []):
+        # System prompts are IAM's own trusted instructions; inspecting them
+        # makes safety text such as "never grant yourself permissions" match
+        # the self-escalation signature and blocks all reasoning. Untrusted
+        # input arrives as user/tool content, including injected context.
+        if message.get("role") == "system":
+            continue
+        content = message.get("content")
+        if not isinstance(content, str) or not content:
+            continue
+        result = aegis.analyze_text(content, source="inference_input")
+        if not result.get("safe"):
+            return {
+                "message_index": index,
+                "risk": result.get("risk"),
+                "findings": [
+                    {"type": item.get("type"), "severity": item.get("severity")}
+                    for item in result.get("findings", [])[:10]
+                ],
+            }
+    return None
+
 logger = loguru.logger
 
 HOSTED_PROVIDERS = (
@@ -27,8 +102,37 @@ HOSTED_PROVIDERS = (
 )
 
 
+def _provider_for_model(model: str) -> str:
+    """Map a hosted model alias/id to its provider for key and usage isolation."""
+    name = (model or "").lower()
+    if "nvidia" in name or "nemotron" in name:
+        return "nvidia"
+    if "dashscope" in name or name.startswith("qwen3.5"):
+        return "dashscope"
+    if "gpt-" in name or "openai" in name:
+        return "openai"
+    if "claude" in name or "anthropic" in name:
+        return "anthropic"
+    return "unknown"
+
+
+@dataclass(frozen=True)
+class ProviderCallContext:
+    """OD-51 key and usage decision for one hosted request (no secret in logs)."""
+
+    provider: str
+    is_paid: bool
+    credential: Optional[str]
+    key_fingerprint: Optional[str]
+    decision: Any = None
+
+
 class InferenceUnavailable(RuntimeError):
     """Raised when no provider is configured or reachable."""
+
+
+class InferenceBlocked(InferenceUnavailable):
+    """Raised when Aegis refuses untrusted input before any provider call."""
 
 
 @dataclass(frozen=True)
@@ -63,6 +167,62 @@ class InferenceService:
             {"name": name, "configured": bool(getattr(settings, field, None))}
             for name, field in HOSTED_PROVIDERS
         ]
+
+    async def _prepare_provider_call(
+        self, db: Any, selected: str, mode: str
+    ) -> ProviderCallContext:
+        """Resolve an authorised key and fail-closed usage decision for a call.
+
+        When no database session is supplied (internal/tests), the legacy
+        gateway credential is used and no accounting is claimed. Production
+        chat routes always pass a session.
+        """
+        provider = _provider_for_model(selected)
+        if db is None or mode != "hosted":
+            return ProviderCallContext(provider, False, None, None)
+        from app.services.model_credential_vault import ModelCredentialVault, VaultError
+        from app.services.model_policy import (
+            PAID_ACTION,
+            ModelPolicyDenied,
+            is_paid_model,
+            require_authorization,
+        )
+        from app.services.model_usage import ModelUsageService
+
+        is_paid = await is_paid_model(db, selected)
+        authority = None
+        if is_paid:
+            try:
+                authority = await require_authorization(db, PAID_ACTION, target_ref=selected)
+            except ModelPolicyDenied as exc:
+                raise InferenceUnavailable(str(exc)) from exc
+        decision = await ModelUsageService(db).preflight(
+            model=selected,
+            is_paid=is_paid,
+            authorization=authority,
+        )
+        if is_paid and not decision.allowed:
+            raise InferenceUnavailable("Usage policy denied: " + decision.reason)
+        credential = None
+        fingerprint = None
+        try:
+            row, credential = await ModelCredentialVault(db).resolve(
+                provider=provider,
+                is_paid=is_paid,
+                purpose="specialist" if not is_paid else None,
+            )
+            fingerprint = str(row.key_fingerprint)
+            decision = type(decision)(
+                allowed=decision.allowed,
+                reason=decision.reason,
+                estimated_cost_usd=decision.estimated_cost_usd,
+                key_fingerprint=fingerprint,
+            )
+        except VaultError:
+            # No vault key configured: the gateway's configured credential is
+            # the sole authorised connection. Never invent a key.
+            credential = None
+        return ProviderCallContext(provider, is_paid, credential, fingerprint, decision)
 
     async def _ollama_models(self) -> List[str]:
         """Return locally available model tags, or [] when Ollama is unavailable."""
@@ -188,12 +348,67 @@ class InferenceService:
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         timeout: Optional[float] = None,
+        db: Any = None,
     ) -> Dict[str, Any]:
         """Run one real chat completion against the resolved provider."""
+        inspection = _inspect_input(messages)
+        if inspection:
+            kinds = ", ".join(str(f.get("type")) for f in inspection["findings"])
+            raise InferenceBlocked(
+                f"Aegis refused inference input ({inspection['risk']}): {kinds}"
+            )
         timeout = timeout if timeout is not None else settings.inference_chat_timeout_seconds
         selected, mode, status = await self._route(model)
         if not status.available or not selected:
             raise InferenceUnavailable(status.reason)
+        call = await self._prepare_provider_call(db, selected, mode)
+        admission = await _admit_inference(selected, mode)
+        try:
+            result = await self._chat_completion(
+                selected,
+                mode,
+                status,
+                messages,
+                temperature,
+                max_tokens,
+                timeout,
+                admission,
+                gateway_credential=call.credential,
+            )
+            result.setdefault("iam_inference", {}).update(
+                {
+                    "provider": call.provider,
+                    "key_fingerprint": call.key_fingerprint,
+                    "usage_decision": call.decision.as_dict() if call.decision else None,
+                }
+            )
+            if db is not None and mode == "hosted":
+                from app.services.model_usage import ModelUsageService
+
+                result["iam_inference"]["usage"] = await ModelUsageService(db).record(
+                    model=selected,
+                    provider=call.provider,
+                    usage=result.get("usage"),
+                    is_paid=call.is_paid,
+                    decision=call.decision,
+                    key_fingerprint=call.key_fingerprint,
+                )
+            return result
+        finally:
+            await _release_inference(selected)
+
+    async def _chat_completion(
+        self,
+        selected: str,
+        mode: str,
+        status: InferenceStatus,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: Optional[int],
+        timeout: float,
+        admission: Optional[Dict[str, Any]],
+        gateway_credential: Optional[str] = None,
+    ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "model": selected,
             "messages": messages,
@@ -204,7 +419,11 @@ class InferenceService:
 
         if mode == "hosted":
             url = f"{settings.litellm_base_url.rstrip('/')}/chat/completions"
-            headers = {"Authorization": f"Bearer {settings.litellm_master_key}"}
+            # A vault key is an authorised gateway credential for this provider
+            # connection. It is used briefly and never logged or returned.
+            headers = {
+                "Authorization": f"Bearer {gateway_credential or settings.litellm_master_key}"
+            }
         else:
             url = f"{settings.ollama_base_url.rstrip('/')}/v1/chat/completions"
             headers = {}
@@ -240,6 +459,7 @@ class InferenceService:
             "model": selected,
             "primary": status.primary,
             "reasoning_retry": token_budget != max_tokens,
+            "irwm": admission,
         }
         return result
 
@@ -249,11 +469,39 @@ class InferenceService:
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
+        db: Any = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """Yield SSE-shaped dicts: start / delta / done / error (no raw bytes)."""
+        inspection = _inspect_input(messages)
+        if inspection:
+            yield {
+                "event": "error",
+                "data": {
+                    "code": "security_blocked",
+                    "message": "Aegis refused inference input: "
+                    + ", ".join(str(f.get("type")) for f in inspection["findings"])[:300],
+                },
+            }
+            return
         selected, mode, status = await self._route(model)
         if not status.available or not selected:
             yield {"event": "error", "data": {"code": "offline", "message": status.reason}}
+            return
+        try:
+            call = await self._prepare_provider_call(db, selected, mode)
+        except InferenceUnavailable as exc:
+            yield {
+                "event": "error",
+                "data": {"code": "usage_denied", "message": str(exc)[:300]},
+            }
+            return
+        try:
+            admission = await _admit_inference(selected, mode)
+        except InferenceUnavailable as exc:
+            yield {
+                "event": "error",
+                "data": {"code": "resource_refused", "message": str(exc)[:300]},
+            }
             return
         payload: Dict[str, Any] = {
             "model": selected,
@@ -265,14 +513,24 @@ class InferenceService:
             payload["max_tokens"] = max_tokens
         if mode == "hosted":
             url = f"{settings.litellm_base_url.rstrip('/')}/chat/completions"
-            headers = {"Authorization": f"Bearer {settings.litellm_master_key}"}
+            headers = {
+                "Authorization": f"Bearer {call.credential or settings.litellm_master_key}"
+            }
         else:
             url = f"{settings.ollama_base_url.rstrip('/')}/v1/chat/completions"
             headers = {}
 
         yield {
             "event": "start",
-            "data": {"model": selected, "mode": mode, "primary": status.primary},
+            "data": {
+                "model": selected,
+                "mode": mode,
+                "primary": status.primary,
+                "provider": call.provider,
+                "key_fingerprint": call.key_fingerprint,
+                "usage_decision": call.decision.as_dict() if call.decision else None,
+                "irwm": admission,
+            },
         }
         try:
             async with httpx.AsyncClient(
@@ -309,7 +567,20 @@ class InferenceService:
                                 yield {"event": "delta", "data": {"text": text}}
                         except Exception:
                             continue
-            yield {"event": "done", "data": {"finish_reason": "stop"}}
+            if db is not None and mode == "hosted":
+                from app.services.model_usage import ModelUsageService
+
+                usage = await ModelUsageService(db).record(
+                    model=selected,
+                    provider=call.provider,
+                    usage=None,
+                    is_paid=call.is_paid,
+                    decision=call.decision,
+                    key_fingerprint=call.key_fingerprint,
+                )
+                yield {"event": "done", "data": {"finish_reason": "stop", "usage": usage}}
+            else:
+                yield {"event": "done", "data": {"finish_reason": "stop"}}
         except httpx.HTTPError as exc:
             logger.error(f"Model stream failed: {exc}")
             detail = f"{type(exc).__name__}: {exc}".strip()
@@ -320,6 +591,8 @@ class InferenceService:
                     "message": detail[:300] or "The model did not return a complete response.",
                 },
             }
+        finally:
+            await _release_inference(selected)
 
 
 inference_service = InferenceService()

@@ -1,5 +1,7 @@
 """Autonomy routes - worker status and system-level autonomy info"""
 
+from typing import Any
+
 from fastapi import APIRouter
 from app.workers.autonomy_worker import autonomy_worker
 
@@ -7,7 +9,7 @@ router = APIRouter(prefix="/api/v1/autonomy", tags=["autonomy"])
 
 
 @router.get("/status")
-async def get_autonomy_status():
+async def get_autonomy_status() -> dict[str, Any]:
     """Get the current state of the autonomy worker."""
     return {
         "running": autonomy_worker.running,

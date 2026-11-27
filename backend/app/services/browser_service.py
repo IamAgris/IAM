@@ -7,9 +7,14 @@ import uuid
 import loguru
 from pathlib import Path
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.config import settings
+from app.services.browser_engine_adapters import (
+    BrowserEngineUnavailable,
+    available_engines,
+    get_adapter,
+)
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 
 logger = loguru.logger
@@ -31,6 +36,8 @@ class BrowserService:
         timeout: int = 30000,
         engine: Optional[str] = None,
     ):
+        if not settings.browser_enabled:
+            raise BrowserEngineUnavailable("browser automation is disabled by policy")
         self.headless = headless
         self.timeout = timeout
         self.engine = engine or settings.uwai_browser_engine
@@ -42,11 +49,13 @@ class BrowserService:
         ).resolve()
         self._playwright = None
         self._browser: Optional[Browser] = None
-        self._context: Optional[BrowserContext] = None
+        self._context: Optional[BrowserContext] = None  # default compatibility context
+        self._contexts: Dict[str, BrowserContext] = {}  # session_token -> isolated context
+        self._session_meta: Dict[str, Dict[str, Any]] = {}
         self._pages: Dict[str, Page] = {}  # session_token -> primary persistent page
         self._tabs: Dict[str, Dict[str, Page]] = {}  # session_token -> tab_id -> page
 
-    async def _ensure_browser(self):
+    async def _ensure_browser(self) -> None:
         """Restart Playwright if a previous driver died or was disconnected."""
         connected = bool(self._browser) and bool(
             getattr(self._browser, "is_connected", lambda: True)()
@@ -62,6 +71,8 @@ class BrowserService:
         self._playwright = None
         self._pages.clear()
         self._tabs.clear()
+        self._contexts.clear()
+        self._session_meta.clear()
         await self.start()
 
     async def start(self):
@@ -72,7 +83,8 @@ class BrowserService:
             os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/ms-playwright"
         self._playwright = await async_playwright().start()
         self.transfer_root.mkdir(parents=True, exist_ok=True)
-        engine = getattr(self._playwright, self.engine)
+        adapter = get_adapter(self.engine)
+        engine = adapter.engine(self._playwright)
         self._browser = await engine.launch(
             headless=self.headless,
             args=[
@@ -92,7 +104,9 @@ class BrowserService:
         logger.info("Browser service started")
 
     async def stop(self):
-        """Close the browser instance."""
+        """Close the browser instance and every session context."""
+        for token in list(self._contexts):
+            await self.close_session(token)
         if self._context:
             await self._context.close()
         if self._browser:
@@ -111,11 +125,78 @@ class BrowserService:
         return candidate
 
     async def get_page(self) -> Page:
-        """Get or create a page in the browser context."""
+        """Get or create a page in the default browser context."""
         await self._ensure_browser()
         if not self._context:
             self._context = await self._browser.new_context()
         return await self._context.new_page()
+
+    async def _reap_expired(self) -> None:
+        now = datetime.now(timezone.utc)
+        for token, meta in list(self._session_meta.items()):
+            age = (now - meta["created_at"]).total_seconds()
+            if age > settings.browser_session_ttl_seconds:
+                await self.close_session(token)
+
+    async def open_session(
+        self,
+        session_token: str,
+        *,
+        mode: str = "headless",
+        owner: str = "agent",
+        permission_scope: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Create an isolated browser context for one UWAIE session.
+
+        Visible mode fails closed without a display and an explicit flag.
+        Isolated mode gives the session its own context (no shared cookies).
+        """
+        if mode not in {"headless", "visible", "isolated"}:
+            raise ValueError(f"unsupported session mode: {mode}")
+        if mode == "visible" and (
+            not settings.browser_visible_mode_enabled or not os.environ.get("DISPLAY")
+        ):
+            raise BrowserEngineUnavailable(
+                "visible browser mode requires DISPLAY and BROWSER_VISIBLE_MODE_ENABLED"
+            )
+        if mode == "isolated" and not settings.browser_isolated_mode_enabled:
+            raise BrowserEngineUnavailable("isolated browser mode is disabled by policy")
+
+        await self._reap_expired()
+        if session_token in self._contexts:
+            return dict(self._session_meta[session_token])
+        if len(self._contexts) >= settings.browser_max_concurrent_sessions:
+            raise BrowserEngineUnavailable("browser session concurrency limit reached")
+
+        await self._ensure_browser()
+        browser = self._browser
+        if browser is None:
+            raise BrowserEngineUnavailable("browser engine is unavailable")
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 720},
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AURA Autonomous AI Browser",
+        )
+        self._contexts[session_token] = context
+        self._session_meta[session_token] = {
+            "session_id": session_token,
+            "mode": mode,
+            "owner": owner,
+            "actor_type": owner if owner in {"agent", "creator"} else "agent",
+            "permission_scope": list(permission_scope or []),
+            "engine": self.engine,
+            "created_at": datetime.now(timezone.utc),
+        }
+        return dict(self._session_meta[session_token])
+
+    async def close_session(self, session_token: str) -> bool:
+        context = self._contexts.pop(session_token, None)
+        self._session_meta.pop(session_token, None)
+        self._pages.pop(session_token, None)
+        self._tabs.pop(session_token, None)
+        if context:
+            await context.close()
+            return True
+        return False
 
     async def fetch_page(
         self,

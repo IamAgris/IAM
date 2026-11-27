@@ -91,6 +91,21 @@ class S3ArtifactStore:
         except Exception:
             return False
 
+    def keys(self, prefix: str = "") -> List[str]:
+        """Relative keys for registry hydration across process restarts."""
+        response = self.client.list_objects_v2(
+            Bucket=self.bucket, Prefix=self._key(prefix)
+        )
+        keys = []
+        for item in response.get("Contents", []):
+            key = item["Key"]
+            if self.prefix:
+                if not key.startswith(f"{self.prefix}/"):
+                    continue
+                key = key[len(self.prefix) + 1 :]
+            keys.append(key)
+        return keys
+
     def list(self, experiment_id: str) -> List[ResearchArtifact]:
         from .artifacts import ArtifactKind
 

@@ -43,8 +43,16 @@ class MemoryService:
         confidence: float = 0.5,
         topic: Optional[str] = None,
         metadata_: Optional[Dict[str, Any]] = None,
+        governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Store a new memory item with provenance tracking and embedding."""
+        if governance_context and governance_context.get("source_id"):
+            from app.services.iplci.gateway import get_gateway
+
+            await get_gateway().enforce_collection(
+                source_id=governance_context["source_id"],
+                agent_id=governance_context.get("agent_id", "main"),
+            )
         memory = MemoryItem(
             content=content,
             memory_type=memory_type,

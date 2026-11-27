@@ -41,6 +41,7 @@ ADMIN_PREFIXES = (
     "/api/v1/creator",  # gateway exact path above is the exception
     "/api/v1/governance",
     "/api/v1/internet",
+    "/api/v1/browser",  # Doc 29: browser operations are admin-gated
     "/api/v1/network",
     "/api/v1/external-presence",
     "/api/v1/resilience",
@@ -57,6 +58,8 @@ ADMIN_PREFIXES = (
     "/api/v1/irwm",
     "/api/v1/model-independence",
     "/api/v1/blockchain",
+    "/api/v1/web3",       # proposed Doc 30: registries, prepare-only transactions
+    "/api/v1/nodes",      # proposed Doc 30: read-only Bitcoin/LND/CLN nodes
     "/api/v1/banking",
     "/api/v1/trading",
     "/api/v1/prediction-markets",

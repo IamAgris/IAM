@@ -28,6 +28,7 @@ STAGES = (
     "discover", "authenticate", "understand", "assess",
     "recommend", "authorise", "implement", "verify",
 )
+LEGAL_AUTHORIZATION_ACTION = "legal.change_authorisation"
 INSTRUMENT_TYPES = {
     "constitution", "legislation", "regulation", "court_judgment", "guidance",
     "policy", "bill", "draft_regulation", "treaty", "standard", "announcement",
@@ -283,16 +284,36 @@ class LegalService:
             raise LegalError("change must reach the recommend stage before authorisation")
         if not creator_approval_reference:
             raise LegalError("creator approval reference is required; IAM cannot self-authorise")
+
+        # A reference string is not authority. Verify the active signed Creator
+        # authorization for this exact change, as finance, delegation and model
+        # release already do.
+        from app.services.creatorapproval_service import CreatorApprovalService
+
+        authority = await CreatorApprovalService(self.db).check_authorization(
+            LEGAL_AUTHORIZATION_ACTION, target_ref=f"legal_change:{change_id}"
+        )
+        if not authority.get("authorized"):
+            raise LegalError(
+                "no active signed Creator authorization for this legal change; "
+                "approval must be completed through the Creator email challenge and hardware signer"
+            )
+        verified_reference = str(authority.get("authorization_id") or "")
+        if creator_approval_reference != verified_reference:
+            raise LegalError(
+                "creator approval reference does not match the active signed authorization"
+            )
+
         impacts = await self.db.execute(
             select(LegalImpact).where(LegalImpact.change_id == change.id)
         )
         high_risk = any(i.risk_level in {"high", "critical"} for i in impacts.scalars().all())
         if high_risk and not professional_review_reference:
             raise LegalError("high-impact legal conclusions require qualified professional review")
-        change.creator_approval_reference = creator_approval_reference
+        change.creator_approval_reference = verified_reference
         change.professional_review_reference = professional_review_reference
         change.lifecycle_stage = "authorise"
-        self._audit(actor, "legal_change_authorised", change_id, {"reference": creator_approval_reference[:100]})
+        self._audit(actor, "legal_change_authorised", change_id, {"reference": verified_reference[:100]})
         await self.db.commit()
         return {"change_id": change_id, "lifecycle_stage": "authorise"}
 

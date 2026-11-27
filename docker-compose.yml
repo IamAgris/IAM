@@ -68,6 +68,12 @@ services:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      # Multiple NVIDIA free-tier keys. _1 falls back to the original single
+      # key; _2.._4 are optional and may be left blank when unused.
+      NVIDIA_API_KEY_1: ${NVIDIA_API_KEY_1:-${NVIDIA_API_KEY:-}}
+      NVIDIA_API_KEY_2: ${NVIDIA_API_KEY_2:-}
+      NVIDIA_API_KEY_3: ${NVIDIA_API_KEY_3:-}
+      NVIDIA_API_KEY_4: ${NVIDIA_API_KEY_4:-}
     volumes:
       - ./infra/litellm/config.yaml:/app/litellm/config.yaml
     healthcheck:
@@ -151,6 +157,8 @@ services:
       S3_BUCKET: ${S3_BUCKET:-aura-storage}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       IAM_BOOTSTRAP_API_KEY: ${IAM_BOOTSTRAP_API_KEY:-}
+      IAM_NODE_ID: ${IAM_NODE_ID:-local-iam}
+      IAM_P2P_SECRET: ${IAM_P2P_SECRET:-}
       CREATOR_EMAIL: ${CREATOR_EMAIL:-}
       CREATOR_PUBLIC_KEY: ${CREATOR_PUBLIC_KEY:-}
       CREATOR_SIGNER_ID: ${CREATOR_SIGNER_ID:-creator-hardware-signer}
@@ -174,14 +182,22 @@ services:
       IAM_SDK_DEFAULT_MODEL: ${IAM_SDK_DEFAULT_MODEL:-nvidia-nemotron-3.5-lightning}
       # One shared primary model for frontend and backend. Hosted models are
       # optional specialists reached only by explicit model id.
-      IAM_PRIMARY_MODEL: ${IAM_PRIMARY_MODEL:-local-qwen-coder-3b}
-      IAM_PRIMARY_LOCAL_TAG: ${IAM_PRIMARY_LOCAL_TAG:-qwen2.5-coder:3b}
+      IAM_PRIMARY_MODEL: ${IAM_PRIMARY_MODEL:-local-qwen-3b}
+      IAM_PRIMARY_LOCAL_TAG: ${IAM_PRIMARY_LOCAL_TAG:-qwen2.5:3b}
+      # Durable research artifacts and trusted local evaluation.
+      RESEARCH_ARTIFACT_STORE: ${RESEARCH_ARTIFACT_STORE:-local}
+      RESEARCH_ARTIFACT_PREFIX: ${RESEARCH_ARTIFACT_PREFIX:-research}
+      LM_EVAL_DATASET_PATH: ${LM_EVAL_DATASET_PATH:-app/services/ai_research/eval_sets/basic.jsonl}
+      POST_DEPLOY_MONITOR_ENABLED: ${POST_DEPLOY_MONITOR_ENABLED:-false}
+      POST_DEPLOY_AUTO_ROLLBACK_ENABLED: ${POST_DEPLOY_AUTO_ROLLBACK_ENABLED:-false}
+      POST_DEPLOY_REGRESSION_THRESHOLD: ${POST_DEPLOY_REGRESSION_THRESHOLD:-0.05}
       # Cold local model loads on a 4 vCPU core can exceed a short timeout.
       INFERENCE_CHAT_TIMEOUT_SECONDS: ${INFERENCE_CHAT_TIMEOUT_SECONDS:-300}
       INFERENCE_STREAM_TIMEOUT_SECONDS: ${INFERENCE_STREAM_TIMEOUT_SECONDS:-300}
       # Real inference: hosted keys (free-only policy enforced by LiteLLM config)
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      FREE_MODELS_ONLY: ${FREE_MODELS_ONLY:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Opt-in local inference via Ollama
@@ -190,6 +206,8 @@ services:
       # UWAIE browser runtime lives outside /app so container rebuilds can
       # reinstall it explicitly (see README).
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      # P2: local Tesseract OCR is available in the image; opt in explicitly.
+      BROWSER_OCR_ENABLED: ${BROWSER_OCR_ENABLED:-false}
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,6 +249,8 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:8000
       IAM_API_URL: http://backend:8000
       IAM_USER_API_KEY: ${IAM_USER_API_KEY:-}
+      # Server-only credential for the read-only /iam-proxy allowlist.
+      IAM_PROXY_TOKEN: ${IAM_PROXY_TOKEN:-}
     depends_on:
       backend:
         condition: service_started
@@ -276,6 +296,29 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # Doc 29 / OD-49: optional ARQ worker for UWAIE browser tasks.
+  #   docker compose --profile browser-arq up -d
+  browser-task-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-browser-task-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_browser_worker.WorkerSettings
+    profiles: ["browser-arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      BROWSER_TASK_WORKER_BACKEND: arq
       APP_ENV: ${APP_ENV:-development}
     depends_on:
       postgres:

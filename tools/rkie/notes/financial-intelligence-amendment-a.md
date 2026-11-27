@@ -26,8 +26,8 @@ Code (research-only; no wagering, wallet funding or real orders):
   `/provider-registry` (27 paths).
 - `frontend/app/financial-intelligence/page.tsx` and sidebar entry.
 - Migrations: `030_financial_intelligence.sql`, `versions/0002_financial_intelligence.py`.
-- Generated `IAM_OPENAPI.json`: 565 paths / 352 schemas after the 2026-11-27
-  drift fix (the financial-intelligence routes themselves were added at 505/320).
+- Generated `IAM_OPENAPI.json`: 708 paths / 435 schemas after the 2026-11-27
+  drift fixes (the financial-intelligence routes themselves were added at 505/320).
 
 ## Verification (2026-11-27)
 
@@ -37,9 +37,10 @@ Code (research-only; no wagering, wallet funding or real orders):
 - `python tests/hbi_acceptance_check.py` — 10 gates passed.
 - `npm run build` (frontend) — pass, `/financial-intelligence` static route.
 - `tools/rkie/Update-Index.ps1`, `tools/rkie/tests/Test-RKIE.ps1` — 20 passed, 0 failed.
-- `pytest tests -q` with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` and
-  `--ignore=tests/test_ownerauth_reconciliation.py` — 406 passed. The exclusion is an
-  environment issue: a blocked `xxhash` DLL reached via `langsmith`, not an IAM failure.
+- `pytest backend/tests -q --cov=app --cov-fail-under=60` — **626 passed, 65.84%**
+  coverage (gate passed). Locally this needs
+  `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` plus `-p pytest_cov`: the environment blocks a
+  `langsmith` plugin dependency (`xxhash` DLL). `pytest-cov` itself is installed.
 
 ## Boundaries
 

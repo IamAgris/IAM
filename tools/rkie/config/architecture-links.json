@@ -89,6 +89,36 @@
       "area": "authentication-and-authority"
     },
     {
+      "pattern": "^backend/app/(services/(model_credential_vault|model_usage|delegation_orchestrator)\\.py|models/model_provider_key\\.py|api/routes/modelcredentials\\.py|db/migrations/052_model_provider_keys\\.sql)$",
+      "spec": "IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "decisions": ["OD-51"],
+      "area": "multi-model-provider-credentials"
+    },
+    {
+      "pattern": "^backend/app/(services/(model_discovery|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py)$",
+      "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md",
+      "decisions": ["OD-52"],
+      "area": "universal-model-discovery-proposed"
+    },
+    {
+      "pattern": "^IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC\\.md$",
+      "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
+      "decisions": ["OD-52"],
+      "area": "universal-model-provider-proposed"
+    },
+    {
+      "pattern": "^IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC\\.md$",
+      "spec": "IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "decisions": ["OD-51"],
+      "area": "multi-model-governance-proposed"
+    },
+    {
+      "pattern": "^IAM_VOICE_AND_HEARING_SYSTEM_SPEC\\.md$|^backend/app/(services/voice_service\\.py|api/routes/voice\\.py)$",
+      "spec": "IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md; IAM_MEDIA_AND_RESEARCH.md; IAM_API_CONTRACTS.md",
+      "decisions": ["OD-50", "OD-28"],
+      "area": "voice-and-hearing"
+    },
+    {
       "pattern": "^backend/app/(api/routes|models|services|db|core|orchestration|workers)/",
       "spec": "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],

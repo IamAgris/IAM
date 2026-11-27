@@ -3,6 +3,7 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -103,6 +104,20 @@ async def add_place(payload: PlaceRequest, request: Request, db: AsyncSession = 
         return await GeoService(db).add_place(payload.model_dump(), _actor(request))
     except GeoError as exc:
         raise _handle(exc)
+
+
+@router.get("/render")
+async def render_map(
+    query: Optional[str] = None,
+    width: int = 800,
+    height: int = 400,
+    db: AsyncSession = Depends(get_db_session),
+) -> Response:
+    """Provider-neutral SVG map fragment (backend rendering support only)."""
+    service = GeoService(db)
+    places = await service.places(query) if query else await service.all_places()
+    svg = service.render_svg(places, width=max(200, min(width, 2000)), height=max(100, min(height, 1200)))
+    return Response(content=svg, media_type="image/svg+xml")
 
 
 @router.get("/places")

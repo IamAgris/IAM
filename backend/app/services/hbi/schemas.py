@@ -257,6 +257,94 @@ class PartnershipRequest(BaseModel):
     agreement_reference: Optional[str] = None
 
 
+class TranslationRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=20000)
+    source_language: Optional[str] = None
+    target_language: str = "en"
+    purpose: str = Field(min_length=1)
+    model: Optional[str] = None
+
+
+class MultilingualSemanticsRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=20000)
+    language: Optional[str] = None
+    region: Optional[str] = None
+    purpose: str = Field(min_length=1)
+
+
+class StudyCreateRequest(BaseModel):
+    title: str = Field(min_length=1)
+    research_question: str = Field(min_length=1)
+    ethics_reference: Optional[str] = None
+    human_participants: bool = True
+    retention_days: int = 90
+    consent_purposes: List[str] = Field(default_factory=lambda: ["research"])
+
+
+class ParticipantConsentRequest(BaseModel):
+    study_id: str
+    participant_ref: str = Field(min_length=1)
+    purposes: List[str] = Field(default_factory=list)
+    basis: str = "informed_consent"
+    retention_days: Optional[int] = None
+
+
+class StudyResponseRequest(BaseModel):
+    study_id: str
+    participant_ref: str
+    response: str = Field(min_length=1, max_length=10000)
+
+
+class ParticipantWithdrawalRequest(BaseModel):
+    study_id: str
+    participant_ref: str
+    reason: str = "withdrawn_by_participant"
+
+
+class TargetVerificationRequest(BaseModel):
+    name: str
+    verified_by: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+
+
+class ContributionRequest(BaseModel):
+    contributor: str = Field(min_length=1)
+    material_type: str = Field(min_length=1)
+    ownership_retained: bool = True
+    training_rights: bool = False
+    commercial_use: bool = False
+    attribution_required: bool = True
+    withdrawal_permitted: bool = True
+    personal_data_present: bool = False
+    ethics_reference: Optional[str] = None
+    agreement_reference: Optional[str] = None
+
+
+class FederatedRequest(BaseModel):
+    institution: str = Field(min_length=1)
+    analysis_description: str = Field(min_length=1)
+    safeguards: List[str] = Field(default_factory=list)
+
+
+class FederatedApprovalRequest(BaseModel):
+    institution: str
+    approver: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+
+
+class LabProjectRequest(BaseModel):
+    title: str = Field(min_length=1)
+    research_question: str = Field(min_length=1)
+    human_participants: bool = False
+    ethics_reference: Optional[str] = None
+    consent_plan: Optional[str] = None
+
+
+class TransformationRequest(BaseModel):
+    source_ids: List[str] = Field(default_factory=list)
+    output_type: str = Field(min_length=1)
+
+
 class LegalContextVerificationRequest(BaseModel):
     topic: str
     verified_by: str = Field(min_length=1)

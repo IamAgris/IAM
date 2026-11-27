@@ -802,6 +802,120 @@ class _HBI:
         )
 
 
+class _Tone:
+    BASE = "/api/v1/tone"
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def analyze(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/analyze", payload)
+
+    async def discussion(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/discussion", payload)
+
+    async def add_record(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/records", payload)
+
+    async def records(self) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/records")
+
+
+class _AINetwork:
+    BASE = "/api/v1/network"
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def agents(self) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/agents")
+
+    async def register_agent(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/agents", payload)
+
+    async def set_agent_status(self, agent_id: str, status: str) -> dict[str, Any]:
+        return await self._t.request(
+            "PATCH", f"{self.BASE}/agents/{agent_id}/status", {"status": status}
+        )
+
+    async def message(self, agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/agents/{agent_id}/message", payload)
+
+    async def interactions(self) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/interactions")
+
+    async def record_trust(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/trust", payload)
+
+    async def collaborations(self) -> Any:
+        return await self._t.request("GET", f"{self.BASE}/collaborations")
+
+    async def collaborate(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/collaborations", payload)
+
+    async def verify(self, agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/agents/{agent_id}/verify", payload)
+
+    async def profile(self, agent_id: str) -> dict[str, Any]:
+        return await self._t.request("GET", f"{self.BASE}/agents/{agent_id}/profile")
+
+
+class _Financial:
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def get(self, path: str) -> Any:
+        return await self._t.request("GET", path)
+
+    async def post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", path, payload)
+
+    async def markets(self) -> Any:
+        return await self.get("/api/v1/prediction-markets/markets")
+
+    async def create_market(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.post("/api/v1/prediction-markets/markets", payload)
+
+    async def forecast(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.post("/api/v1/prediction-markets/forecast/run", payload)
+
+    async def gaming_records(self) -> Any:
+        return await self.get("/api/v1/gaming-intelligence/records")
+
+    async def add_gaming(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.post("/api/v1/gaming-intelligence/records", payload)
+
+    async def investment_records(self) -> Any:
+        return await self.get("/api/v1/investment-intelligence/records")
+
+    async def add_investment(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.post("/api/v1/investment-intelligence/records", payload)
+
+
+class _FreeNodes:
+    BASE = "/api/v1/free-nodes"
+
+    def __init__(self, transport: _Transport) -> None:
+        self._t = transport
+
+    async def candidates(self) -> Any:
+        return await self._t.request("GET", self.BASE)
+
+    async def create_candidate(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._t.request("POST", self.BASE, payload)
+
+    async def verify_terms(self, candidate_id: str) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/{candidate_id}/verify-terms")
+
+    async def set_status(self, candidate_id: str, status: str) -> dict[str, Any]:
+        return await self._t.request(
+            "PATCH", f"{self.BASE}/{candidate_id}/status", {"status": status}
+        )
+
+    async def migration_plan(self, candidate_id: str) -> dict[str, Any]:
+        return await self._t.request("POST", f"{self.BASE}/{candidate_id}/migration-plan")
+
+
 class IAM:
     """Connect local applications and nodes to the IAM Core."""
 
@@ -832,6 +946,10 @@ class IAM:
         self.assistant_lab = _AssistantLab(self._transport)
         self.creator = _Creator(self._transport)
         self.free_sandbox = _FreeSandbox(self._transport)
+        self.tone = _Tone(self._transport)
+        self.ai_network = _AINetwork(self._transport)
+        self.financial = _Financial(self._transport)
+        self.free_nodes = _FreeNodes(self._transport)
         self.digital_assets = _DigitalAssets(self._transport)
         self.events = _Events(self._transport)
         self.hbi = _HBI(self._transport)

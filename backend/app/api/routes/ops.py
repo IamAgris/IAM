@@ -20,7 +20,7 @@ _STARTED_AT = time.monotonic()
 
 
 @router.get("/health/live")
-async def health_live() -> dict:
+async def health_live() -> dict[str, str]:
     """Liveness only — no dependency checks."""
     return {"status": "alive", "service": "aura-backend"}
 

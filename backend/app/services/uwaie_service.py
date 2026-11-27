@@ -18,6 +18,7 @@ from app.models.internetaccess import InternetSession
 from app.models.security import AuditEvent
 from app.models.uwaie import WebsiteWorkflow
 from app.services.browser_service import browser_service
+from app.services.browser_evidence_service import BrowserEvidenceService
 from app.services.internetaccess_service import InternetAccessService
 from app.services.creatorapproval_service import CreatorApprovalService
 
@@ -112,8 +113,15 @@ class UWAIEService:
         workflow_name: Optional[str] = None,
         actor: str = "sdk",
         recover: bool = True,
+        task_id: Optional[str] = None,
+        actor_type: str = "agent",
+        permission_scope: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Run an explicit, caller-supplied workflow. Page content never adds steps."""
+        """Run an explicit, caller-supplied workflow. Page content never adds steps.
+
+        When task_id is supplied, Doc 29 WP-03 evidence and attribution records
+        are written and a standard envelope is added to the result.
+        """
         if not steps:
             raise UWAIEError("steps cannot be empty")
         if not session_token:
@@ -131,7 +139,8 @@ class UWAIEService:
             raise UWAIEError("unknown or inactive browsing session")
         await self._check_steps(steps)
 
-        outcomes = []
+        outcomes: List[Dict[str, Any]] = []
+        current_url: Optional[str] = None
         for step in steps:
             action = step["action"]
             target = str(step.get("target") or "")
@@ -159,6 +168,8 @@ class UWAIEService:
                 raise UWAIEError(
                     "browser runtime unavailable; install Playwright chromium before using UWAIE"
                 )
+            if action == "navigate" and result.get("success"):
+                current_url = target[:2000]
             outcomes.append(
                 {
                     "action": action,
@@ -167,6 +178,35 @@ class UWAIEService:
                     "error": result.get("error"),
                 }
             )
+            if task_id:
+                evidence = BrowserEvidenceService(self.db)
+                await evidence.append_audit(
+                    task_id,
+                    actor=actor,
+                    actor_type=actor_type,
+                    action=f"uwaie.{action}",
+                    target=target,
+                    outcome={
+                        "success": bool(result.get("success")),
+                        "error": str(result.get("error") or "")[:500],
+                    },
+                )
+                screenshot = (
+                    result.get("result")
+                    if action == "screenshot" and result.get("success") else None
+                )
+                excerpt = (
+                    str(result.get("result") or "")
+                    if action == "text" and result.get("success") else None
+                )
+                if screenshot or excerpt:
+                    await evidence.record_evidence(
+                        task_id,
+                        url=current_url,
+                        screenshot_b64=screenshot if isinstance(screenshot, str) else None,
+                        excerpt=excerpt,
+                        session_id=session_token,
+                    )
             if not result.get("success"):
                 break
 
@@ -206,8 +246,26 @@ class UWAIEService:
                 workflow_name, steps, verification, actor
             )
 
+        if task_id:
+            evidence = BrowserEvidenceService(self.db)
+            await evidence.append_audit(
+                task_id,
+                actor=actor,
+                actor_type=actor_type,
+                action="uwaie.verification",
+                target=workflow_name or "unspecified",
+                outcome={"verified": verified, "reason": str(reason)[:500]},
+            )
+            for state in ("running", "verifying", "completed" if verified else "failed"):
+                try:
+                    await evidence.set_state(task_id, state)
+                except PermissionError:
+                    # Runs created before WP-03 or already advanced: never
+                    # downgrade a recorded state.
+                    pass
+
         await self.db.commit()
-        return {
+        response: Dict[str, Any] = {
             "steps": outcomes,
             "verified": verified,
             "verification_reason": reason,
@@ -215,6 +273,12 @@ class UWAIEService:
             "recovery": recovery,
             "credentials_stored": False,
         }
+        if task_id:
+            response["envelope"] = await BrowserEvidenceService(self.db).envelope(
+                task_id, session_id=session_token,
+                status="completed" if verified else "failed",
+            )
+        return response
 
     async def list_workflows(self, approved_only: bool = False) -> List[Dict[str, Any]]:
         query = select(WebsiteWorkflow)
@@ -377,6 +441,40 @@ class UWAIEService:
             if str(url_result.get("result") or "") != verification["expected_url"]:
                 return False, "expected_url mismatch"
         return True, "outcome verified from page state"
+
+    async def verify(
+        self,
+        verification: Dict[str, Any],
+        session_token: str,
+        *,
+        task_id: Optional[str] = None,
+        actor: str = "sdk",
+        actor_type: str = "agent",
+    ) -> Dict[str, Any]:
+        """Public verification surface for Doc 29 §7.1 (independent outcome check)."""
+        verified, reason = await self._verify(verification, session_token)
+        result: Dict[str, Any] = {"verified": verified, "verification_reason": reason}
+        if task_id:
+            evidence = BrowserEvidenceService(self.db)
+            await evidence.append_audit(
+                task_id,
+                actor=actor,
+                actor_type=actor_type,
+                action="uwaie.verify",
+                target=session_token,
+                outcome={"verified": verified, "reason": reason[:500]},
+            )
+            for state in ("running", "verifying", "completed" if verified else "failed"):
+                try:
+                    await evidence.set_state(task_id, state)
+                except PermissionError:
+                    pass
+            result["envelope"] = await evidence.envelope(
+                task_id, session_id=session_token,
+                status="completed" if verified else "failed",
+            )
+        await self.db.commit()
+        return result
 
     async def _save_workflow(
         self,

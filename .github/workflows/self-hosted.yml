@@ -1,0 +1,26 @@
+name: Self-hosted local checks
+
+# Requires a registered self-hosted runner with labels: self-hosted, iam, windows.
+# Manual-only so untrusted fork PRs never execute on a private runner.
+# See tools/quality/SELF_HOSTED_RUNNER.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-rkie:
+    runs-on: [self-hosted, iam, windows]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repository intelligence tests
+        shell: pwsh
+        run: python -m pytest tools/rkie/tests -q
+      - name: Local deterministic CI gates
+        shell: pwsh
+        run: python tools/quality/run_local_ci.py --only lint workflows migrations benchmark
+      - name: Neural embedding status (local Ollama)
+        shell: pwsh
+        run: python tools/rkie/neural.py status --json

@@ -30,9 +30,14 @@ from app.services.ai_research.continuous_improvement import ContinuousImprovemen
 from app.services.ai_research.base import ResearchError
 from app.services.ai_research.dataset_engine import DatasetBuildRequest, build as build_dataset
 from app.services.ai_research.self_improvement import CandidateRequest, prepare_candidate
+from app.services.ai_research.post_deploy import check_regression
+from app.services.ai_research.lm_eval import default_lm_eval_driver, eval_config
+from app.services.ai_research.benchmarks import BenchmarkSpec
 from app.services.ai_research.artifacts import new_experiment_id
 from app.services.ai_research.jobs import HardwareRequirement, ResearchJob, ResearchMethod
 from app.services.free_sandboxes.base import ProviderUnavailable, SandboxError
+from app.services.iplci.gateway import GovernanceRefusal
+from app.services.iplci.integration import enforce_collection_request, enforce_training_request
 
 router = APIRouter(prefix="/api/v1/development", tags=["development"])
 
@@ -112,12 +117,14 @@ class DatasetBuildRequestModel(BaseModel):
     max_rows: int = 200
     consent_types: List[str] = []
     diagnosis: str = ""
+    iplci_source_id: Optional[str] = None
 
 
 class CandidateRequestModel(BaseModel):
     experiment_id: str
     licence: str
     base_model: str = ""
+    candidate_model: str = ""
     version: str = "candidate"
     task_type: str = "coding"
     checkpoint_ref: str
@@ -127,6 +134,9 @@ class CandidateRequestModel(BaseModel):
     max_rows: int = 200
     consent_types: List[str] = []
     diagnosis: str = ""
+    iplci_source_id: Optional[str] = None
+    iplci_dataset_id: Optional[str] = None
+    iplci_approval_id: Optional[str] = None
 
 
 class ResearchRunRequest(BaseModel):
@@ -470,6 +480,7 @@ async def research_history(db: AsyncSession = Depends(get_db_session)):
 @router.post("/datasets")
 async def build_dataset_artifact(
     payload: DatasetBuildRequestModel,
+    request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Build a provenance-bearing dataset from verified knowledge only.
@@ -477,6 +488,14 @@ async def build_dataset_artifact(
     Consent types default to empty, so no visitor interaction is included until
     the owner explicitly configures an allowed consent type.
     """
+    if payload.iplci_source_id:
+        try:
+            await enforce_collection_request(
+                db, source_id=payload.iplci_source_id,
+                agent_id=str(getattr(request.state, "credential", None) or "sdk"),
+            )
+        except GovernanceRefusal as exc:
+            raise HTTPException(403, {"code": exc.code, "decision": exc.decision, "detail": str(exc)})
     try:
         result = await build_dataset(
             db,
@@ -501,6 +520,23 @@ async def run_self_improvement_cycle(
     db: AsyncSession = Depends(get_db_session),
 ):
     """Prepare a benchmarked candidate. Promotion remains a separate signed gate."""
+    if not payload.iplci_source_id or not payload.iplci_dataset_id:
+        raise HTTPException(403, {
+            "code": "IPLCI_PROVENANCE_REQUIRED",
+            "detail": "training requires a registered IPLCI source, dataset and approval",
+        })
+    try:
+        await enforce_training_request(
+            db,
+            source_id=payload.iplci_source_id,
+            dataset_id=payload.iplci_dataset_id,
+            approval_id=payload.iplci_approval_id,
+            agent_id=_release_actor(request),
+        )
+    except GovernanceRefusal as exc:
+        raise HTTPException(403, {
+            "code": exc.code, "decision": exc.decision, "detail": str(exc),
+        })
     try:
         result = await prepare_candidate(
             db,
@@ -508,6 +544,7 @@ async def run_self_improvement_cycle(
                 experiment_id=payload.experiment_id,
                 licence=payload.licence,
                 base_model=payload.base_model or settings.iam_primary_model,
+                candidate_model=payload.candidate_model,
                 version=payload.version,
                 task_type=payload.task_type,
                 checkpoint_ref=payload.checkpoint_ref,
@@ -520,7 +557,47 @@ async def run_self_improvement_cycle(
             ),
             adapters=default_adapters(),
             actor=_release_actor(request),
+            governance_context={
+                "source_id": payload.iplci_source_id,
+                "dataset_id": payload.iplci_dataset_id,
+                "approval_id": payload.iplci_approval_id,
+                "agent_id": _release_actor(request),
+            },
         )
     except ResearchError as exc:
         raise HTTPException(400, str(exc)) from exc
     return result
+
+
+@router.post("/models/{model}/versions/{version}/regression-check")
+async def model_regression_check(
+    model: str,
+    version: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Compare a deployed version with a fresh trusted evaluation.
+
+    Rollback is never self-authorized: it needs the operator switch and the
+    signed release gate, otherwise the result is `approval_required`.
+    """
+    driver = default_lm_eval_driver()
+    if driver is None:
+        raise HTTPException(400, "no trusted evaluator is configured")
+    spec = BenchmarkSpec(
+        name="post-deploy-regression",
+        task_type="regression",
+        repetitions=1,
+        config=eval_config(driver),
+    )
+    try:
+        result = await check_regression(
+            db,
+            model,
+            version,
+            evaluate=lambda candidate: driver.evaluate(spec, candidate),
+            actor=_release_actor(request),
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result.as_dict()

@@ -49,6 +49,43 @@ class DiscoveredModel(Base):
     discovered_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_checked_at = Column(DateTime(timezone=True), nullable=True)
 
+    # OD-52 Phase A: live catalogue registry fields. Never assume a catalogue
+    # entry is an available endpoint or supports a capability.
+    model_type = Column(Text, nullable=False, default="llm")
+    access_type = Column(Text, nullable=False, default="free")
+    endpoint_status = Column(Text, nullable=False, default="unknown")
+    alias = Column(Text, nullable=True)  # LiteLLM model_name used for execution
+    input_capabilities = Column(JSON, nullable=False, default=list)
+    output_capabilities = Column(JSON, nullable=False, default=list)
+    tool_calling = Column(Boolean, nullable=False, default=False)
+    reasoning = Column(Boolean, nullable=False, default=False)
+    structured_output = Column(Boolean, nullable=False, default=False)
+    api_protocol = Column(Text, nullable=False, default="chat_completions")
+    last_tested = Column(DateTime(timezone=True), nullable=True)
+    test_result = Column(JSON, nullable=True)
+    restrictions = Column(JSON, nullable=False, default=dict)
+    metadata_source = Column(Text, nullable=True)
+    last_known_good = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "model_type IN ('llm', 'embedding', 'vision', 'speech', 'image')",
+            name="ck_discovered_model_type",
+        ),
+        CheckConstraint(
+            "access_type IN ('free', 'paid', 'local')",
+            name="ck_discovered_model_access",
+        ),
+        CheckConstraint(
+            "endpoint_status IN ('available', 'unavailable', 'unknown')",
+            name="ck_discovered_model_endpoint_status",
+        ),
+        CheckConstraint(
+            "api_protocol IN ('chat_completions', 'responses', 'embeddings', 'other')",
+            name="ck_discovered_model_protocol",
+        ),
+    )
+
 
 class RoutingDecision(Base):
     """Audit of which model was selected for a task and why."""

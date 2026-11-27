@@ -168,11 +168,23 @@ class ModelRegistry:
     def rollback(self, model: str, target_version: str) -> ModelVersion:
         if model not in self._active:
             raise ResearchError(f"{model} has no deployed version to roll back from")
-        target = self._versions[f"{model}@{target_version}"]
+        key = f"{model}@{target_version}"
+        if key not in self._versions:
+            self.hydrate()
+        if key not in self._versions:
+            raise ResearchError(f"unknown rollback target: {key}")
+        target = self._versions[key]
         previous = self._active[model]
         target.rollback_ref = previous
-        if target.status != "approved":
-            target.status = "approved"
+        # Only the rollback target may remain "deployed". hydrate() rebuilds
+        # active state from that status, so leaving the old version deployed
+        # would silently reactivate it after a process restart.
+        for version in self.list_versions(model):
+            if version is target or version.status != "deployed":
+                continue
+            version.status = "rolled_back"
+            self._persist(version)
+        target.status = "deployed"
         self._persist(target)
         self._active[model] = target_version
         self._audit("model_rollback", {

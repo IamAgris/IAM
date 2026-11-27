@@ -26,6 +26,7 @@ ENV IAM_TARGET_ARCH=${TARGETARCH}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 curl ca-certificates ffmpeg libatomic1 libglib2.0-0 libnss3 libnspr4 \
+    tesseract-ocr tesseract-ocr-eng \
     libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libgbm1 libasound2 libpango-1.0-0 libcairo2 \
@@ -40,7 +41,7 @@ COPY app ./app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # playwright CLI is copied from builder; install browser best-effort (needs system libs
 # from the runtime stage). Failure is non-fatal — research degrades gracefully.
-RUN (playwright install chromium || true)
+RUN (playwright install chromium firefox webkit || true)
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

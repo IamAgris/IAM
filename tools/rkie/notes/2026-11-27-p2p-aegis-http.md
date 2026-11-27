@@ -15,4 +15,16 @@ Based on the current checkout; re-verify before reuse.
   in `routes/p2p.py`, model `p2p_skills.py`, migration 012). Fixed outbound seq
   collision in `p2p_transport.py` and invalid `pending` status in
   `SkillForgeService.create()` for imported skills.
-- Integration check exits 0 with Postgres + Redis; 421 unit tests pass.
+- WebSocket peer route covered by a fake-socket unit test (`WebSocketRouteTests`).
+- CI workflow `.github/workflows/ci.yml` parses with three jobs: backend-unit,
+  backend-integration, frontend (not yet executed on GitHub).
+- UWAIE WP-01/WP-02 slice: `services/browser_engine_adapters.py`, per-session
+  contexts in `services/browser_service.py`, config flags in `core/config.py`.
+- Geospatial backend rendering: `GET /api/v1/geo/render` returns escaped SVG.
+- Fixed environment-dependent production-DSN assertion in `tests/test_backup_service.py`.
+- Doc 29 Phase 1 browser envelope wired at `routes/browser.py`; ARQ browser
+  worker at `workers/arq_browser_worker.py`; opt-in live smoke
+  `tests/e2e_browser_smoke.py`; Dockerfile installs Chromium/Firefox/WebKit.
+- Targeted browser tests pass (13), integration check exits 0, and the full
+  unit suite now passes (637 tests). Earlier external failures were resolved
+  outside this work; re-verify before reusing.

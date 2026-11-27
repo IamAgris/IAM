@@ -17,6 +17,7 @@ from app.services.cybersecurity.security_guard import (
     SecurityGuardDenied,
 )
 from app.core.secrets import placeholder_secrets
+from app.services.blockchain.activation import check_web3_activation
 from app.services.crypto_service import CryptoService
 
 
@@ -175,6 +176,9 @@ def check_deployment() -> Dict[str, Any]:
             "external security engine disabled",
             blocking=False,
         )
+
+    # Proposed Doc 30 activation gate — redacted, fail-closed, no secret values.
+    checks.extend(check_web3_activation()["checks"])
 
     blockers = [c["name"] for c in checks if c["status"] == "blocker"]
     warnings = [c["name"] for c in checks if c["status"] == "warning"]

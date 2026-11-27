@@ -32,7 +32,7 @@ class CheckRequest(BaseModel):
 
 
 @router.post("/authorizations")
-async def grant(request: GrantRequest, db=Depends(get_db_session)):
+async def grant(request: GrantRequest, db: Any = Depends(get_db_session)) -> Any:
     """Retired: standing grants cannot recreate a second authority path."""
     try:
         await OwnerAuthService(db).grant_authorization(
@@ -46,12 +46,12 @@ async def grant(request: GrantRequest, db=Depends(get_db_session)):
 
 
 @router.get("/authorizations")
-async def list_authorizations(db=Depends(get_db_session)):
+async def list_authorizations(db: Any = Depends(get_db_session)) -> Any:
     return await OwnerAuthService(db).list_authorizations()
 
 
 @router.post("/authorizations/check")
-async def check(request: CheckRequest, db=Depends(get_db_session)):
+async def check(request: CheckRequest, db: Any = Depends(get_db_session)) -> Any:
     """Always fails closed; legacy rows are not authority (OD-03/OD-04)."""
     return await OwnerAuthService(db).check_authorization(
         request.action_type, request.requested_level
@@ -59,7 +59,7 @@ async def check(request: CheckRequest, db=Depends(get_db_session)):
 
 
 @router.delete("/authorizations/{authorization_id}")
-async def revoke(authorization_id: str, db=Depends(get_db_session)):
+async def revoke(authorization_id: str, db: Any = Depends(get_db_session)) -> dict[str, str]:
     if not await OwnerAuthService(db).revoke_authorization(authorization_id):
         raise HTTPException(404, "Authorization not found")
     return {"status": "revoked"}

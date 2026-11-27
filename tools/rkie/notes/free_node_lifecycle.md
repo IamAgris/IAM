@@ -14,7 +14,7 @@ This is **not** Doc 22's `free_sandboxes` (notebooks/spaces). It assesses cloud 
 | `backend/app/models/freenode.py` | `FreeNodeCandidate` — provider, arch, resources, verification, usefulness, status, expiry |
 | `backend/app/services/free_node_lifecycle.py` | Usefulness gate + record/verify/set-status/migration-plan; no provisioning |
 | `backend/app/api/routes/freenodes.py` | `/api/v1/free-nodes/*` |
-| `backend/app/db/migrations/019_free_node_candidates.sql` | Table + indexes |
+| `backend/app/db/migrations/042_free_node_candidates.sql` | Table + indexes |
 | `backend/tests/test_free_node_lifecycle.py` | 9 unit tests (no DB) |
 
 ## Verified

@@ -33,11 +33,11 @@ python tools/api/check_migrations.py
 ```
 
 Validates numbered SQL migrations against
-`backend/app/db/migrations/MIGRATION_ORDER.json`, which gives all 44 files an
-explicit sequence. Ten duplicated prefixes (009, 010, 011, 012, 015, 016, 017,
-018, 019, 030) are sanctioned there because specifications and
-`integration_db_check.py` reference the existing filenames. The check now
-passes; it fails on files added/removed without updating the manifest.
+`backend/app/db/migrations/MIGRATION_ORDER.json`, which gives all 44 files a
+unique prefix and an explicit apply sequence. The 13 duplicate-prefix files
+were renamed to `032`–`044` and all references in specifications and
+`integration_db_check.py` were updated. The gate now fails on duplicate
+prefixes, unknown files or missing files.
 
 `IAM_OPENAPI.json` has been regenerated from the live app: **558 paths / 348
 schemas**, drift check OK. The two development paths previously added by hand

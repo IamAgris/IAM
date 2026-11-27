@@ -141,7 +141,14 @@ export function IAMInterface() {
   const [lastQuery, setLastQuery] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
   const [showOptions, setShowOptions] = React.useState(false);
-  const [modelChoice, setModelChoice] = React.useState<"primary" | "hosted">("primary");
+  // OD-51 model control stays inside the sphere. Only free models are offered.
+  type ModelMode = "manual" | "auto" | "hybrid";
+  const [modelMode, setModelMode] = React.useState<ModelMode>("hybrid");
+  const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
+  const [freeModels, setFreeModels] = React.useState<Array<{ model_id: string; display_name: string | null }>>([]);
+  const [providerKeys, setProviderKeys] = React.useState<Array<{ provider: string; key_alias: string; health: string; scope: string; is_enabled: boolean }>>([]);
+  const [delegations, setDelegations] = React.useState<Array<{ model: string; status: string }>>([]);
+  const [previousModel, setPreviousModel] = React.useState<string | null>(null);
   const [inference, setInference] = React.useState<{ mode: string; model: string | null; available: boolean } | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [responseMinimized, setResponseMinimized] = React.useState(false);
@@ -156,7 +163,20 @@ export function IAMInterface() {
   const [selectedSource, setSelectedSource] = React.useState<SourceNode | null>(null);
   const [provenance, setProvenance] = React.useState<ProvenanceResponse | null>(null);
   const [provenanceLoading, setProvenanceLoading] = React.useState(false);
+  const [lastInference, setLastInference] = React.useState<{ mode: string; model: string } | null>(null);
   const compactResponse = response.length > 0 && response.length < 160 && !response.includes("\n");
+  const allConnections = React.useMemo(() => {
+    const merged = new Map<string, KnowledgeConnection>();
+    // Stored graph links carry from_node/to_node; map them onto the source
+    // endpoints the sphere draws so persisted provenance survives event ageing.
+    const persisted: KnowledgeConnection[] = graphConnections
+      .filter((c) => c.from_node && c.to_node)
+      .map((c) => ({ ...c, from: c.from_node as string, to: c.to_node as string }));
+    [...connections, ...persisted].forEach((c) => {
+      merged.set(`${c.from}-${c.to}`, c);
+    });
+    return Array.from(merged.values());
+  }, [connections, graphConnections]);
   const recognitionRef = React.useRef<any>(null);
   const sessionRef = React.useRef<SessionData | null>(null);
   React.useEffect(() => { sessionRef.current = session; }, [session]);
@@ -173,6 +193,28 @@ export function IAMInterface() {
         setConnected(r.status === 200);
         const m = await api.get("/api/v1/models/readiness", { timeout: 4000 });
         setInference({ mode: m.data.mode, model: m.data.model, available: m.data.available });
+        // Read-only model/key status. No credential is ever requested by the browser.
+        try {
+          const [primary, models, keys] = await Promise.all([
+            api.get("/api/v1/models/primary", { timeout: 4000 }),
+            api.get("/api/v1/models/router/models?provider=nvidia", { timeout: 4000 }),
+            api.get("/api/v1/models/credentials/health?provider=nvidia", { timeout: 4000 }),
+          ]);
+          setPreviousModel(primary.data.resolved_model || null);
+          // Free models only: paid access is a separate signed decision (OD-04).
+          setFreeModels(
+            (Array.isArray(models.data) ? models.data : [])
+              .filter((item: any) => item?.is_free === true && item?.is_available !== false)
+              .map((item: any) => ({
+                model_id: String(item.model_id),
+                display_name: item.display_name ? String(item.display_name) : null,
+              }))
+              .slice(0, 8),
+          );
+          setProviderKeys(
+            Array.isArray(keys.data?.keys) ? keys.data.keys : [],
+          );
+        } catch {}
       } catch { setConnected(false); }
     };
     check();
@@ -293,9 +335,41 @@ export function IAMInterface() {
           api.get("/api/v1/interface/freshness"),
         ]);
         if (!live) return;
+        const savedLinks: KnowledgeConnection[] = g.data?.connections || [];
         setClusters(c.data?.clusters || []);
-        setGraphConnections(g.data?.connections || []);
+        setGraphConnections(savedLinks);
         setFreshness(f.data?.nodes || {});
+
+        // Rebuild source dots from persisted links so the graph survives
+        // activity events ageing out of the recent-event window.
+        const savedNodes = new Map<string, SourceNode>();
+        for (const link of savedLinks) {
+          if (link.from_node && link.from_cluster) {
+            savedNodes.set(link.from_node, {
+              id: link.from_node,
+              title: link.from_cluster,
+              domain: link.from_cluster,
+              url: "",
+              state: "stored",
+            });
+          }
+          if (link.to_node && link.to_cluster) {
+            savedNodes.set(link.to_node, {
+              id: link.to_node,
+              title: link.to_cluster,
+              domain: link.to_cluster,
+              url: "",
+              state: "stored",
+            });
+          }
+        }
+        if (savedNodes.size) {
+          setSources((prev) => {
+            const merged = new Map(prev.map((s) => [s.id, s]));
+            savedNodes.forEach((node, id) => { if (!merged.has(id)) merged.set(id, node); });
+            return Array.from(merged.values()).slice(-12);
+          });
+        }
       } catch {}
     };
     load();
@@ -486,6 +560,7 @@ export function IAMInterface() {
     setResponse("");
     setResponseMinimized(false);
     setResponseDismissed(false);
+    setLastInference(null);
     setActivity(null);
     setShowHistory(false);
     setState("thinking");
@@ -528,10 +603,13 @@ export function IAMInterface() {
             ...historyMessages,
           ],
           temperature: mode === "create" ? 0.8 : 0.6,
-          // Primary is the shared local brain; hosted is an explicit specialist.
-          ...(modelChoice === "hosted"
-            ? { model: "nvidia-nemotron-3.5-lightning" }
-            : {}),
+          // Recall mode opts into IAM's permission-controlled memory layer.
+          include_memory: mode === "recall",
+          // OD-51 sphere control: manual selects a free specialist; auto leaves
+          // model choice to IAM; hybrid keeps the local primary and consults an
+          // authorised specialist through IAM's delegation workflow.
+          ...(modelMode === "manual" && selectedModel ? { model: selectedModel } : {}),
+          ...(modelMode === "hybrid" ? { delegate: true } : {}),
         }),
         signal: abortRef.current?.signal,
       });
@@ -563,6 +641,28 @@ export function IAMInterface() {
           if (event === "start") {
             setState("speaking");
             setStatus("Speaking");
+            if (data.mode && data.model) {
+              if (lastInference && lastInference.model !== data.model) {
+                setPreviousModel(lastInference.model);
+              }
+              setLastInference({ mode: data.mode, model: data.model });
+            }
+            if (data.delegation) {
+              const tasks = Array.isArray(data.delegation.tasks) ? data.delegation.tasks : null;
+              setDelegations(
+                tasks
+                  ? tasks.map((task: any) => ({
+                      model: String(task.delegate_model || "specialist"),
+                      status: String(task.status || "unknown"),
+                    }))
+                  : [
+                      {
+                        model: String(data.delegation.delegate_model || "specialist"),
+                        status: String(data.delegation.status || "unknown"),
+                      },
+                    ],
+              );
+            }
           } else if (event === "delta") {
             full += data.text || "";
             setResponse(full);
@@ -648,7 +748,7 @@ export function IAMInterface() {
         nodes={nodes}
         activity={activity}
         sourceNodes={sources}
-        connections={connections}
+        connections={allConnections}
         clusters={clusters}
         graphConnections={graphConnections}
         freshness={freshness}
@@ -897,20 +997,78 @@ export function IAMInterface() {
               {inference ? `${inference.mode}${inference.model ? ` · ${inference.model}` : ""}` : "checking…"}
             </span>
           </div>
+          <div className="flex items-center justify-between text-[10px] opacity-50 mb-1">
+            <span>Active model</span>
+            <span className="truncate ml-2 capitalize">{lastInference?.model || inference?.model || "local primary"}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] opacity-50 mb-3">
+            <span>Previous</span>
+            <span className="truncate ml-2 capitalize">{previousModel || "none"}</span>
+          </div>
 
-          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model</p>
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {(["primary", "hosted"] as const).map((choice) => (
-              <button key={choice} onClick={() => setModelChoice(choice)}
-                className="rounded-lg border px-2 py-2 text-xs transition-colors capitalize"
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model mode</p>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(["manual", "auto", "hybrid"] as const).map((choice) => (
+              <button key={choice} onClick={() => setModelMode(choice)}
+                aria-pressed={modelMode === choice}
+                title={
+                  choice === "manual" ? "Choose a free specialist model" :
+                  choice === "auto" ? "IAM chooses the model" :
+                  "Local primary with an authorised specialist"
+                }
+                className="rounded-lg border px-1 py-2 text-[10px] transition-colors capitalize"
                 style={{
-                  borderColor: modelChoice === choice ? "var(--accent)" : "var(--line)",
-                  background: modelChoice === choice ? "rgba(143,166,255,.16)" : "transparent",
+                  borderColor: modelMode === choice ? "var(--accent)" : "var(--line)",
+                  background: modelMode === choice ? "rgba(143,166,255,.16)" : "transparent",
                 }}>
-                {choice === "primary" ? "Local primary" : "Hosted specialist"}
+                {choice}
               </button>
             ))}
           </div>
+
+          {modelMode === "manual" && (
+            <div className="mb-3 max-h-28 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+              style={{ background: "rgba(255,255,255,.035)" }}>
+              <div className="opacity-60">Free models only · paid access needs signed approval</div>
+              {freeModels.length === 0 && <div className="opacity-50">No free models discovered yet.</div>}
+              {freeModels.map((item) => (
+                <button key={item.model_id}
+                  onClick={() => setSelectedModel(item.model_id)}
+                  aria-pressed={selectedModel === item.model_id}
+                  className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
+                  <span className="truncate">{item.display_name || item.model_id}</span>
+                  <span className="opacity-50">{selectedModel === item.model_id ? "selected" : "free"}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Connections</p>
+          <div className="mb-3 max-h-24 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+            style={{ background: "rgba(255,255,255,.035)" }}>
+            {providerKeys.length === 0 && <div className="opacity-50">No provider keys registered.</div>}
+            {providerKeys.map((key) => (
+              <div key={`${key.provider}-${key.key_alias}`} className="flex justify-between gap-2">
+                <span className="truncate">{key.provider} · {key.key_alias}</span>
+                <span className="opacity-60">{key.is_enabled ? key.health : "disabled"}</span>
+              </div>
+            ))}
+          </div>
+
+          {delegations.length > 0 && (
+            <>
+              <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Delegated tasks</p>
+              <div className="mb-4 max-h-24 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+                style={{ background: "rgba(255,255,255,.035)" }}>
+                {delegations.map((task, index) => (
+                  <div key={`${task.model}-${index}`} className="flex justify-between gap-2">
+                    <span className="truncate">{task.model}</span>
+                    <span className="opacity-60 capitalize">{task.status}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">
             Knowledge graph
@@ -1048,6 +1206,12 @@ export function IAMInterface() {
                 >
                   <RotateCcw size={12} /> Retry
                 </button>
+                {lastInference ? (
+                  <span className="px-2.5 py-1.5 rounded-full text-[10px] border border-[var(--line)] opacity-60 capitalize"
+                    title="Actual model used for this response">
+                    {lastInference.mode} · {lastInference.model}
+                  </span>
+                ) : null}
               </>
             )}
           </div>

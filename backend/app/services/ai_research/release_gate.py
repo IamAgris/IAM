@@ -24,6 +24,7 @@ from app.models.development import (
 )
 from app.models.security import AuditEvent
 from app.services.ai_research.artifacts import FileSystemArtifactStore
+from app.services.ai_research.base import ResearchError
 from app.services.ai_research.benchmarks import BenchmarkResult, BenchmarkRunner
 from app.services.ai_research.governance import SignedApproval
 from app.services.ai_research.registry import ModelRegistry, ModelVersion
@@ -38,7 +39,20 @@ class ModelReleaseError(PermissionError):
     """Raised when a model version fails an evidence or authority gate."""
 
 
-def default_release_store() -> FileSystemArtifactStore:
+def default_release_store():
+    """Return the configured artifact store.
+
+    ``s3`` keeps registry, benchmark and serving evidence durable in the
+    existing MinIO/S3 bucket. ``local`` remains the fail-closed default for
+    development so no external write happens without operator configuration.
+    """
+    if settings.research_artifact_store.lower() == "s3":
+        from .s3_store import S3ArtifactStore
+
+        return S3ArtifactStore(
+            bucket=settings.s3_bucket,
+            prefix=settings.research_artifact_prefix,
+        )
     root = settings.model_release_artifact_root or str(
         Path(tempfile.gettempdir()) / "iam-model-releases"
     )
@@ -156,6 +170,11 @@ class ModelReleaseService:
     ) -> Dict[str, Any]:
         entry = self.registry.get(model, version)
         results = self._benchmarks(benchmark_refs)
+        for result in results:
+            if result.model != model:
+                raise ModelReleaseError(
+                    f"benchmark evidence belongs to {result.model}, not {model}"
+                )
         post_score = results[-1].mean
         try:
             TrainingService.validate_improvement(
@@ -251,9 +270,12 @@ class ModelReleaseService:
     ) -> Dict[str, Any]:
         authority = await self._authority(model, version)
         previous = self.registry.active(model)
-        self.registry.rollback(model, version)
-        # Put inference back on the model that served before the promotion.
-        serving_model.rollback()
+        try:
+            self.registry.rollback(model, version)
+        except ResearchError as exc:
+            raise LookupError(str(exc)) from exc
+        # Put inference back on the exact version named by the signed rollback.
+        serving_model.rollback(target_version=version)
         row = await self._model_row(model)
         versions = await self.db.execute(
             select(ModelVersionRow).where(ModelVersionRow.model_id == row.id)

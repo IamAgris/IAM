@@ -112,3 +112,95 @@ gaps.
 - Still open: real platform drivers / MCP caller, real lm-eval driver, durable
   S3 artifact root, post-deploy regression monitoring, and the model-router
   paid gate on non-router paths beyond chat.
+
+## Update — operational infrastructure (27 November 2026)
+
+- `backend/app/services/ai_research/lm_eval.py` provides `OllamaLMEvalDriver`:
+  a versioned JSONL exact-match eval set (`eval_sets/basic.jsonl`), deterministic
+  scoring against the model under test via Ollama, and a dataset checksum folded
+  into `BenchmarkSpec.config_hash`. `self_improvement.prepare_candidate` now uses
+  this trusted evaluator by default; the cycle endpoint no longer fails merely
+  for lack of an evaluator (it still fails closed without a real platform driver).
+  Live check in `aura-backend`: 5 records, score 1.0 for `qwen2.5-coder:3b`.
+- `default_release_store()` now selects `S3ArtifactStore` when
+  `RESEARCH_ARTIFACT_STORE=s3`; local temp remains the default. S3 store gained
+  `keys()` so registry hydration survives restarts. Live MinIO round-trip and
+  key listing passed (`experiments/exp_s3_check/...`).
+- `backend/app/services/ai_research/post_deploy.py` compares a deployed version's
+  registered benchmark with a fresh trusted evaluation. Regression requires the
+  operator flag **and** the signed release gate; otherwise `approval_required`.
+  Endpoint: `POST /api/v1/development/models/{model}/versions/{version}/regression-check`.
+- `ColabMCPDriver` already implements the agent-side MCP protocol, but real calls
+  require the human `/mcps` Google sign-in documented in `research/mcp/README.md`.
+  That is an OD-41 human action and remains blocked — no runtime was created.
+- Verification: 521 backend tests pass; ruff clean; OpenAPI drift OK (566 paths);
+  migration manifest OK. pytest-cov is not installed locally, so the `--cov`
+  gate could not be run here.
+- Still open: real MCP sign-in, platform drivers with credentials, durable
+  rollout of `RESEARCH_ARTIFACT_STORE=s3`, post-deploy monitor scheduling, and a
+  paid gate for model-router paths beyond chat.
+
+## Update — critical evidence fixes (27 November 2026)
+
+- `CandidateRequest.candidate_model` is now required. A checkpoint artifact is
+  not executable: `self_improvement.prepare_candidate` benchmarks the served
+  candidate alias, registers the candidate under that model, and records
+  base/candidate/checkpoint in the benchmark config. A measured baseline > 0 is
+  required so improvement cannot be claimed against an unmeasured zero.
+- `ModelRegistry.rollback` now marks every other deployed version `rolled_back`
+  and the target `deployed`, so `hydrate()` cannot reactivate the rolled-back
+  version after a restart. Unknown rollback targets raise a controlled error.
+- `serving_model.rollback(target_version=...)` validates the target against the
+  recorded previous version and clears `previous` to stop rollback ping-pong.
+  `ModelReleaseService.rollback` passes the signed target explicitly.
+- Promotion now rejects benchmark evidence whose `result.model` differs from the
+  registered model.
+- Tests: `test_registry_rollback_durability.py` (restart hydration),
+  `test_self_improvement_pipeline.py` (candidate targeting, unserved candidate),
+  `test_serving_model.py` (no ping-pong, target validation). Full suite 662 passed.
+- Gates: ruff clean, OpenAPI drift OK (627 paths), migrations OK, mypy ratchet
+  new errors are in other files (`request_context.py`), not these changes.
+
+## Update — authority and paid-inference gates (27 November 2026)
+
+- `autonomy_graph.check_authority` now checks the action actually selected by
+  `plan()` (governance boundary when one exists, level 1 for allowlisted
+  autonomous actions, otherwise denied). `execute()` refuses to dispatch when
+  `authority_check.permitted` is not true. `run_cycle` accepts a signed
+  authorization in initial state.
+- `tool_authorization.authorize_tool_call` no longer trusts a bare
+  `approval_granted` boolean: explicit/human-approval tools require a signed
+  Creator authorization record (supplied or verified via
+  `CreatorApprovalService`). Code `approval_required` is unchanged for callers.
+- `model_policy` gained `is_paid_model` / `require_paid_authorization`. Chat now
+  requires a signed `model.paid_inference` authorization for an explicit paid
+  model *or* a paid hosted fallback, even when `allow_paid` is false. Adaptive
+  delegation and paid search providers (Brave/Google) are gated too. Free local
+  and free hosted aliases need no authorization.
+- Live check: `POST /api/v1/models/chat {"model":"gpt-4o-mini"}` → 403.
+
+## Update — free-only mode and findings continuity (27 November 2026)
+
+- `FREE_MODELS_ONLY=true` is now the default (`config.py`, compose, `.env.example`).
+  `model_policy` refuses `model.paid_inference` and `search.paid_provider` even
+  with a signed authorization while the switch is on. Free local and free hosted
+  aliases continue to work; disabling the switch is an operator decision.
+- `iam_context` now also surfaces IAM-reviewed or research-output findings that
+  remain `unverified` in the knowledge table, with an explicit "unverified
+  external finding" label — they are no longer invisible to later chats, and
+  external output is never silently promoted to verified.
+- Autonomous research now stores memory and knowledge (`dispatch.py`), and
+  stored research rows carry `iam_review="research_output"`.
+- Frontend Recall mode sends `include_memory`; the "Hosted specialist" choice
+  now sets `delegate: true` instead of pinning a model in the client. Frontend
+  typecheck and production build pass.
+- Minimal constitutional enforcement added: `constitutional_policy.assert_allowed`
+  gates protected-core actions (identity/constitution/signing/finance/model
+  release/protected deploy) with signed Creator authorization; wired into the
+  autonomy graph's execute node.
+- Verification: targeted tests 47 passed. Full suite 708 passed with 5
+  unrelated IPLCI failures (service phase advanced to 6 while those tests still
+  assert 5). Gates: ruff, OpenAPI (661 paths), migrations OK; mypy ratchet new
+  errors are in other agents' files (`web3.py`, `delegation_orchestrator.py`).
+- Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
+  mypy ratchet (new 0, fixed 97) all OK.

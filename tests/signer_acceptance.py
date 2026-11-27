@@ -1,12 +1,16 @@
 """Creator hardware signer acceptance tests."""
+import os
 import sys
 import httpx
 
 sys.path.insert(0, r"D:\AI\project-aura\backend")
 from app.services.creator_keys import generate_keypair, sign_challenge, verify_signature
 
-BASE = "http://localhost:8000"
-H = {"Authorization": "Bearer iam_GJaBEtX-1Uyt13V4m7hwxZ0oNNOkErOP5rrwyktyKa8"}
+BASE = os.environ.get("IAM_API_URL", "http://localhost:8000")
+API_KEY = os.environ.get("IAM_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit("IAM_API_KEY is required for signer acceptance tests")
+H = {"Authorization": f"Bearer {API_KEY}"}
 results = []
 
 

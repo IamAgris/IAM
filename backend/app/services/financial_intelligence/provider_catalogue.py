@@ -72,4 +72,23 @@ PROVIDER_CANDIDATES = (
     # Research and analysis
     ProviderCandidate("Financial Modeling Prep", "market_research"),
     ProviderCandidate("TradingView", "technical_analysis"),
+    # Proposed Doc 30 — all gates unverified until the operator reviews them.
+    # thirdweb remains OD-23 free-only; the node entries are self-hosted, not providers
+    # that hold IAM funds. No adapter is enabled by adding a catalogue entry.
+    ProviderCandidate(
+        "thirdweb", "blockchain_intelligence",
+        "OD-23 free tier only; self-hosted open-source Engine permitted; paid tiers forbidden.",
+    ),
+    ProviderCandidate(
+        "Umbrel Bitcoin Core", "blockchain_intelligence",
+        "Self-hosted node; read-only RPC via an in-Umbrel connector; separate identity.",
+    ),
+    ProviderCandidate(
+        "Umbrel LND", "blockchain_intelligence",
+        "Self-hosted Lightning node 1; restricted macaroon; separate identity from CLN.",
+    ),
+    ProviderCandidate(
+        "Umbrel Core Lightning", "blockchain_intelligence",
+        "Self-hosted Lightning node 2; restricted rune; separate identity from LND.",
+    ),
 )

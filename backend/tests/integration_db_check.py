@@ -87,13 +87,14 @@ async def apply_migrations() -> None:
         "006_creator_email_outbox.sql",
         "007_api_credentials.sql",
         "008_retire_legacy_approval_requests.sql",
-        "009_skill_runtime.sql",
+        "032_skill_runtime.sql",
         "010_creator_email_dead_letter.sql",
-        "011_skill_runtime_logs.sql",
-        "012_p2p_skill_candidates.sql",
+        "034_skill_runtime_logs.sql",
+        "035_p2p_skill_candidates.sql",
         "029_hbi.sql",
-        "030_hbi_history_graph.sql",
+        "044_hbi_history_graph.sql",
         "031_hbi_governance.sql",
+        "049_browser_substrate.sql",
     ):
         sql = (MIGRATIONS / name).read_text(encoding="utf-8")
         await conn.execute(sql)
@@ -531,6 +532,10 @@ async def run_checks() -> None:
             )
             assert approved.status_code == 200, approved.text
             assert approved.json()["requires_creator_approval"] is True
+
+            rendered = await client.get("/api/v1/geo/render", headers=admin_headers)
+            assert rendered.status_code == 200, rendered.text
+            assert "<svg" in rendered.text
         print("  PASS auth + approval + visitor data rights + encryption at rest")
         print("  PASS P2P/Aegis/integrity HTTP routes")
         print("  PASS signed P2P skill exchange")
@@ -621,6 +626,41 @@ async def run_checks() -> None:
         acceptance = await reader.run_acceptance()
         assert acceptance["passed"], acceptance["failed"]
         print("  PASS HBI graded persistence, hydration and acceptance gates")
+
+        # --- Doc 29 WP-03: browser task/evidence/attribution persistence -------
+        from app.services.browser_evidence_service import BrowserEvidenceService
+
+        browser_evidence = BrowserEvidenceService(db)
+        run = await browser_evidence.start_run(
+            task_id="integration-browser-1",
+            actor="integration",
+            actor_type="agent",
+            permission_scope="browse_public",
+            session_id="integration-session",
+            mode="headless",
+            engine=settings.uwai_browser_engine,
+        )
+        assert run["state"] == "queued"
+        await browser_evidence.set_state("integration-browser-1", "running")
+        await browser_evidence.set_state("integration-browser-1", "verifying")
+        evidence_id = await browser_evidence.record_evidence(
+            "integration-browser-1",
+            url="https://example.com",
+            excerpt="public page text",
+            source_metadata={"title": "Example"},
+        )
+        audit_id = await browser_evidence.append_audit(
+            "integration-browser-1",
+            actor="integration",
+            action="browser.integration",
+            target="https://example.com",
+            outcome={"success": True},
+        )
+        envelope = await browser_evidence.envelope("integration-browser-1")
+        assert envelope["status"] == "verifying"
+        assert evidence_id in envelope["evidence_refs"]
+        assert audit_id
+        print("  PASS browser task run, evidence and attribution persistence")
 
 
 async def main() -> None:

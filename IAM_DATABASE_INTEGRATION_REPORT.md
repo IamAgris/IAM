@@ -19,8 +19,8 @@ regenerated from ORM metadata in foreign-key dependency order. Migrations
 `002_skillforge.sql`, `003_security_engines.sql`, `004_creator_email_approval.sql`,
 `005_retire_legacy_owner_authorizations.sql`, `006_creator_email_outbox.sql`,
 `007_api_credentials.sql`, `008_retire_legacy_approval_requests.sql`,
-`009_skill_runtime.sql`, `010_creator_email_dead_letter.sql` and
-`011_skill_runtime_logs.sql` then apply cleanly (idempotently). The current tree
+`032_skill_runtime.sql`, `010_creator_email_dead_letter.sql` and
+`034_skill_runtime_logs.sql` then apply cleanly (idempotently). The current tree
 has 178 public relations, including `alembic_version`. `alembic downgrade base` also
 succeeds; the archived `legacy_owner_authorizations` table is deliberately retained.
 All lifecycle checks passed against real PostgreSQL:

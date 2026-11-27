@@ -1,0 +1,255 @@
+"""Document 28 (confirmed OD-48): IPLCI Phase 6 adversarial tests AT-01…AT-12.
+
+These tests prove that IAM cannot add unapproved training data, circumvent a
+licence, publish infringing material, use confidential information, bypass the
+gateway through another agent, relax its safeguards, treat missing rights as
+permission, reuse revoked permissions, delete preserved evidence, disclose to
+an unsafe provider or promote a model with a blocking revocation.
+"""
+
+import unittest
+
+from app.services.ai_research import self_improvement
+from app.services.iplci import ComplianceGateway, GovernanceRefusal, IPLCIService, MemoryStore
+from app.services.iplci import policy
+from app.services.memory_service import MemoryService
+from app.services.research_service import ResearchService
+
+
+class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.store = MemoryStore()
+        self.service = IPLCIService(self.store)
+        self.gateway = ComplianceGateway(self.service)
+        self.policy = policy.sign_policy(
+            {rule: True for rule in policy.PROTECTED_RULES},
+            version="1.0", signed_by="creator", signed_at="2026-11-27T00:00:00+00:00",
+        )
+        self.gateway.set_policy(self.policy)
+
+    async def _source(self, **overrides):
+        data = {
+            "uri": "https://example.org/material",
+            "rights_status": "PUBLIC_DOMAIN",
+            "source_class": "OPEN_RESEARCH",
+        }
+        data.update(overrides)
+        return await self.service.register_source(data, "tester")
+
+    async def test_status_declares_phase_six(self):
+        status = self.service.status()
+        self.assertEqual(status["phase"], 6)
+        self.assertEqual(status["implemented_phases"], [1, 2, 3, 4, 5, 6])
+
+    async def test_at01_unapproved_dataset_cannot_enter_training(self):
+        source = await self._source()
+        dataset = await self.service.register_dataset({
+            "dataset_version": "v1", "source_ids": [source["id"]],
+        })
+        with self.assertRaises(GovernanceRefusal) as ctx:
+            await self.gateway.enforce_training(
+                source_id=source["id"], dataset_id=dataset["id"],
+            )
+        self.assertIn("independent training approval", str(ctx.exception))
+
+    async def test_at02_licence_restriction_cannot_be_circumvented(self):
+        source = await self._source(
+            rights_status="CREATIVE_COMMONS", licence_flags={"non_commercial": True},
+        )
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce("commercialise", source_id=source["id"])
+
+    async def test_at03_infringing_publication_is_blocked(self):
+        source = await self._source(rights_status="COPYRIGHT_PROTECTED")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce_publication(source_id=source["id"])
+
+    async def test_at04_confidential_information_is_blocked(self):
+        source = await self._source(source_class="CONFIDENTIAL")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce("analyse", source_id=source["id"])
+
+    async def test_at05_sub_agents_use_the_same_gateway(self):
+        source = await self._source()
+        for agent in ("main", "sub-agent-7", "plugin:test", "external_model:test"):
+            result = await self.gateway.enforce_agent_action(
+                agent_id=agent, action="read", source_id=source["id"],
+            )
+            self.assertIn(result["decision"], ("APPROVED", "CONDITIONAL"))
+        blocked = await self._source(rights_status="COPYRIGHT_PROTECTED")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce_agent_action(
+                agent_id="sub-agent-7", action="reproduce", source_id=blocked["id"],
+            )
+
+    async def test_at06_safeguards_cannot_be_relaxed_by_iam(self):
+        proposed = {rule: True for rule in policy.PROTECTED_RULES}
+        proposed["mandatory_gateway"] = False
+        result = await self.service.check_policy_relaxation({"rules": proposed})
+        self.assertFalse(result["permitted"])
+        self.assertEqual(result["error_code"], "IPLCI_POLICY_IMMUTABLE")
+        allowed = await self.service.check_policy_relaxation({
+            "rules": proposed, "human_approval_reference": "creator-signed-approval",
+        })
+        self.assertTrue(allowed["permitted"])
+
+    async def test_at07_missing_licence_is_not_permission(self):
+        source = await self._source(rights_status="UNKNOWN_OWNERSHIP")
+        with self.assertRaises(GovernanceRefusal) as ctx:
+            await self.gateway.enforce("train", source_id=source["id"])
+        self.assertEqual(ctx.exception.decision, "QUARANTINED")
+
+    async def test_at08_revoked_permission_is_not_reused(self):
+        source = await self._source()
+        await self.service.revoke_permission(source["id"], "creator", "withdrawn")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce("commercialise", source_id=source["id"])
+
+    async def test_at09_every_enforcement_is_audited(self):
+        source = await self._source()
+        await self.gateway.enforce("read", source_id=source["id"], agent_id="sub-9")
+        audit = await self.service.audit()
+        events = [item for item in audit["events"] if item["event_type"] == "gateway_check"]
+        self.assertTrue(events)
+        self.assertTrue(any(item["actor"] == "sub-9" for item in events))
+        self.assertTrue(audit["chain_valid"])
+
+    async def test_at10_evidence_under_hold_cannot_be_deleted(self):
+        hold = await self.service.place_legal_hold({"reason": "dispute", "scope": ["asset-a"]})
+        evidence = await self.service.record_evidence({
+            "asset_id": "asset-a", "legal_hold_id": hold["id"],
+        })
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce_retention(evidence_id=evidence["id"])
+
+    async def test_at11_external_provider_disclosure_is_gated(self):
+        source = await self._source(source_class="CONFIDENTIAL")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce_egress(source_id=source["id"])
+
+    async def test_at12_revoked_dataset_blocks_model_promotion(self):
+        source = await self._source()
+        dataset = await self.service.register_dataset({
+            "dataset_version": "v1",
+            "source_ids": [source["id"]],
+            "payload": {
+                "lawfully_obtained": True,
+                "provenance_recorded": True,
+                "rights_assessment_ids": ["assessment-1"],
+            },
+        })
+        approval = await self.service.record_training_approval({
+            "source_id": source["id"], "dataset_id": dataset["id"],
+            "approver": "independent", "ingestion_reviewer": "ingester", "basis": "agreement",
+        })
+        await self.gateway.enforce_training(
+            source_id=source["id"], dataset_id=dataset["id"], approval_id=approval["id"],
+        )
+        lineage = await self.service.register_lineage({
+            "model_id": "candidate-1", "base_model": "qwen2.5-coder:3b",
+            "dataset_ids": [dataset["id"]],
+        })
+        self.assertEqual(lineage["affected_by_revocation"], [])
+        await self.service.revoke_permission(source["id"], "creator", "withdrawn")
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce_training(
+                source_id=source["id"], dataset_id=dataset["id"], approval_id=approval["id"],
+            )
+        check = await self.service.check_lineage(lineage["id"])
+        self.assertEqual(check["risk"], "CRITICAL")
+
+    async def test_tampered_policy_refuses_to_activate(self):
+        tampered = dict(self.policy)
+        tampered["rules"] = {rule: True for rule in policy.PROTECTED_RULES}
+        tampered["rules"]["unknown_never_approved"] = False
+        with self.assertRaises(policy.PolicyError):
+            self.gateway.set_policy(tampered)
+
+    async def test_missing_policy_fails_closed(self):
+        source = await self._source(rights_status="UNKNOWN_OWNERSHIP")
+        self.gateway._policy = {**self.policy, "signature": "bad"}
+        with self.assertRaises(GovernanceRefusal):
+            await self.gateway.enforce("store", source_id=source["id"])
+
+    async def test_gateway_refuses_without_signed_policy(self):
+        source = await self._source()
+        bare = ComplianceGateway(self.service)
+        with self.assertRaises(GovernanceRefusal) as ctx:
+            await bare.enforce("read", source_id=source["id"])
+        self.assertEqual(ctx.exception.code, "IPLCI_POLICY_UNAVAILABLE")
+
+    async def test_tool_call_governance_refusal(self):
+        from unittest.mock import AsyncMock, patch
+
+        from app.services.tool_authorization import ToolAuthorizationError, authorize_tool_call
+
+        refusal = GovernanceRefusal("IPLCI_DENIED", "BLOCKED", "CRITICAL", "blocked")
+        with patch(
+            "app.services.iplci.integration.enforce_agent_request",
+            new=AsyncMock(side_effect=refusal),
+        ):
+            with self.assertRaises(ToolAuthorizationError):
+                await authorize_tool_call(
+                    None, "some_tool", governance_context={"source_id": "s1"},
+                )
+
+    async def test_dispatch_governance_refusal(self):
+        from unittest.mock import AsyncMock, patch
+
+        from app.orchestration import dispatch as action_dispatch
+
+        refusal = GovernanceRefusal("IPLCI_DENIED", "BLOCKED", "CRITICAL", "blocked")
+        with patch(
+            "app.services.iplci.integration.enforce_agent_request",
+            new=AsyncMock(side_effect=refusal),
+        ):
+            result = await action_dispatch.dispatch(
+                None, "research", {"governance_context": {"source_id": "s1"}},
+            )
+        self.assertEqual(result["status"], "failure")
+        self.assertEqual(result["error"], "IPLCI_GOVERNANCE_REFUSED")
+
+    async def test_api_training_route_requires_governance_context(self):
+        from fastapi import HTTPException, Request
+
+        from app.api.routes import development
+
+        request = Request(scope={"type": "http", "headers": []})
+        payload = development.CandidateRequestModel(
+            experiment_id="exp_test", licence="CC-BY-4.0",
+            checkpoint_ref="ckpt", baseline_score=0.5,
+        )
+        with self.assertRaises(HTTPException) as ctx:
+            await development.run_self_improvement_cycle(payload, request, None)
+        self.assertEqual(ctx.exception.status_code, 403)
+        self.assertEqual(ctx.exception.detail["code"], "IPLCI_PROVENANCE_REQUIRED")
+
+    async def test_integration_seams_enforce(self):
+        source = await self._source(rights_status="COPYRIGHT_PROTECTED")
+        ctx = {"source_id": source["id"], "agent_id": "sub-agent"}
+        with self.assertRaises(GovernanceRefusal):
+            await MemoryService(None).store_memory("secret", governance_context=ctx)
+        with self.assertRaises(GovernanceRefusal):
+            await ResearchService().research_topic("topic", governance_context=ctx)
+        from app.services.internetaccess_service import InternetAccessService
+
+        with self.assertRaises(GovernanceRefusal):
+            await InternetAccessService(None).publish_content(
+                "title", "article", governance_context=ctx,
+            )
+        request = self_improvement.CandidateRequest(
+            experiment_id="exp_test", licence="CC-BY-4.0",
+            base_model="local-qwen-coder-3b", candidate_model="local-qwen-coder-3b-v2",
+            checkpoint_ref="ckpt", baseline_score=0.5, min_improvement=0.01,
+            diagnosis="weak at tool use",
+        )
+        with self.assertRaises(GovernanceRefusal):
+            await self_improvement.prepare_candidate(
+                None, request, governance_context={
+                    "source_id": source["id"], "dataset_id": "dataset-1",
+                },
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()

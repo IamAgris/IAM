@@ -14,16 +14,60 @@ model_list:
   # ---------------------------------------------------------------------------
   # Verified live on 26 Nov 2026 via /v1/models with the configured key.
   # Older Llama/Qwen/DeepSeek NIM aliases reached end-of-life (HTTP 410).
+  # Multiple free-tier NVIDIA keys are separate deployments behind the same
+  # alias. LiteLLM load-balances across them and skips a failing key. Unused
+  # NVIDIA_API_KEY_2..4 may be left blank; the original NVIDIA_API_KEY entry
+  # below remains the guaranteed fallback. Never put a key in this file.
   - model_name: nvidia-nemotron-3.5-lightning
     litellm_params:
       model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
       api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
+      api_key: os.environ/NVIDIA_API_KEY_1
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
+      api_key: os.environ/NVIDIA_API_KEY_2
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
+      api_key: os.environ/NVIDIA_API_KEY_3
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
+      api_key: os.environ/NVIDIA_API_KEY_4
       api_base: https://integrate.api.nvidia.com/v1
 
   - model_name: nvidia-nemotron-3-nano
     litellm_params:
       model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
       api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3-nano
+    litellm_params:
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      api_key: os.environ/NVIDIA_API_KEY_1
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3-nano
+    litellm_params:
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      api_key: os.environ/NVIDIA_API_KEY_2
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3-nano
+    litellm_params:
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      api_key: os.environ/NVIDIA_API_KEY_3
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia-nemotron-3-nano
+    litellm_params:
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      api_key: os.environ/NVIDIA_API_KEY_4
       api_base: https://integrate.api.nvidia.com/v1
 
   # ---------------------------------------------------------------------------
@@ -48,20 +92,22 @@ model_list:
 
   # ---------------------------------------------------------------------------
   # Local inference (Ollama) - private, no API key, no spend
-  # OD-46 (26 Nov 2026): Qwen2.5-Coder 3B is IAM's shared primary local brain.
-  # Pull first: docker exec aura-ollama ollama pull qwen2.5-coder:3b
-  # qwen2.5:3b remains an approved secondary local model (OD-38).
+  # Owner-directed reopening of OD-46 (27 Nov 2026): Qwen2.5-3B is IAM's
+  # shared primary local brain. Pull first:
+  #   docker exec aura-ollama ollama pull qwen2.5:3b
+  # qwen2.5-coder:3b remains an optional secondary local model, not the default.
   # Additional local models require an owner decision before being pulled or routed.
   # ---------------------------------------------------------------------------
-  - model_name: local-qwen-coder-3b
-    litellm_params:
-      model: ollama/qwen2.5-coder:3b
-      api_base: http://ollama:11434
-
   - model_name: local-qwen-3b
     litellm_params:
       model: ollama/qwen2.5:3b
       api_base: http://ollama:11434
+
+  # Optional secondary (not the shared primary):
+  # - model_name: local-qwen-coder-3b
+  #   litellm_params:
+  #     model: ollama/qwen2.5-coder:3b
+  #     api_base: http://ollama:11434
 
   # ---------------------------------------------------------------------------
   # Adaptive selection tiers (OD-39 / OD-41) map to the approved primary local
