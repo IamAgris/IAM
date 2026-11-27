@@ -24,7 +24,7 @@ SECRET_FIELDS = (
     "s3_secret_key",
     "creator_public_key",
     "creator_gateway_secret",
-    # Proposed Doc 30 / OD-50 — credentials are Docker secrets, never values in config.
+    # Proposed Doc 33 / OD-53 — credentials are Docker secrets, never values in config.
     "thirdweb_secret_key",
     "bitcoin_rpc_cookie",
     "lnd_macaroon",
@@ -160,6 +160,10 @@ class Settings(BaseSettings):
     # capabilities; it is not a source of endpoint availability.
     models_dev_api_url: str = "https://models.dev/api.json?type=all"
     models_dev_timeout_seconds: float = 20.0
+    # OD-52 Phase C: runtime registration is off until the owner confirms OD-52.
+    # When enabled, discovered free models are added to LiteLLM via /model/new.
+    model_catalog_registration_enabled: bool = False
+    litellm_model_management_timeout_seconds: float = 15.0
     # OD-04: free endpoints only by default. Paid models are refused even with
     # a signed authorization until an operator explicitly disables this switch.
     free_models_only: bool = True
@@ -327,7 +331,7 @@ class Settings(BaseSettings):
     blockchain_secret_env: str = "THIRDWEB_SECRET_KEY"
     blockchain_allow_mainnet: bool = False
 
-    # Proposed Doc 30 / OD-50 — Web3 and node adapters. All flags default-off.
+    # Proposed Doc 33 / OD-53 — Web3 and node adapters. All flags default-off.
     # These flags enable READ and PREPARE paths only; none enables execution.
     # Creator approval integration for execution is a separate later work item.
     web3_registry_enabled: bool = False
@@ -355,12 +359,21 @@ class Settings(BaseSettings):
     lnd_write_macaroon_env: str = "LND_WRITE_MACAROON"
     cln_write_enabled: bool = False
     cln_write_rune_env: str = "CLN_WRITE_RUNE"
-    # Production gates. The owner-decision flag may be set only after OD-50 is
+    # Production gates. The owner-decision flag may be set only after OD-53 is
     # signed; a configuration value is not itself authority.
     web3_owner_decision_confirmed: bool = False
     web3_testnet_evidence_ref: str = ""
     web3_monitoring_enabled: bool = False
     web3_monitoring_stuck_minutes: int = 30
+    # Extended Web3 capability modules (proposed Doc 33). Research/prepare only.
+    web3_defi_enabled: bool = False
+    web3_x402_enabled: bool = False
+    web3_nft_enabled: bool = False
+    web3_dao_enabled: bool = False
+    web3_contract_dev_enabled: bool = False
+    web3_cross_chain_enabled: bool = False
+    web3_threat_intel_enabled: bool = False
+    web3_onchain_analysis_enabled: bool = False
 
     # OD-24 South African banking adapters — credentials are env-var names only.
     banking_enabled: bool = False

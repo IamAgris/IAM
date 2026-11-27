@@ -251,3 +251,29 @@ No phase is called complete on assumed success; each has its own acceptance evid
 ## 6. What this addendum does not do
 
 It does not amend `ARCHITECTURE_INDEX.md` authority tables, the Owner Decision Register, `IAM_FINAL_CONSOLIDATION.md`, Doc 29/OD-49 status, or any implementation file. It does not authorise payments, hosted-model dependence, account registration, offensive security work, automatic model promotion, or changes to IAM's identity, constitution or protected core.
+
+---
+
+## 7. Implementation status — foundation layer landed
+
+The addendum remains a **proposal**, not frozen authority. The following foundation code now exists and is the source of truth for what runs:
+
+| Closure | Implemented | Location |
+|---|---|---|
+| §2.1 egress decisions | URL assessment, SSRF/metadata blocking, DNS rebinding pinning, TLS verification, caps, auditable decision record, bounded redirect re-check | `backend/app/services/iics/egress.py` |
+| §2.0 permissions | Combines `InternetAccessService` public-exploration gates with the mandatory OD-48 `/gate/check`; free lawful access autonomous; approval only for consequential actions or fail-closed legal decisions | `backend/app/services/iics/permissions.py` |
+| §2.3 ledger + budget | Append-only action records, idempotency keys, scope gate, verification state, windowed action/byte/cost budget | `backend/app/services/iics/ledger.py` |
+| §2.7 source registry | Rights, TTL classes, confidence labels, claim evidence, revocation propagation to derived claims | `backend/app/services/iics/source_registry.py` |
+| §2.9 QA harness | Scored benchmark cases and regression stop-gate | `backend/app/services/iics/qa.py` |
+| API surface | Egress check, authorize, actions, sources, claims and QA endpoints under `/api/v1/iics` | `backend/app/api/routes/iics.py` |
+| Persistence | Four tables (`iics_sources`, `iics_claims`, `iics_actions`, `iics_benchmark_results`) | `backend/app/models/iics.py`, `backend/app/db/migrations/057_iics_foundation.sql` |
+| §2.3 / Creator control centre — email path | Informational status updates, QA regression alerts and monitoring digests via the existing OD-18/OD-19 email layer; consequential actions raise signed ED25519 challenge requests delivered by email. A plain reply never grants authority. | `backend/app/services/iics/creator_email.py`, `/api/v1/iics/creator/*` |
+| §2.2 strategy/confidence | Strategy taxonomy (single, decomposition, source-first, refinement, contradiction), rationale and evidence-weighted confidence calibration | `backend/app/services/iics/search_strategy.py` |
+| §2.3 scheduled research | Governed recurring research jobs on the existing ARQ runtime with bounded retries, ledger records and no side-effect replay | `backend/app/services/iics/scheduler.py`, `backend/app/workers/arq_iics_worker.py` |
+| §2.5 media/documents | PDF/DOCX page-attributed extraction, optional local OCR, EXIF extraction and metadata sanitisation, hard size caps, untrusted-data labelling | `backend/app/services/iics/media.py` |
+| §2.6 security | OSV/NVD advisory parsing, dedup, CVE→SBOM mapping, cross-channel DLP with audit events, credential-reference rotation scheduling. Defensive only (OD-16/OD-34). | `backend/app/services/iics/threat_intel.py` |
+| §2.8 governance/privacy | Versioned robots/TOS snapshots with TTL and change detection, DSAR/consent/transfer records with evidence-gated transfer decisions | `backend/app/services/iics/site_policy.py` |
+| §2.9 QA persistence | Benchmark runs stored with thresholds and evidence; regression gate compares against the previous stored baseline | `/api/v1/iics/qa/run`, `/api/v1/iics/qa/results` |
+| Tests | 50 unit tests covering egress, permissions, budget, TTL, confidence, QA, Creator email, strategy, scheduled research, media, threat intel and policy hashing | `backend/tests/test_iics_foundation.py` |
+
+Not yet implemented: the graphical Creator control-centre UI. The email path above provides Creator visibility without a new frontend route or a new system; free lawful research remains autonomous and does not email the Creator. No further backlog item requires a system-count change.

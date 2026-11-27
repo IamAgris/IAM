@@ -95,7 +95,10 @@ class KnowledgeStore:
             raise ValueError("individual_scope_requires_T3")
         if payload.scope == "aggregate" and payload.tier == "T3":
             raise ValueError("T3_reserved_for_individual_scope")
-        allowed_provenance = {"licensed_corpus", "direct_observation", "illustrative_fixture", "derived"}
+        allowed_provenance = {
+            "licensed_corpus", "direct_observation", "illustrative_fixture",
+            "derived", "synthetic",
+        }
         if payload.provenance_kind not in allowed_provenance:
             raise ValueError("invalid_provenance_kind")
 

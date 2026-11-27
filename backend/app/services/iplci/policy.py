@@ -32,8 +32,13 @@ def canonical(value: Mapping[str, Any]) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+# Only these fields are signed; storage metadata (id, created_at, payload,
+# approval reference) must not invalidate an otherwise intact signature.
+SIGNED_FIELDS = ("version", "rules", "signed_by", "signed_at", "status")
+
+
 def policy_hash(document: Mapping[str, Any]) -> str:
-    payload = {key: value for key, value in document.items() if key not in ("signature",)}
+    payload = {key: document.get(key) for key in SIGNED_FIELDS}
     return hashlib.sha256(canonical(payload).encode("utf-8")).hexdigest()
 
 

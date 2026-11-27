@@ -9,6 +9,8 @@
   - `backend/app/services/hbi/research_ecosystem.py` — 12 channels, A–E classification, central legal gate, discovery targets, contributions, federated analysis and derived-output checks.
   - `backend/app/services/hbi/translation.py` — local-first model translation, language/script detection, cross-lingual claim comparison; original preserved.
   - `backend/app/services/hbi/research_lab.py` — ethics-gated studies, informed consent, pseudonymous responses, withdrawal and deletion.
+  - `backend/app/services/hbi/open_sources.py` — free official API adapters with recorded terms; network injected for offline tests.
+  - `backend/app/services/hbi/synthetic.py` — IAM-owned scenarios; excluded from empirical validation.
   - `backend/app/services/hbi/corpus_gate.py` — fail-closed manifest gate: licence/purpose/provenance/privacy+lawful-basis/restrictions/approval, three corpus states, audit history.
   - `backend/app/services/hbi/validation.py` — excludes unapproved licensed sources and illustrative fixtures from validation cases.
   - `backend/app/services/hbi/service.py` — `HBIService` facade; holds store, core, graph, sources, predictor, sign-offs.

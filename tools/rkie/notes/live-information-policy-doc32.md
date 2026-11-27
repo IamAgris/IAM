@@ -47,9 +47,16 @@ Live validation 27 Nov 2026: `IAM_LIVE_E2E=1 python
 tests/e2e_live_information_smoke.py` required installing the Playwright Chromium
 binary (`python -m playwright install chromium`; package alone was insufficient).
 DuckDuckGo HTML through Playwright is bot-blocked in this environment, but direct
-official-site fetch works. Result: 3 real SABC articles with URLs and dates,
-Wikipedia rejected, no fabricated citations. Opt-in smoke only — not a guarantee
-of future site availability.
+official-site fetch works. E-1: 3 real SABC articles with URLs and dates,
+Wikipedia rejected. E-2: `example.org` unavailable → real no-key HTTP DDG adapter
+(`provider="duckduckgo"` in `search_service.py`) returned CNN, UN News and
+Gigazine. No fabricated citations. Opt-in smoke only — not a guarantee of future
+site availability.
+
+Also implemented: query-level cache (`live_evidence_cache`, migration 058) with
+class TTLs 15/60/360/43200 min; reputation read from existing `iics_sources`;
+shared engine API `/api/v1/live-information/{policy,research}` registered in
+`main.py`; `.env.example` flags. OD-52 signoff sheet: `IAM_OD52_SIGNOFF_SHEET.md`.
 
 ## Decisions / constraints
 

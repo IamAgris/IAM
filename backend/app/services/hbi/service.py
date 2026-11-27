@@ -11,9 +11,12 @@ from app.services.hbi import (
 from app.services.hbi.corpus import ingest_corpus as load_corpus
 from app.core.config import settings
 from app.services.hbi.corpus_gate import CorpusGovernance
+from app.services.hbi.http_fetcher import fetch_json as fetch_public_json
+from app.services.hbi.open_sources import fetch_documents, list_adapters
 from app.services.hbi.permission_engine import PermissionEngine
 from app.services.hbi.research_ecosystem import ResearchEcosystem
 from app.services.hbi.research_lab import ResearchLab
+from app.services.hbi.synthetic import build_scenarios, to_records as synthetic_records
 from app.services.hbi.translation import TranslationService
 from app.services.hbi.chronology import resolve as resolve_chronology
 from app.services.hbi.cross_disciplinary import fuse as fuse_disciplines
@@ -64,6 +67,7 @@ from app.services.hbi.schemas import (
     MultilingualIngestRequest,
     MultilingualSemanticsRequest,
     ModuleAnalysisRequest,
+    OpenSourceIngestRequest,
     OversightRequest,
     ParticipantConsentRequest,
     ParticipantWithdrawalRequest,
@@ -74,6 +78,7 @@ from app.services.hbi.schemas import (
     RevisionRequest,
     SourceCalibrationRequest,
     SourceRegisterRequest,
+    SyntheticStudyRequest,
     TemporalRequest,
     TheoryComparisonRequest,
 )
@@ -609,6 +614,46 @@ class HBIService:
 
     def lab_audit(self) -> Dict[str, Any]:
         return self.lab.audit_history()
+
+    def open_source_adapters(self) -> Dict[str, Any]:
+        return list_adapters()
+
+    async def ingest_open_source(self, payload: OpenSourceIngestRequest, fetcher=None) -> Dict[str, Any]:
+        """Ingest metadata from a free official API through the normal gate."""
+        result = await fetch_documents(
+            payload.adapter, payload.query, fetcher or fetch_public_json, payload.limit
+        )
+        if result.get("error"):
+            return result
+        accepted = []
+        for document in result["documents"]:
+            ingested = await self.ingest(document)
+            accepted.append({"source_id": document.source_id, "status": ingested.get("status", "ingested")})
+        self.core._audit("open_source_ingest", "research", "aggregate", "completed",
+                         {"adapter": payload.adapter, "documents": len(accepted)})
+        return {
+            "adapter": result["adapter"], "kind": result["kind"],
+            "terms": result["terms"], "documents": result["count"],
+            "accepted": accepted,
+            "note": "Metadata only; per-item rights must be checked before retention or training.",
+        }
+
+    async def generate_synthetic(self, payload: SyntheticStudyRequest) -> Dict[str, Any]:
+        """Generate IAM-owned scenarios from permitted material; no participants required."""
+        self.core.check_governance(payload.purpose, "aggregate")
+        claims = [r["claim"] for r in self.store.all()]
+        scenarios = build_scenarios(claims, payload.count)
+        records = []
+        for record in synthetic_records(scenarios, payload.study_ref):
+            stored = await self.store.add(record)
+            records.append({"record_ref": stored["record_ref"], "claim": stored["claim"]})
+        self.core._audit("synthetic_generation", payload.purpose, "aggregate", "completed",
+                         {"study_ref": payload.study_ref, "count": len(records)})
+        return {
+            "study_ref": payload.study_ref, "count": len(records),
+            "records": records,
+            "note": "Synthetic scenarios are hypotheses, not empirical evidence.",
+        }
 
     def status(self) -> Dict[str, Any]:
         return {

@@ -4,6 +4,8 @@ Engine creation is lazy: importing the app for OpenAPI/schema generation must no
 require a DBAPI driver (which may be blocked by host application-control policies).
 """
 
+from typing import Any
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
@@ -25,7 +27,7 @@ _engine = None
 _AsyncSessionLocal = None
 
 
-def get_engine():
+def get_engine() -> Any:
     """Lazily create the async engine (avoids DBAPI import at module import)."""
     global _engine
     if _engine is None:
@@ -37,7 +39,7 @@ def get_engine():
     return _engine
 
 
-def get_session_factory():
+def get_session_factory() -> Any:
     """Lazily create the session factory."""
     global _AsyncSessionLocal
     if _AsyncSessionLocal is None:
@@ -51,13 +53,13 @@ def get_session_factory():
 
 # Backwards-compatible module attributes (lazy proxies)
 class _LazyEngine:
-    def __getattr__(self, name):
+    def __getattr__(self, name: Any) -> Any:
         return getattr(get_engine(), name)
 
-    def begin(self):
+    def begin(self) -> Any:
         return get_engine().begin()
 
-    def dispose(self):
+    def dispose(self) -> Any:
         return get_engine().dispose()
 
 
@@ -65,7 +67,7 @@ engine = _LazyEngine()
 
 
 class _LazySessionLocal:
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return get_session_factory()(*args, **kwargs)
 
 

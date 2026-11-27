@@ -202,5 +202,19 @@ gaps.
   unrelated IPLCI failures (service phase advanced to 6 while those tests still
   assert 5). Gates: ruff, OpenAPI (661 paths), migrations OK; mypy ratchet new
   errors are in other agents' files (`web3.py`, `delegation_orchestrator.py`).
+
+## Gate cleanup (27 November 2026)
+
+- Stale IPLCI phase assertions and the WebSocket fake's missing `headers` were
+  corrected by concurrent work; current full suite is **855 passed**.
+- Real bug fixed in `services/iics/permissions.py`: `IPLCIService(db=self.db)`
+  instead of passing the session as the `store` positional argument.
+- Narrow type suppressions added for SQLAlchemy `Column` descriptor assignments
+  in `iics/ledger.py` and `iics/source_registry.py`, plus return/call annotations
+  in `api/routes/modeldiscovery.py` and `services/model_discovery.py`.
+- Current gates: **mypy ratchet OK (new 0, fixed 21)**, ruff clean, OpenAPI drift
+  OK (717 paths), migrations OK, full backend suite 855 passed.
+- Note: several files in this tree are being edited concurrently; re-run all
+  gates before relying on any single result.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

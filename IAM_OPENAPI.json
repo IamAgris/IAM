@@ -2150,6 +2150,74 @@
         }
       }
     },
+    "/api/v1/live-information/policy": {
+      "get": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Live Information Policy",
+        "description": "The standing rule injected into every IAM chat request.",
+        "operationId": "live_information_policy_api_v1_live_information_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Live Information Policy Api V1 Live Information Policy Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/live-information/research": {
+      "post": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Live Research",
+        "description": "Classify intent and retrieve live evidence through the shared engine.",
+        "operationId": "live_research_api_v1_live_information_research_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Live Research Api V1 Live Information Research Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/voice/speech-to-text": {
       "post": {
         "tags": [
@@ -6915,7 +6983,11 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Discover Api V1 Models Discovery  Provider  Post"
+                }
               }
             }
           },
@@ -10118,6 +10190,243 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Release Download Api V1 Browser Security Download Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/knowledge/proposals": {
+      "post": {
+        "tags": [
+          "browser-knowledge"
+        ],
+        "summary": "Create Proposal",
+        "operationId": "create_proposal_api_v1_browser_knowledge_proposals_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Proposal Api V1 Browser Knowledge Proposals Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "browser-knowledge"
+        ],
+        "summary": "List Proposals",
+        "operationId": "list_proposals_api_v1_browser_knowledge_proposals_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response List Proposals Api V1 Browser Knowledge Proposals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/knowledge/proposals/{proposal_id}": {
+      "get": {
+        "tags": [
+          "browser-knowledge"
+        ],
+        "summary": "Get Proposal",
+        "operationId": "get_proposal_api_v1_browser_knowledge_proposals__proposal_id__get",
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Proposal Api V1 Browser Knowledge Proposals  Proposal Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/knowledge/proposals/{proposal_id}/approve": {
+      "post": {
+        "tags": [
+          "browser-knowledge"
+        ],
+        "summary": "Approve Proposal",
+        "operationId": "approve_proposal_api_v1_browser_knowledge_proposals__proposal_id__approve_post",
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Approve Proposal Api V1 Browser Knowledge Proposals  Proposal Id  Approve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/knowledge/proposals/{proposal_id}/reject": {
+      "post": {
+        "tags": [
+          "browser-knowledge"
+        ],
+        "summary": "Reject Proposal",
+        "operationId": "reject_proposal_api_v1_browser_knowledge_proposals__proposal_id__reject_post",
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Reject Proposal Api V1 Browser Knowledge Proposals  Proposal Id  Reject Post"
                 }
               }
             }
@@ -29884,6 +30193,118 @@
         }
       }
     },
+    "/api/v1/hbi/research/open-sources": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Open Sources",
+        "description": "Free/open official API adapters with recorded terms.",
+        "operationId": "open_sources_api_v1_hbi_research_open_sources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Open Sources Api V1 Hbi Research Open Sources Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/open-sources/ingest": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Ingest Open Source",
+        "description": "Ingest public metadata through the normal provenance gate.",
+        "operationId": "ingest_open_source_api_v1_hbi_research_open_sources_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSourceIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Ingest Open Source Api V1 Hbi Research Open Sources Ingest Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/lab/synthetic": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Synthetic Study",
+        "description": "Generate original synthetic scenarios; no human participants required.",
+        "operationId": "synthetic_study_api_v1_hbi_research_lab_synthetic_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyntheticStudyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Synthetic Study Api V1 Hbi Research Lab Synthetic Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/iics/egress/check": {
       "post": {
         "tags": [
@@ -30382,13 +30803,839 @@
         }
       }
     },
+    "/api/v1/iics/research/strategy": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Select Strategy",
+        "operationId": "select_strategy_api_v1_iics_research_strategy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Select Strategy Api V1 Iics Research Strategy Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/research/confidence": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Calibrate Confidence",
+        "operationId": "calibrate_confidence_api_v1_iics_research_confidence_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfidenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calibrate Confidence Api V1 Iics Research Confidence Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/scheduled": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "List Scheduled Tasks",
+        "operationId": "list_scheduled_tasks_api_v1_iics_scheduled_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Scheduled Tasks Api V1 Iics Scheduled Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Create Scheduled Task",
+        "operationId": "create_scheduled_task_api_v1_iics_scheduled_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduledTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Scheduled Task Api V1 Iics Scheduled Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/scheduled/due": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Due Scheduled Tasks",
+        "operationId": "due_scheduled_tasks_api_v1_iics_scheduled_due_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Due Scheduled Tasks Api V1 Iics Scheduled Due Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/scheduled/{task_id}/status": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Set Scheduled Status",
+        "operationId": "set_scheduled_status_api_v1_iics_scheduled__task_id__status_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Set Scheduled Status Api V1 Iics Scheduled  Task Id  Status Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/media/extract": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Extract Media",
+        "description": "Extract text/metadata locally. Content remains untrusted data.",
+        "operationId": "extract_media_api_v1_iics_media_extract_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaExtractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Extract Media Api V1 Iics Media Extract Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/security/advisories/ingest": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Ingest Advisories",
+        "operationId": "ingest_advisories_api_v1_iics_security_advisories_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Ingest Advisories Api V1 Iics Security Advisories Ingest Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/security/advisories": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "List Advisories",
+        "operationId": "list_advisories_api_v1_iics_security_advisories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Advisories Api V1 Iics Security Advisories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/security/dlp/check": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Check Dlp",
+        "operationId": "check_dlp_api_v1_iics_security_dlp_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DLPCheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Check Dlp Api V1 Iics Security Dlp Check Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/site-policies": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Record Site Policy",
+        "operationId": "record_site_policy_api_v1_iics_site_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SitePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Record Site Policy Api V1 Iics Site Policies Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/site-policies/stale": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Stale Site Policies",
+        "operationId": "stale_site_policies_api_v1_iics_site_policies_stale_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Stale Site Policies Api V1 Iics Site Policies Stale Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/site-policies/{domain}": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Get Site Policy",
+        "operationId": "get_site_policy_api_v1_iics_site_policies__domain__get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Domain"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Site Policy Api V1 Iics Site Policies  Domain  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/privacy/records": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Open Privacy Record",
+        "operationId": "open_privacy_record_api_v1_iics_privacy_records_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Open Privacy Record Api V1 Iics Privacy Records Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/privacy/records/{record_id}/resolve": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Resolve Privacy Record",
+        "operationId": "resolve_privacy_record_api_v1_iics_privacy_records__record_id__resolve_post",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Resolve Privacy Record Api V1 Iics Privacy Records  Record Id  Resolve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/privacy/transfer-permitted": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Transfer Permitted",
+        "operationId": "transfer_permitted_api_v1_iics_privacy_transfer_permitted_get",
+        "parameters": [
+          {
+            "name": "subject_ref",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject Ref"
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Jurisdiction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Transfer Permitted Api V1 Iics Privacy Transfer Permitted Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/creator/notify": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Notify Creator",
+        "description": "Send an informational Creator email. It grants no authority.",
+        "operationId": "notify_creator_api_v1_iics_creator_notify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatorNotifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Notify Creator Api V1 Iics Creator Notify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/creator/qa-alert": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Creator Qa Alert",
+        "operationId": "creator_qa_alert_api_v1_iics_creator_qa_alert_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QAAlertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Creator Qa Alert Api V1 Iics Creator Qa Alert Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/creator/monitoring-digest": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Creator Monitoring Digest",
+        "operationId": "creator_monitoring_digest_api_v1_iics_creator_monitoring_digest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitoringDigestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Creator Monitoring Digest Api V1 Iics Creator Monitoring Digest Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/creator/approval-request": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Creator Approval Request",
+        "description": "Raise a signed Creator challenge; email is the carrier, not the authority.",
+        "operationId": "creator_approval_request_api_v1_iics_creator_approval_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatorApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Creator Approval Request Api V1 Iics Creator Approval Request Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/iics/qa/run": {
       "post": {
         "tags": [
           "iics-foundation"
         ],
         "summary": "Run Qa",
-        "description": "Run the scored internet QA suite and apply the regression gate.",
+        "description": "Run the scored internet QA suite, compare with the last run and persist.",
         "operationId": "run_qa_api_v1_iics_qa_run_post",
         "responses": {
           "200": {
@@ -30399,6 +31646,55 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Run Qa Api V1 Iics Qa Run Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/qa/results": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "List Qa Results",
+        "description": "Return persisted benchmark runs (evidence for the QA gate).",
+        "operationId": "list_qa_results_api_v1_iics_qa_results_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response List Qa Results Api V1 Iics Qa Results Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -31644,6 +32940,1144 @@
         }
       }
     },
+    "/api/v1/web3-extended/defi/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Policy",
+        "operationId": "defi_policy_api_v1_web3_extended_defi_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/defi/swaps/compare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Compare",
+        "operationId": "defi_compare_api_v1_web3_extended_defi_swaps_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Quotes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/defi/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Prepare",
+        "operationId": "defi_prepare_api_v1_web3_extended_defi_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/defi/impermanent-loss": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Impermanent Loss",
+        "operationId": "defi_impermanent_loss_api_v1_web3_extended_defi_impermanent_loss_get",
+        "parameters": [
+          {
+            "name": "ratio",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "title": "Ratio"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/defi/liquidation": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Liquidation",
+        "operationId": "defi_liquidation_api_v1_web3_extended_defi_liquidation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/defi/staking": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Defi Staking",
+        "operationId": "defi_staking_api_v1_web3_extended_defi_staking_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/x402/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "X402 Policy",
+        "operationId": "x402_policy_api_v1_web3_extended_x402_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/x402/discover": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "X402 Discover",
+        "operationId": "x402_discover_api_v1_web3_extended_x402_discover_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/x402/evaluate": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "X402 Evaluate",
+        "operationId": "x402_evaluate_api_v1_web3_extended_x402_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/x402/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "X402 Prepare",
+        "operationId": "x402_prepare_api_v1_web3_extended_x402_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/contracts/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Contracts Policy",
+        "operationId": "contracts_policy_api_v1_web3_extended_contracts_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/contracts/analyze": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Contracts Analyze",
+        "operationId": "contracts_analyze_api_v1_web3_extended_contracts_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/contracts/template": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Contracts Template",
+        "operationId": "contracts_template_api_v1_web3_extended_contracts_template_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/contracts/deploy/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Contracts Prepare Deploy",
+        "operationId": "contracts_prepare_deploy_api_v1_web3_extended_contracts_deploy_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/nft/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Nft Policy",
+        "operationId": "nft_policy_api_v1_web3_extended_nft_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/nft/mint/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Nft Prepare Mint",
+        "operationId": "nft_prepare_mint_api_v1_web3_extended_nft_mint_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/nft/list/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Nft Prepare List",
+        "operationId": "nft_prepare_list_api_v1_web3_extended_nft_list_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/nft/ownership": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Nft Ownership",
+        "operationId": "nft_ownership_api_v1_web3_extended_nft_ownership_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/dao/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Dao Policy",
+        "operationId": "dao_policy_api_v1_web3_extended_dao_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/dao/analyze": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Dao Analyze",
+        "operationId": "dao_analyze_api_v1_web3_extended_dao_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/dao/recommendation": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Dao Recommendation",
+        "operationId": "dao_recommendation_api_v1_web3_extended_dao_recommendation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/dao/vote/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Dao Prepare Vote",
+        "operationId": "dao_prepare_vote_api_v1_web3_extended_dao_vote_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/cross-chain/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Cross Chain Policy",
+        "operationId": "cross_chain_policy_api_v1_web3_extended_cross_chain_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/cross-chain/routes/compare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Cross Chain Compare",
+        "operationId": "cross_chain_compare_api_v1_web3_extended_cross_chain_routes_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Quotes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/cross-chain/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Cross Chain Prepare",
+        "operationId": "cross_chain_prepare_api_v1_web3_extended_cross_chain_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/cross-chain/settlement": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Cross Chain Settlement",
+        "operationId": "cross_chain_settlement_api_v1_web3_extended_cross_chain_settlement_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/threat/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Threat Policy",
+        "operationId": "threat_policy_api_v1_web3_extended_threat_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/threat/assess": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Threat Assess",
+        "operationId": "threat_assess_api_v1_web3_extended_threat_assess_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Signals"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/onchain/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Onchain Policy",
+        "operationId": "onchain_policy_api_v1_web3_extended_onchain_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/onchain/concentration": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Onchain Concentration",
+        "operationId": "onchain_concentration_api_v1_web3_extended_onchain_concentration_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/onchain/anomalies": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Onchain Anomalies",
+        "operationId": "onchain_anomalies_api_v1_web3_extended_onchain_anomalies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/onchain/fee": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Onchain Fee",
+        "operationId": "onchain_fee_api_v1_web3_extended_onchain_fee_get",
+        "parameters": [
+          {
+            "name": "base_fee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "title": "Base Fee"
+            }
+          },
+          {
+            "name": "priority_fee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "title": "Priority Fee"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/onchain/whales": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Onchain Whales",
+        "operationId": "onchain_whales_api_v1_web3_extended_onchain_whales_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "summary": "Health Live",
@@ -31710,7 +34144,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Health Check Health Get"
+                }
               }
             }
           }
@@ -31726,7 +34162,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Root  Get"
+                }
               }
             }
           }
@@ -32246,6 +34684,25 @@
           "creator_approval_reference"
         ],
         "title": "AdoptRequest"
+      },
+      "AdvisoryIngestRequest": {
+        "properties": {
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "osv"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payload"
+        ],
+        "title": "AdvisoryIngestRequest"
       },
       "AgentRegisterIdentityRequest": {
         "properties": {
@@ -34089,6 +36546,23 @@
         ],
         "title": "ComparisonRequest"
       },
+      "ConfidenceRequest": {
+        "properties": {
+          "sources": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "ConfidenceRequest"
+      },
       "ConsentRequest": {
         "properties": {
           "visitor_id": {
@@ -34798,6 +37272,83 @@
         ],
         "title": "CorpusSourceMeta"
       },
+      "CreatorApprovalRequest": {
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "title": "Action Type"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "target_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Ref"
+          },
+          "consequences": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consequences",
+            "default": []
+          },
+          "risk_level": {
+            "type": "string",
+            "title": "Risk Level",
+            "default": "3"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_type",
+          "summary"
+        ],
+        "title": "CreatorApprovalRequest"
+      },
+      "CreatorNotifyRequest": {
+        "properties": {
+          "update": {
+            "type": "string",
+            "title": "Update"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "update"
+        ],
+        "title": "CreatorNotifyRequest"
+      },
       "CredentialCreate": {
         "properties": {
           "purpose": {
@@ -35108,6 +37659,24 @@
           "state"
         ],
         "title": "CycleStateRequest"
+      },
+      "DLPCheckRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "default": "api"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "DLPCheckRequest"
       },
       "DPIASignoffRequest": {
         "properties": {
@@ -39767,6 +42336,26 @@
         ],
         "title": "LineageRequest"
       },
+      "LiveResearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "max_results": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Results",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "LiveResearchRequest"
+      },
       "LocationCorrectionRequest": {
         "properties": {
           "session_token": {
@@ -39910,6 +42499,34 @@
           "evidence"
         ],
         "title": "MatchRequest"
+      },
+      "MediaExtractRequest": {
+        "properties": {
+          "content_b64": {
+            "type": "string",
+            "title": "Content B64"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "default": ""
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "default": ""
+          },
+          "allow_ocr": {
+            "type": "boolean",
+            "title": "Allow Ocr",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_b64"
+        ],
+        "title": "MediaExtractRequest"
       },
       "MemoryItemCreate": {
         "properties": {
@@ -40365,6 +42982,23 @@
         ],
         "title": "MonitorRequest"
       },
+      "MonitoringDigestRequest": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "MonitoringDigestRequest"
+      },
       "MultilingualIngestRequest": {
         "properties": {
           "documents": {
@@ -40568,6 +43202,30 @@
           "url"
         ],
         "title": "OfficialSourceRequest"
+      },
+      "OpenSourceIngestRequest": {
+        "properties": {
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Query"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": [
+          "adapter",
+          "query"
+        ],
+        "title": "OpenSourceIngestRequest"
       },
       "OpportunityCreate": {
         "properties": {
@@ -40998,6 +43656,18 @@
           "amount_usd"
         ],
         "title": "PayInvoice"
+      },
+      "Payload": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "Payload"
       },
       "PaymentCreate": {
         "properties": {
@@ -41636,6 +44306,41 @@
         "type": "object",
         "title": "PrivacyCheckRequest"
       },
+      "PrivacyRecordRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "subject_ref": {
+            "type": "string",
+            "title": "Subject Ref"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "subject_ref"
+        ],
+        "title": "PrivacyRecordRequest"
+      },
       "PrivacyRequest": {
         "properties": {
           "source_id": {
@@ -41762,6 +44467,25 @@
         },
         "type": "object",
         "title": "PrivacyRequest"
+      },
+      "PrivacyResolveRequest": {
+        "properties": {
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "resolved"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence"
+        ],
+        "title": "PrivacyResolveRequest"
       },
       "ProfileRequest": {
         "properties": {
@@ -41913,6 +44637,56 @@
         },
         "type": "object",
         "title": "ProjectUpdate"
+      },
+      "ProposalRequest": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          },
+          "claim": {
+            "type": "string",
+            "title": "Claim"
+          },
+          "sources": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Sources"
+          },
+          "legal_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Source Id"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "claim",
+          "sources"
+        ],
+        "title": "ProposalRequest"
       },
       "ProviderCreate": {
         "properties": {
@@ -42078,6 +44852,31 @@
         ],
         "title": "PublishRequest"
       },
+      "QAAlertRequest": {
+        "properties": {
+          "regressions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regressions"
+          },
+          "results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Results",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "regressions"
+        ],
+        "title": "QAAlertRequest"
+      },
       "QuestionRequest": {
         "properties": {
           "question": {
@@ -42112,6 +44911,21 @@
           "question"
         ],
         "title": "QuestionRequest"
+      },
+      "Quotes": {
+        "properties": {
+          "quotes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Quotes",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Quotes"
       },
       "ReassessmentRequest": {
         "properties": {
@@ -42592,6 +45406,17 @@
           "name"
         ],
         "title": "RegisterRequest"
+      },
+      "RejectRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "RejectRequest"
       },
       "RemediationRequest": {
         "properties": {
@@ -43541,6 +46366,45 @@
         "type": "object",
         "title": "ScheduledActivityUpdate"
       },
+      "ScheduledTaskRequest": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "title": "Goal"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "cadence_minutes": {
+            "type": "integer",
+            "title": "Cadence Minutes",
+            "default": 1440
+          },
+          "freshness_class": {
+            "type": "string",
+            "title": "Freshness Class",
+            "default": "documentation"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "goal",
+          "query"
+        ],
+        "title": "ScheduledTaskRequest"
+      },
       "Scope": {
         "type": "string",
         "enum": [
@@ -43754,6 +46618,78 @@
           "decision"
         ],
         "title": "SignRequest"
+      },
+      "Signals": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "signals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Signals",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "Signals"
+      },
+      "SitePolicyRequest": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "robots_text": {
+            "type": "string",
+            "title": "Robots Text",
+            "default": ""
+          },
+          "terms_text": {
+            "type": "string",
+            "title": "Terms Text",
+            "default": ""
+          },
+          "ttl_hours": {
+            "type": "integer",
+            "title": "Ttl Hours",
+            "default": 720
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain"
+        ],
+        "title": "SitePolicyRequest"
       },
       "SkillBuildRequest": {
         "properties": {
@@ -44188,6 +47124,43 @@
         ],
         "title": "StopUpdate"
       },
+      "StrategyRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "known_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Known Domains",
+            "default": []
+          },
+          "prior_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Confidence"
+          },
+          "prefer_depth": {
+            "type": "boolean",
+            "title": "Prefer Depth",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "StrategyRequest"
+      },
       "StudyCreateRequest": {
         "properties": {
           "title": {
@@ -44336,6 +47309,30 @@
           "signature"
         ],
         "title": "SyncObjectRequest"
+      },
+      "SyntheticStudyRequest": {
+        "properties": {
+          "study_ref": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Study Ref"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 5
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose",
+            "default": "research"
+          }
+        },
+        "type": "object",
+        "required": [
+          "study_ref"
+        ],
+        "title": "SyntheticStudyRequest"
       },
       "SystemRequest": {
         "properties": {
@@ -44964,6 +47961,19 @@
         ],
         "title": "TaskResponse"
       },
+      "TaskStatusRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "TaskStatusRequest"
+      },
       "TaskUpdate": {
         "properties": {
           "title": {
@@ -45013,6 +48023,19 @@
         },
         "type": "object",
         "title": "TaskUpdate"
+      },
+      "TemplateRequest": {
+        "properties": {
+          "standard": {
+            "type": "string",
+            "title": "Standard"
+          }
+        },
+        "type": "object",
+        "required": [
+          "standard"
+        ],
+        "title": "TemplateRequest"
       },
       "TemporalRequest": {
         "properties": {

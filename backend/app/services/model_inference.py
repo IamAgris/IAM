@@ -349,8 +349,23 @@ class InferenceService:
         max_tokens: Optional[int] = None,
         timeout: Optional[float] = None,
         db: Any = None,
+        governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Run one real chat completion against the resolved provider."""
+        if governance_context and governance_context.get("source_id"):
+            from app.services.iplci.gateway import GovernanceRefusal
+            from app.services.iplci.integration import enforce_agent_request
+
+            try:
+                await enforce_agent_request(
+                    db,
+                    action="model.invoke",
+                    source_id=governance_context["source_id"],
+                    agent_id=str(governance_context.get("agent_id") or "main"),
+                    jurisdiction=governance_context.get("jurisdiction"),
+                )
+            except GovernanceRefusal as exc:
+                raise InferenceBlocked(f"IPLCI governance refused provider call: {exc}")
         inspection = _inspect_input(messages)
         if inspection:
             kinds = ", ".join(str(f.get("type")) for f in inspection["findings"])

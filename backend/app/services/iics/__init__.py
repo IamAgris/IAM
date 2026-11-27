@@ -9,6 +9,17 @@ from .permissions import PermissionGate
 from .ledger import ActionLedger, BudgetGovernor, BudgetLimit
 from .source_registry import FRESHNESS_TTL_HOURS, SourceRegistry, label_for_confidence
 from .qa import BenchmarkSuite, BenchmarkCase
+from .creator_email import CreatorEmailBridge
+from .search_strategy import ConfidenceCalibrator, StrategyDecision, StrategySelector
+from .scheduler import ScheduledResearchError, ScheduledResearchService
+from .media import MediaDocumentService, MediaError, sanitize_metadata
+from .threat_intel import (
+    AdvisoryIngestor,
+    CredentialRef,
+    CredentialRotationPolicy,
+    DLPEngine,
+)
+from .site_policy import PrivacyLifecycle, SitePolicyStore, policy_hash
 
 __all__ = [
     "EgressDecision",
@@ -22,4 +33,20 @@ __all__ = [
     "label_for_confidence",
     "BenchmarkSuite",
     "BenchmarkCase",
+    "CreatorEmailBridge",
+    "ConfidenceCalibrator",
+    "StrategyDecision",
+    "StrategySelector",
+    "ScheduledResearchError",
+    "ScheduledResearchService",
+    "MediaDocumentService",
+    "MediaError",
+    "AdvisoryIngestor",
+    "CredentialRef",
+    "CredentialRotationPolicy",
+    "DLPEngine",
+    "PrivacyLifecycle",
+    "SitePolicyStore",
+    "policy_hash",
+    "sanitize_metadata",
 ]

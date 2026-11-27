@@ -1,4 +1,4 @@
-"""Creator approval and permission gating for Web3 operations (proposed Doc 30 §6).
+"""Creator approval and permission gating for Web3 operations (proposed Doc 33 §6).
 
 This module does not create a second approval engine. It delegates every decision
 to the existing ``CreatorApprovalService`` (ED25519 signature over a one-time
@@ -19,6 +19,14 @@ from app.services.financial_policy import SpendDenied, authorize_transaction
 # Levels map to the existing LEVEL_ORDER (1..4). There is no level 5.
 ACTION_LEVELS: Dict[str, str] = {
     "web3.transaction.prepare": "1",
+    "web3.x402.purchase": "3",
+    "web3.defi.swap": "3",
+    "web3.defi.stake": "3",
+    "web3.nft.mint": "3",
+    "web3.nft.list": "3",
+    "web3.bridge.execute": "3",
+    "web3.dao.vote": "3",
+    "web3.contract.deploy_testnet": "2",
     "web3.invoice.create": "2",
     "web3.transaction.broadcast": "3",
     "web3.payment.pay_invoice": "3",
@@ -35,6 +43,12 @@ SPEND_ACTIONS = frozenset(
         "web3.transaction.broadcast",
         "web3.payment.pay_invoice",
         "web3.swap.execute",
+        "web3.defi.swap",
+        "web3.defi.stake",
+        "web3.x402.purchase",
+        "web3.nft.mint",
+        "web3.nft.list",
+        "web3.bridge.execute",
         "web3.treasury.withdraw",
     }
 )

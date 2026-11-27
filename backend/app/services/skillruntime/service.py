@@ -149,7 +149,22 @@ class SkillRuntimeService:
         script: Optional[str] = None,
         arguments: Optional[Dict[str, Any]] = None,
         caller: str = "iam",
+        governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        if governance_context and governance_context.get("source_id"):
+            from app.services.iplci.gateway import GovernanceRefusal
+            from app.services.iplci.integration import enforce_agent_request
+
+            try:
+                await enforce_agent_request(
+                    self.db,
+                    action="skill.invoke",
+                    source_id=governance_context["source_id"],
+                    agent_id=str(governance_context.get("agent_id") or caller),
+                    jurisdiction=governance_context.get("jurisdiction"),
+                )
+            except GovernanceRefusal as exc:
+                raise SkillRuntimeError(f"IPLCI governance refused skill invocation: {exc}")
         adapter_name = settings.skill_runtime_adapter
         arguments = arguments or {}
         try:

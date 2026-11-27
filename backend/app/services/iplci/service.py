@@ -1211,6 +1211,19 @@ class IPLCIService:
         version = str(payload.get("version") or "").strip()
         if not version:
             raise core.IPLCIError("IPLCI_INVALID_INPUT", "policy version is required")
+        signer = str(payload.get("signed_by") or "").strip()
+        approval_ref = str(payload.get("human_approval_reference") or "").strip()
+        agent_like = ("iam", "main", "sdk", "system", "agent", "model", "creator_approval_pending")
+        if (
+            not signer
+            or signer.lower() in agent_like
+            or signer.lower().startswith(("sub-agent", "plugin:", "external_model:"))
+            or not approval_ref
+        ):
+            raise core.IPLCIError(
+                "IPLCI_HUMAN_APPROVAL_REQUIRED",
+                "policy activation requires a human signer and a recorded approval reference",
+            )
         current = await self.store.active_policy()
         proposed_rules = dict(payload.get("rules") or {})
         if current:
@@ -1224,7 +1237,7 @@ class IPLCIService:
         document = policy.sign_policy(
             proposed_rules,
             version=version,
-            signed_by=str(payload.get("signed_by") or actor),
+            signed_by=signer,
             signed_at=str(payload.get("signed_at") or _now_iso()),
         )
         if current:

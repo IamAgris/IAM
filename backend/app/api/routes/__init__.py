@@ -11,6 +11,7 @@ from . import (
     technology_registry,
     freenodes,
     web3,
+    web3_extended,
 )
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "technology_registry",
     "freenodes",
     "web3",
+    "web3_extended",
 ]

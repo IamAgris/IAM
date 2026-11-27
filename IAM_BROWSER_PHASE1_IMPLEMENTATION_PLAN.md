@@ -373,3 +373,20 @@ Owner direction: finish code phases before the two external completion items. P3
 **Gates:** 8 new tests pass; ruff clean. Full-suite and OpenAPI gates still reflect concurrent HBI/model work noted in §10 and were not regenerated here.
 
 **Next code phases:** P4 (Web Knowledge Integration + source verification), P5/TIPS foundation, P6/TIPS onion + privacy, P7 (multi-agent scale), P8 (hardening/lifecycle). No claim is made for those phases yet.
+
+---
+
+## 12. Phase 4 — Web Knowledge Integration (owner: finish coding first)
+
+| Capability | File |
+|------------|------|
+| Evidence-backed source verification (distinct domains, preserved evidence IDs, never claims verified from a single unpreserved source) | `backend/app/services/web_knowledge_integration.py` |
+| Mandatory IPLCI `gate_check` before a proposal; blocked/verification-failed results go to `quarantined`, not knowledge | same file |
+| `BrowserKnowledgeProposal` model + migration `061_browser_knowledge_proposals.sql` | `backend/app/models/web_knowledge.py`, `backend/app/db/migrations/061_browser_knowledge_proposals.sql`, `MIGRATION_ORDER.json` (sequence 58) |
+| Signed Creator authorization required for promotion; approval returns a promotion payload and explicitly does **not** write knowledge | same file |
+| `/api/v1/browser/knowledge/proposals` create/list/get/approve/reject | `backend/app/api/routes/browser_knowledge.py`, `backend/app/main.py` |
+| Tests | `backend/tests/test_web_knowledge_integration.py` |
+
+**Gates:** 8 new tests pass; ruff clean; migration check **OK** (58 files, no duplicates). Full suite **879 passed, 4 failed** — failures are in concurrent HBI synthetic-study and provider-model-registrar work, not Doc 29 files.
+
+**Next code phases:** P5/TIPS foundation, P6/TIPS onion + privacy, P7 (multi-agent scale), P8 (hardening/lifecycle).

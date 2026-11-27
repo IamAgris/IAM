@@ -95,7 +95,7 @@
       "area": "multi-model-provider-credentials"
     },
     {
-      "pattern": "^backend/app/(services/(model_discovery|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py)$",
+      "pattern": "^backend/app/(services/(model_discovery|provider_model_registrar|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py)$",
       "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md",
       "decisions": ["OD-52"],
       "area": "universal-model-discovery-proposed"

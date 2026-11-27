@@ -159,7 +159,7 @@ The engine is a **shared capability** of IAM, available to the main assistant, a
 
 - Provider-independent adapters; no fixed publisher whitelist for ordinary public-web research.
 - Provider discovery, health check, quota/cost tracking and automatic failover.
-- **Free-first:** self-hosted or no-key providers preferred (SearXNG, DuckDuckGo HTML where permitted). Wikipedia may supply *background*, but is explicitly **not** live evidence and is excluded from current-information results.
+- **Free-first:** self-hosted or no-key providers preferred (SearXNG, DuckDuckGo HTML where permitted). A real no-key DuckDuckGo HTML adapter is available as `provider="duckduckgo"` in `search_service.py`; it is used after official-site retrieval fails. Wikipedia may supply *background*, but is explicitly **not** live evidence and is excluded from current-information results.
 - **Fail-closed paid use:** Brave, Tavily or any paid search API requires signed Creator authorisation (`SEARCH_ACTION`) before use; automatic chat-time retrieval never invokes a paid provider.
 - No single provider is IAM's only gateway to the web.
 - Respect robots policies, API terms, rate limits and geographic/access restrictions; never bypass authentication, paywalls or access controls without authorisation.
@@ -173,6 +173,12 @@ The engine is a **shared capability** of IAM, available to the main assistant, a
 - **Source reputation** is a signal, never a permission override: original-source status, corroboration count, syndication/duplicate detection, sponsored-content flags and contradiction history.
 - Cached research is reused only while within TTL; repeat queries should hit cache rather than re-query providers.
 - Cache and reputation records integrate with existing Postgres/pgvector tables; no new vector database is introduced.
+
+**Reference implementation:** `live_evidence_cache` (migration 058, query hash +
+TTL: breaking 15 min, current 60 min, standard 360 min, stable 30 days) and
+`backend/app/services/live_evidence_cache.py`. Source reputation is read from the
+existing IICS `iics_sources` registry; no duplicate reputation store. Cache and
+reputation failures are fail-soft and never block research.
 
 ---
 
@@ -225,7 +231,7 @@ These eight cases must pass before OD-52 is recorded:
 7. Verify historical questions do not trigger browsing.
 8. Verify browser failures never produce fabricated citations.
 
-**Reference implementation:** `backend/tests/test_live_information_policy.py` (`LiveRetrievalAcceptanceTests`) and the opt-in real-web check `backend/tests/e2e_live_information_smoke.py` (`IAM_LIVE_E2E=1`). The smoke run of 27 November 2026 retrieved three real SABC articles with URLs and publication dates from the official site while rejecting the Wikipedia fallback; it is evidence of that run only, not a guarantee of future site availability.
+**Reference implementation:** `backend/tests/test_live_information_policy.py` (`LiveRetrievalAcceptanceTests`), `backend/tests/test_live_evidence_cache.py`, and the opt-in real-web check `backend/tests/e2e_live_information_smoke.py` (`IAM_LIVE_E2E=1`). Live runs of 27 November 2026: (1) three real SABC articles with URLs and dates retrieved from the official site while the Wikipedia fallback was rejected; (2) an unavailable named publisher (`example.org`) fell back through the real free HTTP adapter to CNN and UN News. These are evidence of those runs only, not guarantees of future site availability.
 
 ---
 

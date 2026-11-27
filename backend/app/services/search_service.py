@@ -1,5 +1,9 @@
 """Search service - pluggable search API providers for independent research"""
 
+import html as html_lib
+import re
+import urllib.parse
+
 import httpx
 import loguru
 from typing import Optional, List, Dict, Any
@@ -18,7 +22,7 @@ class SearchService:
     through multiple-source evaluation before being stored as knowledge.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.provider = "duckduckgo"  # default: no API key required
         self.brave_api_key = settings.brave_api_key if hasattr(settings, 'brave_api_key') else None
         self.google_api_key = settings.google_api_key
@@ -41,9 +45,79 @@ class SearchService:
             return await self._search_brave(query, max_results)
         elif provider == "google" and self.google_api_key and self.google_cx:
             return await self._search_google(query, max_results)
+        elif provider == "duckduckgo":
+            # Free, no-key web search via the public HTML endpoint.
+            return await self._search_duckduckgo(query, max_results)
         else:
-            # Free fallback: Wikipedia public API (no key, no bot protection)
+            # Free fallback: Wikipedia public API (no key, no bot protection).
+            # Wikipedia is background, not live evidence (proposed Doc 32).
             return await self._search_wikipedia(query, max_results)
+
+    async def _search_duckduckgo(self, query: str, max_results: int) -> Dict[str, Any]:
+        """Free DuckDuckGo HTML search — no key, no browser, no invented data."""
+        results: List[Dict[str, Any]] = []
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(
+                    "https://html.duckduckgo.com/html/",
+                    params={"q": query},
+                    headers={"User-Agent": "IAM-Research/1.0 (public web research)"},
+                    timeout=20.0,
+                )
+            if response.status_code != 200:
+                return {
+                    "query": query,
+                    "provider": "duckduckgo",
+                    "results": [],
+                    "error": f"HTTP {response.status_code}",
+                    "searched_at": datetime.utcnow().isoformat(),
+                }
+            page = response.text
+            anchor = re.compile(
+                r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
+                re.IGNORECASE | re.DOTALL,
+            )
+            snippet_re = re.compile(
+                r'class="[^"]*result__snippet[^"]*"[^>]*>(.*?)</a>',
+                re.IGNORECASE | re.DOTALL,
+            )
+            for match in anchor.finditer(page):
+                url = html_lib.unescape(match.group(1))
+                if "uddg=" in url:
+                    url = urllib.parse.unquote(
+                        url.split("uddg=", 1)[1].split("&", 1)[0]
+                    )
+                title = re.sub(r"<[^>]+>", "", match.group(2))
+                title = html_lib.unescape(title).strip()
+                if not url.startswith("http") or not title:
+                    continue
+                tail = page[match.end() : match.end() + 2000]
+                snippet_match = snippet_re.search(tail)
+                snippet = ""
+                if snippet_match:
+                    snippet = html_lib.unescape(
+                        re.sub(r"<[^>]+>", "", snippet_match.group(1))
+                    ).strip()
+                results.append(
+                    {"title": title[:200], "url": url[:1000], "description": snippet[:300]}
+                )
+                if len(results) >= max_results:
+                    break
+        except Exception as exc:
+            logger.warning(f"DuckDuckGo HTML search failed: {exc}")
+            return {
+                "query": query,
+                "provider": "duckduckgo",
+                "results": [],
+                "error": str(exc)[:200],
+                "searched_at": datetime.utcnow().isoformat(),
+            }
+        return {
+            "query": query,
+            "provider": "duckduckgo",
+            "results": results,
+            "searched_at": datetime.utcnow().isoformat(),
+        }
 
     async def _search_wikipedia(self, query: str, max_results: int) -> Dict[str, Any]:
         """Search Wikipedia's public API — free, no key, respects access norms."""
@@ -87,7 +161,7 @@ class SearchService:
                     "https://api.search.brave.com/res/v1/web/search",
                     headers={
                         "Accept": "application/json",
-                        "X-Subscription-Token": self.brave_api_key,
+                        "X-Subscription-Token": str(self.brave_api_key or ""),
                     },
                     params={"q": query, "count": max_results},
                     timeout=30.0,

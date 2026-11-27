@@ -72,7 +72,7 @@ PROVIDER_CANDIDATES = (
     # Research and analysis
     ProviderCandidate("Financial Modeling Prep", "market_research"),
     ProviderCandidate("TradingView", "technical_analysis"),
-    # Proposed Doc 30 — all gates unverified until the operator reviews them.
+    # Proposed Doc 33 — all gates unverified until the operator reviews them.
     # thirdweb remains OD-23 free-only; the node entries are self-hosted, not providers
     # that hold IAM funds. No adapter is enabled by adding a catalogue entry.
     ProviderCandidate(

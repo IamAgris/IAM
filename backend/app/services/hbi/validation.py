@@ -61,8 +61,11 @@ def build_cases(records: List[Dict[str, Any]], approved_ids: Set[str] = None) ->
             if source_id not in approved_ids:
                 excluded.append({"record_ref": record.get("record_ref"), "reason": "source_not_approved"})
                 continue
-        if record.get("provenance_kind") == "illustrative_fixture":
-            excluded.append({"record_ref": record.get("record_ref"), "reason": "illustrative_fixture_excluded"})
+        if record.get("provenance_kind") in {"illustrative_fixture", "synthetic"}:
+            excluded.append({
+                "record_ref": record.get("record_ref"),
+                "reason": "non_empirical_material_excluded",
+            })
             continue
         if record.get("evidence_class") not in {"verified", "well_supported"}:
             excluded.append({"record_ref": record.get("record_ref"), "reason": "insufficient_evidence_grade"})

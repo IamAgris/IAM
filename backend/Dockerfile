@@ -30,6 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libgbm1 libasound2 libpango-1.0-0 libcairo2 \
+    libgtk-4-1 libgtk-3-0t64 libxslt1.1 libevent-2.1-7 \
+    libharfbuzz-icu0 libepoxy0 libsecret-1-0 libhyphen0 libgles2 \
+    libwoff1 libopus0 libwebpdemux2 libenchant-2-2 \
+    libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-bad1.0-0 \
+    libmanette-0.2-0 libflite1 libavif16 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages

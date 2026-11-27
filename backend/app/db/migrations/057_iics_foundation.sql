@@ -70,6 +70,82 @@ CREATE INDEX IF NOT EXISTS ix_iics_actions_idempotency_key
     ON iics_actions (idempotency_key);
 CREATE INDEX IF NOT EXISTS ix_iics_actions_created_at ON iics_actions (created_at);
 
+CREATE TABLE IF NOT EXISTS iics_scheduled_tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id VARCHAR(128) NOT NULL UNIQUE,
+    goal TEXT NOT NULL,
+    query TEXT NOT NULL,
+    freshness_class TEXT NOT NULL DEFAULT 'documentation',
+    cadence_minutes INTEGER NOT NULL DEFAULT 1440,
+    next_run_at TIMESTAMPTZ NOT NULL,
+    last_run_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'scheduled',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT ck_iics_scheduled_status
+        CHECK (status IN ('scheduled', 'running', 'completed', 'failed', 'paused', 'cancelled'))
+);
+
+CREATE INDEX IF NOT EXISTS ix_iics_scheduled_tasks_next_run ON iics_scheduled_tasks (next_run_at);
+
+CREATE TABLE IF NOT EXISTS iics_advisories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cve_id TEXT NOT NULL UNIQUE,
+    source TEXT NOT NULL DEFAULT 'osv',
+    severity TEXT NOT NULL DEFAULT 'UNKNOWN',
+    published TEXT,
+    url TEXT,
+    summary TEXT NOT NULL DEFAULT '',
+    affected JSON NOT NULL DEFAULT '[]'::json,
+    evidence JSON NOT NULL DEFAULT '{}'::json,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ix_iics_advisories_cve_id ON iics_advisories (cve_id);
+
+CREATE TABLE IF NOT EXISTS iics_dlp_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    channel TEXT NOT NULL,
+    matched_labels JSON NOT NULL DEFAULT '[]'::json,
+    action TEXT NOT NULL DEFAULT 'blocked',
+    details JSON NOT NULL DEFAULT '{}'::json,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS iics_site_policies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    domain TEXT NOT NULL UNIQUE,
+    robots_text TEXT NOT NULL DEFAULT '',
+    terms_text TEXT NOT NULL DEFAULT '',
+    content_hash VARCHAR(64) NOT NULL,
+    ttl_hours INTEGER NOT NULL DEFAULT 720,
+    source_url TEXT,
+    notes TEXT,
+    snapshot_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT ck_iics_site_policy_ttl CHECK (ttl_hours > 0)
+);
+
+CREATE INDEX IF NOT EXISTS ix_iics_site_policies_domain ON iics_site_policies (domain);
+
+CREATE TABLE IF NOT EXISTS iics_privacy_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    kind TEXT NOT NULL,
+    subject_ref TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    jurisdiction TEXT,
+    details JSON NOT NULL DEFAULT '{}'::json,
+    evidence JSON NOT NULL DEFAULT '{}'::json,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    resolved_at TIMESTAMPTZ,
+    CONSTRAINT ck_iics_privacy_kind
+        CHECK (kind IN ('dsar_access', 'dsar_erasure', 'consent_withdrawal', 'transfer_assessment')),
+    CONSTRAINT ck_iics_privacy_status
+        CHECK (status IN ('open', 'in_progress', 'resolved', 'refused'))
+);
+
+CREATE INDEX IF NOT EXISTS ix_iics_privacy_records_kind ON iics_privacy_records (kind);
+
 CREATE TABLE IF NOT EXISTS iics_benchmark_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     benchmark TEXT NOT NULL,

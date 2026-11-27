@@ -187,14 +187,24 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
         configured: Dict[str, Any],
         browser: AsyncMock,
         official: Optional[Dict[str, Any]] = None,
+        free: Optional[Dict[str, Any]] = None,
     ) -> LiveEvidence:
         from app.services import live_information_policy as policy
+
+        async def provider_search(
+            query: str, max_results: int = 10, provider: Optional[str] = None
+        ) -> Dict[str, Any]:
+            if provider == "duckduckgo":
+                return free or {
+                    "provider": "duckduckgo", "query": query, "results": []
+                }
+            return configured
 
         with (
             patch.object(
                 search_service_module.search_service,
                 "search",
-                new=AsyncMock(return_value=configured),
+                new=AsyncMock(side_effect=provider_search),
             ),
             patch.object(
                 browser_service_module.browser_service,
@@ -292,14 +302,25 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
                 }
             ]
 
+        free = {
+            "provider": "duckduckgo",
+            "results": [
+                {
+                    "title": "Reuters report",
+                    "url": "https://www.reuters.com/world/report",
+                    "description": "Independent reporting.",
+                }
+            ],
+        }
         evidence = await self.collect(
             "Latest news from unavailable-example.org",
             {"provider": "wikipedia", "results": []},
             AsyncMock(side_effect=browser),
+            free=free,
         )
         joined = " ".join(evidence.errors)
         self.assertIn("no browser results for unavailable-example.org", joined)
-        self.assertTrue(any(not q.startswith("site:") for q in calls))
+        self.assertIn("duckduckgo-http", evidence.provider)
 
     async def test_04_falls_back_to_other_credible_sources(self) -> None:
         async def browser(query: str, max_results: int = 10) -> list[dict[str, str]]:
@@ -313,10 +334,21 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
                 }
             ]
 
+        free = {
+            "provider": "duckduckgo",
+            "results": [
+                {
+                    "title": "BBC report",
+                    "url": "https://www.bbc.com/news/world-report",
+                    "description": "Independent reporting.",
+                }
+            ],
+        }
         evidence = await self.collect(
             "Breaking news from unavailable-example.org",
             {"provider": "wikipedia", "results": []},
             AsyncMock(side_effect=browser),
+            free=free,
         )
         self.assertTrue(any("bbc.com" in item["url"] for item in evidence.results))
 
@@ -333,12 +365,23 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
                 }
             ]
 
+        free = {
+            "provider": "duckduckgo",
+            "results": [
+                {
+                    "title": "New model release",
+                    "url": "https://example-tech.org/releases/new-model",
+                    "description": "Release notes.",
+                }
+            ],
+        }
         evidence = await self.collect(
             "What is the latest AI model release?",
             {"provider": "wikipedia", "results": []},
             AsyncMock(side_effect=browser),
+            free=free,
         )
-        self.assertTrue(any("latest AI model release" in q for q in calls))
+        self.assertIn("duckduckgo-http", evidence.provider)
         self.assertTrue(evidence.results)
 
     async def test_06_arbitrary_user_url_becomes_preferred_source(self) -> None:

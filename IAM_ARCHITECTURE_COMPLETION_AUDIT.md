@@ -295,3 +295,22 @@ All eight workflow files parse as valid YAML and expose the expected jobs/trigge
 Open defects found during this work: IRWM `in_flight` remains occupied during API-level hosted calls, and the backend container died once during the first hosted attempt (before the Aegis system-prompt fix and rebuild).
 
 Final gate state after the four-item investigation: **805 tests passed**, coverage **67.35%**; ruff clean; OpenAPI 696/696 paths and 430/430 schemas; migrations 56/56 with no duplicate prefixes; RKIE smoke **20/20** and index **FRESH**. Two stale tests were corrected during this pass: `test_serving_model.py` assumed the pre-OD-46 local tag, and `test_adaptive_model_selector.py` transiently failed against a concurrently changing config. A new migration/model pair (`056_iics_foundation.sql`, `iics.py`) appeared during verification and was reconciled by the concurrent owner before the final run.
+
+### 11.9 GitHub Actions execution (owner-authorized push)
+
+Commit `904eb1a96cfca4ebff9c57d4c2ed83d9c628582d` ("IAM P0 hardening: …") was pushed to `origin/testing`; `git ls-remote` confirms it is the remote head. PR #4 (`testing → main`) and push triggers started real GitHub-hosted runs:
+
+| Workflow (PR event) | Conclusion |
+|---|---|
+| RKIE toolkit tests | **success** |
+| OpenAPI contract drift | **success** |
+| CodeQL | **success** |
+| IAM CI | **success** |
+| Supply chain checks | **failure** |
+| Quality gates | **failure** |
+
+Diagnosis of the two red workflows:
+- **Supply chain** — `pip-audit` found 3 advisories in 2 pinned packages: `ecdsa 0.19.2` (PYSEC-2026-1325, twice) and `python-jose 3.5.0` (PYSEC-2026-4298). No fixed versions are currently offered by the audit output. Needs a dependency decision, not a test change.
+- **Quality gates** — four jobs failed: `types` (full-repo mypy ratchet drifted from 1995 to 1997 baseline errors; two of the new errors were fixed locally, but more appeared in concurrently added `hbi/synthetic.py` and `live_evidence_cache.py`), `sdk-contracts` (Python SDK tests pass locally after `pip install -e`, so this needs CI log review), `repo-intel` (all individual commands pass locally with correct argument quoting; needs CI log review), and `acceptance` (failed at "Start minimum IAM stack" on the GitHub runner).
+
+GitHub Actions execution is therefore **proven**; a clean full suite is **not** yet achieved. The remaining failures are in concurrently added code and dependency advisories, and were not silently suppressed.

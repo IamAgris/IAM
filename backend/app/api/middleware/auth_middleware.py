@@ -21,7 +21,7 @@ from app.services.auth_service import AuthService
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
+    def __init__(self, app: Any) -> Any:
         super().__init__(app)
         self.local_limiter = RateLimiter(settings.auth_rate_limit_per_minute)
         self.redis_limiter = (
@@ -30,7 +30,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             else None
         )
 
-    async def _rate_check(self, key: str):
+    async def _rate_check(self, key: str) -> Any:
         if self.redis_limiter:
             try:
                 return await self.redis_limiter.check(key)
@@ -50,7 +50,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         async with get_session_factory()() as db:
             return await AuthService(db).verify_key(key)
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         required = required_scope(request.url.path)
         # SDK protocol compatibility: reject a known-different version with 426.
         # Missing headers are tolerated unless the deployment opts into strict mode.

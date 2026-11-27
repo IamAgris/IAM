@@ -7,7 +7,7 @@ than fixed screen coordinates.
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -352,14 +352,66 @@ class UWAIEService:
         pattern = str(workflow.url_pattern)
         if pattern and pattern not in url:
             raise UWAIEError("url does not match the approved workflow pattern")
-        return await self.execute(
-            steps=workflow.steps or [],
+        adapted, remapped = await self._adapt_steps(
+            cast(List[Dict[str, Any]], workflow.steps or []), url, actor
+        )
+        result = await self.execute(
+            steps=adapted,
             verification=workflow.verification or {},
             session_token=session_token,
             learn=False,
             workflow_name=workflow.name,
             actor=actor,
         )
+        result["adapted_steps"] = remapped
+        return result
+
+    async def _adapt_steps(
+        self, steps: List[Dict[str, Any]], url: str, actor: str
+    ) -> tuple[List[Dict[str, Any]], int]:
+        """Re-locate recorded steps by accessible label when a layout changed.
+
+        Page structure is used only to find the target of a trusted step — it
+        never adds or changes the action itself.
+        """
+        page = await self.inspect(url, actor)
+        fields: List[Dict[str, Any]] = []
+        for form in page.get("forms", []):
+            fields.extend(form.get("fields", []) or [])
+        adapted: List[Dict[str, Any]] = []
+        remapped = 0
+        for step in steps:
+            item = dict(step)
+            semantic = str(item.get("semantic") or item.get("label") or "").lower()
+            if semantic and item.get("action") in {"click", "type", "submit"}:
+                match = next(
+                    (
+                        f for f in fields
+                        if semantic in f"{f.get('label', '')} {f.get('name', '')}".lower()
+                    ),
+                    None,
+                )
+                if match:
+                    selector = ""
+                    if match.get("name"):
+                        selector = f'[name="{str(match["name"]).replace(chr(34), "")}"]'
+                    elif match.get("label"):
+                        selector = f'[aria-label="{str(match["label"]).replace(chr(34), "")}"]'
+                    if selector and selector != item.get("target"):
+                        item["target"] = selector
+                        remapped += 1
+            adapted.append(item)
+        if remapped:
+            self.db.add(
+                AuditEvent(
+                    event_type="uwaie_workflow_adapted",
+                    actor=actor,
+                    target=url[:500],
+                    details={"remapped_steps": remapped},
+                )
+            )
+            await self.db.commit()
+        return adapted, remapped
 
     async def request_handover(
         self, url: str, reason: str, actor: str

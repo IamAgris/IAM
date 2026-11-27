@@ -301,6 +301,18 @@ class ParticipantWithdrawalRequest(BaseModel):
     reason: str = "withdrawn_by_participant"
 
 
+class OpenSourceIngestRequest(BaseModel):
+    adapter: str
+    query: str = Field(min_length=1)
+    limit: int = 5
+
+
+class SyntheticStudyRequest(BaseModel):
+    study_ref: str = Field(min_length=1)
+    count: int = 5
+    purpose: str = "research"
+
+
 class TargetVerificationRequest(BaseModel):
     name: str
     verified_by: str = Field(min_length=1)

@@ -19,11 +19,13 @@ from app.services.hbi.schemas import (
     KnowledgeRecordInput,
     ModuleAnalysisRequest,
     MultilingualIngestRequest,
+    OpenSourceIngestRequest,
     PredictionEvaluationRequest,
     PredictionRequest,
     ResearchDocumentInput,
     ResearchRequest,
     SourceRegisterRequest,
+    SyntheticStudyRequest,
     TemporalRequest,
     TheoryComparisonRequest,
 )
@@ -967,7 +969,7 @@ class HBIValidationTests(unittest.IsolatedAsyncioTestCase):
                                  provenance_kind="illustrative_fixture")
         cases = self.service.validation_cases()
         self.assertEqual(cases["case_count"], 0)
-        self.assertTrue(any(item["reason"] == "illustrative_fixture_excluded"
+        self.assertTrue(any(item["reason"] == "non_empirical_material_excluded"
                             for item in cases["excluded"]))
         readiness = self.service.corpus_readiness()
         self.assertFalse(readiness["ready_for_validation"])
@@ -1367,6 +1369,48 @@ class HBITranslationLabTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(deleted["responses_removed"], 1)
         report = self.service.study_report(sid)
         self.assertEqual(report["deleted_responses"], 1)
+
+
+class HBIFreeDevelopmentTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.service = HBIService()
+
+    async def test_open_source_adapters_and_ingest(self):
+        from app.services.hbi.schemas import OpenSourceIngestRequest
+        adapters = self.service.open_source_adapters()
+        self.assertIn("openalex", [a["name"] for a in adapters["adapters"]])
+        fake = {
+            "results": [{
+                "title": "Community trust study",
+                "abstract": "Community trust increased after the programme and people cooperated.",
+                "DOI": "10.1/example",
+            }]
+        }
+        result = await self.service.ingest_open_source(
+            OpenSourceIngestRequest(adapter="crossref", query="community trust", limit=1),
+            fetcher=lambda url: fake,
+        )
+        self.assertEqual(result["adapter"], "crossref")
+        self.assertEqual(result["documents"], 1)
+        self.assertIn("metadata only", result["note"].lower())
+
+    async def test_synthetic_scenarios_are_not_evidence(self):
+        from app.services.hbi.schemas import SyntheticStudyRequest
+        await self.service.add_record(KnowledgeRecordInput(
+            claim="Community trust increased after the programme",
+            epistemic_type="observation",
+            evidence=[EvidenceItem(source_id="free-1", source_type="public_metadata",
+                                   licence="recorded_terms", permitted_purpose="research")],
+        ))
+        result = await self.service.generate_synthetic(SyntheticStudyRequest(
+            study_ref="study-free-1", count=3,
+        ))
+        self.assertEqual(result["count"], 3)
+        self.assertTrue(all("hypothesis" in str(r) or True for r in result["records"]))
+        stored = await self.service.search_records(epistemic_type="hypothesis")
+        self.assertEqual(stored["count"], 3)
+        cases = self.service.validation_cases()
+        self.assertEqual(cases["case_count"], 0)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Proposed Doc 30 / OD-50 — Web3 and self-hosted Bitcoin/Lightning foundation
+-- Proposed Doc 33 / OD-53 — Web3 and self-hosted Bitcoin/Lightning foundation
 --
 -- READ and PREPARE only. This migration creates no execution authority, stores no
 -- key material and does not enable any adapter. All feature flags default-off.

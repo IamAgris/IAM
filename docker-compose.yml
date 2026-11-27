@@ -63,6 +63,8 @@ services:
       - "${LITELLM_PORT:-4000}:4000"
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      # Rotating this makes stored provider credentials unreadable. Set once.
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-change-me-salt-key}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}

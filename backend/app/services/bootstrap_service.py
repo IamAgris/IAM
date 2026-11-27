@@ -36,7 +36,7 @@ def generate_ulid() -> str:
 
 
 class BootstrapService:
-    def __init__(self, db_session: AsyncSession):
+    def __init__(self, db_session: AsyncSession) -> Any:
         self.db = db_session
 
     async def initialize_all(self) -> Dict[str, Any]:
@@ -50,7 +50,7 @@ class BootstrapService:
         await self.db.commit()
         return results
 
-    async def _init_genesis(self):
+    async def _init_genesis(self) -> Any:
         result = await self.db.execute(select(AIIdentityGenesis))
         if result.scalar_one_or_none():
             return "exists"
@@ -64,7 +64,7 @@ class BootstrapService:
         ))
         return "created"
 
-    async def _init_identity(self):
+    async def _init_identity(self) -> Any:
         result = await self.db.execute(select(AIIdentity).limit(1))
         if result.scalar_one_or_none():
             return "exists"
@@ -80,7 +80,7 @@ class BootstrapService:
         self.db.add(AIPersonality(identity_id=identity.id, traits={"curious": True, "protective": True}, tone="calm", formality_level=6))
         return "created"
 
-    async def _init_principles(self):
+    async def _init_principles(self) -> Any:
         defaults = [
             ("transparency", "Identify as an AI when communicating with people", "personal", True),
             ("no_self_authorized_finance", "Never authorize own financial limit increases", "security", False),
@@ -97,7 +97,7 @@ class BootstrapService:
                 count += 1
         return f"created:{count}"
 
-    async def _init_authority(self):
+    async def _init_authority(self) -> Any:
         actions = [
             ("research_and_learn", "1", False), ("write_code_internal", "2", False),
             ("publish_externally", "3", True), ("spend_money", "4", True),
@@ -122,7 +122,7 @@ class BootstrapService:
                 count += 1
         return f"created:{count}"
 
-    async def _init_internet_permissions(self):
+    async def _init_internet_permissions(self) -> Any:
         defaults = [
             ("browse_public", "exploration", True, False), ("search_web", "exploration", True, False),
             ("read_public_content", "exploration", True, False), ("download_public_file", "exploration", True, False),
@@ -138,7 +138,7 @@ class BootstrapService:
                 count += 1
         return f"created:{count}"
 
-    async def _init_providers(self):
+    async def _init_providers(self) -> Any:
         from app.core.config import settings
         providers = [
             ("nvidia", "nvidia", settings.nvidia_base_url, settings.nvidia_free_only),

@@ -52,8 +52,10 @@ from app.models.internetaccess import (
     MonitoredTarget, RetrievedFile, InternetPermission, InternetEvent,
 )
 from app.models.iics import (
-    IICSSource, IICSClaim, IICSAction, IICSBenchmarkResult,
+    IICSSource, IICSClaim, IICSAction, IICSBenchmarkResult, IICSScheduledTask,
+    IICSAdvisory, IICSDLPEvent, IICSSitePolicy, IICSPrivacyRecord,
 )
+from app.models.live_evidence import LiveEvidenceCache
 from app.models.modelrouter import AIProvider, DiscoveredModel, RoutingDecision, ProviderUsage
 from app.models.model_provider_key import ModelProviderKey
 from app.models.skillforge import (
@@ -254,7 +256,8 @@ __all__ = [
     "InvestmentResearchRecord", "ProviderRegistryEntry",
     "WebAuthnChallenge", "PasskeyCredential", "TotpEnrollment",
     # IICS foundation overlay (pending proposal)
-    "IICSSource", "IICSClaim", "IICSAction", "IICSBenchmarkResult",
+    "IICSSource", "IICSClaim", "IICSAction", "IICSBenchmarkResult", "IICSScheduledTask",
+    "IICSAdvisory", "IICSDLPEvent", "IICSSitePolicy", "IICSPrivacyRecord",
     # Website knowledge & universal web interaction
     "WebsiteKnowledge", "WebsiteSession", "WebsiteAccountLifecycle",
     "DigitalReputation", "WebsiteConsent", "DigitalSecurityIncident",
@@ -264,7 +267,7 @@ __all__ = [
     "AIConversationMessage", "AIContextExchange", "AIResponseVerification",
     "AIReputationRecord", "AICommunicationPermission",
     "HumanCommunicationBridge", "AICommunicationAudit",
-    # Proposed Doc 30 — Web3 and self-hosted node records (metadata only)
+    # Proposed Doc 33 — Web3 and self-hosted node records (metadata only)
     "Web3Network", "Web3Wallet", "Web3Transaction", "Web3Asset", "Web3Contract",
     "NodeConnection", "NodeWalletBalance", "BitcoinUtxo", "LightningChannel",
     "LightningPeer", "LightningInvoice", "LightningPayment", "LightningEvent",

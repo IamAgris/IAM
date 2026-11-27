@@ -248,7 +248,7 @@ OpenAlex, Europe PMC, Crossref, Semantic Scholar, Wikidata, CORE, BASE, DOAJ, Op
 
 ## 21. Implementation and verification
 
-Implemented in `backend/app/services/hbi/research_ecosystem.py` with registries for discovery targets, sources, contributions, federated analyses and laboratory projects; classification A–E; a central legal enforcement gate; `translation.py` (local-first model translation with preserved originals); and `research_lab.py` (ethics-gated, consented studies with pseudonymous responses, withdrawal and deletion). Verification: §17 of Doc 26 and `tools/rkie/notes/hbi-implementation.md`.
+Implemented in `backend/app/services/hbi/research_ecosystem.py` with registries for discovery targets, sources, contributions, federated analyses and laboratory projects; classification A–E; a central legal enforcement gate; `translation.py` (local-first model translation with preserved originals); `research_lab.py` (ethics-gated, consented studies with pseudonymous responses, withdrawal and deletion); `open_sources.py` (free official API adapters for OpenAlex, Crossref, Europe PMC, Semantic Scholar, Wikidata, DOAJ, CORE and Internet Archive); and `synthetic.py` (IAM-owned scenarios excluded from empirical validation). Development proceeds on free/public material; approvals and legal verification remain external gates and are not development blockers. Verification: §17 of Doc 26 and `tools/rkie/notes/hbi-implementation.md`.
 
 ## 12. Owner decision required (proposed OD-47)
 

@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.modelrouter import AIProvider, DiscoveredModel
+from app.services.provider_model_registrar import ProviderModelRegistrar
 from app.services.providers.base import BaseProvider, ModelSpec
 
 _PROVIDERS: Dict[str, str] = {"nvidia": "app.services.providers.nvidia.NvidiaProvider"}
@@ -27,7 +28,9 @@ def _provider(name: str) -> Optional[BaseProvider]:
         return None
     module_name, class_name = path.rsplit(".", 1)
     module = __import__(module_name, fromlist=[class_name])
-    return getattr(module, class_name)()
+    from typing import cast
+
+    return cast(BaseProvider, getattr(module, class_name)())
 
 
 def _alias(model_id: str) -> str:
@@ -37,6 +40,7 @@ def _alias(model_id: str) -> str:
 class ModelDiscoveryService:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.registration: Optional[Dict[str, Any]] = None
 
     @staticmethod
     def merge(
@@ -58,6 +62,8 @@ class ModelDiscoveryService:
         # A catalogue entry is never proof of an available endpoint.
         for spec in result:
             spec.endpoint_status = "unknown"
+            if spec.access_type == "free":
+                spec.alias = _alias(spec.model_id)
         return result
 
     async def discover(self, provider_name: str = "nvidia") -> List[Dict[str, Any]]:
@@ -69,7 +75,11 @@ class ModelDiscoveryService:
         specs = self.merge(catalog, metadata, provider_name)
         if not specs:
             return []
-        return await self._persist(provider_name, specs)
+        written = await self._persist(provider_name, specs)
+        # Phase C: make eligible free models executable through LiteLLM.
+        # The registrar is a no-op until OD-52 enables it.
+        self.registration = await ProviderModelRegistrar().sync(specs)
+        return written
 
     async def _persist(self, provider_name: str, specs: List[ModelSpec]) -> List[Dict[str, Any]]:
         result = await self.db.execute(
@@ -82,7 +92,9 @@ class ModelDiscoveryService:
         existing_result = await self.db.execute(
             select(DiscoveredModel).where(DiscoveredModel.provider_id == provider_row.id)
         )
-        existing = {row.model_id: row for row in existing_result.scalars().all()}
+        existing = {
+            str(row.model_id): cast(Any, row) for row in existing_result.scalars().all()
+        }
         snapshot = {
             "model_ids": [
                 row.model_id
@@ -106,7 +118,7 @@ class ModelDiscoveryService:
             row.model_type = spec.model_type
             row.access_type = spec.access_type
             row.endpoint_status = spec.endpoint_status
-            row.alias = _alias(spec.model_id) if spec.access_type == "free" else None
+            row.alias = spec.alias if spec.access_type == "free" else None
             row.context_length = spec.context_length
             row.input_capabilities = spec.input_capabilities
             row.output_capabilities = spec.output_capabilities

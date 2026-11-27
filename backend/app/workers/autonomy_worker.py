@@ -29,7 +29,7 @@ class AutonomyWorker:
     It sleeps between ticks to conserve resources.
     """
 
-    def __init__(self, tick_interval: int = 30):
+    def __init__(self, tick_interval: int = 30) -> Any:
         self.tick_interval = tick_interval
         self.state = "idle"
         self.running = False
@@ -37,13 +37,13 @@ class AutonomyWorker:
         self._task: Optional[asyncio.Task] = None
         self._ticks = 0
 
-    async def start(self):
+    async def start(self) -> Any:
         """Start the autonomy loop as a background task."""
         self.running = True
         self._task = asyncio.create_task(self._loop())
         logger.info("Autonomy worker started")
 
-    async def stop(self):
+    async def stop(self) -> Any:
         """Stop the autonomy loop."""
         self.running = False
         if self._task:
@@ -54,7 +54,7 @@ class AutonomyWorker:
                 pass
         logger.info("Autonomy worker stopped")
 
-    async def _loop(self):
+    async def _loop(self) -> Any:
         """Main autonomy loop — uses the durable LangGraph workflow when available."""
         while self.running:
             try:
@@ -105,7 +105,7 @@ class AutonomyWorker:
                 self.state = "conserving"
             await asyncio.sleep(self.tick_interval)
 
-    async def _tick(self):
+    async def _tick(self) -> Any:
         """One iteration of the autonomy loop.
 
         Steps:

@@ -44,7 +44,7 @@ class OllamaLMEvalDriver:
         *,
         base_url: Optional[str] = None,
         timeout: Optional[float] = None,
-        client_factory=None,
+        client_factory: Any=None,
     ) -> None:
         self.client_factory = client_factory
         path = _resolve_path(dataset_path)
@@ -119,7 +119,7 @@ class EvaluationSuite:
     candidate against a recorded baseline before promotion.
     """
 
-    def __init__(self, manifest_path: str = DEFAULT_SUITE_MANIFEST, client_factory=None):
+    def __init__(self, manifest_path: str = DEFAULT_SUITE_MANIFEST, client_factory: Any=None) -> Any:
         path = _resolve_path(manifest_path)
         raw = path.read_bytes()
         self.path = str(path)
@@ -200,7 +200,7 @@ class EvaluationSuite:
         return {"regressions": regressions, "passed": not regressions}
 
 
-def default_eval_suite(client_factory=None) -> Optional[EvaluationSuite]:
+def default_eval_suite(client_factory: Any=None) -> Optional[EvaluationSuite]:
     if not settings.lm_eval_suite_enabled:
         return None
     return EvaluationSuite(client_factory=client_factory)

@@ -269,10 +269,28 @@ python tools/quality/run_local_ci.py --only workflows
 - `tools/quality/run_local_ci.py` runs the deterministic gates locally in CI
   order. It is a simulation, not GitHub Actions.
 
+### Setting up embeddings on another machine
+
+```powershell
+./tools/rkie/setup_local_embeddings.ps1          # Windows: install/start Ollama, pull model, enable config
+./tools/rkie/setup_local_embeddings.ps1 -CheckOnly
+```
+```bash
+./tools/rkie/setup_local_embeddings.sh           # Linux/macOS
+./tools/rkie/setup_local_embeddings.sh --check
+```
+
+If Ollama cannot be installed natively, `setup_ollama_docker.ps1` runs it in a
+container instead (`docker run -p 11434:11434 ...`), pulls the model and
+enables the same config. The adapter fails closed to TF-IDF where no local
+model exists; the re-rank test skips automatically in those environments.
+Runner setup is documented in `tools/quality/SELF_HOSTED_RUNNER.md`.
+
 ## Still not implemented
 
-Neural embeddings on machines without a local Ollama model (the adapter is
-enabled here and fails closed elsewhere), actual reduction of the ~2,000-error mypy baseline
-(the ratchet and debt tracker exist; a libcst codemod is provided but Windows
-App Control blocks libcst's native extension on this host), and execution of
-workflows on GitHub Actions (only static validation is possible locally).
+Neural embeddings where neither Ollama nor the bootstrap script can be used
+(the adapter fails closed to TF-IDF there), actual reduction of the ~2,000-error
+mypy baseline (the ratchet and debt tracker exist; a libcst codemod is provided
+but Windows App Control blocks libcst's native extension on this host), and an
+actual GitHub Actions run (workflow steps were executed locally in Docker, but
+Actions itself remains external).

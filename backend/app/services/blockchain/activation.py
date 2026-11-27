@@ -1,7 +1,7 @@
 """Web3 activation and production gate — redacted, fail-closed readiness report.
 
 This check never returns secret values and never grants authority. In particular,
-``web3_owner_decision_confirmed`` is an operator assertion that OD-50 was signed;
+``web3_owner_decision_confirmed`` is an operator assertion that OD-53 was signed;
 setting it does not verify or replace the Creator signature.
 """
 
@@ -48,7 +48,7 @@ def check_web3_activation() -> Dict[str, Any]:
     add(
         "owner_decision",
         bool(settings.web3_owner_decision_confirmed) or not any_enabled,
-        "WEB3_OWNER_DECISION_CONFIRMED may be set only after signed OD-50",
+        "WEB3_OWNER_DECISION_CONFIRMED may be set only after signed OD-53",
     )
     add(
         "testnet_evidence",

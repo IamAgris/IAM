@@ -150,7 +150,9 @@ OD-51 (Doc 31) is confirmed and covers encrypted credentials, isolation, fail-cl
 
 ### Implementation status
 
-Phases A and B are implemented. Phase B adds `services/providers/base.py` (`BaseProvider` / `ModelSpec`), `providers/nvidia.py` (live `/v1/models`, one key, free-only filter), `providers/models_dev.py` (specifications only), `services/model_discovery.py` (merge precedence: live catalogue for access, Models.dev for capabilities), `POST /api/v1/models/discovery/{provider}`, config for the Models.dev endpoint and tests. Discovered entries always persist with `endpoint_status='unknown'` — no availability is claimed.
+Phases A, B and C are implemented. Phase C adds `services/provider_model_registrar.py`, `store_model_in_db: true` and `LITELLM_SALT_KEY` wiring, one static NVIDIA bootstrap alias (the ten static multi-key deployments were removed), and `model_catalog_registration_enabled` — **default false**. Discovery calls the registrar; registration is a no-op until OD-52 is confirmed and that flag is enabled. Registered models use `api_key: os.environ/NVIDIA_API_KEY` and are marked `iam_managed` so static config models are never deleted.
+
+Phase B adds `services/providers/base.py` (`BaseProvider` / `ModelSpec`), `providers/nvidia.py` (live `/v1/models`, one key, free-only filter), `providers/models_dev.py` (specifications only), `services/model_discovery.py` (merge precedence: live catalogue for access, Models.dev for capabilities), `POST /api/v1/models/discovery/{provider}`, config for the Models.dev endpoint and tests. Discovered entries always persist with `endpoint_status='unknown'` — no availability is claimed.
 
 Phase A only was implemented first: `DiscoveredModel` registry fields and migration `060_model_catalog.sql` (registered in `MIGRATION_ORDER.json`) with conservative defaults — `endpoint_status='unknown'`, capabilities false until tested, `access_type='free'`, and a backfill that never claims legacy rows were availability-tested. Evidence tests are in `backend/tests/test_model_catalog.py`. No dynamic model registration, availability monitor, provider registration or paid access is enabled; OD-52 remains proposed.
 

@@ -45,7 +45,11 @@ codes, and records a history in `index/mypy-debt.json` (optionally with
 `--target N`). Manual annotation of small files has already reduced the
 baseline from 2,054 to 1,954 errors. `annotate_signatures.py` is a libcst
 codemod for mechanical `Any` annotations; it is unavailable on hosts where
-Windows App Control blocks libcst's native extension.
+Windows App Control blocks libcst's native extension, but it was executed
+successfully inside `python:3.12-slim` on 10 non-route backend files (73
+annotations, backend suite 910 passed, coverage 67.68%). Concurrent feature
+work added more errors than that pass removed, so the baseline still stands at
+~2,000 — the ratchet prevents further regressions.
 
 `check_workflows.py` parses every `.github/workflows/*.yml`, checks that
 referenced local scripts exist, and rejects hardcoded `ref: testing`; it

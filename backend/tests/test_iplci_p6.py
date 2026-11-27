@@ -209,6 +209,57 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["status"], "failure")
         self.assertEqual(result["error"], "IPLCI_GOVERNANCE_REFUSED")
 
+    async def test_iam_cannot_self_sign_a_policy(self):
+        from app.services.iplci import IPLCIError
+
+        for signer in ("iam", "main", "sub-agent:7", "plugin:x"):
+            with self.assertRaises(IPLCIError) as ctx:
+                await self.service.record_policy({
+                    "version": f"bad-{signer}",
+                    "rules": {rule: True for rule in policy.PROTECTED_RULES},
+                    "signed_by": signer,
+                    "human_approval_reference": "self-declared",
+                })
+            self.assertEqual(ctx.exception.code, "IPLCI_HUMAN_APPROVAL_REQUIRED")
+
+    async def test_human_signed_policy_activates_gateway(self):
+        record = await self.service.record_policy({
+            "version": "production-1",
+            "rules": {rule: True for rule in policy.PROTECTED_RULES},
+            "signed_by": "creator",
+            "human_approval_reference": "OD-48-creator-confirmation",
+        })
+        self.assertEqual(record["status"], "active")
+        status = await self.service.verify_active_policy()
+        self.assertTrue(status["valid"])
+        gateway = ComplianceGateway(self.service)
+        gateway.set_policy(record)
+        source = await self._source()
+        result = await gateway.enforce("read", source_id=source["id"])
+        self.assertIn(result["decision"], ("APPROVED", "CONDITIONAL"))
+
+    async def test_skill_and_provider_seams_enforce(self):
+        from unittest.mock import AsyncMock, patch
+
+        from app.services.model_inference import InferenceBlocked, InferenceService
+        from app.services.skillruntime.service import SkillRuntimeError, SkillRuntimeService
+
+        refusal = GovernanceRefusal("IPLCI_DENIED", "BLOCKED", "CRITICAL", "blocked")
+        with patch(
+            "app.services.iplci.integration.enforce_agent_request",
+            new=AsyncMock(side_effect=refusal),
+        ):
+            with self.assertRaises(SkillRuntimeError):
+                await SkillRuntimeService(None).invoke(
+                    "skill-1", permission="network_access",
+                    governance_context={"source_id": "s1"},
+                )
+            with self.assertRaises(InferenceBlocked):
+                await InferenceService().chat(
+                    [{"role": "user", "content": "hello"}],
+                    governance_context={"source_id": "s1"},
+                )
+
     async def test_api_training_route_requires_governance_context(self):
         from fastapi import HTTPException, Request
 

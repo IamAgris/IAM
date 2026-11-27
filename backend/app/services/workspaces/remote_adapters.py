@@ -138,7 +138,7 @@ class CoderWorkspaceAdapter(RemoteWorkspaceAdapter):
         await self._request("POST", self._url(settings.workspace_coder_start_path, external_id), token)
         return {"status": "active", "external_id": external_id}
 
-    async def execute(self, external_id, command, env_names, actor):
+    async def execute(self, external_id: Any, command: Any, env_names: Any, actor: Any) -> Any:
         if not settings.workspace_coder_execute_path:
             raise RemoteProviderError(
                 "WORKSPACE_CODER_EXECUTE_PATH is not configured; command execution is unavailable"
@@ -152,7 +152,7 @@ class CoderWorkspaceAdapter(RemoteWorkspaceAdapter):
         )
         return self._outcome(data, command)
 
-    async def destroy(self, external_id, actor):
+    async def destroy(self, external_id: Any, actor: Any) -> Any:
         token = self._token(settings.workspace_coder_token_env)
         await self._request("DELETE", self._url(settings.workspace_coder_destroy_path, external_id), token)
         return {"status": "destroyed", "external_id": external_id}
@@ -170,7 +170,7 @@ class CodespacesWorkspaceAdapter(RemoteWorkspaceAdapter):
         base = settings.workspace_codespaces_api_base.rstrip("/")
         return base + path.format(repo=self._repo(), id=external_id)
 
-    async def provision(self, name, actor):
+    async def provision(self, name: Any, actor: Any) -> Any:
         token = self._token(settings.workspace_codespaces_token_env)
         data = await self._request(
             "POST",
@@ -180,14 +180,14 @@ class CodespacesWorkspaceAdapter(RemoteWorkspaceAdapter):
         )
         return {"external_id": self._external_id(data), "provider": self.name}
 
-    async def start(self, external_id, actor):
+    async def start(self, external_id: Any, actor: Any) -> Any:
         token = self._token(settings.workspace_codespaces_token_env)
         await self._request(
             "POST", self._url(settings.workspace_codespaces_start_path, external_id), token
         )
         return {"status": "active", "external_id": external_id}
 
-    async def execute(self, external_id, command, env_names, actor):
+    async def execute(self, external_id: Any, command: Any, env_names: Any, actor: Any) -> Any:
         if not settings.workspace_codespaces_execute_path:
             raise RemoteProviderError(
                 "WORKSPACE_CODESPACES_EXECUTE_PATH is not configured; "
@@ -202,7 +202,7 @@ class CodespacesWorkspaceAdapter(RemoteWorkspaceAdapter):
         )
         return self._outcome(data, command)
 
-    async def destroy(self, external_id, actor):
+    async def destroy(self, external_id: Any, actor: Any) -> Any:
         token = self._token(settings.workspace_codespaces_token_env)
         await self._request(
             "DELETE", self._url(settings.workspace_codespaces_destroy_path, external_id), token

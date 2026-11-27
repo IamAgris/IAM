@@ -31,6 +31,7 @@ class ModelSpec:
     api_protocol: str = "chat_completions"
     restrictions: Dict[str, Any] = field(default_factory=dict)
     metadata_source: str = "unknown"
+    alias: Optional[str] = None  # LiteLLM model_name; set for free models
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -49,6 +50,7 @@ class ModelSpec:
             "api_protocol": self.api_protocol,
             "restrictions": self.restrictions,
             "metadata_source": self.metadata_source,
+            "alias": self.alias,
         }
 
 

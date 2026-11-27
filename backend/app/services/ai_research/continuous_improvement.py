@@ -72,7 +72,7 @@ def default_store() -> FileSystemArtifactStore:
     return FileSystemArtifactStore(root)
 
 
-def default_adapters():
+def default_adapters() -> Any:
     return [
         ColabResearchAdapter(),
         KaggleResearchAdapter(),
@@ -85,10 +85,10 @@ class ContinuousImprovement:
     def __init__(
         self,
         db: AsyncSession,
-        store=None,
-        adapters=None,
-        audit_sink=None,
-    ):
+        store: Any=None,
+        adapters: Any=None,
+        audit_sink: Any=None,
+    ) -> Any:
         self.db = db
         self.store = store or default_store()
         self.adapters = list(adapters or default_adapters())
@@ -108,7 +108,7 @@ class ContinuousImprovement:
         self.lifecycle = PlatformLifecycle()
         self.recovery = JobRecovery(self.coordinator, audit_sink=sink)
 
-    def _adapter(self, name: str):
+    def _adapter(self, name: str) -> Any:
         return next(item for item in self.adapters if item.info.name == name)
 
     async def _schedule(self, job: ResearchJob) -> List[str]:

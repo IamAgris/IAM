@@ -109,6 +109,9 @@ export function PresenceSphere({
   const hoverRef = React.useRef(onNodeHover);
   const selectRef = React.useRef(onNodeSelect);
   const hitRef = React.useRef<Array<SourceNode & { x: number; y: number }>>([]);
+  const drawRef = React.useRef<(() => void) | null>(null);
+  const reducedMotion = typeof window !== "undefined"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   React.useEffect(() => { stateRef.current = state; }, [state]);
   React.useEffect(() => { modeRef.current = mode; }, [mode]);
@@ -127,7 +130,6 @@ export function PresenceSphere({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let W = 0, H = 0, cx = 0, cy = 0, R = 0;
     let mx = 0, my = 0;
@@ -476,9 +478,11 @@ export function PresenceSphere({
         }
       }
 
-      raf = requestAnimationFrame(frame);
+      raf = reducedMotion ? 0 : requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    drawRef.current = () => frame(performance.now());
+    if (reducedMotion) frame(performance.now());
+    else raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);

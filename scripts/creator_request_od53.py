@@ -1,15 +1,15 @@
-"""Prepare the signed Creator approval request for OD-50.
+"""Prepare the signed Creator approval request for OD-53.
 
 IAM never self-approves. This script only creates a pending request through the
 official Creator approval API and prints the challenge that the Creator hardware
 signer must sign. Set IAM_ENDPOINT and IAM_API_TOKEN in the environment.
 
 This does NOT change the repository, the decision register or the architecture
-index. OD-50 becomes CONFIRMED only after CreatorApprovalService.decide() verifies
+index. OD-53 becomes CONFIRMED only after CreatorApprovalService.decide() verifies
 an ED25519 signature over the one-time challenge.
 
 Usage:
-    python scripts/creator_request_od50.py
+    python scripts/creator_request_od53.py
     python -m iam_sdk.creator_cli sign <request_id> --approve \
         --signer "<hardware signer command>" --signer-id <signer-id>
 """
@@ -21,11 +21,11 @@ import sys
 import httpx
 
 ACTION_TYPE = "architecture.decision.confirm"
-TARGET_REF = "OD-50"
+TARGET_REF = "OD-53"
 RISK_LEVEL = "4"
 CHANNEL = "creator_cli"
 SUMMARY = (
-    "Confirm Document 30: provider-independent Web3 operations and three independent "
+    "Confirm Document 33: provider-independent Web3 operations and three independent "
     "self-hosted Bitcoin/Lightning node adapters inside existing IAM systems"
 )
 CONSEQUENCES = [
@@ -76,7 +76,7 @@ def main() -> int:
         "signing_message": f"{result.get('challenge_hash')}|approved",
         "expires_at": result.get("expires_at"),
         "status": result.get("status"),
-        "note": "A chat message is not authority. Only a verified ED25519 signature approves OD-50.",
+        "note": "A chat message is not authority. Only a verified ED25519 signature approves OD-53.",
     }, indent=2))
     return 0
 

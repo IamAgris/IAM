@@ -281,6 +281,16 @@
       "sequence": 56,
       "number": 57,
       "path": "057_iics_foundation.sql"
+    },
+    {
+      "sequence": 57,
+      "number": 58,
+      "path": "058_live_evidence_cache.sql"
+    },
+    {
+      "sequence": 58,
+      "number": 61,
+      "path": "061_browser_knowledge_proposals.sql"
     }
   ]
 }

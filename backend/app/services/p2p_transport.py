@@ -72,7 +72,7 @@ def verify_envelope(env: Dict[str, Any], secret: str) -> bool:
 class P2PTransport:
     """In-memory transport registry + store-and-forward queues."""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.connections: Dict[str, Any] = {}       # node_id -> WebSocket
         self.seq: Dict[str, int] = defaultdict(int)  # sender -> last seq seen (inbound)
         self.outgoing_seq: Dict[str, int] = defaultdict(int)  # node -> next seq to send
@@ -81,7 +81,7 @@ class P2PTransport:
         self.local_secret: str = secrets.token_hex(32)
         self.node_id: str = "local-iam"
 
-    def configure(self, node_id: str, secret: Optional[str] = None):
+    def configure(self, node_id: str, secret: Optional[str] = None) -> Any:
         self.node_id = node_id
         if secret:
             self.local_secret = secret
@@ -111,7 +111,7 @@ class P2PTransport:
         self.seen[eid] = time.time()
         return {"accepted": True, "envelope": env}
 
-    def queue_for(self, peer_id: str, env: Dict[str, Any]):
+    def queue_for(self, peer_id: str, env: Dict[str, Any]) -> Any:
         """Store-and-forward for an offline peer."""
         self.outbox[peer_id].append(env)
 
@@ -120,10 +120,10 @@ class P2PTransport:
         items = self.outbox.pop(peer_id, [])
         return items
 
-    def register_ws(self, peer_id: str, ws: Any):
+    def register_ws(self, peer_id: str, ws: Any) -> Any:
         self.connections[peer_id] = ws
 
-    def unregister_ws(self, peer_id: str):
+    def unregister_ws(self, peer_id: str) -> Any:
         self.connections.pop(peer_id, None)
 
     async def broadcast(self, topic: str, payload: Dict[str, Any]) -> Dict[str, Any]:

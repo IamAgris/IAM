@@ -12,62 +12,14 @@ model_list:
   # ---------------------------------------------------------------------------
   # NVIDIA NIM / build.nvidia.com (free endpoints, OpenAI-compatible)
   # ---------------------------------------------------------------------------
-  # Verified live on 26 Nov 2026 via /v1/models with the configured key.
-  # Older Llama/Qwen/DeepSeek NIM aliases reached end-of-life (HTTP 410).
-  # Multiple free-tier NVIDIA keys are separate deployments behind the same
-  # alias. LiteLLM load-balances across them and skips a failing key. Unused
-  # NVIDIA_API_KEY_2..4 may be left blank; the original NVIDIA_API_KEY entry
-  # below remains the guaranteed fallback. Never put a key in this file.
+  # OD-52 Phase C: one static bootstrap alias keeps the gateway usable before
+  # discovery runs. All other eligible free models are registered at runtime
+  # via /model/new by IAM's ProviderModelRegistrar, using this same single key.
+  # Never put a key literal in this file.
   - model_name: nvidia-nemotron-3.5-lightning
     litellm_params:
       model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
       api_key: os.environ/NVIDIA_API_KEY
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3.5-lightning
-    litellm_params:
-      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
-      api_key: os.environ/NVIDIA_API_KEY_1
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3.5-lightning
-    litellm_params:
-      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
-      api_key: os.environ/NVIDIA_API_KEY_2
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3.5-lightning
-    litellm_params:
-      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
-      api_key: os.environ/NVIDIA_API_KEY_3
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3.5-lightning
-    litellm_params:
-      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
-      api_key: os.environ/NVIDIA_API_KEY_4
-      api_base: https://integrate.api.nvidia.com/v1
-
-  - model_name: nvidia-nemotron-3-nano
-    litellm_params:
-      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      api_key: os.environ/NVIDIA_API_KEY
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3-nano
-    litellm_params:
-      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      api_key: os.environ/NVIDIA_API_KEY_1
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3-nano
-    litellm_params:
-      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      api_key: os.environ/NVIDIA_API_KEY_2
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3-nano
-    litellm_params:
-      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      api_key: os.environ/NVIDIA_API_KEY_3
-      api_base: https://integrate.api.nvidia.com/v1
-  - model_name: nvidia-nemotron-3-nano
-    litellm_params:
-      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
-      api_key: os.environ/NVIDIA_API_KEY_4
       api_base: https://integrate.api.nvidia.com/v1
 
   # ---------------------------------------------------------------------------
@@ -102,6 +54,8 @@ model_list:
     litellm_params:
       model: ollama/qwen2.5:3b
       api_base: http://ollama:11434
+      # CPU-only 3B cold start on the 4 vCPU core can exceed LiteLLM's 60s default.
+      timeout: 300
 
   # Optional secondary (not the shared primary):
   # - model_name: local-qwen-coder-3b
@@ -134,6 +88,9 @@ general_settings:
   max_budget: 0  # paid inference disabled until owner authorization
   num_retries: 3
   retry_after: 2
+  # OD-52 Phase C: runtime-registered free models persist across restarts.
+  # Provider credentials are encrypted by LiteLLM using LITELLM_SALT_KEY.
+  store_model_in_db: true
 
 litellm_settings:
   enable_tagging: true

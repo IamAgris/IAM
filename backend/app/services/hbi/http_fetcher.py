@@ -4,6 +4,7 @@ Only called through LiveSourceRegistry after allowlist, licence and purpose
 checks. Respects robots.txt, enforces a byte cap and a short timeout.
 """
 
+import json
 from typing import Any, Dict
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
@@ -24,6 +25,18 @@ def _robots_allowed(url: str) -> bool:
     except Exception:
         return False
     return parser.can_fetch(_USER_AGENT, url)
+
+
+def fetch_json(url: str) -> Dict[str, Any]:
+    """Fetch public JSON from an allowlisted/open API endpoint."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("unsupported_scheme")
+    request = Request(url, headers={"User-Agent": _USER_AGENT, "Accept": "application/json"})
+    with urlopen(request, timeout=_TIMEOUT) as response:
+        raw = response.read(_MAX_BYTES)
+        payload = json.loads(raw.decode("utf-8", errors="ignore"))
+        return payload if isinstance(payload, dict) else {}
 
 
 def fetch(url: str) -> Dict[str, Any]:

@@ -2,9 +2,10 @@
 
     IAM_LIVE_E2E=1 python tests/e2e_live_information_smoke.py
 
-Skipped by default. Uses the real Playwright browser stack and no search API
-key: the configured provider is simulated as an unsuitable Wikipedia fallback,
-so the only way to obtain evidence is the conditional browser escalation.
+Skipped by default. Uses the real search service (no API key, therefore the real
+Wikipedia fallback) and the real Playwright browser stack. No provider response
+is patched or fabricated: the only overrides are the two operating flags that
+define the behaviour under test (browser off, conditional escalation on).
 No credentials are used and no private data is sent. The output is evidence,
 not a claim — if retrieval fails the process exits non-zero and prints why.
 """
@@ -13,12 +14,11 @@ import asyncio
 import json
 import os
 import sys
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from app.core.config import settings
 from app.services.browser_service import browser_service
 from app.services.live_information_policy import collect_live_evidence
-from app.services.search_service import search_service
 
 QUERY = os.environ.get(
     "IAM_LIVE_E2E_QUERY", "What's the latest news from SABC?"
@@ -28,24 +28,8 @@ TIMEOUT = float(os.environ.get("IAM_LIVE_E2E_TIMEOUT", "60"))
 
 
 async def main() -> None:
-    # A Wikipedia result is deliberately supplied so the smoke proves it is
-    # rejected as live evidence rather than silently used.
-    unsuitable = {
-        "query": QUERY,
-        "provider": "wikipedia",
-        "results": [
-            {
-                "title": "SABC (background)",
-                "url": "https://en.wikipedia.org/wiki/SABC",
-                "description": "Encyclopaedia background, not current news.",
-            }
-        ],
-    }
     try:
         with (
-            patch.object(
-                search_service, "search", new=AsyncMock(return_value=unsuitable)
-            ),
             patch.object(settings, "iam_live_info_use_browser", False),
             patch.object(settings, "iam_live_info_escalate_to_browser", True),
             patch.object(settings, "iam_live_info_timeout_seconds", TIMEOUT),
@@ -60,9 +44,9 @@ async def main() -> None:
             "provider": evidence.provider,
             "escalation_fired": any(
                 name in evidence.provider
-                for name in ("official-site", "duckduckgo-browser")
+                for name in ("official-site", "duckduckgo-http", "duckduckgo-browser")
             ),
-            "wikipedia_rejected": all(
+            "wikipedia_result_excluded": all(
                 "wikipedia.org" not in item["url"] for item in evidence.results
             ),
             "result_count": len(evidence.results),
@@ -79,6 +63,9 @@ async def main() -> None:
         ):
             print("FAIL: no SABC article retrieved", file=sys.stderr)
             raise SystemExit(2)
+        if any("wikipedia.org" in item["url"] for item in evidence.results):
+            print("FAIL: Wikipedia fallback was presented as live evidence", file=sys.stderr)
+            raise SystemExit(3)
     finally:
         # Same event loop as the browser session — a second asyncio.run()
         # would close the Playwright transport mid-shutdown.

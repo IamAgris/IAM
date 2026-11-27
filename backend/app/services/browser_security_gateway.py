@@ -13,7 +13,7 @@ import ipaddress
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from app.core.config import settings
@@ -65,7 +65,7 @@ class BrowserSecurityGateway:
 
     def __init__(self, db: Any, *, aegis: Optional[AegisEngine] = None):
         self.db = db
-        self.aegis = aegis or cast(AegisEngine, AegisEngine())
+        self.aegis = aegis or AegisEngine()
         self.evidence = BrowserEvidenceService(db)
 
     @staticmethod

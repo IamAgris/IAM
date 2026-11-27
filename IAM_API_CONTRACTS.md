@@ -149,7 +149,9 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET | `/models/router/models?provider=` | List discovered models |
 | POST | `/models/router/select` | `{task_type, capabilities, allow_paid}` → selected model |
 | GET | `/models/router/history` | Routing decisions |
-| POST | `/models/discovery/{provider}` | Dual-source discovery (provider catalogue + Models.dev metadata); returns registry entries, not verified endpoints |
+| POST | `/models/discovery/{provider}` | Dual-source discovery (provider catalogue + Models.dev metadata); returns registry entries, not verified endpoints, plus runtime registration result |
+
+**OD-52 Phase C:** runtime registration via LiteLLM `/model/new` is gated by `model_catalog_registration_enabled` (default false). When enabled, discovered free models get `nv-*` aliases using `api_key: os.environ/NVIDIA_API_KEY`; no literal key is ever sent to the gateway. Static config models are never deleted.
 | POST | `/models/credentials` | Register an encrypted provider connection key (signed authorization required; never returns the secret) |
 | GET | `/models/credentials/health?provider=` | Read-only key health summary; no ciphertext or plaintext |
 | POST | `/models/credentials/{key_id}/disable` | Disable a connection (signed authorization required) |

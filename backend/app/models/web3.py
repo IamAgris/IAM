@@ -1,4 +1,4 @@
-"""Proposed Doc 30 / OD-50 — Web3 and self-hosted node records.
+"""Proposed Doc 33 / OD-53 — Web3 and self-hosted node records.
 
 Metadata only. No table in this module stores a private key, seed phrase, macaroon,
 rune or RPC password. Execution authority is not created here: all transaction

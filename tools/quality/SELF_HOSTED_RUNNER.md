@@ -74,9 +74,33 @@ Notes:
   primarily runs Linux containers. Use the self-hosted Windows runner for
   those.
 
+## 4. Docker container as a runner (verified on this host)
+
+`act` was installed with winget but Windows App Control blocks `act.exe` on
+this machine (the same policy that blocks libcst's native extension). Docker
+itself works, so a job can be executed in a real isolated container with the
+repository mounted — this is the closest local equivalent to a runner and was
+verified here:
+
+```powershell
+docker run --rm -v "D:\AI\project-aura:/workspace" -w /workspace `
+  python:3.12-slim bash -lc `
+  "apt-get update -qq && apt-get install -y -qq git >/dev/null && `
+   python -m pip install --quiet pytest pyyaml watchdog && `
+   python -m pytest tools/rkie/tests -q"
+# Result: 17 passed, 1 skipped (the neural test skips because Ollama is not in the container)
+```
+
+The `workflow-validation` job steps also ran successfully in the same way with
+only `pyyaml` installed. Note that container runs are Linux jobs: the
+PowerShell `rkie-tests.yml` job needs a Windows self-hosted runner, and the
+neural re-ranking test needs a local Ollama endpoint (use `--network host` on
+Linux, or skip it).
+
 ## Recommendation
 
 Keep GitHub-hosted runners for all PR checks. Add a labelled self-hosted
 runner only for jobs that genuinely need local Ollama/GPU/compose, and gate
-those jobs to `workflow_dispatch`. Use `act` for quick local iteration, and
+those jobs to `workflow_dispatch`. Use the Docker container path above (or
+`act` where App Control allows it) for local iteration, and
 `tools/quality/run_local_ci.py` for the deterministic gates without a runner.

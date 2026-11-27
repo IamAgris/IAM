@@ -163,6 +163,6 @@ to the authority tables or the Owner Decision Register.
 
 | Path | Status |
 |------|--------|
-| `IAM_IICS_GAP_CLOSURE_ADDENDUM.md` | Proposed overlay: nine IICS gap closures mapped to existing systems. Navigation only; not part of the frozen baseline, no owner decision, no new top-level system or queue. |
+| `IAM_IICS_GAP_CLOSURE_ADDENDUM.md` | Proposed overlay: nine IICS gap closures mapped to existing systems. Navigation only; not part of the frozen baseline, no owner decision, no new top-level system or queue. IICS overlay implemented in `backend/app/services/iics/` (egress, permissions, ledger, source registry, QA, Creator email, strategy, scheduler, media, threat intel, site policy); §7 records status. |
 | `IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md` | Document 32 — **PROPOSED** Universal Model Provider & Intelligence Orchestration System: repository audit, one-key dynamic catalog registration via LiteLLM, dual discovery (NVIDIA + Models.dev), availability monitor, capability-based sub-agent assignment, financial governance and implementation phases A–H; proposed OD-52. **Awaiting owner decision — not part of the frozen baseline; no implementation or paid access authorised.** |
 

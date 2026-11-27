@@ -14,7 +14,8 @@ dependencies = [
     "alembic>=1.13.0",
     "redis>=5.0.0",
     "httpx>=0.27.0",
-    "python-jose[cryptography]>=3.3.0",
+    # python-jose/ecdsa removed: unused by the codebase and affected by
+    # PYSEC-2026-1325 and PYSEC-2026-4298 with no upstream fix versions.
     "passlib[bcrypt]>=1.7.4",
     "python-dotenv>=1.0.1",
     "python-multipart>=0.0.9",

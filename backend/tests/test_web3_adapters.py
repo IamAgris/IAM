@@ -1,4 +1,4 @@
-"""Proposed Doc 30 tests — read-only adapters, registries and prepare-only transactions.
+"""Proposed Doc 33 tests — read-only adapters, registries and prepare-only transactions.
 
 No test in this module performs a network call, signs, broadcasts or pays.
 """

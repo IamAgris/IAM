@@ -1,9 +1,12 @@
 """Project AURA - Main FastAPI Application Entry Point"""
 
+from typing import Any
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from typing import Any
 import loguru
 
 from app.core.config import settings
@@ -53,6 +56,7 @@ from app.api.routes import (
     browser,
     browser_intelligence,
     browser_security,
+    browser_knowledge,
     deployment,
     bootstrap,
     suggestions,
@@ -96,9 +100,11 @@ from app.api.routes import (
     ai_communication,
     hbi,
     iics,
+    live_information,
     technology_registry,
     freenodes,
     web3,
+    web3_extended,
 )
 from app.workers.autonomy_worker import autonomy_worker
 from app.workers.creator_email_worker import creator_email_worker
@@ -108,7 +114,7 @@ logger = loguru.logger
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> Any:
     """Application lifespan: startup and shutdown."""
     logger.info("Starting Project AURA backend...")
 
@@ -189,6 +195,7 @@ app.include_router(decisions.router)
 app.include_router(tools.router)
 app.include_router(scheduling.router)
 app.include_router(research.router)
+app.include_router(live_information.router)
 app.include_router(voice.router)
 app.include_router(vision.router)
 app.include_router(external_presence.router)
@@ -216,6 +223,7 @@ app.include_router(skillruntime.router)
 app.include_router(browser.router)
 app.include_router(browser_intelligence.router)
 app.include_router(browser_security.router)
+app.include_router(browser_knowledge.router)
 app.include_router(deployment.router)
 app.include_router(bootstrap.router)
 app.include_router(suggestions.router)
@@ -267,6 +275,7 @@ app.include_router(technology_registry.router)
 app.include_router(freenodes.router)
 app.include_router(web3.web3_router)
 app.include_router(web3.nodes_router)
+app.include_router(web3_extended.router)
 
 # Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
 app.include_router(ops.router)
@@ -274,7 +283,7 @@ app.include_router(ops.router)
 
 # Global exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(request: Request, exc: Exception) -> Any:
     from app.core.error_response import error_response
 
     logger.error(f"Unhandled exception: {exc}")
@@ -289,13 +298,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Health check
 @app.get("/health")
-async def health_check():
+async def health_check() -> Any:
     return {"status": "healthy", "service": "aura-backend", "version": "0.1.0"}
 
 
 # Root
 @app.get("/")
-async def root():
+async def root() -> Any:
     return {
         "name": "Project AURA",
         "description": "Autonomous Unified Reasoning Architecture",

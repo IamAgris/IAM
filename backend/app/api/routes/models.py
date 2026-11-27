@@ -131,7 +131,7 @@ async def _prepare_messages(
     if settings.iam_live_info_enabled:
         trigger = SearchTriggerClassifier().classify(query)
         if trigger.needs_search:
-            evidence = await collect_live_evidence(query, trigger=trigger)
+            evidence = await collect_live_evidence(query, trigger=trigger, db=db)
             messages = evidence.inject(messages)
 
     if request.delegation_tasks:

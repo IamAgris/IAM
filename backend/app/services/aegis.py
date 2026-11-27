@@ -46,7 +46,7 @@ SENSITIVE_DATA_PATTERNS = [
 class AegisEngine:
     """IAM's own defensive security engine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.findings: List[Dict[str, Any]] = []
         self.actions: List[Dict[str, Any]] = []
 

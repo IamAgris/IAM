@@ -23,6 +23,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 
 _POLICY_MARKER = "WEB ACCESS AND LIVE INFORMATION POLICY"
@@ -299,13 +301,16 @@ def _is_suitable_live_evidence(payload: Dict[str, Any], trigger: SearchTrigger) 
 
 
 async def _try_configured_search(
-    query: str, max_results: int, timeout: float
+    query: str, max_results: int, timeout: float, provider: Optional[str] = None
 ) -> tuple[Dict[str, Any], Optional[str]]:
     from app.services.search_service import search_service
 
     try:
         payload = await asyncio.wait_for(
-            search_service.search(query, max_results=max_results), timeout=timeout
+            search_service.search(
+                query, max_results=max_results, provider=provider
+            ),
+            timeout=timeout,
         )
         return payload, None
     except asyncio.TimeoutError:
@@ -437,6 +442,7 @@ async def collect_live_evidence(
     max_results: Optional[int] = None,
     timeout: Optional[float] = None,
     use_browser: Optional[bool] = None,
+    db: Optional[AsyncSession] = None,
 ) -> LiveEvidence:
     """Run a bounded, free-provider search through the existing services.
 
@@ -444,6 +450,12 @@ async def collect_live_evidence(
     always fails soft with an explicit limitation note for the model to report.
     """
     trigger = trigger or SearchTriggerClassifier().classify(query)
+    if db is not None:
+        from app.services.live_evidence_cache import get_cached
+
+        cached = await get_cached(db, query)
+        if cached:
+            return cached
     max_results = max_results or settings.iam_live_info_max_results
     timeout = timeout if timeout is not None else settings.iam_live_info_timeout_seconds
     # ``use_browser`` is an explicit override for tests/operators. By default
@@ -542,10 +554,24 @@ async def collect_live_evidence(
                     for domain in preferred[:2]:
                         if await add_browser_results(f"site:{domain} {query}", domain):
                             break
-                if not preferred_found():
-                    await add_browser_results(query, "alternative credible sources")
-            elif not merged:
-                await add_browser_results(query, "live web")
+            if not merged:
+                # Free HTTP search adapter: works where browser search is
+                # bot-blocked. Still real retrieved pages, never invented.
+                free_payload, free_error = await _try_configured_search(
+                    query, max_results, timeout, provider="duckduckgo"
+                )
+                if free_error:
+                    errors.append(free_error)
+                if free_payload.get("error"):
+                    errors.append(str(free_payload["error"])[:200])
+                for item in (free_payload.get("results") or [])[:max_results]:
+                    normalized = _normalize(item)
+                    if normalized:
+                        merged.append(normalized)
+                if free_payload.get("results"):
+                    providers.append("duckduckgo-http")
+            if not merged:
+                await add_browser_results(query, "alternative credible sources")
         else:
             errors.append("browser escalation disabled by configuration")
 
@@ -561,10 +587,16 @@ async def collect_live_evidence(
         seen.add(item["url"])
         unique.append(item)
 
-    return LiveEvidence(
+    evidence = LiveEvidence(
         query=query,
         retrieved_at=datetime.now(timezone.utc).isoformat(),
         provider="+".join(providers) if providers else "unavailable",
         results=unique[:max_results],
         errors=errors,
     )
+    if db is not None:
+        from app.services.live_evidence_cache import annotate_reputation, store_cached
+
+        evidence.results = await annotate_reputation(db, evidence.results)
+        await store_cached(db, evidence, trigger)
+    return evidence

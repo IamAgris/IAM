@@ -119,6 +119,105 @@ class IICSAction(Base):  # type: ignore[misc]
     )
 
 
+class IICSScheduledTask(Base):  # type: ignore[misc]
+    """A governed recurring research job on the OD-08 ARQ runtime."""
+
+    __tablename__ = "iics_scheduled_tasks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id = Column(String(128), nullable=False, unique=True, index=True)
+    goal = Column(Text, nullable=False)
+    query = Column(Text, nullable=False)
+    freshness_class = Column(Text, nullable=False, default="documentation")
+    cadence_minutes = Column(Integer, nullable=False, default=1440)
+    next_run_at = Column(DateTime(timezone=True), nullable=False)
+    last_run_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(Text, nullable=False, default="scheduled")
+    attempts = Column(Integer, nullable=False, default=0)
+    last_error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('scheduled', 'running', 'completed', 'failed', 'paused', 'cancelled')",
+            name="ck_iics_scheduled_status",
+        ),
+    )
+
+
+class IICSAdvisory(Base):  # type: ignore[misc]
+    """A deduplicated external security advisory (CVE/OSV/NVD)."""
+
+    __tablename__ = "iics_advisories"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    cve_id = Column(Text, nullable=False, unique=True, index=True)
+    source = Column(Text, nullable=False, default="osv")
+    severity = Column(Text, nullable=False, default="UNKNOWN")
+    published = Column(Text, nullable=True)
+    url = Column(Text, nullable=True)
+    summary = Column(Text, nullable=False, default="")
+    affected = Column(JSON, nullable=False, default=list)
+    evidence = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class IICSDLPEvent(Base):  # type: ignore[misc]
+    """A blocked or flagged egress attempt from the cross-channel DLP engine."""
+
+    __tablename__ = "iics_dlp_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    channel = Column(Text, nullable=False)
+    matched_labels = Column(JSON, nullable=False, default=list)
+    action = Column(Text, nullable=False, default="blocked")
+    details = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class IICSSitePolicy(Base):  # type: ignore[misc]
+    """Versioned snapshot of robots/terms for a domain with TTL and hash."""
+
+    __tablename__ = "iics_site_policies"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain = Column(Text, nullable=False, unique=True, index=True)
+    robots_text = Column(Text, nullable=False, default="")
+    terms_text = Column(Text, nullable=False, default="")
+    content_hash = Column(String(64), nullable=False)
+    ttl_hours = Column(Integer, nullable=False, default=720)
+    source_url = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    snapshot_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class IICSPrivacyRecord(Base):  # type: ignore[misc]
+    """DSAR, consent-withdrawal and cross-border transfer evidence."""
+
+    __tablename__ = "iics_privacy_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    kind = Column(Text, nullable=False, index=True)
+    subject_ref = Column(Text, nullable=False)
+    status = Column(Text, nullable=False, default="open")
+    jurisdiction = Column(Text, nullable=True)
+    details = Column(JSON, nullable=False, default=dict)
+    evidence = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN ('dsar_access', 'dsar_erasure', 'consent_withdrawal', 'transfer_assessment')",
+            name="ck_iics_privacy_kind",
+        ),
+        CheckConstraint(
+            "status IN ('open', 'in_progress', 'resolved', 'refused')",
+            name="ck_iics_privacy_status",
+        ),
+    )
+
+
 class IICSBenchmarkResult(Base):  # type: ignore[misc]
     """A scored internet-capability benchmark run with a pass/fail gate."""
 

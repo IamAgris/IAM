@@ -37,6 +37,7 @@ from app.services.hbi.schemas import (
     ModuleAnalysisRequest,
     MultilingualIngestRequest,
     MultilingualSemanticsRequest,
+    OpenSourceIngestRequest,
     OversightRequest,
     ParticipantConsentRequest,
     ParticipantWithdrawalRequest,
@@ -48,6 +49,7 @@ from app.services.hbi.schemas import (
     SourceCalibrationRequest,
     Scope,
     SourceRegisterRequest,
+    SyntheticStudyRequest,
     TargetVerificationRequest,
     TemporalRequest,
     TransformationRequest,
@@ -717,3 +719,26 @@ async def study_report(study_id: str, service: HBIService = Depends(_service)) -
 @router.get("/research/lab/audit")
 async def lab_audit(service: HBIService = Depends(_service)) -> Dict[str, Any]:
     return service.lab_audit()
+
+
+@router.get("/research/open-sources")
+async def open_sources(service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Free/open official API adapters with recorded terms."""
+    return service.open_source_adapters()
+
+
+@router.post("/research/open-sources/ingest")
+async def ingest_open_source(request: OpenSourceIngestRequest,
+                             service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Ingest public metadata through the normal provenance gate."""
+    return await service.ingest_open_source(request)
+
+
+@router.post("/research/lab/synthetic")
+async def synthetic_study(request: SyntheticStudyRequest,
+                          service: HBIService = Depends(_service)) -> Dict[str, Any]:
+    """Generate original synthetic scenarios; no human participants required."""
+    try:
+        return await service.generate_synthetic(request)
+    except GovernanceRefusal as error:
+        raise _translate(error)

@@ -331,3 +331,34 @@ class BrowserAudit(Base):  # type: ignore[misc]
         CheckConstraint("actor_type IN ('agent','creator')",
                         name="ck_browser_audit_actor_type"),
     )
+
+
+class BrowserKnowledgeProposal(Base):
+    """Doc 29 P4: governed proposal before browser research enters knowledge."""
+
+    __tablename__ = "browser_knowledge_proposals"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id = Column(Text, nullable=False, index=True)
+    claim = Column(Text, nullable=False)
+    source_urls = Column(JSON, nullable=False, default=list)
+    evidence_refs = Column(JSON, nullable=False, default=list)
+    independent_source_count = Column(Integer, nullable=False, default=0)
+    verification_state = Column(Text, nullable=False, default="unverified")
+    legal_decision = Column(Text, nullable=False, default="BLOCKED")
+    status = Column(Text, nullable=False, default="pending_review")
+    promotion_ref = Column(Text, nullable=True)
+    created_by = Column(Text, nullable=False)
+    reviewed_by = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending_review','quarantined','approved','rejected')",
+            name="ck_browser_knowledge_proposal_status"),
+        CheckConstraint(
+            "verification_state IN ('unverified','single_source','verified')",
+            name="ck_browser_knowledge_proposal_verification"),
+    )

@@ -75,7 +75,7 @@ def sigmoid(value: float) -> float:
 
 
 class PlattCalibrator:
-    def __init__(self):
+    def __init__(self) -> Any:
         self.a = 1.0
         self.b = 0.0
         self.fitted = False
@@ -118,7 +118,7 @@ def raw_score(features: Dict[str, float]) -> float:
 
 
 class EvidenceForecaster:
-    def __init__(self):
+    def __init__(self) -> Any:
         self.calibrator = PlattCalibrator()
 
     def fit(self, cases: List[HistoricalCase]) -> None:
@@ -164,7 +164,7 @@ def backtest(cases: List[HistoricalCase],
 class LogisticModel:
     """Interpretable logistic model over evidence strength, trained by gradient descent."""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.weight = 0.0
         self.bias = 0.0
 
@@ -188,7 +188,7 @@ class LogisticModel:
 class BetaBinomialModel:
     """Bayesian baseline with an auditable Beta prior and posterior interval."""
 
-    def __init__(self, alpha: float = 1.0, beta: float = 1.0):
+    def __init__(self, alpha: float = 1.0, beta: float = 1.0) -> Any:
         self.prior_alpha = alpha
         self.prior_beta = beta
         self.alpha_post = alpha
@@ -221,7 +221,7 @@ class BetaBinomialModel:
 class EnsembleForecaster:
     """Combines calibrated evidence and Bayesian baselines; disagreement widens uncertainty."""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.evidence = EvidenceForecaster()
         self.bayesian = BetaBinomialModel()
 
@@ -238,7 +238,7 @@ class EnsembleForecaster:
 class PredictionService:
     """Emits probabilities only from a model that passed validation."""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.models: Dict[str, Any] = {}
         self.validation: Dict[str, Dict[str, Any]] = {}
         self.versions: Dict[str, List[Dict[str, Any]]] = {}
