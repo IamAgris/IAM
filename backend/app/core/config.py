@@ -24,7 +24,7 @@ SECRET_FIELDS = (
     "s3_secret_key",
     "creator_public_key",
     "creator_gateway_secret",
-    # Proposed Doc 33 / OD-53 — credentials are Docker secrets, never values in config.
+    # Proposed Doc 35 / OD-55 — credentials are Docker secrets, never values in config.
     "thirdweb_secret_key",
     "bitcoin_rpc_cookie",
     "lnd_macaroon",
@@ -185,6 +185,9 @@ class Settings(BaseSettings):
     endpoint_availability_enabled: bool = True
     availability_probe_timeout_seconds: float = 10.0
     availability_probe_concurrency: int = 2
+    # OD-52 Phase F: operational hardening for shared provider accounts.
+    provider_retry_max_attempts: int = 3
+    provider_retry_backoff_seconds: float = 1.0
     # OD-04: free endpoints only by default. Paid models are refused even with
     # a signed authorization until an operator explicitly disables this switch.
     free_models_only: bool = True
@@ -377,7 +380,7 @@ class Settings(BaseSettings):
     blockchain_secret_env: str = "THIRDWEB_SECRET_KEY"
     blockchain_allow_mainnet: bool = False
 
-    # Proposed Doc 33 / OD-53 — Web3 and node adapters. All flags default-off.
+    # Proposed Doc 35 / OD-55 — Web3 and node adapters. All flags default-off.
     # These flags enable READ and PREPARE paths only; none enables execution.
     # Creator approval integration for execution is a separate later work item.
     web3_registry_enabled: bool = False
@@ -405,13 +408,13 @@ class Settings(BaseSettings):
     lnd_write_macaroon_env: str = "LND_WRITE_MACAROON"
     cln_write_enabled: bool = False
     cln_write_rune_env: str = "CLN_WRITE_RUNE"
-    # Production gates. The owner-decision flag may be set only after OD-53 is
+    # Production gates. The owner-decision flag may be set only after OD-55 is
     # signed; a configuration value is not itself authority.
     web3_owner_decision_confirmed: bool = False
     web3_testnet_evidence_ref: str = ""
     web3_monitoring_enabled: bool = False
     web3_monitoring_stuck_minutes: int = 30
-    # Extended Web3 capability modules (proposed Doc 33). Research/prepare only.
+    # Extended Web3 capability modules (proposed Doc 35). Research/prepare only.
     web3_defi_enabled: bool = False
     web3_x402_enabled: bool = False
     web3_nft_enabled: bool = False

@@ -1,4 +1,4 @@
-"""Non-EVM and emerging-network research registry (proposed Doc 33).
+"""Non-EVM and emerging-network research registry (proposed Doc 35).
 
 Capabilities are unverified until tested. Bitcoin is already represented by the
 separate self-hosted node adapter and is not treated as an EVM chain here.

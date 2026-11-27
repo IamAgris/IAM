@@ -1,4 +1,4 @@
-"""Advanced read-only on-chain analysis (proposed Doc 33).
+"""Advanced read-only on-chain analysis (proposed Doc 35).
 
 All statistics are computed from operator-supplied observations. No RPC call is
 made here and no conclusion is presented as certainty.

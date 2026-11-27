@@ -446,3 +446,29 @@ Owner direction: finish code phases before the two external completion items. P3
 **Gates:** 8 new tests pass; ruff clean; migration check OK (64 files); OpenAPI check OK; full suite **992 passed, 19 subtests passed**.
 
 **Next code phase:** P8 (hardening/lifecycle) — the last code phase.
+
+---
+
+## 16. Phase 8 — hardening and lifecycle (owner: finish coding first)
+
+| Capability | File |
+|------------|------|
+| Version snapshot (engines, packages, config) with digest; dependency floor checks explicitly not a CVE scan; local health report with `claimed_operational: false` | `backend/app/services/browser_lifecycle.py` |
+| Backups with integrity verification (no restore applied silently), signed-Creator update and retirement records, audit summary, performance budget with `measured: false` | same file |
+| `BrowserLifecycleRecord` model + migration `068_browser_lifecycle.sql` | `backend/app/models/web_knowledge.py`, `backend/app/db/migrations/068_browser_lifecycle.sql`, `MIGRATION_ORDER.json` (sequence 65) |
+| `/api/v1/browser/lifecycle/{snapshot,health,vulnerabilities,snapshot/record,backup,verify-backup,update,retire,audit,performance}` | `backend/app/api/routes/browser_lifecycle.py`, `backend/app/main.py` |
+| Tests | `backend/tests/test_browser_lifecycle.py` |
+
+**Gates:** 10 new tests pass; ruff clean; migration check OK (65 files); OpenAPI check OK; full suite **1002 passed, 19 subtests passed**.
+
+## 17. Code-phase status
+
+All eight implementation phases (P1–P8) now have code and passing unit tests. This is **code-complete**, not operationally complete. The remaining items are external and unchanged:
+
+1. Signed OD-49 Creator decision artefact (P0 exit, OD-03/OD-42).
+2. Live-stack browser smoke run printing `IAM_BROWSER_P1_OK`.
+3. Live Tor Browser / onion availability, leak and kill-switch drills (P5/P6 exit criteria).
+4. Live Postgres integration run for the new browser tables (unit tests use DB doubles).
+5. Adversarial security test against real malicious fixtures and compatibility testing on Firefox/WebKit runtimes.
+
+No phase is marked complete in Doc 29 §11 until its own evidence exists.

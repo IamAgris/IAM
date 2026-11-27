@@ -1,4 +1,4 @@
-"""Unified read-only Bitcoin/Lightning intelligence (proposed Doc 33).
+"""Unified read-only Bitcoin/Lightning intelligence (proposed Doc 35).
 
 LND and CLN are reported independently. The comparison view never merges node
 identities, channels, balances or payment histories and never routes between them.

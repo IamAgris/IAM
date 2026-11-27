@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS ip_legal_licences (
 CREATE TABLE IF NOT EXISTS ip_legal_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source_id UUID NOT NULL,
-    right TEXT NOT NULL,
+    "right" TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'UNKNOWN',
     basis TEXT,
     conditions JSONB NOT NULL DEFAULT '[]'::jsonb,

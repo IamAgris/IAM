@@ -1,4 +1,4 @@
-"""Cross-chain research and bridge preparation (proposed Doc 33).
+"""Cross-chain research and bridge preparation (proposed Doc 35).
 
 Routes and quotes are operator-supplied. No bridge transaction is submitted and
 no asset is assumed to arrive; settlement must always be verified on the

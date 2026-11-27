@@ -1,4 +1,4 @@
-"""DeFi research and preparation (proposed Doc 33).
+"""DeFi research and preparation (proposed Doc 35).
 
 Read and calculate only. Quotes are operator-supplied data; IAM independently
 validates them and never assumes liquidity, returns or protocol safety. No swap,

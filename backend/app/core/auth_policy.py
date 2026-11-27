@@ -59,9 +59,9 @@ ADMIN_PREFIXES = (
     "/api/v1/irwm",
     "/api/v1/model-independence",
     "/api/v1/blockchain",
-    "/api/v1/web3",       # proposed Doc 33: registries, prepare-only transactions
-    "/api/v1/web3-extended",  # proposed Doc 33: DeFi/x402/NFT/DAO/bridge research
-    "/api/v1/nodes",      # proposed Doc 33: read-only Bitcoin/LND/CLN nodes
+    "/api/v1/web3",       # proposed Doc 35: registries, prepare-only transactions
+    "/api/v1/web3-extended",  # proposed Doc 35: DeFi/x402/NFT/DAO/bridge research
+    "/api/v1/nodes",      # proposed Doc 35: read-only Bitcoin/LND/CLN nodes
     "/api/v1/banking",
     "/api/v1/trading",
     "/api/v1/prediction-markets",

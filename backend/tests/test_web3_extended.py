@@ -1,4 +1,4 @@
-"""Proposed Doc 33 tests — extended Web3 research and preparation modules.
+"""Proposed Doc 35 tests — extended Web3 research and preparation modules.
 
 No test performs a network call, signs, mints, swaps, bridges or votes.
 """

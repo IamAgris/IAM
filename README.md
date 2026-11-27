@@ -249,7 +249,7 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - **`IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`** — OD-41 work packages, dependencies, priorities and acceptance tests
 - **`IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`** — hybrid Python + Rust + TypeScript implementation allocation (cross-cutting; not a new decision)
 - **`IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`** — Document 24 : human behaviour research, Equality of Existence and responsibility (OD-43)
-- **`IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`** — Document 25 : financial intelligence amendment (income, crypto, trading, payments; Amendment A adds prediction markets, gaming intelligence and investments) (OD-44)
+- **`IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md`** — Document 25 : financial intelligence amendment (income, crypto, trading, payments; Amendment A adds prediction markets, gaming intelligence and investments) (OD-44, OD-55)
 - `IAM_DATABASE_DESIGN.md` — canonical ERD and migration strategy
 - `IAM_DATABASE_INTEGRATION_REPORT.md` — live Postgres verification, fixes and remaining migration issues
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema

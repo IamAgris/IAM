@@ -1,4 +1,4 @@
-"""Wallet and address registry (proposed Doc 33 §8.1) — metadata only.
+"""Wallet and address registry (proposed Doc 35 §8.1) — metadata only.
 
 No key, seed phrase, derivation secret, macaroon or rune is accepted or stored.
 An address is a routing destination, never an identity (OD-01) or an authority.

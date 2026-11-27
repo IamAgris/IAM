@@ -1,4 +1,4 @@
-"""Creator approval and permission gating for Web3 operations (proposed Doc 33 §6).
+"""Creator approval and permission gating for Web3 operations (proposed Doc 35 §6).
 
 This module does not create a second approval engine. It delegates every decision
 to the existing ``CreatorApprovalService`` (ED25519 signature over a one-time

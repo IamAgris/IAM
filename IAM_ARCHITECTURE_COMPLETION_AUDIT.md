@@ -354,4 +354,9 @@ Commit `a6a10ab` ("CI: fix missing cryptography dep, secret-scan fixture, repo-i
 | IAM CI | ❌ failure — concurrently added `test_live_evidence_db.py` IICS claim test passes locally but fails on Python 3.12 CI runner (2 errors, swallowed exception in `live_evidence_cache.store_cached`) |
 | Quality gates | ❌ failure — only `types` and `coverage` jobs remain red (mypy ratchet drift from newly added modules plus the same IICS test); lint, sdk-contracts, repo-intel, acceptance and workflow-validation are green |
 
-Baseline regeneration was deliberately **not** used to hide the mypy drift, and no failing test was weakened. These two remaining failures are in concurrently added code, not in the P0 hardening work documented here; they are recorded as open findings.
+Baseline regeneration was deliberately **not** used to hide the mypy drift, and no failing test was weakened. These two remaining failures were then addressed:
+
+- **IAM CI root cause (from authenticated logs):** the two errors were *not* the IICS test — they were `test_tor_intelligence.py` passing a bare `object()` database to `BrowserEvidenceService.append_audit` and calling `engage_killswitch()` without injecting the manager dependency. Both test fakes were corrected (changes were already present uncommitted and were included in commit `849e87c`).
+- **Quality-gates types:** all new strict-typing errors were fixed rather than baselined away — narrow return annotations for route handlers, `type: ignore` only on ORM-column assignments, explicit narrowing for optional points/paths, renamed shadowed locals, and `IPLCIService(db=...)` instead of positional `db`. Result: **1925 errors, 0 new, 50 fixed — `RESULT: OK`**.
+
+Final local verification: **992 tests passed**, coverage **67.77%**, OpenAPI 836/836, migrations 64/64, ruff clean, `pip-audit` clean, mypy ratchet `OK`. All changes were committed/pushed by the concurrent owner as `849e87c` ("Refresh contracts, typing gates and integration isolation"); CI results for that head were still in progress when this record was written.

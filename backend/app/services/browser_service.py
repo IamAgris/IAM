@@ -87,9 +87,11 @@ class BrowserService:
         self.transfer_root.mkdir(parents=True, exist_ok=True)
         adapter = get_adapter(self.engine)
         engine = adapter.engine(self._playwright)
-        self._browser = await engine.launch(
-            headless=self.headless,
-            args=[
+        # Chromium-specific switches break Firefox/WebKit launch — only pass
+        # them to Chromium.
+        launch_kwargs: Dict[str, Any] = {"headless": self.headless}
+        if self.engine == "chromium":
+            launch_kwargs["args"] = [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
@@ -97,8 +99,8 @@ class BrowserService:
                 "--no-first-run",
                 "--no-zygote",
                 "--disable-gpu",
-            ],
-        )
+            ]
+        self._browser = await engine.launch(**launch_kwargs)
         self._context = await self._browser.new_context(
             viewport={"width": 1280, "height": 720},
             user_agent="Mozilla/5.0 (X11; Linux x86_64) AURA Autonomous AI Browser",

@@ -1,4 +1,4 @@
-"""Fiat on/off-ramp research (proposed Doc 33).
+"""Fiat on/off-ramp research (proposed Doc 35).
 
 Provider availability, fees, geography and KYC requirements must be verified
 live before any integration. No account is opened and no payment is initiated.

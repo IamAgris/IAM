@@ -1,4 +1,4 @@
-"""x402 machine-to-machine payment discovery and preparation (proposed Doc 33).
+"""x402 machine-to-machine payment discovery and preparation (proposed Doc 35).
 
 Discovery is an HTTP GET only; a 402 response is treated as untrusted data.
 Nothing is paid here. Purchase requires the existing signed Creator approval and

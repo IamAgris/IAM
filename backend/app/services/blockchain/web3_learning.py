@@ -1,4 +1,4 @@
-"""Controlled Web3 learning records (proposed Doc 33).
+"""Controlled Web3 learning records (proposed Doc 35).
 
 Gap identification, research logs, tool benchmarks and versioned technical notes.
 This module never modifies the production model, signing infrastructure, financial

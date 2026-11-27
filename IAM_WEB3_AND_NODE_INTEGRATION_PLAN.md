@@ -59,7 +59,7 @@ These must be resolved by the owner before implementation, not silently designed
 | C3 | Transaction authorisation **Level 5** (creator approval) | `LEVEL_ORDER` only supports 1–4; protected-core changes need OD-11 signed approval | Map protected operations to **level 4 + explicit action allowlist** (`treasury.withdraw`, `key.rotate`, `contract.upgrade`, `governance.change`). Adding level 5 to the engine is a protected-core change requiring signed approval. |
 | C4 | "TypeScript SDK as primary implementation", React Native, Engine/Transactions as primary backend | Doc 01 §5 + Implementation Addendum: backend **Python/FastAPI**, TypeScript only web/SDK; OD-08 ARQ unchanged | Backend adapters in **Python** (`httpx`/JSON-RPC/REST) behind `BlockchainService`; thirdweb TypeScript SDK only in `frontend/` and `sdk/typescript/`. Node gateways (self-hosted Engine, Umbrel connector) are external HTTP services behind a Python adapter. |
 | C5 | 12–20 new top-level Web3 modules; "permanent subsystem" with own intelligence | Doc 09 §3.3 already defines **10 engines inside existing systems**; OD-45/OD-49 patterns put new capabilities inside existing systems with **no new top-level system** | Implement WIBO as engines inside existing `financial`, `development`, `security` and `orchestration` systems. No seventeenth top-level system. |
-| C6 | Bitcoin/LND/CLN connection and Tailscale | No owner decision covers self-hosted Bitcoin/Lightning nodes; OD-23 covers thirdweb only | Request a **new owner decision (proposed OD-53)** defining this as a separate, self-hosted adapter family. Do not fold it into OD-23 or into thirdweb. |
+| C6 | Bitcoin/LND/CLN connection and Tailscale | No owner decision covers self-hosted Bitcoin/Lightning nodes; OD-23 covers thirdweb only | Request a **new owner decision (proposed OD-55)** defining this as a separate, self-hosted adapter family. Do not fold it into OD-23 or into thirdweb. |
 | C7 | "Immutable audit records" | `AuditEvent` is a plain table, mutable via normal DB access | New append-only `blockchain_audit_log` table with hash chaining + DB `UPDATE/DELETE` revocation, or a signed external WORM store. Gap must be closed before any write path. |
 | C8 | "Full Web3 integration" including mainnet, treasury, token launches, DAO voting, DeFi investment | Doc 09 acceptance: testnets during development; mainnet needs separately authorised funds; Doc 25 §8 "simulated first", no real trading in first implementation | Free testnets and read-only mainnet *research* first; no mainnet value transfer until signed approval and a separate production gate. |
 
@@ -182,7 +182,7 @@ Each phase ends with tests; a phase is not "complete" until its tests pass.
 
 | Phase | Work | Gate |
 |---|---|---|
-| **P0 — Decisions & spec** | Owner resolves C1–C8; proposed OD-53 for self-hosted nodes; freeze a Doc 33 spec if accepted | Signed owner decision; ARCHITECTURE_INDEX updated **by owner instruction** |
+| **P0 — Decisions & spec** | Owner resolves C1–C8; proposed OD-55 for self-hosted nodes; freeze a Doc 35 spec if accepted | Signed owner decision; ARCHITECTURE_INDEX updated **by owner instruction** |
 | **P1 — Registry & secrets** | Migration 047; provider candidates; credential fields; capability registry; audit table | `check_migrations.py` passes; no secret in DB/logs; audit trigger tested |
 | **P2 — Read-only thirdweb** | Extend `BlockchainService` with free-tier read adapter; chains; no write path | Read tests with mocked HTTP; `network_calls_made` semantics preserved for `status()`; no paid call |
 | **P3 — Read-only Umbrel** | Tailscale check; Bitcoin Core connector; LND REST; CLN CLNRest; separate identities | Connection tests with real endpoints supplied by operator; TLS verified; read-only macaroon/rune |
@@ -194,7 +194,7 @@ Each phase ends with tests; a phase is not "complete" until its tests pass.
 
 **Not in scope for P1–P8:** autonomous spending, mainnet value transfer without approval,
 actual DAO votes, token launches, NFT purchases, DeFi investment, paid thirdweb tiers.
-Research and preparation for these capabilities is implemented in the extended Doc 33
+Research and preparation for these capabilities is implemented in the extended Doc 35
 modules, but every value-moving action remains approval-gated or unimplemented. Real
 execution and paid tiers are separate, later owner decisions.
 
@@ -234,11 +234,11 @@ Security assertions that must appear in tests:
 ## 11. Open owner decisions required before implementation
 
 The one-page owner sign-off sheet with recommended defaults and the exact register text
-is `IAM_OD53_SIGNOFF_SHEET.md`. The frozen functional scope is proposed as Doc 33 in
+is `IAM_OD55_SIGNOFF_SHEET.md`. The frozen functional scope is proposed as Doc 35 in
 `IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md` (including §8.1 wallet/address design and
-§6.1 transaction lifecycle). Neither document is authority until OD-53 is signed.
+§6.1 transaction lifecycle). Neither document is authority until OD-55 is signed.
 
-1. **OD-53 (proposed):** self-hosted Bitcoin Core + LND + CLN as three independent
+1. **OD-55 (proposed):** self-hosted Bitcoin Core + LND + CLN as three independent
    node adapters inside the existing financial/development systems; no new top-level
    system; read-only first; Tailscale private transport.
 2. Reopen **OD-23** only if paid thirdweb products are ever wanted (not recommended).
@@ -272,12 +272,12 @@ The read-only foundation (P1–P5), approval-gated execution (P6) and read-only
 reconciliation (P7) have been added to the working tree. **Every write path is
 default-off and requires a verified signed Creator authorization at execution time.**
 No signing key is held by IAM; execution is delegated to an operator-reviewed
-external executor. OD-53 remains unsigned, so no feature is enabled by default.
+external executor. OD-55 remains unsigned, so no feature is enabled by default.
 Operator procedure for the remaining external inputs: `IAM_WEB3_ACTIVATION_RUNBOOK.md`.
 
 | Phase | Status | Evidence |
 |---|---|---|
-| P0 proposals | Drafted, unsigned | `IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md`, `IAM_OD53_SIGNOFF_SHEET.md`, `scripts/creator_request_od53.py` (not run) |
+| P0 proposals | Drafted, unsigned | `IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md`, `IAM_OD55_SIGNOFF_SHEET.md`, `scripts/creator_request_od55.py` (not run) |
 | P1 registry/secrets/audit | Implemented | migration `054_web3_and_nodes.sql`; `models/web3.py`; hash-chained `blockchain/audit.py`; secrets and admin scopes wired |
 | P2 read-only thirdweb | Implemented | `blockchain/providers/thirdweb_adapter.py`; paid features denied; no broadcast |
 | P3 read-only nodes | Implemented | `bitcoin_core_adapter.py`, `lnd_adapter.py`, `cln_adapter.py`; TLS required; allowlists; separate identities |
@@ -285,8 +285,8 @@ Operator procedure for the remaining external inputs: `IAM_WEB3_ACTIVATION_RUNBO
 | P5 prepare-only | Implemented | `transaction_manager.py` stops at `simulated`; `wallet_registry.py` metadata only |
 | P6 approval-gated execution | Implemented | `governance.py` delegates to `CreatorApprovalService` + OD-04 caps; `transaction_manager.py` prepare→request→confirm→broadcast; LND/CLN invoice + pay behind level 2/3 signed authority |
 | P7 accounting/monitoring | Implemented (no auto-correction) | read-only `reconciliation.py`, `/web3/reconcile`; `monitoring.py` writes `web3_alert` + high-severity `SecurityIncident`; automated correction deferred |
-| P8 production gates | Partial | `activation.py` + `/web3/activation` + existing `/api/v1/deployment/preflight` now gate on signed OD-53 assertion, testnet evidence, executor URL and credentials; owner signature still pending |
-| Extended Doc 33 modules | Implemented (research/prepare only) | `defi.py`, `x402.py`, `contracts.py`, `nft.py`, `dao.py`, `cross_chain.py`, `threat_intel.py`, `onchain_analysis.py` + `/api/v1/web3-extended`; no execution path |
+| P8 production gates | Partial | `activation.py` + `/web3/activation` + existing `/api/v1/deployment/preflight` now gate on signed OD-55 assertion, testnet evidence, executor URL and credentials; owner signature still pending |
+| Extended Doc 35 modules | Implemented (research/prepare only) | `defi.py`, `x402.py`, `contracts.py`, `nft.py`, `dao.py`, `cross_chain.py`, `threat_intel.py`, `onchain_analysis.py` + `/api/v1/web3-extended`; no execution path |
 | Wallet ecosystem, ops, governance records | Implemented | real SIWE verification (`keccak.py` + `secp256k1.py`), session keys, multisig, backups; `transaction_ops.py` (nonce/gas/queue/simulation/recovery); `registries.py`, `emergency.py`, `accounting.py`, `web3_learning.py`, `business.py`, `non_evm.py`, `fiat.py` |
 
 Verification run: 54 Web3 tests pass (25 core + 18 extended + 11 ops/SIWE); `ruff`,
@@ -299,7 +299,7 @@ been applied to a live database in this environment.
 ## 14. Relationship to existing documents
 
 This plan is a **navigation document only**. It does not amend the frozen decision
-register, does not create OD-53 until the owner confirms it, and does not claim any
+register, does not create OD-55 until the owner confirms it, and does not claim any
 capability is implemented beyond the informational status above. When implementation
 and this plan disagree, the frozen specification wins for intent and source code
 remains the truth for what runs.

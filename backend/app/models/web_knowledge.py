@@ -386,7 +386,7 @@ class OnionReputation(Base):  # type: ignore[misc]
     )
 
 
-class BrowserAgentSession(Base):
+class BrowserAgentSession(Base):  # type: ignore[misc]
     """Doc 29 P7: one isolated browser session per authorised agent."""
 
     __tablename__ = "browser_agent_sessions"
@@ -410,4 +410,30 @@ class BrowserAgentSession(Base):
         CheckConstraint(
             "isolation_level IN ('headless','visible','isolated')",
             name="ck_browser_agent_session_isolation"),
+    )
+
+
+class BrowserLifecycleRecord(Base):  # type: ignore[misc]
+    """Doc 29 P8: versioning, backup, update and retirement evidence."""
+
+    __tablename__ = "browser_lifecycle_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    component = Column(Text, nullable=False, index=True)
+    event_type = Column(Text, nullable=False, index=True)
+    status = Column(Text, nullable=False, default="applied")
+    version = Column(Text, nullable=True)
+    checksum = Column(Text, nullable=True)
+    backup_ref = Column(Text, nullable=True)
+    actor = Column(Text, nullable=False)
+    payload = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "event_type IN ('snapshot','update','backup','recovery','retire','rollback')",
+            name="ck_browser_lifecycle_event"),
+        CheckConstraint(
+            "status IN ('applied','verified','failed','retired')",
+            name="ck_browser_lifecycle_status"),
     )

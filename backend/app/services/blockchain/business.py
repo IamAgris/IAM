@@ -1,4 +1,4 @@
-"""Web3 business-opportunity research (proposed Doc 33).
+"""Web3 business-opportunity research (proposed Doc 35).
 
 Advisory scoring only. No service is launched, no price is charged and no legal
 conclusion is made. Regulatory requirements must be verified separately (OD-31/OD-48).

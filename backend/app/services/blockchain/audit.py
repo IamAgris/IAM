@@ -1,4 +1,4 @@
-"""Append-only, hash-chained blockchain audit records (proposed Doc 33 §8).
+"""Append-only, hash-chained blockchain audit records (proposed Doc 35 §8).
 
 Existing ``AuditEvent`` remains the general audit stream; blockchain entries are
 written to both, with the chain hash stored in ``AuditEvent.details``. The database

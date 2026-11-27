@@ -1,4 +1,4 @@
-"""Web3 alerting and health monitoring (proposed Doc 33 P7).
+"""Web3 alerting and health monitoring (proposed Doc 35 P7).
 
 Read-only checks plus audit alerts. This module never modifies financial records,
 never signs, and never contacts a provider. Alerts are written to the existing

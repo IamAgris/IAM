@@ -5,7 +5,7 @@
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026); expanded by owner direction 26 November 2026 (Amendment A: prediction markets, gaming/casino intelligence, investments and provider-independent ecosystem). No earlier decision is reopened or weakened.  
 **Parent:** `IAM_MASTER_ARCHITECTURE.md`  
 **Related:** `IAM_BLOCKCHAIN_AND_BANKING.md` (Doc 09), `IAM_OWNER_DECISIONS.md` (OD-04, OD-23, OD-24, OD-25), `IAM_FINAL_CONSOLIDATION.md`, `IAM_COMMUNICATION_ARCHITECTURE.md` (Doc 07), `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (Doc 15)  
-**Confirmed decision:** OD-44 (financial intelligence and economic independence)  
+**Confirmed decisions:** OD-44 (financial intelligence and economic independence); OD-55 (Amendment A expansion — prediction markets, gaming intelligence and investments)  
 **Amendment A:** Sections 11–24 (owner-directed expansion and implementation status; research and simulation only unless explicitly approved)
 
 ---

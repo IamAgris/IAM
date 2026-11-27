@@ -3,7 +3,7 @@
 **Version:** 1.0 · 27 November 2026  
 **Status:** **PROPOSAL FOR OWNER REVIEW — no decision is made by this sheet.** A chat message, a checked box in a Markdown file and an unsigned request are not authority. OD-54 becomes effective only after `CreatorApprovalService.decide()` verifies an ED25519 signature from the configured Creator signer over a one-time challenge (OD-03/OD-42).  
 **Source document:** `IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` (proposed Document 34).  
-**Identifier note:** OD-52 and Document 32 were subsequently assigned to the Universal Model Provider orchestration decision, and OD-53/Document 33 to Web3 operations. This proposal therefore uses the next free identifiers: **OD-54 / Document 34**. This is a coordination correction, not a change to any locked decision.  
+**Identifier note:** OD-52 and Document 32 were subsequently assigned to the Universal Model Provider orchestration decision, and OD-53/Document 33 to Financial Intelligence Amendment A; OD-55/Document 35 is the current Web3 proposal. This proposal therefore uses the next free identifiers: **OD-54 / Document 34**. This is a coordination correction, not a change to any locked decision.  
 **Evidence rule for this sheet:** **no mock data and no patched provider responses are accepted as evidence.** Only the real-web smoke run recorded in section C is cited. Unit tests that patch search or browser services are regression checks only and are deliberately excluded from this sign-off.
 
 ---

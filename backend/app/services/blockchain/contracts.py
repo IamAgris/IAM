@@ -1,4 +1,4 @@
-"""Smart-contract research, analysis and deployment preparation (proposed Doc 33).
+"""Smart-contract research, analysis and deployment preparation (proposed Doc 35).
 
 Analysis is static and local. Generated templates are educational skeletons, never
 production-ready contracts. Deployment and verification require signed Creator

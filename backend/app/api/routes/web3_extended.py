@@ -1,4 +1,4 @@
-"""Proposed Doc 33 extended Web3 APIs — research and preparation only.
+"""Proposed Doc 35 extended Web3 APIs — research and preparation only.
 
 No endpoint in this router executes a swap, mint, bridge, vote, purchase or
 deployment. Execution remains subject to signed Creator approval elsewhere.

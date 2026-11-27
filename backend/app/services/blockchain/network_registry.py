@@ -1,4 +1,4 @@
-"""Per-network capability registry (proposed Doc 33 §5.2).
+"""Per-network capability registry (proposed Doc 35 §5.2).
 
 A network is not assumed supported because a provider advertises it. Every
 (provider, network, method) capability is explicit and unverified capabilities

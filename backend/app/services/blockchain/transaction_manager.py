@@ -1,4 +1,4 @@
-"""Prepare-only transaction manager (proposed Doc 33 §6.1).
+"""Prepare-only transaction manager (proposed Doc 35 §6.1).
 
 This module deliberately stops at ``simulated``. Moving a record to
 ``awaiting_approval``/``approved`` and any broadcast/payment operation require

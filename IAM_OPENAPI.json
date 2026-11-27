@@ -10926,6 +10926,296 @@
         }
       }
     },
+    "/api/v1/browser/lifecycle/snapshot": {
+      "get": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Snapshot",
+        "operationId": "snapshot_api_v1_browser_lifecycle_snapshot_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Snapshot Api V1 Browser Lifecycle Snapshot Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/health": {
+      "get": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_v1_browser_lifecycle_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api V1 Browser Lifecycle Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/vulnerabilities": {
+      "get": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Vulnerabilities",
+        "operationId": "vulnerabilities_api_v1_browser_lifecycle_vulnerabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Vulnerabilities Api V1 Browser Lifecycle Vulnerabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/snapshot/record": {
+      "post": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Record Snapshot",
+        "operationId": "record_snapshot_api_v1_browser_lifecycle_snapshot_record_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Record Snapshot Api V1 Browser Lifecycle Snapshot Record Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/backup": {
+      "post": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Backup",
+        "operationId": "backup_api_v1_browser_lifecycle_backup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Backup Api V1 Browser Lifecycle Backup Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/verify-backup": {
+      "post": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Verify Backup",
+        "operationId": "verify_backup_api_v1_browser_lifecycle_verify_backup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verify Backup Api V1 Browser Lifecycle Verify Backup Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/update": {
+      "post": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Apply Update",
+        "operationId": "apply_update_api_v1_browser_lifecycle_update_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Apply Update Api V1 Browser Lifecycle Update Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/retire": {
+      "post": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Retire",
+        "operationId": "retire_api_v1_browser_lifecycle_retire_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetireRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Retire Api V1 Browser Lifecycle Retire Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/audit": {
+      "get": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Audit Report",
+        "operationId": "audit_report_api_v1_browser_lifecycle_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Audit Report Api V1 Browser Lifecycle Audit Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/lifecycle/performance": {
+      "get": {
+        "tags": [
+          "browser-lifecycle"
+        ],
+        "summary": "Performance",
+        "operationId": "performance_api_v1_browser_lifecycle_performance_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Performance Api V1 Browser Lifecycle Performance Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tor/status": {
       "get": {
         "tags": [
@@ -37907,6 +38197,19 @@
         ],
         "title": "BackupVerificationRequest"
       },
+      "BackupVerifyRequest": {
+        "properties": {
+          "backup_ref": {
+            "type": "string",
+            "title": "Backup Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backup_ref"
+        ],
+        "title": "BackupVerifyRequest"
+      },
       "BandwidthRequest": {
         "properties": {
           "kbps": {
@@ -48545,6 +48848,24 @@
         ],
         "title": "ResultRequest"
       },
+      "RetireRequest": {
+        "properties": {
+          "component": {
+            "type": "string",
+            "title": "Component"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component",
+          "reason"
+        ],
+        "title": "RetireRequest"
+      },
       "ReuseWorkflowRequest": {
         "properties": {
           "url": {
@@ -51625,6 +51946,24 @@
         },
         "type": "object",
         "title": "Uncertainty"
+      },
+      "UpdateRequest": {
+        "properties": {
+          "component": {
+            "type": "string",
+            "title": "Component"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component",
+          "version"
+        ],
+        "title": "UpdateRequest"
       },
       "UpgradeRequest": {
         "properties": {

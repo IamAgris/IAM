@@ -267,7 +267,7 @@ __all__ = [
     "AIConversationMessage", "AIContextExchange", "AIResponseVerification",
     "AIReputationRecord", "AICommunicationPermission",
     "HumanCommunicationBridge", "AICommunicationAudit",
-    # Proposed Doc 33 — Web3 and self-hosted node records (metadata only)
+    # Proposed Doc 35 — Web3 and self-hosted node records (metadata only)
     "Web3Network", "Web3Wallet", "Web3Transaction", "Web3Asset", "Web3Contract",
     "NodeConnection", "NodeWalletBalance", "BitcoinUtxo", "LightningChannel",
     "LightningPeer", "LightningInvoice", "LightningPayment", "LightningEvent",

@@ -177,7 +177,7 @@ def check_deployment() -> Dict[str, Any]:
             blocking=False,
         )
 
-    # Proposed Doc 33 activation gate — redacted, fail-closed, no secret values.
+    # Proposed Doc 35 activation gate — redacted, fail-closed, no secret values.
     checks.extend(check_web3_activation()["checks"])
 
     blockers = [c["name"] for c in checks if c["status"] == "blocker"]

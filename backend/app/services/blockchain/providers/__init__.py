@@ -1,4 +1,4 @@
-"""Provider-independent Web3 and node adapters (proposed Doc 33).
+"""Provider-independent Web3 and node adapters (proposed Doc 35).
 
 All adapters are READ-ONLY and default-off. Execution methods exist only to deny
 explicitly; Creator approval integration is a separate later work item.

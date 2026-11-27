@@ -321,6 +321,11 @@
       "sequence": 64,
       "number": 67,
       "path": "067_browser_agent_sessions.sql"
+    },
+    {
+      "sequence": 65,
+      "number": 68,
+      "path": "068_browser_lifecycle.sql"
     }
   ]
 }

@@ -1,4 +1,4 @@
-"""Read-only reconciliation of Web3 records against IAM's ledger (proposed Doc 33 P7).
+"""Read-only reconciliation of Web3 records against IAM's ledger (proposed Doc 35 P7).
 
 This module never modifies financial records. A difference is reported as an issue
 and recorded as an ``AuditEvent``; correction requires a signed decision and the

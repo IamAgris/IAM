@@ -58,6 +58,7 @@ from app.api.routes import (
     browser_security,
     browser_knowledge,
     browser_agents,
+    browser_lifecycle,
     tor,
     deployment,
     bootstrap,
@@ -233,6 +234,7 @@ app.include_router(browser_intelligence.router)
 app.include_router(browser_security.router)
 app.include_router(browser_knowledge.router)
 app.include_router(browser_agents.router)
+app.include_router(browser_lifecycle.router)
 app.include_router(tor.router)
 app.include_router(deployment.router)
 app.include_router(bootstrap.router)

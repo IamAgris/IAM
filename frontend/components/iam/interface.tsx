@@ -145,7 +145,11 @@ export function IAMInterface() {
   type ModelMode = "manual" | "auto" | "hybrid";
   const [modelMode, setModelMode] = React.useState<ModelMode>("hybrid");
   const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
-  const [freeModels, setFreeModels] = React.useState<Array<{ model_id: string; display_name: string | null }>>([]);
+  const [freeModels, setFreeModels] = React.useState<Array<{
+    model_id: string; display_name: string | null; endpoint_status: string;
+    capabilities: string[]; context_length: number | null; last_checked_at: string | null;
+  }>>([]);
+  const [catalogSearch, setCatalogSearch] = React.useState("");
   const [providerKeys, setProviderKeys] = React.useState<Array<{ provider: string; key_alias: string; health: string; scope: string; is_enabled: boolean }>>([]);
   const [delegations, setDelegations] = React.useState<Array<{ model: string; status: string }>>([]);
   const [previousModel, setPreviousModel] = React.useState<string | null>(null);

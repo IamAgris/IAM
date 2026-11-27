@@ -1,4 +1,4 @@
-"""NFT and digital-asset preparation (proposed Doc 33).
+"""NFT and digital-asset preparation (proposed Doc 35).
 
 No mint, listing, purchase or transfer is executed. Metadata references are
 content-addressed identifiers, not file contents; no IPFS provider is assumed.

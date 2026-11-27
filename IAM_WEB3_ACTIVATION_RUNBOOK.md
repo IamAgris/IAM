@@ -2,7 +2,7 @@
 
 **Version:** 1.0 · 27 November 2026  
 **Status:** **OPERATOR PROCEDURE.** It does not grant authority, sign anything, or enable a feature by itself.  
-**Prerequisite:** proposed Doc 33 and the companion decisions in `IAM_OD53_SIGNOFF_SHEET.md` are reviewed. OD-53 remains unsigned until step 2 completes.  
+**Prerequisite:** proposed Doc 35 and the companion decisions in `IAM_OD55_SIGNOFF_SHEET.md` are reviewed. OD-55 remains unsigned until step 2 completes.  
 **Safety rule:** no secret value is ever pasted into chat, a repository file, a log, or a model request. Only file paths and names are recorded.
 
 ---
@@ -11,7 +11,7 @@
 
 | Input | Where it comes from | Who supplies it |
 |---|---|---|
-| Signed OD-53 challenge | Creator hardware signer via the existing approval API | Creator, outside IAM |
+| Signed OD-55 challenge | Creator hardware signer via the existing approval API | Creator, outside IAM |
 | Restricted node credentials + thirdweb secret | Generated on your Umbrel / thirdweb dashboard, stored as Docker secrets on Contabo | Operator |
 | Protected executor endpoint | Self-hosted thirdweb Engine (free, open source) or equivalent signer on a private network | Operator |
 
@@ -35,14 +35,14 @@ Do not assume the ports or paths quoted in earlier discussions — verify them.
 
 ---
 
-## 2. OD-53 signature — the only source of decision authority
+## 2. OD-55 signature — the only source of decision authority
 
 From a machine with the admin-scoped IAM token:
 
 ```powershell
 $env:IAM_ENDPOINT = "https://<iam-private-endpoint>"
 $env:IAM_API_TOKEN = "<scoped admin token>"
-python scripts/creator_request_od53.py
+python scripts/creator_request_od55.py
 ```
 
 The script prints `request_id`, `challenge_hash` and the exact signing message. It
@@ -56,9 +56,9 @@ python -m iam_sdk.creator_cli sign <request_id> --approve `
 Only `CreatorApprovalService.decide()` verifying the ED25519 signature makes the
 decision effective. Only **after** that verification, the owner:
 
-1. adds OD-53 and the accepted companion decisions to `IAM_OWNER_DECISIONS.md`;
+1. adds OD-55 and the accepted companion decisions to `IAM_OWNER_DECISIONS.md`;
 2. adds a navigation row to `ARCHITECTURE_INDEX.md`;
-3. changes proposed Doc 33 status to CONFIRMED;
+3. changes proposed Doc 35 status to CONFIRMED;
 4. sets `WEB3_OWNER_DECISION_CONFIRMED=true` on the IAM host.
 
 Step 4 is an operator assertion that the signature exists. **The flag is not the
@@ -148,7 +148,7 @@ Set these in the Contabo environment / Docker secrets:
 
 | Variable | Purpose |
 |---|---|
-| `WEB3_OWNER_DECISION_CONFIRMED=true` | Assert signed OD-53 exists (never a substitute for it) |
+| `WEB3_OWNER_DECISION_CONFIRMED=true` | Assert signed OD-55 exists (never a substitute for it) |
 | `THIRDWEB_CLIENT_ID`, `THIRDWEB_SECRET_KEY_FILE` | free-tier thirdweb credentials |
 | `THIRDWEB_BASE_URL` | operator-reviewed private RPC base |
 | `BITCOIN_RPC_COOKIE_FILE`, `BITCOIN_CORE_CONNECTOR_URL` | in-Umbrel connector |
@@ -204,7 +204,7 @@ POST /api/v1/web3/monitoring/run
 A timeout is never treated as failure. Verify on-chain state before any retry; the
 idempotency key `(approval_id, chain_id, nonce or payment_hash)` prevents double submission.
 
-Mainnet value movement requires the separate signed production gate in Doc 33 §1.1.
+Mainnet value movement requires the separate signed production gate in Doc 35 §1.1.
 
 ---
 
@@ -220,7 +220,7 @@ Mainnet value movement requires the separate signed production gate in Doc 33 §
 
 ## 10. What cannot be completed from this machine
 
-The OD-53 signature, the Umbrel/LND/CLN/thirdweb credentials, and the executor endpoint
+The OD-55 signature, the Umbrel/LND/CLN/thirdweb credentials, and the executor endpoint
 are outside this environment. Everything else — code, schemas, approval flow, activation
 gate, monitoring and tests — is implemented and verified. The gate is the authority check:
 if it reports a blocker, the corresponding input has not been supplied yet.

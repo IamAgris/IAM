@@ -1,4 +1,4 @@
-"""Proposed Doc 33 APIs — read-only Web3/node intelligence and prepare-only transactions.
+"""Proposed Doc 35 APIs — read-only Web3/node intelligence and prepare-only transactions.
 
 There is no endpoint for broadcast, payment, swap, bridge, invoice payment or channel
 change. Those require signed Creator approval and are a separate later work item.

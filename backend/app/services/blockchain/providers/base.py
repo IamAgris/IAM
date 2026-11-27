@@ -1,4 +1,4 @@
-"""Shared contracts for Web3 and node adapters (proposed Doc 33).
+"""Shared contracts for Web3 and node adapters (proposed Doc 35).
 
 Design rule: an adapter may read and prepare, never execute. Execution methods are
 declared so that callers get an explicit denial rather than a missing attribute.

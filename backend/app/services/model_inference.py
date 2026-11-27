@@ -8,6 +8,7 @@ One decision path decides whether live inference is available:
 No API key is ever returned by these helpers.
 """
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
@@ -118,6 +119,64 @@ def _inspect_input(messages: List[Dict[str, str]]) -> Optional[Dict[str, Any]]:
     return None
 
 logger = loguru.logger
+
+
+async def _post_with_retry(
+    client: httpx.AsyncClient,
+    url: str,
+    headers: Dict[str, str],
+    payload: Dict[str, Any],
+    timeout: float,
+) -> httpx.Response:
+    """Retry shared-account rate limits and transient provider failures."""
+    response: httpx.Response | None = None
+    for attempt in range(max(1, settings.provider_retry_max_attempts)):
+        response = await client.post(url, headers=headers, json=payload, timeout=timeout)
+        if response.status_code not in (429, 500, 502, 503, 504):
+            return response
+        if attempt + 1 < settings.provider_retry_max_attempts:
+            await asyncio.sleep(settings.provider_retry_backoff_seconds * (2**attempt))
+    return response  # type: ignore[return-value]
+
+
+def _fit_context(messages: List[Dict[str, str]], limit: int) -> List[Dict[str, str]]:
+    """Keep system instructions and the newest messages inside the context budget."""
+    def estimate(items: List[Dict[str, str]]) -> int:
+        return sum(len(str(item.get("content") or "")) // 4 for item in items)
+
+    if estimate(messages) <= limit:
+        return messages
+    system = [dict(item) for item in messages if item.get("role") == "system"]
+    rest = [item for item in messages if item.get("role") != "system"]
+    kept = list(system)
+    for item in reversed(rest):
+        candidate = kept + [item]
+        if estimate(candidate) > limit:
+            break
+        kept = candidate
+    if estimate(kept) > limit and system:
+        # System instructions still win, but are truncated to the hard budget.
+        allowed = max(0, limit * 4)
+        kept[0]["content"] = str(kept[0].get("content") or "")[:allowed]
+    return kept
+
+
+def _normalise_tool_calls(message: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Convert provider-specific tool calls into IAM's common shape."""
+    normalised: List[Dict[str, Any]] = []
+    for call in message.get("tool_calls") or []:
+        if not isinstance(call, dict):
+            continue
+        function = call.get("function") or {}
+        normalised.append(
+            {
+                "id": call.get("id"),
+                "name": function.get("name") or call.get("name"),
+                "arguments": function.get("arguments") or call.get("arguments"),
+            }
+        )
+    return normalised
+
 
 HOSTED_PROVIDERS = (
     ("nvidia", "nvidia_api_key"),
@@ -453,7 +512,7 @@ class InferenceService:
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "model": selected,
-            "messages": messages,
+            "messages": _fit_context(messages, settings.irwm_context_tokens),
             "temperature": temperature,
         }
         if max_tokens is not None:
@@ -479,29 +538,39 @@ class InferenceService:
             if token_budget is not None:
                 attempt_payload["max_tokens"] = token_budget
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.post(
+                response = await _post_with_retry(
+                    client,
                     url,
-                    headers={"Content-Type": "application/json", **headers},
-                    json=attempt_payload,
+                    {"Content-Type": "application/json", **headers},
+                    attempt_payload,
+                    timeout,
                 )
             if response.status_code != 200:
                 raise InferenceUnavailable(
                     f"{mode} provider returned {response.status_code}: {response.text[:300]}"
                 )
             result = response.json()
-            message = (result.get("choices") or [{}])[0].get("message") or {}
+            choices = result.get("choices")
+            if not isinstance(choices, list) or not choices:
+                raise InferenceUnavailable("provider returned no choices; response rejected")
+            message = choices[0].get("message") if isinstance(choices[0], dict) else None
+            if not isinstance(message, dict):
+                raise InferenceUnavailable("provider returned a malformed message; response rejected")
             if message.get("content") or not message.get("reasoning_content"):
                 break
             if attempt == 0 and token_budget is not None:
                 token_budget = min(max(token_budget * 4, 512), 2048)
                 continue
             break
+        final_message = (choices[0].get("message") or {}) if choices else {}
         result["iam_inference"] = {
             "mode": mode,
             "model": selected,
             "primary": status.primary,
             "reasoning_retry": token_budget != max_tokens,
             "irwm": admission,
+            "response_validated": True,
+            "tool_calls": _normalise_tool_calls(final_message),
         }
         return result
 

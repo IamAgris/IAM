@@ -1,4 +1,4 @@
-"""Contract, token and provider-health registries (proposed Doc 33).
+"""Contract, token and provider-health registries (proposed Doc 35).
 
 IAM owns these records so they survive provider replacement. All entries are
 unverified until an operator reviews them; no registry entry grants authority.

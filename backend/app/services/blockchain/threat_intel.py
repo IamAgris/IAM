@@ -1,4 +1,4 @@
-"""Multi-source Web3 threat assessment (proposed Doc 33).
+"""Multi-source Web3 threat assessment (proposed Doc 35).
 
 No single score is authoritative. Signals come from independent sources and a
 high-risk signal is never overridden by an aggregate score.

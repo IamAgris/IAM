@@ -1,4 +1,4 @@
-"""DAO and governance research with advisory recommendations (proposed Doc 33).
+"""DAO and governance research with advisory recommendations (proposed Doc 35).
 
 Voting is never automatic. Recommendations are deterministic and evidence-based;
 final authority stays with the Creator through the signed approval flow.

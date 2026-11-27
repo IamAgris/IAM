@@ -1,11 +1,11 @@
 # IAM — Web3 and Self-Hosted Bitcoin/Lightning Integration Specification
 
-**Document:** 33 (proposed addendum to Documents 01–32; OD-53 is unconfirmed)  
+**Document:** 35 (proposed addendum to Documents 01–34; OD-55 is unconfirmed)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **PROPOSED — awaiting a signed owner decision (OD-53).** A chat message is not authority. This document does not alter the frozen baseline, `IAM_OWNER_DECISIONS.md`, `ARCHITECTURE_INDEX.md` or any locked decision until OD-53 is confirmed through `CreatorApprovalService.decide()` with an ED25519 signature over a one-time challenge. It is a design specification, **not** an implementation or security-validation claim.  
+**Status:** **PROPOSED — awaiting a signed owner decision (OD-55).** A chat message is not authority. This document does not alter the frozen baseline, `IAM_OWNER_DECISIONS.md`, `ARCHITECTURE_INDEX.md` or any locked decision until OD-55 is confirmed through `CreatorApprovalService.decide()` with an ED25519 signature over a one-time challenge. It is a design specification, **not** an implementation or security-validation claim.  
 **Parent:** `IAM_FINAL_CONSOLIDATION.md`, `ARCHITECTURE_INDEX.md`, `IAM_OWNER_DECISIONS.md`  
-**Related:** Doc 09 `IAM_BLOCKCHAIN_AND_BANKING.md` (OD-23/24/25), Doc 25 `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` (OD-44), `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`, Doc 15 (OD-31), Doc 14 (OD-30), Doc 28 (OD-48), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_API_CONTRACTS.md`, `IAM_DATABASE_DESIGN.md`, `IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md`, `IAM_OD53_SIGNOFF_SHEET.md`  
-**Proposed decision:** OD-53 (Web3 operations and self-hosted Bitcoin/Lightning node adapters)  
+**Related:** Doc 09 `IAM_BLOCKCHAIN_AND_BANKING.md` (OD-23/24/25), Doc 25 `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` (OD-44), `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`, Doc 15 (OD-31), Doc 14 (OD-30), Doc 28 (OD-48), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_API_CONTRACTS.md`, `IAM_DATABASE_DESIGN.md`, `IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md`, `IAM_OD55_SIGNOFF_SHEET.md`  
+**Proposed decision:** OD-55 (Web3 operations and self-hosted Bitcoin/Lightning node adapters)  
 **Governing principle:** **IAM remains the brain; infrastructure providers are replaceable. Capability is not authority, and access is not permission to spend.**
 
 ---
@@ -36,12 +36,12 @@ which this specification **extends** rather than duplicates.
 
 ---
 
-## 1. Proposed owner decision OD-53
+## 1. Proposed owner decision OD-55
 
 The following text is proposed for addition to `IAM_OWNER_DECISIONS.md` **only after**
 the owner signs a Creator approval request. It is reproduced here for review.
 
-> **OD-53 — Web3 operations and self-hosted Bitcoin/Lightning nodes.**
+> **OD-55 — Web3 operations and self-hosted Bitcoin/Lightning nodes.**
 > Add a permanent, provider-independent Web3 and node-integration capability **inside
 > existing IAM systems** (principally financial, development, security and
 > orchestration), not as a sixteenth or seventeenth top-level system and not as a new
@@ -69,11 +69,11 @@ the owner signs a Creator approval request. It is reproduced here for review.
 | OD-23-a | May any paid thirdweb product ever be used? | **No** — retain free-only |
 | OD-04-a | May IAM hold a standing crypto operational budget? | **No** — retain zero standing budget |
 | OD-25-a | Add authorization level 5? | **No** — protected operations stay level 4 + action allowlist |
-| OD-53-a | Scope ceiling for the first build | Read-only + prepare-only + approval-gated execution (P1–P8) |
-| OD-53-b | Mainnet value movement | Deferred to a separate signed production gate |
+| OD-55-a | Scope ceiling for the first build | Read-only + prepare-only + approval-gated execution (P1–P8) |
+| OD-55-b | Mainnet value movement | Deferred to a separate signed production gate |
 
 The one-page owner sign-off sheet with accept/reject checkboxes and the exact register
-text is `IAM_OD53_SIGNOFF_SHEET.md`. Each recommendation is independent: rejecting one
+text is `IAM_OD55_SIGNOFF_SHEET.md`. Each recommendation is independent: rejecting one
 does not reopen or alter any other locked decision. The defaults are the only combination
 that fits the frozen architecture — OD-23 forbids paid tiers, OD-04 forbids standing
 budgets, adding level 5 is an OD-11 protected-core change, and Doc 25 §8 requires
@@ -419,7 +419,7 @@ A database backup is not a Lightning channel backup.
 
 | Phase | Work | Completion gate |
 |---|---|---|
-| P0 | Owner resolves §1.1; OD-53 signed; this spec frozen as Doc 33 | Verified signature; register/index updated by owner instruction |
+| P0 | Owner resolves §1.1; OD-55 signed; this spec frozen as Doc 35 | Verified signature; register/index updated by owner instruction |
 | P1 | Migration 047; provider candidates; secret fields; registries; hash-chained audit | `check_migrations.py` passes; no secret in DB/logs; audit trigger tested |
 | P2 | Read-only thirdweb adapter; network registry; no write path | Mocked read tests pass; no paid call; `status()` preserves no-network-call semantics |
 | P3 | Read-only Bitcoin Core / LND / CLN adapters over private network | Real endpoint tests with operator-supplied config; TLS verified; restricted credentials |
@@ -429,20 +429,20 @@ A database backup is not a Lightning channel backup.
 | P7 | Ledger reconciliation, P&L, health monitoring, alerts, emergency stop, recovery | Reconciliation and emergency-stop tests pass; backup procedures documented |
 | P8 | Legal/KYC/tax review, contract security review, failover drill, production gate | Owner-signed production approval with testnet/regtest evidence |
 
-### 11.1 Preparing the OD-53 signature — what can be done without authority
+### 11.1 Preparing the OD-55 signature — what can be done without authority
 
 The following is preparatory only. None of it confirms a decision or changes the
 repository's frozen files.
 
 | Step | Action | Authority granted |
 |---|---|---|
-| 1 | Owner reviews Doc 33 and the five companion decisions in `IAM_OD53_SIGNOFF_SHEET.md` | None |
-| 2 | Owner records accept/reject for OD-23-a, OD-04-a, OD-25-a, OD-53-a, OD-53-b | None — a proposal state |
+| 1 | Owner reviews Doc 35 and the five companion decisions in `IAM_OD55_SIGNOFF_SHEET.md` | None |
+| 2 | Owner records accept/reject for OD-23-a, OD-04-a, OD-25-a, OD-55-a, OD-55-b | None — a proposal state |
 | 3 | Operator supplies the Umbrel inspection results and scoped `IAM_API_TOKEN` | None |
-| 4 | `python scripts/creator_request_od53.py` creates a **pending** Creator request | None — request only |
+| 4 | `python scripts/creator_request_od55.py` creates a **pending** Creator request | None — request only |
 | 5 | Creator hardware signer signs `challenge_hash|approved` | Creator authority, outside IAM |
 | 6 | `CreatorApprovalService.decide()` verifies signer, expiry, nonce and ED25519 signature | Decision becomes effective |
-| 7 | Only then: register entry, architecture index navigation row, Doc 33 status → CONFIRMED | Effective |
+| 7 | Only then: register entry, architecture index navigation row, Doc 35 status → CONFIRMED | Effective |
 
 IAM never self-approves. A chat message, a checked Markdown box, an unsigned request
 and a prepared script are not authority. Until step 6 completes, P1 code, migrations
@@ -486,7 +486,7 @@ migration 054 has not been applied to a live database, and no production claim i
 | Wallet/address, SIWE, session/multisig | Implemented | `wallet_registry.py`, `wallet_ecosystem.py`, `keccak.py`, `secp256k1.py` |
 | Extended research modules | Implemented (prepare only) | `defi.py`, `x402.py`, `contracts.py`, `nft.py`, `dao.py`, `cross_chain.py`, `threat_intel.py`, `onchain_analysis.py`, `transaction_ops.py`, `accounting.py`, `web3_learning.py`, `business.py`, `non_evm.py`, `fiat.py` |
 | Audit, reconciliation, alerting, activation gate | Implemented | `audit.py`, `reconciliation.py`, `monitoring.py`, `activation.py` |
-| Real execution rails / paid tiers / mainnet value movement | Not implemented or gated | requires signed OD-53, operator executor and a separate production gate |
+| Real execution rails / paid tiers / mainnet value movement | Not implemented or gated | requires signed OD-55, operator executor and a separate production gate |
 | Live node connectivity | Not verified | requires Umbrel inspection results and restricted credentials |
 
 Verification: 54 Web3 tests pass; 893 full-suite tests passed at final verification;
@@ -504,10 +504,10 @@ Verification: 54 Web3 tests pass; 893 full-suite tests passed at final verificat
   replaceable providers), OD-18/19/42 (Creator channels), OD-22 (ARM64/x86-64),
   OD-23 (thirdweb free-only), OD-39 (resources), OD-48 (legal/IP governance) and
   OD-49 (browser/security boundaries).
-- Supersedes nothing. It is a proposal until OD-53 is signed; if the owner rejects it,
+- Supersedes nothing. It is a proposal until OD-55 is signed; if the owner rejects it,
   this document remains a historical proposal and no implementation proceeds.
 
-**Decision sign-off sheet:** `IAM_OD53_SIGNOFF_SHEET.md` — five companion decisions, exact
+**Decision sign-off sheet:** `IAM_OD55_SIGNOFF_SHEET.md` — five companion decisions, exact
 register text, checklist and request-preparation commands. It is a proposal, not authority.
 
 **Implementation plan:** `IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md`.
