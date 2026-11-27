@@ -12,9 +12,9 @@ model_list:
   # ---------------------------------------------------------------------------
   # NVIDIA NIM / build.nvidia.com (free endpoints, OpenAI-compatible)
   # ---------------------------------------------------------------------------
-  # OD-52 Phase C: one static bootstrap alias keeps the gateway usable before
-  # discovery runs. All other eligible free models are registered at runtime
-  # via /model/new by IAM's ProviderModelRegistrar, using this same single key.
+  # Static bootstrap aliases: these keep the gateway usable before discovery
+  # runs and are smoke-tested with /chat/completions. Additional eligible free
+  # models are registered at runtime with /model/new through LiteLLM's DB.
   # Never put a key literal in this file.
   - model_name: nvidia-nemotron-3.5-lightning
     litellm_params:
@@ -22,14 +22,32 @@ model_list:
       api_key: os.environ/NVIDIA_API_KEY
       api_base: https://integrate.api.nvidia.com/v1
 
+  # OD-51 / "use from .env": free chat models available on the configured
+  # NVIDIA key, registered under their exact catalogue IDs so the options
+  # panel's manual mode (which sends model_id verbatim) is directly callable.
+  # Runtime /model/new registration is disabled here (LiteLLM's Prisma CLI
+  # hangs on this host). No key literal appears in this file; paid models are
+  # excluded by the free-only policy.
+  - model_name: mistralai/mistral-large-4-1t-a52b
+    litellm_params:
+      model: openai/mistralai/mistral-large-4-1t-a52b
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+  - model_name: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+    litellm_params:
+      model: openai/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
   # ---------------------------------------------------------------------------
   # Alibaba Dashscope (Qwen)
   # ---------------------------------------------------------------------------
-  - model_name: qwen3.5-9b
-    litellm_params:
-      model: dashscope/qwen3.5-9b
-      api_key: os.environ/DASHSCOPE_API_KEY
-      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+  # Disabled until DASHSCOPE_API_KEY is configured:
+  # - model_name: qwen3.5-9b
+  #   litellm_params:
+  #     model: dashscope/qwen3.5-9b
+  #     api_key: os.environ/DASHSCOPE_API_KEY
+  #     api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
 
   # ---------------------------------------------------------------------------
   # Google Gemini — additional reasoning/research/coding provider (OD-38).
@@ -71,15 +89,16 @@ model_list:
   # ---------------------------------------------------------------------------
   # Fallback providers
   # ---------------------------------------------------------------------------
-  - model_name: gpt-4o-mini
-    litellm_params:
-      model: openai/gpt-4o-mini
-      api_key: os.environ/OPENAI_API_KEY
+  # Disabled until the corresponding provider key is configured:
+  # - model_name: gpt-4o-mini
+  #   litellm_params:
+  #     model: openai/gpt-4o-mini
+  #     api_key: os.environ/OPENAI_API_KEY
 
-  - model_name: claude-3-haiku
-    litellm_params:
-      model: anthropic/claude-3-haiku-20240307
-      api_key: os.environ/ANTHROPIC_API_KEY
+  # - model_name: claude-3-haiku
+  #   litellm_params:
+  #     model: anthropic/claude-3-haiku-20240307
+  #     api_key: os.environ/ANTHROPIC_API_KEY
 
 # ---------------------------------------------------------------------------
 # General settings — zero standing budget (OD-04)
@@ -88,7 +107,8 @@ general_settings:
   max_budget: 0  # paid inference disabled until owner authorization
   num_retries: 3
   retry_after: 2
-  # OD-52 Phase C: runtime-registered free models persist across restarts.
+  # OD-52: DATABASE_URL points LiteLLM at its own Prisma DB, so eligible free
+  # models discovered by IAM can be registered with /model/new and persist.
   # Provider credentials are encrypted by LiteLLM using LITELLM_SALT_KEY.
   store_model_in_db: true
 

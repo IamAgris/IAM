@@ -1,0 +1,10 @@
+{"prompt":"If f(x) = 2x + 1, what is f(5)? Reply with the number only.","expected":"11","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If f(x) = 3x - 2, what is f(4)? Reply with the number only.","expected":"10","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If f(x) = x^2 + 1, what is f(3)? Reply with the number only.","expected":"10","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If g(x) = 5x + 10, what is g(3)? Reply with the number only.","expected":"25","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If h(x) = 4x - 7, what is h(6)? Reply with the number only.","expected":"17","domain":"learning_efficiency","task_type":"function_application","difficulty":"medium"}
+{"prompt":"If p(x) = 2x^2 + 3, what is p(4)? Reply with the number only.","expected":"35","domain":"learning_efficiency","task_type":"function_application","difficulty":"medium"}
+{"prompt":"If q(x) = x/2 + 5, what is q(10)? Reply with the number only.","expected":"10","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If r(x) = 7x - 3, what is r(2)? Reply with the number only.","expected":"11","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If s(x) = 3x + 4, what is s(7)? Reply with the number only.","expected":"25","domain":"learning_efficiency","task_type":"function_application","difficulty":"easy"}
+{"prompt":"If t(x) = x^2 - 4, what is t(5)? Reply with the number only.","expected":"21","domain":"learning_efficiency","task_type":"function_application","difficulty":"medium"}

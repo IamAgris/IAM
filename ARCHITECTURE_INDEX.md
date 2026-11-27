@@ -10,8 +10,9 @@
 | Priority | Document | Status |
 |----------|----------|--------|
 | **1** | `IAM_FINAL_CONSOLIDATION.md` | **AUTHORITATIVE** — master gap analysis, all systems, completion levels, roadmap |
-| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 52 locked decisions (OD-01…OD-52; OD-47 owner-confirmed 27 Nov 2026, not a signed Creator decision) |
-| 2 | `canonical/IAM_DOC_01…04` | Frozen supplied documents 01–04 |
+| **1** | `IAM_OWNER_DECISIONS.md` | **AUTHORITATIVE** — 53 locked decisions (OD-01…OD-52 plus OD-56; OD-47 owner-confirmed 27 Nov 2026, not a signed Creator decision; OD-53/54/55 proposed; OD-57 paid proposal proposed) |
+| **1 — status** | `IAM_ARCHITECTURE_COMPLETION_AUDIT.md` | **DESIGNATED IMPLEMENTATION STATUS** — evidence-qualified gap record and navigation aid; does not amend any decision. Its dated gate numbers are snapshots, not current truth. |
+| 2 | `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md`, `canonical/IAM_DOC_02_INTELLIGENCE_EVOLUTION.md`, `canonical/IAM_DOC_03_INTERNET_AUTONOMY_ECOSYSTEM.md`, `canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md` | Frozen supplied documents 01–04 |
 | 2 | `IAM_DISTRIBUTED_ARCHITECTURE.md` | Document 05 |
 | 2 | `IAM_WHITEHAT_AND_WORKSPACE.md` | Document 06 |
 | 2 | `IAM_COMMUNICATION_ARCHITECTURE.md` | Document 07 |
@@ -52,14 +53,41 @@
 | 2 | `IAM_COMPATIBILITY_MATRIX.md` | ARM64/x86-64 component matrix (OD-22) |
 | 2 | `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md` | Technical specifications |
 
-**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority. Document 26 (`IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md`) is **CONFIRMED** under OD-45 (26 November 2026) and part of the frozen baseline; it establishes 38 modules in six divisions + 13 technical engines inside existing systems, does not create a sixteenth top-level system, and does not change any earlier decision. It supersedes its own v1.0 draft. Document 23-A (`IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md`, OD-46) is **CONFIRMED** and part of the frozen baseline; it supersedes only OD-38 §1/§3 on local-model selection. Owner-directed reopening 27 Nov 2026: **Qwen2.5-3B (`local-qwen-3b`) is the shared primary**; the 26 Nov Qwen2.5-Coder 3B choice is superseded and the coder remains an optional secondary. All other OD-38 provisions remain authoritative. Document 29 (`IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`) is **CONFIRMED** under OD-49 (27 November 2026) and part of the frozen baseline; it establishes BIWOS and TIPS as core browser capabilities organised into four logical components inside existing systems, does not create a new top-level system, and is **not** an implementation claim. OD-48 is **CONFIRMED** (27 November 2026) and part of the frozen baseline; proposed OD-47 is **CONFIRMED** by explicit owner instruction (27 November 2026) and part of the frozen baseline; this is owner confirmation, not a signed Creator decision, and it authorises no OD-03 protected-core action. Document 30 (`IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md`) is **CONFIRMED** under OD-50 (27 November 2026) and part of the frozen baseline; it freezes the Voice & Hearing System capability scope (60 capabilities, 12 components) without creating a new top-level system and is **not** an implementation claim. Document 31 (`IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md`) is **CONFIRMED** under OD-51 (27 November 2026) for clauses §4.1–§4.4 and the parallel-delegation starting bounds; §4.5 paid NVIDIA usage is **not authorised**. It creates no new top-level system. Document 32 (`IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md`) is **CONFIRMED** under OD-52 (27 November 2026) for the free-model provider architecture; paid endpoints are explicitly not authorised. The register now holds 52 decisions.
+### Derived implementation specifications (navigation tier — not new authority)
+
+These documents define implemented or in-development subsystems. They inherit authority
+from the rows above; none creates a new owner decision. Every entry must name its parent.
+They are not duplicate authorities.
+
+| Document | Authority parent | Current status |
+|---|---|---|
+| `IAM_ARTEX_INTEGRATION_SPEC.md` | Consolidation inventory | IMPLEMENTED, default-disabled |
+| `IAM_API_AUTH_SPEC.md` | OD-18/OD-19 | IMPLEMENTED |
+| `IAM_CREATOR_APPROVAL_SPEC.md` | OD-18/OD-19 | IMPLEMENTED |
+| `IAM_CREATOR_SIGNER_SETUP.md` | OD-18/OD-19 | OPERATIONAL |
+| `IAM_SKILL_FORGE_SPEC.md` | Skill subsystem, index map | IMPLEMENTED (phases 1–2) |
+| `IAM_SKILL_RUNTIME_SPEC.md` | Skill subsystem, index map | IMPLEMENTED, default-disabled |
+| `IAM_FRONTEND_IMPLEMENTATION.md` | Doc 04, index map | CURRENT SCOPE |
+| `IAM_BROWSER_AND_GEO_BACKEND.md` | Docs 29/16 | IMPLEMENTED (backend slice) |
+| `IAM_CI_AND_WORKERS.md` | `AGENTS.md` §3 | OPERATIONAL |
+| `IAM_DEPLOYMENT_CONFIG.md` | OD-07 | OPERATIONAL |
+| `IAM_PRIVACY_AND_SECRETS.md` | OD-05/07/09 | OPERATIONAL |
+| `IAM_FREE_SANDBOXES.md` | Docs 19/22 | OPERATIONAL |
+| `IAM_MEDIA_AND_RESEARCH.md` | API contracts, Doc 12 | IMPLEMENTATION STATUS |
+| `IAM_DATABASE_INTEGRATION_REPORT.md` | Database design | VERIFIED (dated run) |
+| `IAM_EXTERNAL_MODULES_REVIEW.md` | Index | VERIFIED (dated review) |
+| `IAM_AI_COMMUNICATION_COLLABORATION.md` | Self-declared Phase 10 → Doc 03/OD-34 | SPECIFIED |
+| `IAM_DIGITAL_IDENTITY_UNIVERSAL_WEB_INTERACTION.md` | Self-declared Phase 10 → Docs 11/29 | SPECIFIED |
+| `MODEL_PROVIDER_SETUP.md` | OD-38/46/52 | OPERATIONAL |
+
+**Note:** Documents 17–21 and 23, the OD-39/OD-40 specifications, the OD-41 parent architecture and implementation plan, and OD-33–OD-41 are **CONFIRMED** and part of the frozen baseline (owner confirmation 25 November 2026). They extend existing systems and do not alter any prior decision, including OD-08 (ARQ queue runtime). OD-38 locks the foundation-model set; OD-39 governs resources; OD-40 governs model development; OD-41 freezes autonomous distributed research requirements and implementation sequence. `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md` governs implementation language only — it does not change any decision or any mandated technology (Next.js/TypeScript, Python/FastAPI, ARQ). OD-42 (Creator channels), OD-43 (human behaviour and equality) and OD-44 (financial intelligence) are **CONFIRMED**; Docs 24–25 are part of the frozen baseline and do not alter any earlier decision, including OD-04/OD-25 financial authority. Document 26 (`IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md`) is **CONFIRMED** under OD-45 (26 November 2026) and part of the frozen baseline; it establishes 38 modules in six divisions + 13 technical engines inside existing systems, does not create a sixteenth top-level system, and does not change any earlier decision. It supersedes its own v1.0 draft. Document 23-A (`IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md`, OD-46) is **CONFIRMED** and part of the frozen baseline; it supersedes only OD-38 §1/§3 on local-model selection. Owner-directed reopening 27 Nov 2026: **Qwen2.5-3B (`local-qwen-3b`) is the shared primary**; the 26 Nov Qwen2.5-Coder 3B choice is superseded and the coder remains an optional secondary. All other OD-38 provisions remain authoritative. Document 29 (`IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`) is **CONFIRMED** under OD-49 (27 November 2026) and part of the frozen baseline; it establishes BIWOS and TIPS as core browser capabilities organised into four logical components inside existing systems, does not create a new top-level system, and is **not** an implementation claim. OD-48 is **CONFIRMED** (27 November 2026) and part of the frozen baseline; proposed OD-47 is **CONFIRMED** by explicit owner instruction (27 November 2026) and part of the frozen baseline; this is owner confirmation, not a signed Creator decision, and it authorises no OD-03 protected-core action. Document 30 (`IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md`) is **CONFIRMED** under OD-50 (27 November 2026) and part of the frozen baseline; it freezes the Voice & Hearing System capability scope (60 capabilities, 12 components) without creating a new top-level system and is **not** an implementation claim. Document 31 (`IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md`) is **CONFIRMED** under OD-51 (27 November 2026) for clauses §4.1–§4.4 and the parallel-delegation starting bounds; §4.5 paid NVIDIA usage is **not authorised**. It creates no new top-level system. Document 32 (`IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md`) is **CONFIRMED** under OD-52 (27 November 2026) for the free-model provider architecture; paid endpoints are explicitly not authorised. The register now holds 53 decisions (OD-01…OD-52 plus OD-56).
 
 ## Superseded documents (historical — do not use as source of truth)
 
 These were early derived drafts. They are retained for history but **superseded** by the documents above:
 
-- `MASTER_SPECIFICATION.md` → superseded by `IAM_FINAL_CONSOLIDATION.md` + `IAM_MASTER_ARCHITECTURE.md`
-- `IAM_MASTER_ARCHITECTURE.md` → superseded by `canonical/IAM_DOC_01` + `IAM_FINAL_CONSOLIDATION.md`
+- `MASTER_SPECIFICATION.md` → superseded by `IAM_FINAL_CONSOLIDATION.md` and `canonical/IAM_DOC_01…04` (not by a document that is itself superseded)
+- `IAM_MASTER_ARCHITECTURE.md` → superseded by `canonical/IAM_DOC_01` + `IAM_FINAL_CONSOLIDATION.md`; it is history, although many older specifications still name it as their parent (see the derived tier above)
 - `IAM_INTELLIGENCE_EVOLUTION_SPEC.md` → superseded by `canonical/IAM_DOC_02`
 - `IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md` → superseded by `canonical/IAM_DOC_03`
 - `IAM_UI_GLOBAL_ACCESS_SPEC.md` → superseded by `canonical/IAM_DOC_04`
@@ -82,11 +110,11 @@ authoritative. Generated details live in `tools/rkie/index/file-index.json`.
 | Path | Contents | Search first with |
 |------|----------|-------------------|
 | `canonical/` | Frozen source documents 01–04 | `-Mode docs` |
-| Root `IAM_*.md`, `MASTER_SPECIFICATION.md` | 61 specification / analysis documents; see authority table above | `-Mode docs` |
-| `backend/app/api/routes/` | ~75 FastAPI route modules (API surface) | `-Mode api` |
-| `backend/app/services/` | ~90 service modules, incl. `ai_research/`, `hbi/`, `skillforge/`, `skillruntime/`, `workspaces/` | `-Mode content -Scope backend` |
+| Root `IAM_*.md`, `MASTER_SPECIFICATION.md` | 77 `IAM_*.md` files at last count; see authority and derived tiers above rather than a hard total | `-Mode docs` |
+| `backend/app/api/routes/` | 94 route modules at last count (API surface) | `-Mode api` |
+| `backend/app/services/` | 105 modules directly, 295 recursively, incl. `ai_research/`, `hbi/`, `skillforge/`, `skillruntime/`, `workspaces/` | `-Mode content -Scope backend` |
 | `backend/app/models/` | SQLAlchemy ORM models | `-Mode db` |
-| `backend/app/db/migrations/` | 001–031 SQL + Alembic `0001_initial.py` | `-Mode db` |
+| `backend/app/db/migrations/` | 66 numbered SQL files (prefixes 001–069 with gaps) + Alembic `0001_initial.py` | `-Mode db` |
 | `backend/app/core/` | Config, database, auth policy, rate limit, secrets | `-Mode content -Scope backend/app/core` |
 | `backend/app/orchestration/`, `backend/app/workers/` | LangGraph autonomy loop, ARQ workers | `-Mode content -Scope backend` |
 | `backend/tests/`, `tests/` | Unit, integration and Level 1–5 acceptance suites | `-Mode tests` |
@@ -98,8 +126,11 @@ authoritative. Generated details live in `tools/rkie/index/file-index.json`.
 | `scripts/` | Docker build, model key, Creator signer helpers | `-Mode files -Scope scripts` |
 | `tools/rkie/` | Local search toolkit and generated file index | `-Mode files -Scope tools` |
 
-Dominant implementation language is Python (≈422 `.py` files); TypeScript/React
-is a thin frontend and SDK layer. Deployment is Docker Compose.
+Dominant implementation language is Python (628 `.py` files under `backend/` at
+last count; about 700 in the repo excluding generated/vendor directories);
+TypeScript/React is a thin frontend and SDK layer. Deployment is Docker Compose.
+Counts are navigation aids only — regenerate from the working tree before relying
+on them; generated details live in `tools/rkie/index/file-index.json`.
 
 ### Implementation → authority quick map
 
@@ -166,8 +197,8 @@ to the authority tables or the Owner Decision Register.
 | Path | Status |
 |------|--------|
 | `IAM_IICS_GAP_CLOSURE_ADDENDUM.md` | Proposed overlay: nine IICS gap closures mapped to existing systems. Navigation only; not part of the frozen baseline, no owner decision, no new top-level system or queue. IICS overlay implemented and wired in `backend/app/services/iics/` (egress, permissions, ledger, source registry, QA, Creator email, strategy, scheduler, media, threat intel, site policy, tool registry); §7 records status. |
-| `IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md` | Proposed **Document 35 / OD-55** — Web3 (thirdweb, free-only) and three independent self-hosted Bitcoin/Lightning node adapters. **Awaiting signed owner decision — not part of the frozen baseline.** Renumbered: OD-50/Doc 30 = Voice & Hearing, OD-53/Doc 33 = Financial Intelligence Amendment A, OD-54/Doc 34 = Live Information proposal. Plan: `IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md`; sign-off: `IAM_OD55_SIGNOFF_SHEET.md`; activation: `IAM_WEB3_ACTIVATION_RUNBOOK.md`. Research/prepare code exists behind default-off flags; no execution, paid tier or mainnet value movement is authorised by this navigation entry. |
+| `IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md` | Proposed **Document 35 / OD-55** — Web3 (thirdweb, free-only) and three independent self-hosted Bitcoin/Lightning node adapters. **Awaiting signed owner decision — not part of the frozen baseline.** Renumbered: OD-50/Doc 30 = Voice & Hearing, OD-53 = Web3/node proposal (Doc 33 remains unassigned), Financial Intelligence Amendment A = OD-56 / Doc 25, OD-54/Doc 34 = Live Information proposal. Plan: `IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md`; sign-off: `IAM_OD55_SIGNOFF_SHEET.md`; activation: `IAM_WEB3_ACTIVATION_RUNBOOK.md`. Research/prepare code exists behind default-off flags; no execution, paid tier or mainnet value movement is authorised by this navigation entry. |
 | `IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` | Proposed **Document 34 / OD-54** — always-on Web Access and Live Information Policy, deterministic triggers, conditional browser escalation, claim labels/corroboration, free-first provider management and bounded research cache/monitoring. **Awaiting signed owner decision — not part of the frozen baseline.** Numbered 34/OD-54 because Doc 32/OD-52 and Doc 33/OD-53 were assigned to other decisions. Addendum to Doc 29/OD-49; sign-off: `IAM_OD54_SIGNOFF_SHEET.md`; request: `scripts/creator_request_od54.py`. Behavioural reference implementation exists; no new top-level system, identity or model is claimed. |
-| `IAM_PAID_MODEL_ACCESS_DECISION.md` | Proposed **Document 36 / OD-56** — controlled paid hosted-model access decision request. **Paid access is NOT enabled**; OD-04 zero standing budget, OD-51 fail-closed usage and OD-52 free-only filtering remain in force. Requires owner confirmation plus a signed per-expenditure approval before any paid call. |
+| `IAM_PAID_MODEL_ACCESS_DECISION.md` | Proposed **Document 37 / OD-57** — controlled paid hosted-model access decision request (previously numbered Doc 36 / OD-56, which is locked to Financial Amendment A). **Awaiting signed owner decision — not part of the frozen baseline. Paid access is NOT enabled**; OD-04 zero standing budget, OD-51 fail-closed usage and OD-52 free-only filtering remain in force. Requires owner confirmation plus a signed per-expenditure approval before any paid call. |
 
 

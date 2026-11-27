@@ -1,0 +1,15 @@
+{"prompt":"The element with chemical symbol Au is which metal? Reply with the name only.","expected":"gold","domain":"knowledge_retention","task_type":"chemistry","difficulty":"easy"}
+{"prompt":"In what year did World War II end? Reply with the year only.","expected":"1945","domain":"knowledge_retention","task_type":"history","difficulty":"easy"}
+{"prompt":"Who wrote the play Romeo and Juliet? Reply with the name only.","expected":"William Shakespeare","domain":"knowledge_retention","task_type":"literature","difficulty":"easy"}
+{"prompt":"What is the capital of Japan? Reply with the city name only.","expected":"Tokyo","domain":"knowledge_retention","task_type":"geography","difficulty":"easy"}
+{"prompt":"The speed of light in a vacuum is approximately how many meters per second? Reply with the number only.","expected":"299792458","domain":"knowledge_retention","task_type":"physics","difficulty":"medium"}
+{"prompt":"Which planet is known as the Red Planet? Reply with the planet name only.","expected":"Mars","domain":"knowledge_retention","task_type":"astronomy","difficulty":"easy"}
+{"prompt":"What is the largest organ in the human body? Reply with the organ name only.","expected":"skin","domain":"knowledge_retention","task_type":"biology","difficulty":"easy"}
+{"prompt":"In which continent is Egypt located? Reply with the continent name only.","expected":"Africa","domain":"knowledge_retention","task_type":"geography","difficulty":"easy"}
+{"prompt":"The theory of relativity was developed by which physicist? Reply with the name only.","expected":"Albert Einstein","domain":"knowledge_retention","task_type":"physics","difficulty":"medium"}
+{"prompt":"What is the chemical formula for water? Reply with the formula only.","expected":"H2O","domain":"knowledge_retention","task_type":"chemistry","difficulty":"easy"}
+{"prompt":"Who painted the Mona Lisa? Reply with the name only.","expected":"Leonardo da Vinci","domain":"knowledge_retention","task_type":"art","difficulty":"easy"}
+{"prompt":"What is the smallest prime number? Reply with the number only.","expected":"2","domain":"knowledge_retention","task_type":"mathematics","difficulty":"easy"}
+{"prompt":"In which year did the Berlin Wall fall? Reply with the year only.","expected":"1989","domain":"knowledge_retention","task_type":"history","difficulty":"medium"}
+{"prompt":"What is the currency of the United Kingdom? Reply with the currency name only.","expected":"pound sterling","domain":"knowledge_retention","task_type":"economics","difficulty":"easy"}
+{"prompt":"Which gas do plants absorb from the atmosphere for photosynthesis? Reply with the gas name only.","expected":"carbon dioxide","domain":"knowledge_retention","task_type":"biology","difficulty":"easy"}

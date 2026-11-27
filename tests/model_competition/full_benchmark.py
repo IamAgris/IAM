@@ -12,17 +12,19 @@ Requires aura-ollama constrained to 4 vCPU / 8 GB (see docker-compose.benchmark.
 """
 
 import json
+import logging
 import statistics
 import subprocess
-import sys
 import threading
 import time
 import urllib.request
 from pathlib import Path
 
+from metrics import derive_metrics
 from smoke_coding import TASK, extract_code, master_key, run_candidate
 
 HERE = Path(__file__).resolve().parent
+logger = logging.getLogger(__name__)
 OUT = HERE / "results" / "constrained_results.jsonl"
 SUMMARY = HERE / "results" / "benchmark_summary.json"
 CONTAINER = "aura-ollama"
@@ -45,7 +47,7 @@ CGROUP_CMD = (
 
 def docker(*args: str, timeout: int = 60) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["docker", *args], capture_output=True, text=True, timeout=timeout
+        ["docker", *args], check=False, capture_output=True, text=True, timeout=timeout
     )
 
 
@@ -117,8 +119,8 @@ class Sampler:
                         "events": cg["events"],
                     }
                 )
-            except Exception:
-                pass
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+                logger.debug("cgroup sample skipped", exc_info=True)
             self._stop.wait(0.2)
 
     def start(self):
@@ -159,6 +161,7 @@ def call_stream(model: str, extra_body: dict | None = None) -> dict:
         "temperature": 0,
         "max_tokens": 512,
         "stream": True,
+        "stream_options": {"include_usage": True},
     }
     if extra_body:
         body["extra_body"] = extra_body
@@ -225,6 +228,7 @@ def run_trial(model: str, phase: str, order: int, extra_body: dict | None = None
         "ttft_ms": call["ttft_ms"],
         "latency_ms": call["latency_ms"],
         "usage": call["usage"],
+        **derive_metrics(call),
         "quota_cores": cg0["quota_cores"],
         "memory_max_bytes": cg0["memory_max"],
         "loaded_before": loaded_before,
@@ -254,6 +258,15 @@ def summarise(records: list):
         ttft = [r["ttft_ms"] for r in warm if r["ttft_ms"] is not None]
         cold_ttft = [r["ttft_ms"] for r in cold if r["ttft_ms"] is not None]
 
+        def metric_values(phase: str, key: str, model: str = model):
+            return [
+                r[key]
+                for r in records
+                if r["model"] == model
+                and r["phase"] == phase
+                and r.get(key) is not None
+            ]
+
         def stats(values):
             if not values:
                 return {}
@@ -269,12 +282,20 @@ def summarise(records: list):
             "cold": {
                 "latency_ms": stats([r["latency_ms"] for r in cold]),
                 "ttft_ms": stats(cold_ttft),
+                "prompt_tokens": stats(metric_values("cold", "prompt_tokens")),
+                "completion_tokens": stats(metric_values("cold", "completion_tokens")),
+                "decode_tps": stats(metric_values("cold", "decode_tps")),
+                "prefill_tps_observed": stats(metric_values("cold", "prefill_tps_observed")),
                 "peak_mem_mb": stats([r["peak_mem_mb"] for r in cold]),
                 "correct": sum(r["passed"] for r in cold),
             },
             "warm": {
                 "latency_ms": stats(lat),
                 "ttft_ms": stats(ttft),
+                "prompt_tokens": stats(metric_values("warm", "prompt_tokens")),
+                "completion_tokens": stats(metric_values("warm", "completion_tokens")),
+                "decode_tps": stats(metric_values("warm", "decode_tps")),
+                "prefill_tps_observed": stats(metric_values("warm", "prefill_tps_observed")),
                 "peak_mem_mb": stats([r["peak_mem_mb"] for r in warm]),
                 "avg_cpu_cores": stats(
                     [r["avg_cpu_cores"] for r in warm if r["avg_cpu_cores"] is not None]

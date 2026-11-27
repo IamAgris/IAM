@@ -3,7 +3,7 @@
 **Document:** 19 (addendum to Documents 01–18)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026)  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_DISTRIBUTED_ARCHITECTURE.md` §8 (OEDIE), `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (Doc 10), `IAM_HARDWARE_ADAPTATION.md` (Doc 08), `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (Doc 13), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-35 (free infrastructure node discovery and lifecycle)
 

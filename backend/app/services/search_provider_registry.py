@@ -9,6 +9,7 @@ under OD-04/OD-25 via ``SEARCH_ACTION``.
 from __future__ import annotations
 
 import asyncio
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,6 +27,7 @@ class ProviderState:
     calls: int = 0
     failures: int = 0
     last_error: str = ""
+    last_failure_at: float = 0.0
 
 
 class SearchProviderRegistry:
@@ -34,14 +36,22 @@ class SearchProviderRegistry:
     def __init__(self) -> None:
         self._states: Dict[str, ProviderState] = {
             name: ProviderState(name=name, free=name not in PAID_PROVIDERS)
-            for name in ("wikipedia", "duckduckgo", "searxng", "brave", "google", "tavily")
+            for name in (
+                "duckduckgo", "google-news-rss", "bing-news-rss",
+                "google-html", "brave-html", "searxng", "wikipedia",
+                "brave", "google", "tavily",
+            )
         }
 
     def reset(self) -> None:
         """Restore all providers to enabled/healthy (test and restart helper)."""
         self._states = {
             name: ProviderState(name=name, free=name not in PAID_PROVIDERS)
-            for name in ("wikipedia", "duckduckgo", "searxng", "brave", "google", "tavily")
+            for name in (
+                "duckduckgo", "google-news-rss", "bing-news-rss",
+                "google-html", "brave-html", "searxng", "wikipedia",
+                "brave", "google", "tavily",
+            )
         }
 
     def state(self, name: str) -> ProviderState:
@@ -49,7 +59,22 @@ class SearchProviderRegistry:
             name, ProviderState(name=name, free=name not in PAID_PROVIDERS)
         )
 
+    def _recover(self, state: ProviderState) -> None:
+        """Re-probe an unhealthy provider after a bounded cooldown."""
+        if (
+            not state.healthy
+            and state.last_failure_at
+            and time.monotonic() - state.last_failure_at
+            >= settings.iam_search_provider_recovery_s
+        ):
+            state.healthy = True
+            state.failures = 0
+            state.last_error = ""
+            state.last_failure_at = 0.0
+
     def chain(self, *, free_only: bool = True) -> List[str]:
+        for state in self._states.values():
+            self._recover(state)
         configured = [
             name.strip().lower()
             for name in settings.iam_search_provider_order.split(",")
@@ -77,6 +102,7 @@ class SearchProviderRegistry:
         else:
             state.failures += 1
             state.last_error = error[:200]
+            state.last_failure_at = time.monotonic()
             if state.failures >= 3:
                 state.healthy = False
 
@@ -92,6 +118,27 @@ class SearchProviderRegistry:
             }
             for name, state in self._states.items()
         }
+
+    async def call_concurrent(
+        self,
+        names: List[str],
+        query: str,
+        max_results: int,
+        timeout: float,
+        max_providers: int = 3,
+    ) -> List[Tuple[str, Dict[str, Any], Optional[str]]]:
+        """Run independent free providers in parallel and return all outcomes.
+
+        No provider is authoritative: every result and every failure is kept so
+        the evidence layer can combine sources and report unavailable engines.
+        """
+        selected = names[: max(1, max_providers)]
+
+        async def one(name: str) -> Tuple[str, Dict[str, Any], Optional[str]]:
+            payload, error = await self.call(name, query, max_results, timeout)
+            return name, payload, error
+
+        return list(await asyncio.gather(*(one(name) for name in selected)))
 
     async def call(
         self,

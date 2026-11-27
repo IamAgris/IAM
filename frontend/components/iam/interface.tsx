@@ -4,6 +4,7 @@ import React from "react";
 import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip, Copy, Wand2, Settings2, Trash2, Activity, Minus, ChevronDown } from "lucide-react";
 import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo, MapPlace } from "./presence-sphere";
 import { api } from "@/lib/api";
+import { listConversations, createConversation, getConversationMessages, createConversationMessage, Conversation, ConversationMessage } from "@/lib/api";
 
 type Mode = "focus" | "recall" | "create";
 
@@ -121,7 +122,7 @@ function FormattedResponse({ text }: { text: string }) {
   );
 }
 
-export function IAMInterface() {
+export function IAMInterface({ initialConversationId }: { initialConversationId?: string } = {}) {
   const [mode, setMode] = React.useState<Mode>("focus");
   const [state, setState] = React.useState<IAMState>("idle");
   const [status, setStatus] = React.useState("Online · ready when you are");
@@ -130,6 +131,7 @@ export function IAMInterface() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [nodes, setNodes] = React.useState<MemoryNode[]>([]);
   const [suggestions, setSuggestions] = React.useState<string[]>(MODE_CONFIG.focus.suggestions);
+  const [suggestionsOpen, setSuggestionsOpen] = React.useState(false);
   const [session, setSession] = React.useState<SessionData | null>(null);
   const [showHistory, setShowHistory] = React.useState(false);
   const [theme, setTheme] = React.useState<"dark" | "light">("light");
@@ -141,6 +143,12 @@ export function IAMInterface() {
   const [lastQuery, setLastQuery] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
   const [showOptions, setShowOptions] = React.useState(false);
+  // Conversation persistence
+  const [conversations, setConversations] = React.useState<Conversation[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = React.useState<string | null>(
+    initialConversationId ?? null
+  );
+  const [isLoadingConversations, setIsLoadingConversations] = React.useState(false);
   // OD-51 model control stays inside the sphere. Only free models are offered.
   type ModelMode = "manual" | "auto" | "hybrid";
   const [modelMode, setModelMode] = React.useState<ModelMode>("hybrid");
@@ -416,7 +424,6 @@ export function IAMInterface() {
         setMode(restoredMode);
         setStatus(MODE_CONFIG[restoredMode].status);
         await loadMessages(stored.session_token);
-        return;
       }
       try {
         const resp = await api.post("/api/v1/access/sessions", { mode: "focus" });
@@ -430,6 +437,7 @@ export function IAMInterface() {
       } catch {
         // Offline mode — interface still works visually
       }
+      await loadConversations();
     };
     init();
   }, []);
@@ -475,6 +483,52 @@ export function IAMInterface() {
       setMessages(items.filter((m: any) => m.role === "user" || m.role === "assistant"));
     } catch {}
   };
+
+  // Load all conversations for the sidebar/history
+  const loadConversations = React.useCallback(async () => {
+    try {
+      setIsLoadingConversations(true);
+      const data = await listConversations();
+      setConversations(Array.isArray(data) ? data : []);
+    } catch {
+      // Conversations list unavailable - continue with current conversation
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, []);
+
+  // Create a new conversation
+  const createNewConversation = React.useCallback(async () => {
+    try {
+      const created = await createConversation("New Conversation");
+      setSelectedConversationId(created.id);
+      setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
+      setMessages([]);
+    } catch {
+      // Fall back to local-only conversation
+    }
+  }, []);
+
+  // Load messages for a specific conversation
+  const loadConversationMessages = React.useCallback(async (conversationId: string) => {
+    try {
+      setSelectedConversationId(conversationId);
+      const items = await getConversationMessages(conversationId);
+      setMessages(
+        items
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content, created_at: m.created_at ?? undefined }))
+      );
+    } catch {
+      setMessages([]);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (initialConversationId) {
+      void loadConversationMessages(initialConversationId);
+    }
+  }, [initialConversationId, loadConversationMessages]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -595,10 +649,15 @@ export function IAMInterface() {
       }).catch(() => {});
     }
 
-    const historyMessages = [...messages, userMessage].slice(-12).map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // With a server-side conversation the backend supplies history; sending it
+    // again would duplicate context and stored turns. Without one, keep the
+    // client-side transcript so the first turn still has context.
+    const historyMessages = selectedConversationId
+      ? [{ role: "user" as const, content: query }]
+      : [...messages, userMessage].slice(-12).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
     // Real SSE streaming from the backend. Stay in "thinking" until the
     // backend emits start/first token so the sphere reflects reality.
@@ -609,6 +668,7 @@ export function IAMInterface() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          conversation_id: selectedConversationId || undefined,
           messages: [
             { role: "system", content: cfg.systemPrompt },
             ...historyMessages,
@@ -650,6 +710,9 @@ export function IAMInterface() {
           try { data = JSON.parse(dataStr); } catch { continue; }
 
           if (event === "start") {
+            if (data.conversation_id && !selectedConversationId) {
+              setSelectedConversationId(data.conversation_id);
+            }
             setState("speaking");
             setStatus("Speaking");
             if (data.mode && data.model) {
@@ -759,12 +822,14 @@ export function IAMInterface() {
         nodes={nodes}
         activity={activity}
         sourceNodes={sources}
+        selectedId={selectedSource?.id ?? null}
         connections={allConnections}
         clusters={clusters}
         graphConnections={graphConnections}
         freshness={freshness}
         mapMode={mapMode}
         mapPlaces={mapPlaces}
+        dark={theme === "dark"}
         onNodeHover={(node, x, y) => {
           const id = node?.id ?? null;
           if (id && id === lastHoverRef.current) return;
@@ -792,6 +857,39 @@ export function IAMInterface() {
         </div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="relative">
+            <button
+              type="button"
+              aria-expanded={suggestionsOpen}
+              aria-haspopup="menu"
+              onClick={() => setSuggestionsOpen((open) => !open)}
+              onKeyDown={(e) => { if (e.key === "Escape") setSuggestionsOpen(false); }}
+              className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-xl"
+              style={{ background: "var(--glass)", color: "var(--mute)" }}
+            >
+              Suggestions
+            </button>
+            {suggestionsOpen && (
+              <div
+                role="menu"
+                aria-label="Suggestions"
+                className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-[var(--line)] p-2 backdrop-blur-xl space-y-1"
+                style={{ background: "var(--glass)", color: "var(--mute)" }}
+              >
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    role="menuitem"
+                    disabled={generating}
+                    onClick={() => { setSuggestionsOpen(false); ask(s); }}
+                    className="block w-full rounded-lg px-2 py-1.5 text-left text-[12px] opacity-80 hover:opacity-100 disabled:opacity-40"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex gap-1.5 p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label="Mode">
             {(Object.keys(MODE_CONFIG) as Mode[]).map((m) => (
               <button
@@ -1069,79 +1167,6 @@ export function IAMInterface() {
             </div>
           )}
 
-          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Connections</p>
-          <div className="mb-3 max-h-24 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
-            style={{ background: "rgba(255,255,255,.035)" }}>
-            {providerKeys.length === 0 && <div className="opacity-50">No provider keys registered.</div>}
-            {providerKeys.map((key) => (
-              <div key={`${key.provider}-${key.key_alias}`} className="flex justify-between gap-2">
-                <span className="truncate">{key.provider} · {key.key_alias}</span>
-                <span className="opacity-60">{key.is_enabled ? key.health : "disabled"}</span>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model catalogue</p>
-          <div className="mb-3 max-h-28 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
-            style={{ background: "rgba(255,255,255,.035)" }}>
-            <div className="opacity-60">
-              {freeModels.length} free · ready {freeModels.filter((item) => item.endpoint_status === "available").length}
-              {' '}· last sync {freeModels[0]?.last_checked_at ? new Date(freeModels[0].last_checked_at).toLocaleTimeString() : "never"}
-            </div>
-            <div className="opacity-50">Research → auto · Coding → auto · Reviewer → independent · Local primary evaluates</div>
-            {freeModels.slice(0, 5).map((item) => (
-              <div key={`catalog-${item.model_id}`} className="flex justify-between gap-2">
-                <span className="truncate">{item.display_name || item.model_id}</span>
-                <span className="opacity-60">
-                  {item.endpoint_status}{item.context_length ? ` · ${Math.round(item.context_length / 1000)}k` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {delegations.length > 0 && (
-            <>
-              <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Delegated tasks</p>
-              <div className="mb-4 max-h-24 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
-                style={{ background: "rgba(255,255,255,.035)" }}>
-                {delegations.map((task, index) => (
-                  <div key={`${task.model}-${index}`} className="flex justify-between gap-2">
-                    <span className="truncate">{task.model}</span>
-                    <span className="opacity-60 capitalize">{task.status}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">
-            Knowledge graph
-          </p>
-          <div className="mb-3 max-h-32 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
-            style={{ background: "rgba(255,255,255,.035)" }}>
-            <div className="opacity-60">{clusters.length} clusters · {graphConnections.length + connections.length} links</div>
-            {clusters.slice(0, 6).map((c) => (
-              <button key={c.node_id} onClick={() => { void loadProvenance(c.name); setShowOptions(false); }}
-                aria-label={`Inspect ${c.name} provenance`}
-                className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
-                <span className="truncate">{c.name}</span>
-                <span className="opacity-50">{c.count}</span>
-              </button>
-            ))}
-            {sources.slice(0, 6).map((source) => (
-              <button key={source.id} onClick={() => { setSelectedSource(source); setShowOptions(false); }}
-                aria-label={`Inspect source ${source.domain || source.title}`}
-                className="w-full truncate text-left opacity-60 hover:opacity-100">
-                · {source.domain || source.title}
-              </button>
-            ))}
-            {graphConnections.slice(0, 4).map((link, i) => (
-              <div key={link.id || i} className="truncate opacity-60">
-                {link.from_cluster || link.from} → {link.to_cluster || link.to}
-              </div>
-            ))}
-          </div>
-
           <button onClick={() => { setMapMode(!mapMode); setShowOptions(false); }}
             className="w-full mb-3 rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:border-[var(--accent)] transition-colors">
             {mapMode ? "Return to intelligence sphere" : "Open geospatial view"}
@@ -1155,7 +1180,7 @@ export function IAMInterface() {
           ) : null}
 
           <button
-            onClick={() => { setMessages([]); setResponse(""); setLastQuery(""); setShowOptions(false); }}
+            onClick={() => { setMessages([]); setSelectedConversationId(null); setResponse(""); setLastQuery(""); setShowOptions(false); }}
             className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center gap-2 justify-center hover:border-[var(--accent)] transition-colors"
           >
             <Trash2 size={13} /> Clear this conversation view

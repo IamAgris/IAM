@@ -3,7 +3,7 @@
 **Document:** 10 (addendum to Documents 01–09)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — formal part of IAM architecture, not an optional plugin  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_DISTRIBUTED_ARCHITECTURE.md`, `IAM_HARDWARE_ADAPTATION.md`, `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decisions:** OD-11 (protected core), OD-12 (hybrid P2P), OD-13 (restricted reporting), OD-22 (hardware adaptation), OD-26 (creator-controlled core + 1% contribution)
 

@@ -1,5 +1,7 @@
 # IAM — Master Technical Specification
 
+> **HISTORICAL — SUPERSEDED.** Retained for development history only. Current authority: `ARCHITECTURE_INDEX.md`, `IAM_FINAL_CONSOLIDATION.md`, `IAM_OWNER_DECISIONS.md` and `canonical/IAM_DOC_01…04`.
+
 **Project Name:** IAM  
 **Codename:** Project AURA (Autonomous Unified Reasoning Architecture)  
 **Status:** SUPERSEDED — historical draft. See `ARCHITECTURE_INDEX.md` for the authoritative documents.  

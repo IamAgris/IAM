@@ -34,7 +34,7 @@ This addendum specifies only those six gaps.
 | OD-04 / OD-25 | Paid search providers require signed Creator authorisation; fail-closed. |
 | OD-27 (UWAIE) | Arbitrary user-supplied URLs stay in scope; permission checks unchanged. |
 | OD-30 (global research) | Provenance, date and correction rules inherited. |
-| **OD-46** | The shared primary is **Qwen2.5-Coder 3B** (`qwen2.5-coder:3b`). All references to "Qwen2.5:3B" in proposals are informal; no reopening of OD-46 is requested. |
+| **OD-46** | The shared primary is **Qwen2.5-3B** (`qwen2.5:3b`, alias `local-qwen-3b`), as reopened by the owner on 27 Nov 2026. The 26 Nov Coder choice is superseded; `qwen2.5-coder:3b` is an optional secondary. |
 | OD-49 (Doc 29) | This addendum adds behaviour on top of BIWOS/Web Research Engine; it does not replace them. |
 | OD-51 (Doc 31) | Model-provider isolation and accounting inherited; search-provider management is the missing parallel layer. |
 | OD-08 (ARQ) | Any background/scheduled retrieval uses ARQ; no new queue. |
@@ -143,11 +143,11 @@ and `collect_live_evidence` in `backend/app/services/live_information_policy.py`
 ## 5. Engine boundary (who does what)
 
 ```
-Qwen2.5-Coder 3B (OD-46 shared primary)  → decides what information is needed
+Qwen2.5-3B (OD-46 shared primary)        → decides what information is needed
 Web Intelligence Engine                  → classifies intent, plans, discovers sources
 Existing search / browser services       → perform discovery, retrieval, extraction
 Verification services                    → dates, credibility, corroboration, contradiction
-Qwen2.5-Coder 3B                         → analyses retrieved evidence
+Qwen2.5-3B                               → analyses retrieved evidence
 IAM                                      → formulates and delivers the final answer
 ```
 

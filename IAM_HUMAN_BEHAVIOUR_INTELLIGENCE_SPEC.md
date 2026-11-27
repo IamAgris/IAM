@@ -4,7 +4,7 @@
 **Version:** 2.0 · 26 November 2026  
 **Status:** **FROZEN — CONFIRMED** part of the IAM architecture under **OD-45** (owner confirmation 26 November 2026). Phase 0 gate (§13) completed before implementation. Supersedes its own v1.0 draft; does not alter any earlier decision.  
 **Supersedes:** the v1.0 draft of this same document (all content absorbed here).  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`, `IAM_FINAL_CONSOLIDATION.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md`, `IAM_FINAL_CONSOLIDATION.md` (the early master draft is superseded)  
 **Related:** Doc 14 (`IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md`), Doc 17 (`IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md`), Doc 24 (`IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`), Doc 23 (OD-38), `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` (OD-40), `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` (OD-41), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_API_CONTRACTS.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-45 (HBI as a permanent, governed intelligence domain — confirmed 26 November 2026)  
 **Scope:** Individual psychology and behaviour; cognition, motivation and decisions; communication and relationships; collective, cultural and societal behaviour; historical human behaviour, evolution and civilisations; prediction, scientific learning and psychological protection.  

@@ -2,7 +2,7 @@
 
 **Version:** 1.0 · 24 November 2026  
 **Status:** Provisional — pending owner decisions OD-01…OD-10  
-**Parent:** `IAM_ARCHITECTURE_GAP_ANALYSIS.md` (resolves D-01…D-10, T-01, T-12)  
+**Parent:** `IAM_FINAL_CONSOLIDATION.md` (resolves D-01…D-10, T-01, T-12; the original gap analysis is superseded)  
 **Source of truth:** This document + SQLAlchemy ORM models in `backend/app/models/`. Generated migrations are the only path to schema changes.
 
 ---

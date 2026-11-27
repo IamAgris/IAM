@@ -151,3 +151,45 @@ This is a **relative** choice, not approval as primary brain: none of the three 
 - `results/provider_readiness.json`, `results/hardware_KOJOPAPO.json`
 - `../docker-compose.benchmark.yml` — benchmark-only 4 vCPU / 8 GB override
 - `../docker-compose.ram-profile.yml` — OD-39 production RAM profile (6 GB cap, one model, short keep-alive)
+
+## 8. Warm throughput baseline for the OD-46 primary (28 November 2026)
+
+Scope: **warm-only, no container restart**, five trials of `local-qwen-3b` through `full_benchmark.py`. This is a baseline for future engine comparison, not a repeat of the historical three-model competition in §§2–5.
+
+Conditions: `aura-ollama` at the Compose default **2 vCPU / 4 GB** (not the 4 vCPU / 8 GB `docker-compose.benchmark.yml` override); one resident model confirmed before and after every trial; no OOM kills. `usage` token counts were captured by sending `stream_options: {"include_usage": true}` through LiteLLM — without that flag the SSE stream carries no usage object.
+
+| Metric (5 trials) | Median | Min | Max | Std dev |
+|---|---:|---:|---:|---:|
+| Time to first token | 3,967.1 ms | 3,392.1 ms | 4,255.5 ms | 359.9 ms |
+| Total latency | 25,076.7 ms | 21,879.6 ms | 26,672.8 ms | 2,100.0 ms |
+| Prompt tokens | 98 | 98 | 98 | 0.0 |
+| Completion tokens | 45 | 45 | 45 | 0.0 |
+| Decode throughput | 2.1 tok/s | 2.0 tok/s | 2.5 tok/s | 0.2 |
+| Observed prefill rate | 24.7 tok/s | 23.0 tok/s | 28.9 tok/s | 2.4 |
+| Peak container RAM | 2,991.4 MB | 2,753.8 MB | 3,044.5 MB | 120.6 MB |
+| Peak CPU cores | 2.3 | 2.2 | 2.4 | 0.0 |
+
+Correctness guard: **0/5** passed the unchanged `normalise_path` assertion. This matches the known model coding error documented in §4 and is not a regression.
+
+Interpretation limits: decode throughput is measured on a 2 vCPU / 4 GB container, so it is **not comparable** with the §§2–5 figures (4 vCPU / 8 GB) or with upstream EPYC 7642 assembly-engine claims. "Observed prefill rate" divides prompt tokens by TTFT, which includes gateway, queueing and network time; use it only for relative comparison. Cold-start performance was **not** measured — the cold phase deliberately restarts `aura-ollama` and was not authorised.
+
+Evidence: `results/warm_baseline_2026-11-28.json` (summary and container limits) and the five appended records in `results/constrained_results.jsonl`.
+
+## 9. Cold baseline for the OD-46 primary (28 November 2026)
+
+Scope: two cold trials of `local-qwen-3b`, with `aura-ollama` restarted before each trial by `full_benchmark.restart_ollama()`. Conditions match §8 (Compose default 2 vCPU / 4 GB, same prompt, same `usage` capture). The container was confirmed healthy after the run. Model was absent before each trial and present after each; no OOM kills.
+
+| Metric (2 trials) | Median | Min | Max |
+|---|---:|---:|---:|
+| Time to first token | 20,530.3 ms | 18,056.4 ms | 23,004.3 ms |
+| Total latency | 36,635.9 ms | 34,548.4 ms | 38,723.5 ms |
+| Prompt tokens | 98 | 98 | 98 |
+| Completion tokens | 39 | 39 | 39 |
+| Decode throughput | 2.5 tok/s | 2.4 tok/s | 2.5 tok/s |
+| Observed prefill rate | 4.8 tok/s | 4.3 tok/s | 5.4 tok/s |
+| Peak container RAM | 3,128.1 MB | 2,887.8 MB | 3,368.3 MB |
+| Peak CPU cores | 2.2 | 2.2 | 2.3 |
+
+Cold TTFT is ~16.6 s above the §8 warm median, which includes container restart plus model load. Only two cold trials were run (the harness's standard cold-round count), so variability is wider than the five-trial warm baseline. Correctness guard remains 0/5-equivalent (0/2 here), consistent with §4. Same comparability limits as §8: not comparable with the historical 4 vCPU / 8 GB results or upstream EPYC claims; observed prefill includes gateway, queueing and network time.
+
+Evidence: `results/cold_baseline_2026-11-28.json` and the two appended cold records in `results/constrained_results.jsonl`. Together §8 and §9 complete the baseline for the current Ollama Qwen2.5-3B primary; future engine candidates should be measured against these figures under the same container limits.

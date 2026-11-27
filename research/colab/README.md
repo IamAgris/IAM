@@ -1,7 +1,7 @@
 # IAM free-GPU research notebook
 
 **Notebook:** `IAM_vLLM_Qwen_Coder_3B.ipynb`  
-**Purpose:** WP9 / acceptance A8 — vLLM serving experiment for `Qwen2.5-Coder-3B` using a temporary free GPU.  
+**Purpose:** WP9 / acceptance A8 — vLLM serving experiment using a temporary free GPU. The notebook historically serves `Qwen2.5-Coder-3B-Instruct`; the current shared primary under OD-46 is `qwen2.5:3b`.  
 **Decision: OD-41** — free platforms are temporary research workers, not IAM's permanent home.
 
 ## Readiness observed on this machine (25 November 2026)

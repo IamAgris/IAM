@@ -1,11 +1,11 @@
 # IAM — Paid Hosted Model Access Decision Request
 
-**Document:** 36 (companion to Documents 23-A / 31 / 32)  
+**Document:** 37 (companion to Documents 23-A / 31 / 32; previously numbered 36)  
 **Version:** 1.0 · 27 November 2026  
 **Status:** **PROPOSED — awaiting owner decision. Paid access is NOT enabled.**  
 **Parent:** `ARCHITECTURE_INDEX.md`, `IAM_OWNER_DECISIONS.md`  
 **Related:** `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (Doc 23-A / OD-46), `IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md` (Doc 31 / OD-51), `IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md` (Doc 32 / OD-52)  
-**Proposed decision:** **OD-56** — controlled paid hosted-model access. **Not confirmed.** (OD-53/54/55 are assigned to other proposals.)
+**Proposed decision:** **OD-57** — controlled paid hosted-model access. **Not confirmed.** OD-56 is locked to Financial Intelligence Amendment A; OD-53/54/55 are assigned to other proposals.  
 
 ---
 
@@ -49,5 +49,5 @@ Nothing here changes IAM's identity, shared local primary, LiteLLM gateway, sing
 | Item | Decision |
 |------|----------|
 | Paid NVIDIA access | ❌ **NOT AUTHORISED** — current standing position |
-| OD-56 | ⏳ **PROPOSED** — owner confirmation required |
-| Any paid API call | Blocked until OD-56 confirmed *and* a signed per-expenditure approval exists |
+| OD-57 | ⏳ **PROPOSED** — owner confirmation required |
+| Any paid API call | Blocked until OD-57 confirmed *and* a signed per-expenditure approval exists |

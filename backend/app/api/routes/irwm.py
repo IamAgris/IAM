@@ -61,6 +61,7 @@ async def force_release(payload: ReleaseRequest) -> Any:
     async with irwm._lock:
         if irwm.resident and irwm.resident.model == payload.model:
             irwm.resident.in_flight = 0
+            irwm.resident.leases.clear()
             irwm.resident.in_flight_since = None
             irwm.resident.last_used = __import__("time").monotonic()
             irwm.history.append({"decision": "force_released", "model": payload.model})

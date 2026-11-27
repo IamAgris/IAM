@@ -14,11 +14,17 @@ import time
 from pathlib import Path
 
 from full_benchmark import MODELS, Sampler, call_stream, cgroup_snapshot
+from metrics import derive_metrics
 from smoke_coding import extract_code, run_candidate
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "results" / "concurrent_results.jsonl"
 N = 3
+
+
+def median_or_none(values: list) -> float | None:
+    present = [v for v in values if v is not None]
+    return round(statistics.median(present), 1) if present else None
 
 
 def check_model(model: str) -> dict:
@@ -33,6 +39,7 @@ def check_model(model: str) -> dict:
         results[idx] = {
             "ttft_ms": call["ttft_ms"],
             "latency_ms": call["latency_ms"],
+            **derive_metrics(call),
             "passed": passed,
             "detail": detail[:200],
         }
@@ -57,6 +64,14 @@ def check_model(model: str) -> dict:
         "median_latency_ms": round(statistics.median(latencies), 1) if latencies else None,
         "max_latency_ms": round(max(latencies), 1) if latencies else None,
         "ttft_ms": [r["ttft_ms"] for r in results if r],
+        "prompt_tokens": [r["prompt_tokens"] for r in results if r],
+        "completion_tokens": [r["completion_tokens"] for r in results if r],
+        "decode_tps": [r["decode_tps"] for r in results if r],
+        "prefill_tps_observed": [r["prefill_tps_observed"] for r in results if r],
+        "median_decode_tps": median_or_none([r["decode_tps"] for r in results if r]),
+        "median_prefill_tps_observed": median_or_none(
+            [r["prefill_tps_observed"] for r in results if r]
+        ),
         "peak_mem_mb": round(cg1["memory_current"] / 2**20, 1),
         "peak_swap_mb": round(cg1["swap_current"] / 2**20, 1),
         "throttled_delta": cg1["throttled"] - cg0["throttled"],

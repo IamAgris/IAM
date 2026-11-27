@@ -3,7 +3,7 @@
 **Document:** 05 (addendum to Documents 01–04)  
 **Version:** 1.0 · 24 November 2026  
 **Status:** FROZEN — formal part of IAM architecture, not an optional plugin  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Confirmed decisions:** OD-11 (protected core), OD-12 (hybrid P2P), OD-13 (restricted reporting), OD-14 (IAM Aegis), OD-15 (OEDIE)  
 **Related:** `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (OD-26 — dynamic node roles, 1% voluntary contribution, standalone mode)
 

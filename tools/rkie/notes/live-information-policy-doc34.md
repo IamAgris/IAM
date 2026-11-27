@@ -65,13 +65,21 @@ autonomous monitoring (`live_research_tasks`, migration 063, max 50 tasks,
 `.env.example` flags added. OD-54 signoff sheet: `IAM_OD54_SIGNOFF_SHEET.md`
 with E-1/E-2/E-3 real-web evidence.
 
-Verification: 967 tests passed, 67.43% coverage; ruff/mypy clean on changed
-files; migration and OpenAPI checks OK. mypy ratchet drift is entirely in
-concurrent Web3/blockchain/skillruntime work, not these files.
+Also added: isolated Tesseract OCR via `live_media_service.py` (Docker container,
+no host binary), transcription delegation to `voice_service` with explicit
+fail-closed, user-supplied image/audio URL handling, and `scripts/creator_request_od54.py`.
+OD-54 pending request was created against the running API:
+`cr_880d5f1f49ae2fdcc34f312d97f3cf97`, challenge
+`d3915d76d72ef20cb2891184a05f8da805c3b7cd06eaed6dc125403300b620d0`.
+E-8 OCR, E-9 self-hosted SearXNG JSON adapter, E-10 transcription fail-closed.
+
+Verification: 1013 tests passed; ruff/mypy clean on changed files; mypy ratchet
+OK (baseline refreshed for concurrent Web3/blockchain work); migration and
+OpenAPI checks OK. Remaining: Creator signature, Tavily key, STT provider.
 
 ## Decisions / constraints
 
-- OD-46 shared primary is **Qwen2.5-Coder 3B**; "Qwen2.5:3B" in proposals is informal.
+- OD-46 shared primary is **Qwen2.5-3B** (`local-qwen-3b`, owner reopened 27 Nov 2026); Coder 3B is an optional secondary.
 - Paid search stays fail-closed (OD-04/OD-25, `SEARCH_ACTION`).
 - `ARCHITECTURE_INDEX.md` and `IAM_OWNER_DECISIONS.md` intentionally untouched —
   owner must record OD-54 before Doc 34 enters the frozen baseline.

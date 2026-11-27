@@ -2,7 +2,7 @@
 
 - Question: Which repo-wide verification gates were red, and which files owned the failures, before the agreed pause?
 - Search modes / queries used: direct mypy run, `tools/quality/check_mypy_ratchet.py`, `tools/api/print_openapi.py --check`, `tools/api/check_migrations.py`, pytest from both repo root and `backend/`, `git status --short`.
-- Authoritative spec and decisions: `AGENTS.md` §3 step 5 (verification gates), `ARCHITECTURE_INDEX.md`, Doc 26 (OD-45 confirmed), Doc 27 (OD-47 proposed, Creator approval pending).
+- Authoritative spec and decisions: `AGENTS.md` §3 step 5 (verification gates), `ARCHITECTURE_INDEX.md`, Doc 26 (OD-45 confirmed), Doc 27 (OD-47 owner-confirmed 27 Nov 2026, not a signed Creator decision).
 - Key findings at snapshot time:
   - OpenAPI drift was from newly added untracked `backend/app/api/routes/iplci.py` paths. Snapshot regenerated with `print_openapi.py --update`; now 630 paths / 394 schemas, check OK.
   - `check_migrations.py` drift: `020_provider_registry_gates_reviewed.sql` present on disk but absent from `MIGRATION_ORDER.json`.

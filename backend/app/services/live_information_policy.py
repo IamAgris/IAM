@@ -321,7 +321,9 @@ def _normalize(item: Dict[str, Any]) -> Optional[Dict[str, str]]:
             item.get("description") or item.get("snippet") or item.get("content") or ""
         ).strip()[:400],
         "published": str(item.get("age") or item.get("published") or "").strip()[:80],
-        "source": _host(url),
+        # RSS providers carry the publisher domain explicitly; prefer it over
+        # the aggregator host so provenance stays accurate.
+        "source": str(item.get("source") or _host(url))[:120],
     }
 
 
@@ -496,13 +498,17 @@ async def collect_live_evidence(
 
     Never writes memory or knowledge, never calls a paid search provider and
     always fails soft with an explicit limitation note for the model to report.
+    Fresh retrievals may publish fingerprint-only public activity signals; no
+    query text or visitor-pasted link enters that stream.
     """
     trigger = trigger or SearchTriggerClassifier().classify(query)
     if db is not None:
         from app.services.live_evidence_cache import get_cached
 
         cached: Optional[LiveEvidence] = await get_cached(db, query)
-        if cached:
+        # A failed/empty retrieval must never be served as a cache hit: it
+        # would keep a transient provider outage alive for the whole TTL.
+        if cached and cached.results:
             return cached
     max_results = max_results or settings.iam_live_info_max_results
     timeout = timeout if timeout is not None else settings.iam_live_info_timeout_seconds
@@ -637,22 +643,47 @@ async def collect_live_evidence(
     payload: Dict[str, Any] = {}
     provider_attempted = False
     provider_name = ""
+    fanout_suitable = False
     if not (merged and (preferred_found() if preferred else True)):
         provider_attempted = True
         from app.services.search_provider_registry import search_provider_registry
 
         chain = search_provider_registry.chain(free_only=True)
         if chain:
-            provider_name = chain[0]
-            payload, search_error = await search_provider_registry.call(
-                provider_name, query, max_results, timeout
+            # Independent engines in parallel; keep every result and failure.
+            fanout = await search_provider_registry.call_concurrent(
+                chain,
+                query,
+                max_results,
+                timeout,
+                max_providers=settings.iam_search_concurrent_providers,
             )
-            if search_error:
-                errors.append(search_error)
+            for name, provider_payload, search_error in fanout:
+                if search_error:
+                    errors.append(search_error)
+                if not provider_payload:
+                    continue
+                if not payload:
+                    payload = provider_payload
+                if provider_payload.get("error"):
+                    errors.append(str(provider_payload["error"])[:200])
+                if _is_suitable_live_evidence(provider_payload, trigger):
+                    for item in (provider_payload.get("results") or [])[:max_results]:
+                        normalized = _normalize(item)
+                        if normalized:
+                            merged.append(normalized)
+                            fanout_suitable = True
+                    if fanout_suitable:
+                        providers.append(
+                            str(provider_payload.get("provider") or name) + "-http"
+                        )
+            provider_name = str(payload.get("provider") or chain[0])
         else:
             errors.append("no free search providers available")
 
-    suitable = bool(payload) and _is_suitable_live_evidence(payload, trigger)
+    suitable = (
+        bool(payload) and _is_suitable_live_evidence(payload, trigger) and not fanout_suitable
+    )
     if suitable:
         for item in (payload.get("results") or [])[:max_results]:
             normalized = _normalize(item)
@@ -661,7 +692,7 @@ async def collect_live_evidence(
         providers.append(str(payload.get("provider") or "search"))
         if payload.get("error"):
             errors.append(str(payload["error"])[:200])
-    elif provider_attempted:
+    elif provider_attempted and not fanout_suitable:
         provider_name = str(payload.get("provider") or "unknown")
         if not payload:
             reason = "configured search provider returned no usable response"
@@ -767,9 +798,13 @@ async def collect_live_evidence(
         errors=errors,
         analysis=analysis,
     )
-    if db is not None:
+    if db is not None and evidence.results:
         from app.services.live_evidence_cache import annotate_reputation, store_cached
+        from app.services.public_activity_signals import emit_public_search_activity
 
         evidence.results = await annotate_reputation(db, evidence.results)
         await store_cached(db, evidence, trigger)
+        # Public sphere sees fingerprint-only source dots for fresh retrievals.
+        # No query text, raw URL or visitor-pasted link is ever published.
+        await emit_public_search_activity(db, evidence.results)
     return evidence

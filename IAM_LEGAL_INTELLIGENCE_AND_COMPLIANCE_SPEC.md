@@ -3,7 +3,7 @@
 **Document:** 15 (addendum to Documents 01–14)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — requirements scope closed; legal validation remains  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md`, `IAM_CREATOR_APPROVAL_SPEC.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-31 (autonomous legal intelligence and compliance)
 

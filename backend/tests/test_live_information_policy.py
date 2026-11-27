@@ -122,7 +122,10 @@ class AutoSearchTests(unittest.IsolatedAsyncioTestCase):
             new=AsyncMock(return_value=payload),
         ) as mocked:
             evidence = await policy.collect_live_evidence("latest news")
-        mocked.assert_awaited_once()
+        # Independent free engines are queried concurrently now; all outcomes
+        # are merged, so more than one adapter call is expected.
+        self.assertGreaterEqual(mocked.await_count, 1)
+        self.assertLessEqual(mocked.await_count, settings.iam_search_concurrent_providers)
         self.assertEqual(len(evidence.results), 1)
         self.assertEqual(evidence.results[0]["source"], "sabcnews.com")
         self.assertEqual(evidence.results[0]["published"], "2h")
@@ -165,7 +168,7 @@ class AutoSearchTests(unittest.IsolatedAsyncioTestCase):
                 models, "collect_live_evidence", new=AsyncMock(return_value=evidence)
             ) as mocked,
         ):
-            result, delegation, action = await models._prepare_messages(
+            result, delegation, action, conversation_id = await models._prepare_messages(
                 request, SimpleNamespace(), status
             )
         mocked.assert_awaited_once()

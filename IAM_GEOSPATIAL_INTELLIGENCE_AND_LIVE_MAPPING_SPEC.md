@@ -3,7 +3,7 @@
 **Document:** 16 (addendum to Documents 01–15)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — requirements scope closed; provider/free-tier verification at implementation  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md`, `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-32 (geospatial intelligence and live mapping)
 

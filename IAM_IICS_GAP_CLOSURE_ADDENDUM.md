@@ -11,10 +11,10 @@
 This addendum is a *pending proposal*. It becomes authority only after a signed owner decision. It does **not**:
 
 - create a new top-level system (`IAM_FINAL_CONSOLIDATION.md` §1/§8/§9; OD-41, OD-45, OD-48, OD-49, OD-50, OD-51);
-- invent new owner decisions — OD-47 and OD-52 remain **proposed**, and this addendum does not pre-approve either;
+- invent new owner decisions — OD-47 is **owner-confirmed** (27 Nov 2026, not a signed Creator decision) and OD-52 is **confirmed** (27 Nov 2026); this addendum pre-approves nothing new;
 - claim implementation — it states requirements and acceptance criteria only;
 - introduce a queue technology — all background work uses the OD-08 ARQ runtime and the existing Doc 29 §7 `iam.browser.*` surface;
-- change the local-first rule — Qwen2.5-Coder 3B remains the primary intelligence (OD-46); hosted providers stay optional and subordinate (OD-38, OD-51); internet access must work with every hosted provider disabled (`canonical/IAM_DOC_03` §2);
+- change the local-first rule — Qwen2.5-3B (`local-qwen-3b`) is the primary intelligence (OD-46, owner reopened 27 Nov 2026); the Coder 3B model is an optional secondary; hosted providers stay optional and subordinate (OD-38, OD-51); internet access must work with every hosted provider disabled (`canonical/IAM_DOC_03` §2);
 - require Creator approval for ordinary free use. Free, lawful public access is **autonomous**; permissibility is decided by the existing legal module (OD-31 / OD-48, `POST /gate/check`), not by asking the Creator each time. Approval is reserved for consequential actions — see §2.0.
 
 All closures are organised as modules inside existing systems: system F (Internet and Digital Interaction), system D (Research/Knowledge), system E (Learning/Self-Development), system H (Memory/Workspace), system P (Evaluation) and system 13 (traffic/queues). The audit's "full" areas — search & web browsing (Doc 29 §3.1–3.11) and task orchestration (Doc 29 §3.8/§7.3) — need no new requirement and are inherited unchanged.
@@ -28,7 +28,7 @@ All closures are organised as modules inside existing systems: system F (Interne
 | Connectivity & networking | No general egress control, DNS rebinding defence, provider failover policy | `EgressGateway` | Doc 29 §3.12/§5.2; provisional security policy §2 | No new OD; scope of VPN/link layer needs owner ruling |
 | Internet research intelligence | No strategy taxonomy, calibrated confidence, TTL/reputation, claim labels, metrics | `ResearchStrategy` + `SourceReputation` | Doc 03 §5; Doc 14 §6/§9; Doc 29 §3.4 | No new OD; OD-52 for trigger/provider clauses remains pending |
 | Autonomous online operations | No cross-service action ledger, scheduled research executor, global budget | `OnlineActionLedger` + `ResearchScheduler` | Doc 03 §11–12/§16; OD-27; Doc 29 §3.5/§3.8; OD-37 | No new OD |
-| Online learning & knowledge | Research↔training separation not frozen | `PipelineSeparationGate` | Doc 03 §15; OD-40/OD-41; proposed OD-47 §3–§6 | Aligns with OD-47; requires signed OD-47 to become authority |
+| Online learning & knowledge | Research↔training separation not frozen | `PipelineSeparationGate` | Doc 03 §15; OD-40/OD-41; OD-47 §3–§6 (owner-confirmed 27 Nov 2026) | Aligns with OD-47; owner confirmation recorded, not a signed Creator decision |
 | Digital media & document | OCR/PDF parsing explicitly open; no A/V, provenance detection | `MediaDocumentAdapters` | Doc 29 §3.1/§3.14; Doc 29a §10 | No new OD |
 | Internet security & threat intel | No CVE feeds, DLP, DNSSEC/DoH, proxy policy, unified rotation | `ThreatIntelFeed` + `DLP` + `VaultRotation` | OD-16 (Aegis), OD-34, OD-48, Doc 29 §8/§9 | No new OD; OD-51 §4.5 paid-use ban unchanged |
 | Knowledge memory & source mgmt | No rights registry, TTL classes, claim-level evidence, revocation propagation | `SourceRegistry` extension | Doc 01 §3.D; Doc 14 §6; Doc 29 §6/§7.2; OD-48 | OD-47 for rights manifest; otherwise no new OD |
@@ -91,7 +91,7 @@ Free does **not** mean unregulated; it means *no Creator approval is needed when
 
 **Requirements:**
 1. **Strategy taxonomy and selection.** Strategies: single-query, query decomposition (sub-questions), source-first (known authoritative domain), iterative refinement, and contradiction-focused. Selection records the chosen strategy, rationale and information gap. Effectiveness feedback from §2.9 QA updates selection policy; update requires review, never autonomous self-authorisation.
-2. **Provider policy.** Free-first, health-ranked failover; no provider is the sole gateway. Free public providers are used autonomously after the §2.0 legal check. Paid search/API use is fail-closed unless a signed Creator approval and budget exist (OD-04; proposed OD-52 §6 remains pending).
+2. **Provider policy.** Free-first, health-ranked failover; no provider is the sole gateway. Free public providers are used autonomously after the §2.0 legal check. Paid search/API use is fail-closed unless a signed Creator approval and budget exist (OD-04; OD-52 §6 is confirmed, but paid endpoints remain unauthorised under OD-51/OD-52).
 3. **Calibrated confidence.** Score in `[0,1]` from independent-source count, source reliability record, primary-vs-syndicated status, publication recency and contradiction flag. Calibration is logged and tested. Threshold table: `<0.40` unverified observation, `0.40–0.69` provisional, `≥0.70` verified knowledge. Sub-`0.70` claims may inform free `Research` output only with their label — no Creator approval is needed to read or report them. A `Commit` action relying on a sub-`0.70` claim requires Creator approval and a `reviewer_required` legal decision.
 4. **Freshness TTL by class.** Volatile/news 24 h, documentation 30 d, standards/specifications 180 d, stable reference 365 d. Expiry forces recheck before reuse; expiry is visible to the caller.
 5. **Claim-level evidence contract.** Every retained claim carries `claim_id`, `source_id`, URL, publication date, `retrieved_at`, page/fragment locator, confidence score and one label: `verified | provisional | unverified | outdated | contradicted | unresolved`.
@@ -117,7 +117,7 @@ Free does **not** mean unregulated; it means *no Creator approval is needed when
 
 ### 2.4 Online learning & knowledge — pipeline separation gate
 
-**Gap addressed:** research↔training separation exists only in proposed OD-47.
+**Gap addressed:** research↔training separation is specified in OD-47 (owner-confirmed 27 Nov 2026, not a signed Creator decision).
 
 **Requirements:**
 1. Three logically separated pipelines: **research/knowledge** (web → memory, read-only), **dataset preparation** (derived artifacts, rights-checked), **training** (signed release only). No direct path from a fetched page to a training dataset.
@@ -128,7 +128,7 @@ Free does **not** mean unregulated; it means *no Creator approval is needed when
 
 **Acceptance:** attempt to train directly from an unverified web page is refused; manifest round-trip preserves provenance; source revocation flags derived datasets; no training action without a signed release.
 
-**Dependency:** becomes frozen only if OD-47 is signed; until then this section is a design alignment, not an authority claim.
+**Dependency:** OD-47 was confirmed by explicit owner instruction on 27 November 2026 (not a signed Creator decision); this section is part of the frozen baseline. It authorises no OD-03 protected-core action.
 
 ---
 
@@ -229,7 +229,7 @@ All closures extend existing services; none creates a parallel runtime system:
 ## 4. Sequencing
 
 1. **Foundation:** §2.1 egress gateway, §2.3 ledger + budget, §2.7 source registry, §2.9 QA harness.
-2. **Intelligence:** §2.2 strategy/confidence/TTL, §2.4 pipeline separation gate (pending OD-47).
+2. **Intelligence:** §2.2 strategy/confidence/TTL, §2.4 pipeline separation gate (OD-47 confirmed by owner instruction 27 Nov 2026).
 3. **Depth:** §2.5 media/document adapters, §2.6 threat intel/DLP/vault.
 4. **Governance:** §2.8 site policy store and privacy lifecycle.
 5. **Closure:** recurring QA thresholds and regression gate active across all prior phases.
@@ -240,8 +240,8 @@ No phase is called complete on assumed success; each has its own acceptance evid
 
 ## 5. Owner decisions required
 
-- **OD-47 (proposed):** §2.4 and part of §2.7 become frozen only after a signed decision.
-- **OD-52 (proposed):** search triggers, provider management, TTL and claim labels in §2.2 are already drafted there; promote by signed decision rather than duplicating.
+- **OD-47 (owner-confirmed 27 November 2026, not a signed Creator decision):** §2.4 and part of §2.7 are part of the frozen baseline; this confirmation authorises no protected-core action.
+- **OD-52 (confirmed 27 November 2026):** search triggers, provider management, TTL and claim labels in §2.2 are already part of that decision; do not duplicate them.
 - **Scope ruling:** confirm that §2.1 link/physical networking, host VPN lifecycle and ICANN/IETF participation stay out of IAM runtime scope.
 - **No system-count change** is requested. Any request to make IICS a top-level system requires a separate gap-analysis-proven omission and signed reopening.
 - **Approval interpretation:** the items above are decisions to freeze architecture, **not** per-action Creator approvals. Free lawful use stays autonomous under §2.0; the legal gateway decides permissibility, and Creator approval attaches only to the consequential-action list.

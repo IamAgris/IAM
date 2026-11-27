@@ -123,7 +123,7 @@ These are research objectives, not promised capabilities.
 
 IAM should be able to research, design, reproduce, train, optimise, compress, reproduce, test, protect, deploy and maintain its own AI models — from legacy-compatible ultra-small assistants to larger general-purpose foundation models — while its identity, memory and protected core remain independent of any model.
 
-Current implementation status: OD-38 (foundation set; the 25 Nov `qwen2.5:3b`-only local baseline was superseded by OD-46 on 26 Nov, making benchmark-favoured `qwen2.5-coder:3b` the shared primary while `qwen2.5:3b` remains a secondary alias), OD-39 (resource manager + RAM profile), OD-40 (MEFE), OD-41 (frozen requirements below), and the adaptive selector described in section 6. The implementation sequence is in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`.
+Current implementation status: OD-38/OD-46 (foundation set; the owner reopened the shared primary on 27 Nov 2026 to `qwen2.5:3b` / `local-qwen-3b`, with benchmark-favoured `qwen2.5-coder:3b` retained as an optional secondary), OD-39 (resource manager + RAM profile), OD-40 (MEFE), OD-41 (frozen requirements below), and the adaptive selector described in section 6. The implementation sequence is in `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -140,7 +140,7 @@ This capability is part of this architecture, **not** a separate standalone syst
 | Lightning AI Studios | More substantial GPU development | Free credits/eligibility; verify terms |
 | Hugging Face ZeroGPU | Short inference/evaluation demos | ~5 min daily quota; no sustained training or persistent server |
 
-vLLM is an inference/serving engine — an alternative to Ollama, not a replacement for the model. Keep `Qwen2.5-Coder:3B`.
+vLLM is an inference/serving engine — an alternative to Ollama, not a replacement for the model. Keep the OD-46 shared primary `qwen2.5:3b` (`local-qwen-3b`); `qwen2.5-coder:3b` remains an optional secondary.
 
 ### Central workflow
 

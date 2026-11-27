@@ -1,14 +1,14 @@
 {
     "version":  1,
-    "generatedAt":  "2026-11-27T12:29:23Z",
-    "baseCommit":  "a33a7ec61223e52180352dbff4fb3999cb2342a8",
+    "generatedAt":  "2026-11-27T13:28:25Z",
+    "baseCommit":  "4025c5c830c18e51c8dd34668f189e642e9b2cf0",
     "configVersion":  1,
     "stats":  {
-                  "files":  981,
-                  "added":  3,
-                  "changed":  12,
+                  "files":  988,
+                  "added":  2,
+                  "changed":  4,
                   "removed":  0,
-                  "unchanged":  966
+                  "unchanged":  982
               },
     "files":  [
                   {
@@ -130,8 +130,8 @@
                   },
                   {
                       "path":  ".github/workflows/quality-gates.yml",
-                      "sha256":  "272ecd5ef02051acdbcb9e8a6d15cc9a44790955aff8338410a149ebe94496e5",
-                      "bytes":  5406,
+                      "sha256":  "ae2f771bda27a5abb555c7ee45420877a06420778b81d2beb0b27536086c2550",
+                      "bytes":  5495,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -2523,6 +2523,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/app/db/migrations/069_memory_verification.sql",
+                      "sha256":  "af0cd3e228a81fe2f373465fc75d4036fd9ef8c61b421c4f44b5f880e2574aa0",
+                      "bytes":  851,
+                      "status":  "untracked",
+                      "category":  "migration",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/app/db/migrations/env.py",
                       "sha256":  "fe164073b1f822c1048c91b64118861d51390b4180ee27b1fb68cb10d70a181d",
                       "bytes":  2154,
@@ -2550,8 +2563,8 @@
                   },
                   {
                       "path":  "backend/app/db/migrations/MIGRATION_ORDER.json",
-                      "sha256":  "a46eda4cf898da763aba2363ba83a4f471548303204e160cbaa0099450237352",
-                      "bytes":  6849,
+                      "sha256":  "385c5caf4a78f95d9356bdb8619bef81a6409fdbd883ba9c8e0923c89012b9fa",
+                      "bytes":  6953,
                       "status":  "tracked",
                       "category":  "migration",
                       "area":  "backend-core",
@@ -3396,8 +3409,8 @@
                   },
                   {
                       "path":  "backend/app/orchestration/autonomy_graph.py",
-                      "sha256":  "04b5e9b9454ab86a0a8e03b1649400eae2602729937f074849eb53e711c0631b",
-                      "bytes":  26779,
+                      "sha256":  "90c5ebb7a0f94823d7a5d4e33fd23546b31ac12b5e4e63608391eca42229bcfd",
+                      "bytes":  44634,
                       "status":  "tracked",
                       "category":  "orchestration",
                       "area":  "backend-core",
@@ -3412,6 +3425,32 @@
                       "sha256":  "b00674560c48dbaf5a86ba2072f71a9794503c6474942f27afc0fe6f02106188",
                       "bytes":  5507,
                       "status":  "tracked",
+                      "category":  "orchestration",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/app/orchestration/hypothesis_engine.py",
+                      "sha256":  "9a5efb951e72fc617f37e79bf19097bb2dbfdbbefe35decf01393059b9fff3c2",
+                      "bytes":  13964,
+                      "status":  "untracked",
+                      "category":  "orchestration",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/app/orchestration/reasoning_engine.py",
+                      "sha256":  "293faf97b6dcfc6ff7290a83995aeb5b25952dbbdf522c57afb926fb48818b23",
+                      "bytes":  17116,
+                      "status":  "untracked",
                       "category":  "orchestration",
                       "area":  "backend-core",
                       "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
@@ -4943,6 +4982,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/app/services/evidence_service.py",
+                      "sha256":  "7ad44009c44e64f36354aba16dce9735ad6b4ad2df834bac41052a737398f223",
+                      "bytes":  13835,
+                      "status":  "untracked",
+                      "category":  "service",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/app/services/financial_intelligence/__init__.py",
                       "sha256":  "da292ded23d86feac9989e35ae52551867ca62e387917332d958c96449185d5c",
                       "bytes":  61,
@@ -5854,8 +5906,8 @@
                   },
                   {
                       "path":  "backend/app/services/iam_context.py",
-                      "sha256":  "b5153a0c71c88881ee8b7342cf14cf18eb8e2f09c2a276e345edb4e8eb49f6e8",
-                      "bytes":  8436,
+                      "sha256":  "b452df66ef48a9ec6115927c6c436d04b099145770dbeb5b9d9f0d325d243fbc",
+                      "bytes":  24725,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -6427,8 +6479,8 @@
                   },
                   {
                       "path":  "backend/app/services/live_information_policy.py",
-                      "sha256":  "98e5cc97db2452494e6f83480929e08da2772f948a892528f6808e483c7b7a00",
-                      "bytes":  32319,
+                      "sha256":  "2becbb98956aac69e0df4665fa220b74146a377fdb1cc8eb58deb009b433421f",
+                      "bytes":  32343,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -6440,8 +6492,8 @@
                   },
                   {
                       "path":  "backend/app/services/live_media_service.py",
-                      "sha256":  "a348f5e7c28fd474c8f41f979522db146eea72d3078c4ebdef367cc352ff3b6e",
-                      "bytes":  3275,
+                      "sha256":  "d1db7e58f2e0f75ba4027498ff048400dc78228e7cde1460f11e595771ab7dcf",
+                      "bytes":  3313,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -6466,8 +6518,8 @@
                   },
                   {
                       "path":  "backend/app/services/memory_service.py",
-                      "sha256":  "f9c66fdd64f822e15d56672b0c4f9c231787f6bf6d2bc19150979e95f7cc8e40",
-                      "bytes":  9348,
+                      "sha256":  "e307810939b57d60d6ff1b550174a99a967ba9e1d15c5c265b2b628458938c5f",
+                      "bytes":  18210,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "runtime-memory-and-knowledge",
@@ -7495,9 +7547,22 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "backend/mypy-baseline.json",
-                      "sha256":  "616933d14fea668d68f0228804ead50ca255d94bf3a99c697881e6773941dad1",
-                      "bytes":  108316,
+                      "path":  "backend/mypy-baseline-3.12.json",
+                      "sha256":  "2d2a9e1d7219c96ef52c8505d76a5847559fee238e5f5434f4a1c49f2f5514e7",
+                      "bytes":  109096,
+                      "status":  "tracked",
+                      "category":  "other",
+                      "area":  "general",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/mypy-baseline-3.15.json",
+                      "sha256":  "347c7671a48ad75b1373314d213453aa351fca91c65ea306ff5bbe67a6520741",
+                      "bytes":  113626,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -7873,8 +7938,8 @@
                   },
                   {
                       "path":  "backend/tests/test_autonomy_graph_integration.py",
-                      "sha256":  "27e3189fd8160f9fe6156bc7b1b9989ff46515babe37a533c3657fa5d03716a5",
-                      "bytes":  13765,
+                      "sha256":  "5f89225ed6956c9881b73f9ec7d75109d6572e978a5e1aa642531e040811db69",
+                      "bytes":  14415,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8445,8 +8510,8 @@
                   },
                   {
                       "path":  "backend/tests/test_iplci_p6.py",
-                      "sha256":  "ae4a8df6d176ac58169880310d2a5f2087f4ad3019e128dc2449bfebf2a755d6",
-                      "bytes":  19649,
+                      "sha256":  "8b00309802bfacd1146ea65a9288e966dfe1e1b337a0d208fb0f36b0e25741ab",
+                      "bytes":  19701,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8549,8 +8614,8 @@
                   },
                   {
                       "path":  "backend/tests/test_live_intelligence_extensions.py",
-                      "sha256":  "37cc0c9db1a215681c83f695213a5794e418e4f4903a2b84a2bf1d4819cd054d",
-                      "bytes":  6683,
+                      "sha256":  "3349dc9982e3cc945955cad2087b03dee3b38191d22888fb02b9509a2088ee62",
+                      "bytes":  7724,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8747,6 +8812,19 @@
                       "sha256":  "5327858048f3429ba459c46dbcf7224cfbaf756c96aa11c3c4b96f002c3c56d8",
                       "bytes":  3925,
                       "status":  "tracked",
+                      "category":  "test",
+                      "area":  "acceptance-tests",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/tests/test_p02_belief_validation.py",
+                      "sha256":  "78b2ea947fb48d6c98c22f41f78027639cc8659f1e624eb491bc8d9983f1ac3c",
+                      "bytes":  5063,
+                      "status":  "untracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
                       "spec":  "IAM_FINAL_CONSOLIDATION.md",
@@ -9433,8 +9511,8 @@
                   },
                   {
                       "path":  "frontend/components/iam/presence-sphere.tsx",
-                      "sha256":  "04283b71747d572a9a27ab11f8710bf296519c33c7f2ee6734e4e013bb98afb2",
-                      "bytes":  23687,
+                      "sha256":  "a3bd666f42a00baa9955df93ca983d716d718f6bfcd0e80e8062e4038f2fe45f",
+                      "bytes":  24535,
                       "status":  "tracked",
                       "category":  "frontend",
                       "area":  "frontend",
@@ -9536,6 +9614,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "frontend/lib/world-outline.ts",
+                      "sha256":  "ac22f6569d909c2855df9175567beedb0b9149acc2ed79548c7e5e4a0b7e65e1",
+                      "bytes":  2694,
+                      "status":  "tracked",
+                      "category":  "frontend",
+                      "area":  "frontend",
+                      "spec":  "IAM_FRONTEND_IMPLEMENTATION.md; canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "frontend/next.config.js",
                       "sha256":  "8adf6ae19a98e831454bf5e27d13aa92f7e0267e42a695fb80f96a8e44fe8463",
                       "bytes":  747,
@@ -9550,8 +9641,8 @@
                   },
                   {
                       "path":  "frontend/next-env.d.ts",
-                      "sha256":  "1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37",
-                      "bytes":  295,
+                      "sha256":  "b8b3a344484b959af5e4e3fc1a1609dac3cb9ece0cdeb6c145be29bc4c491000",
+                      "bytes":  303,
                       "status":  "tracked",
                       "category":  "frontend",
                       "area":  "frontend",
@@ -9797,8 +9888,8 @@
                   },
                   {
                       "path":  "IAM_ARCHITECTURE_COMPLETION_AUDIT.md",
-                      "sha256":  "8b04d29f3d9652798517a21039e537f1e77bc4839e7b9c24e25b6110d270a3d6",
-                      "bytes":  41066,
+                      "sha256":  "2cde881f4ae79951c58c9c0becca76d2f1c196b60a2acd3dd7ac52c4bf4f30ca",
+                      "bytes":  41802,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10083,8 +10174,8 @@
                   },
                   {
                       "path":  "IAM_FINAL_CONSOLIDATION.md",
-                      "sha256":  "e559ad4cafc378a09eda85c76a67b74062a48cb6fbb7f2b3bd9e0c90ffad2321",
-                      "bytes":  22953,
+                      "sha256":  "d67fe82bb0dab99d17612c676fd753c0910ac4608d70a096cdbb5579c6b18c5a",
+                      "bytes":  23555,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "master-architecture",
@@ -10369,8 +10460,8 @@
                   },
                   {
                       "path":  "IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md",
-                      "sha256":  "cd2096f1c6308e13ec66c22ffe844a95ed94f486a01398203150f0f541f114cf",
-                      "bytes":  18308,
+                      "sha256":  "ef46aeab686ff6df637f5b37f91749fb0e18d7666fc0662630cd735a99aeae64",
+                      "bytes":  18619,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10434,8 +10525,8 @@
                   },
                   {
                       "path":  "IAM_OD54_SIGNOFF_SHEET.md",
-                      "sha256":  "3a7385b9e203ae002b65ce19e49c21880995fd524f3f1d549df5e57cb4b1c5a1",
-                      "bytes":  11459,
+                      "sha256":  "8744c3c0a54001ce9a70b4ffe2d7ab0e60c0c42c8b7548e3328573fa72e659c4",
+                      "bytes":  12632,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10813,8 +10904,8 @@
                   },
                   {
                       "path":  "MODEL_PROVIDER_SETUP.md",
-                      "sha256":  "d8084908ea2809ba669ab8fcfb63c6bd8590d6e3b8d387bd77d3cc38884c204f",
-                      "bytes":  1637,
+                      "sha256":  "6ad02b8127d6d27da422773ad1f8d2932a5eaac39afd7a237b6df1733d9cf525",
+                      "bytes":  2023,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "general",
@@ -11034,8 +11125,8 @@
                   },
                   {
                       "path":  "scripts/mcp_bridge_server.py",
-                      "sha256":  "f06ec1151ee106849e8162900db3edadb58319c43673a37ad65eab5fd6c0a465",
-                      "bytes":  4095,
+                      "sha256":  "26bd87228e80af0ac8f633759dc0162e3b2df80f7b7edb8acc218dfcc0a88537",
+                      "bytes":  4097,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -12022,8 +12113,8 @@
                   },
                   {
                       "path":  "tools/quality/check_mypy_ratchet.py",
-                      "sha256":  "c56326d39c9bf8f6cd05fdacf97cdd0f1916d93e97bf6bf4fb62bc931e498f7d",
-                      "bytes":  3091,
+                      "sha256":  "2e8b22cc43f9f31ccac52dafc615b497241a9e53cd909a475c68c489f672c324",
+                      "bytes":  3549,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -12048,8 +12139,8 @@
                   },
                   {
                       "path":  "tools/quality/index/mypy-debt.json",
-                      "sha256":  "b1c1287ac8f17a2f81cc0a78aafd650cbdb1b405deabd4df7d880050239b0419",
-                      "bytes":  220,
+                      "sha256":  "c777c3cb0de646055a24f5274a0f33f90a31be2739c02b1362f632537e2d715d",
+                      "bytes":  330,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -12061,8 +12152,8 @@
                   },
                   {
                       "path":  "tools/quality/mypy_debt.py",
-                      "sha256":  "dc17c916057eb31b6c6b7d18fafc9549cb110d83b2a7e918d978313e813cd0a5",
-                      "bytes":  2268,
+                      "sha256":  "ef8b30b5df3258ed7dc81a1074b72575f5d9462c54c3a4236afc2d5f1aa37b1e",
+                      "bytes":  2442,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -12074,8 +12165,8 @@
                   },
                   {
                       "path":  "tools/quality/README.md",
-                      "sha256":  "12a52cabac29e2eb9630d5e95980ca2d3ce9572dc960961288158e804d83804e",
-                      "bytes":  3017,
+                      "sha256":  "deffb9d258d616bd7efcd13f3753a2b70d6b3a981acb6f35a0637557e617737f",
+                      "bytes":  3243,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "general",
@@ -12464,8 +12555,8 @@
                   },
                   {
                       "path":  "tools/rkie/notes/live-information-policy-doc34.md",
-                      "sha256":  "03e24164471714f95aae726857f9b199c6f5ebb3877647f2bcccd6f984c0a249",
-                      "bytes":  4809,
+                      "sha256":  "9098210469beb34929a3a0f9b895af02523f140ab9834b38cc3559c7b11da1f4",
+                      "bytes":  5339,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",
@@ -12633,8 +12724,8 @@
                   },
                   {
                       "path":  "tools/rkie/RKIE_CAPABILITY_AUDIT.md",
-                      "sha256":  "dfaef36417213e18b32e2656928dc8cb08919d8b62e7f3644a73699935c4b7ea",
-                      "bytes":  34173,
+                      "sha256":  "15b124d51c0255a9d526d15cf56fe7504bc76518386be5c3a96534d01a2cf57f",
+                      "bytes":  35573,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",

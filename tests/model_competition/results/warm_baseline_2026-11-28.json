@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-11-27T22:42:03.440868+00:00",
+  "kind": "warm-only baseline, no container restart",
+  "model": "local-qwen-3b",
+  "trials": 5,
+  "container_limits": {
+    "cpus": 2.0,
+    "memory_gb": 4.0
+  },
+  "metrics": {
+    "ttft_ms": {
+      "n": 5,
+      "min": 3392.1,
+      "median": 3967.1,
+      "max": 4255.5,
+      "stdev": 359.9
+    },
+    "latency_ms": {
+      "n": 5,
+      "min": 21879.6,
+      "median": 25076.7,
+      "max": 26672.8,
+      "stdev": 2100.0
+    },
+    "prompt_tokens": {
+      "n": 5,
+      "min": 98,
+      "median": 98,
+      "max": 98,
+      "stdev": 0.0
+    },
+    "completion_tokens": {
+      "n": 5,
+      "min": 45,
+      "median": 45,
+      "max": 45,
+      "stdev": 0.0
+    },
+    "decode_tps": {
+      "n": 5,
+      "min": 2.0,
+      "median": 2.1,
+      "max": 2.5,
+      "stdev": 0.2
+    },
+    "prefill_tps_observed": {
+      "n": 5,
+      "min": 23.0,
+      "median": 24.7,
+      "max": 28.9,
+      "stdev": 2.4
+    },
+    "peak_mem_mb": {
+      "n": 5,
+      "min": 2753.8,
+      "median": 2991.4,
+      "max": 3044.5,
+      "stdev": 120.6
+    },
+    "avg_cpu_cores": {
+      "n": 5,
+      "min": 2.0,
+      "median": 2.0,
+      "max": 2.0,
+      "stdev": 0.0
+    },
+    "peak_cpu_cores": {
+      "n": 5,
+      "min": 2.2,
+      "median": 2.3,
+      "max": 2.4,
+      "stdev": 0.0
+    },
+    "correct": 0,
+    "oom_kills": 0,
+    "loaded_before": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "loaded_after": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  }
+}

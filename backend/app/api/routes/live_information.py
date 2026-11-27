@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db_session
 from app.services.live_information_policy import (
     WEB_ACCESS_POLICY,
@@ -70,6 +71,7 @@ async def search_providers() -> Dict[str, Any]:
     """Health, quota and cost metadata for the search provider chain."""
     return {
         "chain": search_provider_registry.chain(free_only=True),
+        "parallel": settings.iam_search_concurrent_providers,
         "providers": search_provider_registry.status(),
     }
 

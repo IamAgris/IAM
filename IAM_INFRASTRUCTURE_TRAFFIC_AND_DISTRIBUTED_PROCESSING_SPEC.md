@@ -3,7 +3,7 @@
 **Document:** 21 (addendum to Documents 01–20)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026)  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_MASTER_ARCHITECTURE.md` §3 and §13, `canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md`, `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (Doc 10), `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` (Doc 18), `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` (Doc 19), `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` (Doc 20), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_API_CONTRACTS.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-37 (infrastructure, traffic management and distributed processing)
 

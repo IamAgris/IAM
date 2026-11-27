@@ -62,6 +62,13 @@ services:
     ports:
       - "${LITELLM_PORT:-4000}:4000"
     environment:
+      # OD-52 runtime /model/new registration needs LiteLLM's own Prisma DB.
+      # PostgreSQL already runs in this stack; SQLite is not supported for
+      # DB-backed routes. The password comes from .env, never from this file.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aura}:${POSTGRES_PASSWORD:-change-me-securely}@postgres:5432/${LITELLM_DB:-litellm_db}
+      # Use the bundled cost map so unknown model IDs do not block startup on
+      # a network cost-map lookup.
+      LITELLM_LOCAL_MODEL_COST_MAP: "True"
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
       # Rotating this makes stored provider credentials unreadable. Set once.
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-change-me-salt-key}
@@ -85,6 +92,8 @@ services:
       retries: 10
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - aura-network
@@ -203,6 +212,10 @@ services:
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       FREE_MODELS_ONLY: ${FREE_MODELS_ONLY:-true}
+      # OD-39 core-service reserve. Default 1500 MB suits the 8 GB target and
+      # is the policy default on the host/tests. A smaller dev Docker VM can
+      # override only the container with IAM_CONTAINER_RAM_RESERVE in .env.
+      ADAPTIVE_RESERVED_RAM_MB: ${IAM_CONTAINER_RAM_RESERVE:-1500}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Opt-in local inference via Ollama

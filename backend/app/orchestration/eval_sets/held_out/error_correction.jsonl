@@ -1,0 +1,10 @@
+{"prompt":"The statement \"The Earth is flat\" is true or false? Reply with true or false only.","expected":"false","domain":"error_correction","task_type":"false_premise","difficulty":"easy"}
+{"prompt":"The statement \"2 + 2 = 5\" is true or false? Reply with true or false only.","expected":"false","domain":"error_correction","task_type":"false_premise","difficulty":"easy"}
+{"prompt":"The statement \"The sun revolves around the Earth\" is true or false? Reply with true or false only.","expected":"false","domain":"error_correction","task_type":"false_premise","difficulty":"easy"}
+{"prompt":"Correct the error: \"The capital of France is London.\" Reply with the correct capital only.","expected":"Paris","domain":"error_correction","task_type":"correction","difficulty":"easy"}
+{"prompt":"Correct the error: \"Water boils at 50 degrees Celsius at sea level.\" Reply with the correct temperature only.","expected":"100","domain":"error_correction","task_type":"correction","difficulty":"easy"}
+{"prompt":"The statement \"Humans use only 10 percent of their brains\" is true or false? Reply with true or false only.","expected":"false","domain":"error_correction","task_type":"myth","difficulty":"medium"}
+{"prompt":"Correct the error: \"The Great Wall of China is visible from the Moon with the naked eye.\" Reply true or false only.","expected":"false","domain":"error_correction","task_type":"myth","difficulty":"medium"}
+{"prompt":"Correct the error: \"Lightning never strikes the same place twice.\" Reply true or false only.","expected":"false","domain":"error_correction","task_type":"myth","difficulty":"medium"}
+{"prompt":"Correct the error: \"Bats are blind.\" Reply true or false only.","expected":"false","domain":"error_correction","task_type":"myth","difficulty":"easy"}
+{"prompt":"Correct the error: \"Goldfish have a 3-second memory.\" Reply true or false only.","expected":"false","domain":"error_correction","task_type":"myth","difficulty":"easy"}

@@ -19,7 +19,12 @@ def parse_since(value: Optional[str]) -> Optional[datetime]:
     """Parse an ISO-8601 cursor, returning an aware UTC datetime."""
     if not value:
         return None
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        # A malformed cursor must fail soft: the public activity poll sends a
+        # fresh cursor every 2s and a single bad value must not return HTTP 500.
+        return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)

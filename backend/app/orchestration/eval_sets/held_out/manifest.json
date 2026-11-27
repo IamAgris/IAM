@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "description": "Held-out longitudinal evaluation sets for IAM. These questions are not part of IAM's training or memory and are used to measure genuine capability improvement over time.",
+  "suites": [
+    {"name": "reasoning", "dataset": "reasoning.jsonl", "threshold": 0.7, "weight": 1.0},
+    {"name": "knowledge_retention", "dataset": "knowledge_retention.jsonl", "threshold": 0.7, "weight": 1.0},
+    {"name": "transfer", "dataset": "transfer.jsonl", "threshold": 0.6, "weight": 1.0},
+    {"name": "prediction_accuracy", "dataset": "prediction_accuracy.jsonl", "threshold": 0.7, "weight": 1.0},
+    {"name": "error_correction", "dataset": "error_correction.jsonl", "threshold": 0.8, "weight": 1.0},
+    {"name": "learning_efficiency", "dataset": "learning_efficiency.jsonl", "threshold": 0.7, "weight": 1.0}
+  ]
+}

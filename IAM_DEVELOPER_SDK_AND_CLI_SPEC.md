@@ -3,7 +3,7 @@
 **Document:** 13 (addendum to Documents 01–12)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — official communication interface for the IAM ecosystem  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_API_CONTRACTS.md`, `IAM_DYNAMIC_NODE_NETWORK_SPEC.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-29 (official SDKs and CLI)
 

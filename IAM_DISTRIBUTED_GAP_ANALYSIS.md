@@ -1,5 +1,7 @@
 # IAM — Distributed Network & Authority Gap Analysis
 
+> **HISTORICAL — SUPERSEDED.** Retained for development history only. Superseded by `IAM_FINAL_CONSOLIDATION.md`; do not use as a current source of truth.
+
 **Version:** 1.0 · 24 November 2026  
 **Scope:** Original architecture + new P2P network, creator authority, restricted reporting, IAM Aegis and OEDIE  
 **Parent:** `IAM_ARCHITECTURE_GAP_ANALYSIS.md` (original four documents)  

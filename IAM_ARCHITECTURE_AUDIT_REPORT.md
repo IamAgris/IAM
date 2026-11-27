@@ -1,5 +1,7 @@
 # IAM Architecture Audit Report
 
+> **HISTORICAL SNAPSHOT — NOT CURRENT STATUS.** This audit was written when the register held 26–32 decisions. It is retained as evidence of a point-in-time consistency check. Current authority: `ARCHITECTURE_INDEX.md`, `IAM_FINAL_CONSOLIDATION.md`, `IAM_OWNER_DECISIONS.md`; current implementation status: `IAM_ARCHITECTURE_COMPLETION_AUDIT.md`.
+
 **Date:** 25 November 2026  
 **Scope:** All 26 architecture documents, 26 owner decisions, 7 resolved specs  
 **Method:** Automated consistency scan (`audit_architecture.py`) + manual review of findings  

@@ -3,7 +3,9 @@
 Per `frontend/AGENTS.md`, Next.js 16.4.6 docs in `frontend/node_modules/next/dist/docs/`
 were read before writing code (project structure, server/client components, route handlers).
 
-## Current frontend shape
+> **Historical snapshot (27 November 2026).** The four routable pages described here were subsequently removed or moved under underscore-prefixed (non-routable) directories. Current routable pages are `/`, `/suggestions`, `/conversations` and `/conversations/[id]`. Re-verify before relying on this note.
+
+## Frontend shape at the time of this note
 
 An external consolidation removed the old `app/_freesandboxes` and
 `app/_financial-intelligence` private pages and the sidebar, and added:

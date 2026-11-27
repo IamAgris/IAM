@@ -81,3 +81,62 @@ export async function healthCheck() {
   const { data } = await api.get("/health");
   return data;
 }
+
+/* Conversation persistence */
+
+export interface Conversation {
+  id: string;
+  title: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  metadata: Record<string, any>;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  role: "user" | "assistant" | "system" | "tool";
+  content: string;
+  created_at: string | null;
+  metadata: Record<string, any>;
+}
+
+export async function listConversations(): Promise<Conversation[]> {
+  const { data } = await api.get("/api/v1/conversations/");
+  return data;
+}
+
+export async function createConversation(
+  title?: string,
+  metadata?: Record<string, any>
+): Promise<Conversation> {
+  const { data } = await api.post("/api/v1/conversations/", {
+    title,
+    metadata,
+  });
+  return data;
+}
+
+export async function getConversationMessages(
+  conversationId: string
+): Promise<ConversationMessage[]> {
+  const { data } = await api.get(
+    `/api/v1/conversations/${conversationId}/messages`
+  );
+  return data;
+}
+
+export async function createConversationMessage(
+  conversationId: string,
+  role: "user" | "assistant" | "system" | "tool",
+  content: string,
+  metadata?: Record<string, any>
+): Promise<ConversationMessage> {
+  const { data } = await api.post("/api/v1/conversations/messages", {
+    conversation_id: conversationId,
+    role,
+    content,
+    metadata,
+  });
+  return data;
+}

@@ -57,7 +57,7 @@ This addendum records *how components are implemented*. It does not change *what
 | Identity, signing, financial authority, protected core | OD-01 / OD-03 / OD-04 / OD-25 / OD-11 | Unchanged. Rust components are subject to the same Creator-approval and signed-approval gates |
 | Free-first, no paid upgrade without approval | OD-04 / OD-25 / OD-41 | Unchanged; Rust tooling and CI must use free tiers only |
 
-Because the register is frozen at 41 decisions, any future change to a locked decision still requires explicit owner reopening under `IAM_OWNER_DECISIONS.md` "Change control (frozen)".
+Because the register is frozen at 53 decisions, any future change to a locked decision still requires explicit owner reopening under `IAM_OWNER_DECISIONS.md` "Change control (frozen)".
 
 ---
 
@@ -99,7 +99,7 @@ For every candidate component:
 
 ## 8. Relationship to other documents
 
-- `IAM_OWNER_DECISIONS.md` — frozen at 41 decisions; this addendum changes none of them.
+- `IAM_OWNER_DECISIONS.md` — frozen at 53 decisions; this addendum changes none of them.
 - `IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md` — work-package classification and acceptance tests A17–A20.
 - `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` (OD-39) and `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` (OD-37) — Rust candidates for scheduler and distributed transport, subject to §6.
 - `sdk/PROTOCOL.md` — canonical language-neutral protocol.

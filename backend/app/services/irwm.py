@@ -8,12 +8,21 @@ State is per-process; multi-replica coordination is a deployment concern.
 
 import asyncio
 import time
+import uuid
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Deque, Dict, List, Optional
 
 from app.core.config import settings
 from app.services.adaptive_model_selector import ResourceSnapshot, detect_resources
+
+
+@dataclass
+class Lease:
+    admitted_at: float
+    purpose: str = "internal"
+    preemptible: bool = True
+    task: Any = None
 
 
 @dataclass
@@ -25,6 +34,7 @@ class Residency:
     last_used: float
     in_flight: int = 0
     in_flight_since: Optional[float] = None  # set when in_flight goes 0 -> 1
+    leases: Dict[str, Lease] = field(default_factory=dict)
 
 
 class IRWM:
@@ -33,16 +43,32 @@ class IRWM:
         snapshot: Optional[ResourceSnapshot] = None,
         unloader: Optional[Callable[[str], bool]] = None,
     ):
+        self._snapshot_fixed = snapshot is not None  # injected snapshots are authoritative
         self.snapshot = snapshot or detect_resources()
+        self._snapshot_at = time.monotonic()
         self.unloader = unloader
         self.resident: Optional[Residency] = None
         self.queue: Deque[Dict[str, Any]] = deque(maxlen=256)
         self.history: Deque[Dict[str, Any]] = deque(maxlen=200)
         self._lock = asyncio.Lock()
 
+    def _live_snapshot(self) -> ResourceSnapshot:
+        """Re-read host/cgroup memory for auto-detected snapshots.
+
+        A snapshot frozen at import can keep the primary permanently delegated
+        after a temporary memory spike. Tests and operators that inject an
+        explicit snapshot keep their deterministic reading.
+        """
+        if not self._snapshot_fixed:
+            self.snapshot = detect_resources()
+            self._snapshot_at = time.monotonic()
+        return self.snapshot
+
     @property
     def usable_ram_mb(self) -> int:
-        return max(0, self.snapshot.available_ram_mb - settings.adaptive_reserved_ram_mb)
+        return max(
+            0, self._live_snapshot().available_ram_mb - settings.adaptive_reserved_ram_mb
+        )
 
     def _unload(self, model: str) -> bool:
         if not self.unloader:
@@ -72,6 +98,7 @@ class IRWM:
                     "reason": "lease exceeded timeout without release",
                 })
                 self.resident.in_flight = 0
+                self.resident.leases.clear()
                 self.resident.in_flight_since = None
                 self.resident.last_used = time.monotonic()
             else:
@@ -91,6 +118,10 @@ class IRWM:
         estimated_ram_mb: int,
         context_tokens: Optional[int] = None,
         task_complexity: int = 3,
+        enqueue: bool = True,
+        purpose: str = "internal",
+        preemptible: bool = True,
+        task: Any = None,
     ) -> Dict[str, Any]:
         """Admit, queue or delegate a request without breaking the core reserve."""
         async with self._lock:
@@ -118,7 +149,10 @@ class IRWM:
 
             if self.resident and self.resident.model != model:
                 if self.resident.in_flight:
-                    self.queue.append({"model": model, "estimated_ram_mb": estimated_ram_mb})
+                    if enqueue:
+                        self.queue.append(
+                            {"model": model, "estimated_ram_mb": estimated_ram_mb}
+                        )
                     base["queue_depth"] = len(self.queue)
                     decision = {
                         **base,
@@ -140,8 +174,35 @@ class IRWM:
                     last_used=now,
                 )
 
+            if (
+                purpose == "user"
+                and self.resident.in_flight
+                and all(lease.preemptible for lease in self.resident.leases.values())
+            ):
+                # A user chat outranks internal background work. Cancel the
+                # internal task(s) and reclaim the single residency slot rather
+                # than refusing the user. The cancelled tasks' token releases
+                # are no-ops because their leases are removed here.
+                for lease in self.resident.leases.values():
+                    if lease.task is not None and not lease.task.done():
+                        lease.task.cancel()
+                cancelled = len(self.resident.leases)
+                self.resident.leases.clear()
+                self.resident.in_flight = 0
+                self.resident.in_flight_since = None
+                self.history.append(
+                    {
+                        "decision": "preempted_internal",
+                        "model": self.resident.model,
+                        "cancelled": cancelled,
+                    }
+                )
+
             if self.resident.in_flight >= settings.irwm_max_concurrent:
-                self.queue.append({"model": model, "estimated_ram_mb": estimated_ram_mb})
+                if enqueue:
+                    self.queue.append(
+                        {"model": model, "estimated_ram_mb": estimated_ram_mb}
+                    )
                 base["queue_depth"] = len(self.queue)
                 decision = {
                     **base,
@@ -153,23 +214,46 @@ class IRWM:
 
             if self.resident.in_flight == 0:
                 self.resident.in_flight_since = time.monotonic()
-            self.resident.in_flight += 1
+            lease_id = uuid.uuid4().hex
+            self.resident.leases[lease_id] = Lease(
+                admitted_at=time.monotonic(),
+                purpose=purpose,
+                preemptible=preemptible,
+                task=task,
+            )
+            self.resident.in_flight = len(self.resident.leases)
             self.resident.last_used = time.monotonic()
             decision = {
                 **base,
                 "decision": "admit",
                 "resident_model": self.resident.model,
                 "reason": "model fits within the core-service reserve and concurrency limit",
+                "lease_id": lease_id,  # idempotent release even after task cancellation
             }
             self.history.append(decision)
             return decision
 
-    async def release(self, model: str) -> Dict[str, Any]:
+    async def release(self, model: str, lease_id: Optional[str] = None) -> Dict[str, Any]:
+        """Release one lease. Repeated releases of the same lease are harmless."""
         async with self._lock:
             if not self.resident or self.resident.model != model:
                 return {"released": False, "reason": "model is not resident"}
-            self.resident.in_flight = max(0, self.resident.in_flight - 1)
+            if lease_id is not None:
+                if lease_id not in self.resident.leases:
+                    return {
+                        "released": False,
+                        "reason": "lease already released",
+                        "model": model,
+                    }
+                self.resident.leases.pop(lease_id, None)
+                self.resident.in_flight = len(self.resident.leases)
+            else:
+                # Legacy callers (admin route, older tests) release one anonymous slot.
+                if self.resident.leases:
+                    self.resident.leases.pop(next(iter(self.resident.leases)))
+                self.resident.in_flight = max(0, self.resident.in_flight - 1)
             if self.resident.in_flight == 0:
+                self.resident.leases.clear()
                 self.resident.in_flight_since = None
             self.resident.last_used = time.monotonic()
             promoted = None
@@ -182,14 +266,15 @@ class IRWM:
 
     def status(self) -> Dict[str, Any]:
         self.sweep_idle()
+        live = self._live_snapshot()
         return {
             "enabled": settings.irwm_enabled,
             "snapshot": {
-                "total_ram_mb": self.snapshot.total_ram_mb,
-                "available_ram_mb": self.snapshot.available_ram_mb,
-                "cpu_count": self.snapshot.cpu_count,
-                "has_gpu": self.snapshot.has_gpu,
-                "source": self.snapshot.source,
+                "total_ram_mb": live.total_ram_mb,
+                "available_ram_mb": live.available_ram_mb,
+                "cpu_count": live.cpu_count,
+                "has_gpu": live.has_gpu,
+                "source": live.source,
             },
             "usable_ram_mb": self.usable_ram_mb,
             "resident": (
@@ -198,6 +283,18 @@ class IRWM:
                     "estimated_ram_mb": self.resident.estimated_ram_mb,
                     "context_tokens": self.resident.context_tokens,
                     "in_flight": self.resident.in_flight,
+                    "leases": len(self.resident.leases),
+                    "lease_age_s": (
+                        round(
+                            min(
+                                time.monotonic() - lease.admitted_at
+                                for lease in self.resident.leases.values()
+                            ),
+                            1,
+                        )
+                        if self.resident.leases
+                        else 0
+                    ),
                 }
                 if self.resident
                 else None

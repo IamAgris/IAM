@@ -2,9 +2,9 @@
 
 **Document:** 28 — **Master Specification** (proposed addendum to Documents 01–27)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **CONFIRMED under OD-48 (27 November 2026)** — part of the frozen baseline. This document does not alter identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25), protected-core rules (OD-11), the existing system count or the proposed OD-47. It is a governance specification, **not** proof of legal compliance; jurisdiction-specific legal validation remains required.  
-**Parent:** `IAM_FINAL_CONSOLIDATION.md`, `IAM_MASTER_ARCHITECTURE.md`  
-**Related:** Doc 15 `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31), Doc 27 `IAM_RESEARCH_ACQUISITION_AND_LEGAL_INTELLIGENCE_SPEC.md` (proposed OD-47), Doc 14 `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30), Doc 26 `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (OD-45), `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` (OD-40), `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` (OD-41), `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (OD-46), `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_OWNER_DECISIONS.md`  
+**Status:** **CONFIRMED under OD-48 (27 November 2026)** — part of the frozen baseline. This document does not alter identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25), protected-core rules (OD-11), the existing system count or OD-47 (owner-confirmed 27 Nov 2026, not a signed Creator decision). It is a governance specification, **not** proof of legal compliance; jurisdiction-specific legal validation remains required.  
+**Parent:** `IAM_FINAL_CONSOLIDATION.md`, `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (the early master draft is superseded)  
+**Related:** Doc 15 `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31), Doc 27 `IAM_RESEARCH_ACQUISITION_AND_LEGAL_INTELLIGENCE_SPEC.md` (OD-47 owner-confirmed 27 Nov 2026, not a signed Creator decision), Doc 14 `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30), Doc 26 `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (OD-45), `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` (OD-40), `IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md` (OD-41), `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (OD-46), `IAM_DATABASE_DESIGN.md`, `IAM_API_CONTRACTS.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-48 (IP & Legal Intelligence as a foundational, constitutionally protected governance subsystem) — confirmed 27 November 2026  
 **Governing principle:** **Access is not permission.** Being able to access information, being allowed to learn from it, being allowed to reproduce it and being allowed to commercialise it are four separate permissions.  
 **Frozen functional scope:** **20 capability areas** (IL-01…IL-20), **7 central enforcement engines** (CE-01…CE-07), a mandatory legal policy enforcement gateway, independent compliance verification, human authorisation for legally consequential actions, and a tamper-evident audit and evidence registry.
@@ -37,7 +37,7 @@ Implementation is **inside the existing 15 IAM systems** (principally systems 2,
 ### 1.1 What this adds — and what it does not
 
 - **Adds:** a mandatory, independent legal governance layer; 20 capability areas; 7 enforcement engines; a rights-assessment and permission-state machine; provenance, lineage, dispute, incident, deadline and evidence registries; human authorisation gates; and adversarial compliance testing.
-- **Extends and completes:** Doc 15 (OD-31 legal intelligence) with rights enforcement, and proposed Doc 27 (OD-47) with the full IP/trademark/patent/software/publication scope. Doc 27 remains a separate proposal; this document neither confirms nor overrides it.
+- **Extends and completes:** Doc 15 (OD-31 legal intelligence) with rights enforcement, and Doc 27 (OD-47, owner-confirmed 27 November 2026, not a signed Creator decision) with the full IP/trademark/patent/software/publication scope. Doc 27 is a separate confirmed document; this document neither amends nor overrides it.
 - **Does not:** change identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25), protected core (OD-11), Creator channels (OD-18/19/42), foundation-model set (OD-38/OD-46), resource control (OD-39), model-development rules (OD-40), frozen research scope (OD-41), HBI boundaries (OD-45) or any other locked decision.
 - **Does not:** turn IAM into a law firm, grant it authority to give legal advice, or let it sign contracts, form legal entities, accept settlements, transfer ownership, waive rights or register IP in its own name.
 
@@ -46,7 +46,7 @@ Implementation is **inside the existing 15 IAM systems** (principally systems 2,
 | Document | Role | Effect of this spec |
 |----------|------|---------------------|
 | Doc 15 / OD-31 | Continuous legal learning, official-source monitoring, legal-change lifecycle, obligation mapping, evidence | Inherited unchanged; this spec adds **rights enforcement** around it |
-| Doc 27 / OD-47 (proposed) | Five acquisition routes, three pipelines, expanded manifest, independent training approval, legal-context registry | Inherited; this spec generalises it to all material, not only research corpora |
+| Doc 27 / OD-47 (owner-confirmed 27 Nov 2026, not a signed Creator decision) | Twelve acquisition channels, three pipelines, expanded manifest, independent training approval, legal-context registry | Inherited; this spec generalises it to all material, not only research corpora |
 | This spec / OD-48 | IP, copyright, trademark, patent, licensing, privacy, software, training, publication, business, disputes, audit | Adds the governance layer and enforcement gates; **confirmed 27 November 2026** |
 
 Where a rule appears in both, the stricter rule applies. Legal-context entries remain `requires_verification` until counsel records a reference (Doc 27 §8).
@@ -574,7 +574,7 @@ Confirmed scope:
 5. **Human authority matrix** (§1.6) and separate administrative permissions.
 6. **Fail-closed** default: unknown, missing or unavailable checks produce quarantine/deny.
 7. **Legal-context entries remain unverified** until qualified counsel records a reference; no legal conclusions without official-source verification.
-8. **Relationship to OD-31, OD-47 and OD-49**: this extends them and overrides nothing; OD-47 remains a separate unconfirmed proposal.
+8. **Relationship to OD-31, OD-47 and OD-49**: this extends them and overrides nothing; OD-47 is a separate owner-confirmed decision (27 November 2026, not a signed Creator decision).
 9. **Phased rollout** P0…P6 with the adversarial production gate.
 
 Owner confirmation was recorded on 27 November 2026 in `IAM_OWNER_DECISIONS.md` (OD-48). This decision adds no new top-level system and changes no other locked decision.

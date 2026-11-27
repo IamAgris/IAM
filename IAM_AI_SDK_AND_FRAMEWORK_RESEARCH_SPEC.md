@@ -3,7 +3,7 @@
 **Document:** 20 (addendum to Documents 01–19)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026)  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `canonical/IAM_DOC_02_INTELLIGENCE_EVOLUTION.md`, `IAM_DISTRIBUTED_ARCHITECTURE.md` §8 (OEDIE), `IAM_AI_ASSISTANT_INTEROPERABILITY_SPEC.md` (Doc 12), `IAM_DEVELOPER_SDK_AND_CLI_SPEC.md` (Doc 13), `IAM_MASTER_ARCHITECTURE.md` §3, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-36 (AI SDK, framework and model research and integration)
 

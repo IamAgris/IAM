@@ -3,7 +3,7 @@
 **Document:** 12 (addendum to Documents 01–11)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — formal part of IAM architecture, not an optional plugin  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_INTELLIGENCE_EVOLUTION_SPEC.md`, `IAM_COMMUNICATION_ARCHITECTURE.md`, `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-28 (AI assistant interoperability and technology learning)
 

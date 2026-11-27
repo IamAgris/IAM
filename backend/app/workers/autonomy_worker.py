@@ -58,6 +58,14 @@ class AutonomyWorker:
         """Main autonomy loop — uses the durable LangGraph workflow when available."""
         while self.running:
             try:
+                # Self-heal any leaked IRWM lease (e.g. from a cancelled
+                # request). sweep_idle() expires leases past their timeout.
+                try:
+                    from app.services.irwm import irwm
+                    irwm.sweep_idle()
+                except Exception:
+                    pass
+
                 durable = None
                 try:
                     from app.orchestration.autonomy_graph import run_cycle
@@ -209,6 +217,9 @@ class AutonomyWorker:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                # Explicit free hosted specialist: the single local residency
+                # slot must stay available for user chat (OD-39/OD-46).
+                model=settings.autonomy_model,
                 temperature=0.2,
                 max_tokens=256,
                 timeout=60.0,

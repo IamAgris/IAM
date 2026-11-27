@@ -19,7 +19,7 @@ IAM should discover, connect to, evaluate, select and coordinate multiple intell
 The following are **preserved unchanged** by this proposal:
 
 - IAM's identity, genesis record and constitution (OD-01).
-- The local primary model — `Qwen2.5-Coder 3B` (`local-qwen-coder-3b` / `qwen2.5-coder:3b`) under OD-46 — and the rule that it wins when reachable.
+- The local primary model — `Qwen2.5-3B` (`local-qwen-3b` / `qwen2.5:3b`) under OD-46, reopened by the owner 27 Nov 2026 — and the rule that it wins when reachable. `qwen2.5-coder:3b` is an optional secondary.
 - LiteLLM as the single shared gateway.
 - The single-sphere frontend (`/` only); no new page or dashboard.
 - No API credentials in browser JavaScript, browser storage or any API response.

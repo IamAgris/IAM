@@ -3,7 +3,7 @@
 **Document:** 24 (addendum to Documents 01–23)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026)  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_HUMAN_PSYCHOLOGY_TONE_AND_INFLUENCE_SPEC.md` (Doc 17 / OD-33), `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (Doc 14 / OD-30), `IAM_EXTERNAL_AI_IDENTITY_AND_LEARNING_SPEC.md` (Doc 18 / OD-34), `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-43 (human behaviour, equality and responsibility)
 
@@ -458,7 +458,7 @@ specific permission (Doc 14 §2.3).
 | Python | 3.15.2 |
 | Git | 2.45.1.windows.1 |
 | Ollama on host | Not installed as a host command |
-| Ollama in Docker | Running container `aura-ollama`; OD-46 (26 Nov 2026) makes **`qwen2.5-coder:3b`** the shared primary, with `qwen2.5:3b` retained as a secondary alias (`qwen3.5:4b` remains inactive) |
+| Ollama in Docker | Running container `aura-ollama`; OD-46 (owner reopened 27 Nov 2026) makes **`qwen2.5:3b`** (`local-qwen-3b`) the shared primary, with `qwen2.5-coder:3b` retained as an optional secondary (`qwen3.5:4b` remains inactive) |
 | Disk | 15.4 GB free on D: |
 | Cloud budget | Minimal / under $10 monthly |
 | Programming experience | Beginner |

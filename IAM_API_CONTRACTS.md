@@ -2,7 +2,7 @@
 
 **Version:** 1.0 · 24 November 2026  
 **Status:** Provisional — pending owner decisions  
-**Parent:** `IAM_ARCHITECTURE_GAP_ANALYSIS.md` (resolves M-06, C-10)  
+**Parent:** `IAM_FINAL_CONSOLIDATION.md` (resolves M-06, C-10; the original gap analysis is superseded)  
 **Base URL:** `/api/v1` · **Frontend proxy:** Next.js rewrites `/api/*` → backend
 
 ---

@@ -4,7 +4,7 @@
 **Confirmed decision:** OD-38 (extends `IAM_OWNER_DECISIONS.md`)  
 **Status:** CONFIRMED — owner direction, 25 November 2026  
 **Amendment (confirmed OD-46, 26 November 2026; reopened by owner 27 November 2026):** `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (Doc 23-A) establishes one shared primary model for frontend and backend, hosted models as subordinate sub-agents, and a bridge from signed model releases to live inference. **Owner-directed reopening 27 Nov 2026:** the shared primary is **Qwen2.5-3B** (`qwen2.5:3b`); the 26 Nov Qwen2.5-Coder 3B choice is superseded and the coder remains an optional secondary. It supersedes only §1 and §3 below on local-model selection; all other provisions of this document remain authoritative.  
-**Extends:** canonical `IAM_DOC_02_INTELLIGENCE_EVOLUTION.md`; core systems 2 (Intelligence and Reasoning), 5 (Learning), 11 (Self-Evolution and Model Independence), 14 (Evaluation and Research)  
+**Extends:** `canonical/IAM_DOC_02_INTELLIGENCE_EVOLUTION.md`; core systems 2 (Intelligence and Reasoning), 5 (Learning), 11 (Self-Evolution and Model Independence), 14 (Evaluation and Research)  
 **Related:** `IAM_AI_SDK_AND_FRAMEWORK_RESEARCH_SPEC.md` (Doc 20 / OD-36), `IAM_INFRASTRUCTURE_TRAFFIC_AND_DISTRIBUTED_PROCESSING_SPEC.md` (Doc 21 / OD-37), `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (OD-26), `IAM_HARDWARE_ADAPTATION.md` (OD-22)
 
 ---

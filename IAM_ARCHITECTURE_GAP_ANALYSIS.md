@@ -1,5 +1,7 @@
 # IAM — Architecture Gap Analysis
 
+> **HISTORICAL — SUPERSEDED.** Retained for development history only. Superseded by `IAM_FINAL_CONSOLIDATION.md`. Historical "resolved in code" and "complete" statements are dated snapshots, not current evidence.
+
 **Version:** 1.0 · 24 November 2026  
 **Status:** Consolidation review of Documents 01–04  
 **Purpose:** Identify missing requirements, contradictions, security gaps, technical dependencies and database overlaps before finalising the implementation blueprint.  

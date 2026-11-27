@@ -96,5 +96,44 @@ class ProviderModelRegistrarTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("literally-secret", serialized)
 
 
+class RegistrarEligibilityTests(unittest.TestCase):
+    def test_chat_llm_is_eligible(self):
+        spec = ModelSpec(
+            provider="nvidia",
+            model_id="nvidia/nemotron-3-5-lightning-30b-a3b",
+            display_name="Nemotron 3.5 Lightning",
+            alias="nv-nemotron",
+            access_type="free",
+            model_type="llm",
+            api_protocol="chat_completions",
+        )
+        self.assertTrue(ProviderModelRegistrar._eligible(spec))
+
+    def test_db_backed_entry_id_is_read_from_model_info(self):
+        entry = {"model_name": "nv-free", "model_info": {"id": "db-id-1"}}
+        self.assertEqual(ProviderModelRegistrar._entry_id(entry), "db-id-1")
+
+    def test_non_chat_catalogue_models_are_ineligible(self):
+        for model_id in (
+            "openai/whisper-large-v3",
+            "nvidia/active-speaker-detection",
+            "nvidia/bevformer",
+            "nvidia/streampetr",
+            "nvidia/sparsedrive",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        ):
+            spec = ModelSpec(
+                provider="nvidia",
+                model_id=model_id,
+                display_name=model_id,
+                alias="nv-model",
+                access_type="free",
+                model_type="llm",
+                api_protocol="chat_completions",
+            )
+            with self.subTest(model_id=model_id):
+                self.assertFalse(ProviderModelRegistrar._eligible(spec))
+
+
 if __name__ == "__main__":
     unittest.main()

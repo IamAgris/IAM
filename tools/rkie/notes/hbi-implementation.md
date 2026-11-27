@@ -5,7 +5,7 @@
 - Authoritative spec and decisions: `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (Doc 26, OD-45 confirmed 26 Nov 2026), `IAM_OWNER_DECISIONS.md`, `ARCHITECTURE_INDEX.md`. Earlier related docs: Doc 17 (OD-33), Doc 24 (OD-43), Doc 14 (OD-30).
 - Key files:
   - `backend/app/api/routes/hbi.py` — 79 versioned `/api/v1/hbi/*` endpoints; `_service` dependency commits/rolls back.
-  - `backend/app/services/hbi/permission_engine.py` — Doc 27 (proposed OD-47) acquisition permissions, independent training approval, partnerships and unverified legal-context registry.
+  - `backend/app/services/hbi/permission_engine.py` — Doc 27 (OD-47 owner-confirmed 27 Nov 2026) acquisition permissions, independent training approval, partnerships and unverified legal-context registry.
   - `backend/app/services/hbi/research_ecosystem.py` — 12 channels, A–E classification, central legal gate, discovery targets, contributions, federated analysis and derived-output checks.
   - `backend/app/services/hbi/translation.py` — local-first model translation, language/script detection, cross-lingual claim comparison; original preserved.
   - `backend/app/services/hbi/research_lab.py` — ethics-gated studies, informed consent, pseudonymous responses, withdrawal and deletion.

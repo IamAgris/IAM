@@ -12,7 +12,11 @@ import loguru
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.deps import get_db_session
-from app.api.middleware import AuthMiddleware, IPLCIContextMiddleware
+from app.api.middleware import (
+    AuthMiddleware,
+    ConversationOwnerMiddleware,
+    IPLCIContextMiddleware,
+)
 from app.api.middleware.request_context import RequestContextMiddleware
 from app.api.routes import (
     identity,
@@ -173,6 +177,9 @@ app = FastAPI(
 
 # Correlation id first so CORS and auth responses carry X-Request-ID.
 app.add_middleware(RequestContextMiddleware)
+
+# Server-issued owner token scopes public conversations without client changes.
+app.add_middleware(ConversationOwnerMiddleware)
 
 # IPLCI governance context propagates from request headers to all downstream calls.
 app.add_middleware(IPLCIContextMiddleware)

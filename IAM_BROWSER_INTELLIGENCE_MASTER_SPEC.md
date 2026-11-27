@@ -2,9 +2,9 @@
 
 **Document:** 29 — **Master Specification** (addendum to Documents 01–28)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **CONFIRMED — OD-49 confirmed 27 November 2026; part of the frozen baseline.** This document does not alter any locked decision (OD-01…OD-46, OD-49), the existing system count or the system register, and does not affect proposed OD-47 or OD-48. It is a **complete architecture and implementation specification**, **not** confirmation that any capability described here has been implemented or security-tested.  
-**Parent:** `IAM_FINAL_CONSOLIDATION.md`, `IAM_MASTER_ARCHITECTURE.md`  
-**Related:** Doc 11 `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md` (OD-27), Doc 14 `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30), Doc 15 `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31), Doc 23/23-A (OD-38/OD-46), `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` (OD-39), `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` (OD-40), Doc 26 `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (OD-45), Doc 27 (proposed OD-47), Doc 28 `IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md` (OD-48, confirmed 27 November 2026), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_API_CONTRACTS.md`, `IAM_DATABASE_DESIGN.md`, `IAM_OWNER_DECISIONS.md`  
+**Status:** **CONFIRMED — OD-49 confirmed 27 November 2026; part of the frozen baseline.** This document does not alter any locked decision (OD-01…OD-46, OD-49), the existing system count or the system register, and does not affect OD-47 (owner-confirmed 27 Nov 2026, not a signed Creator decision) or OD-48 (confirmed 27 Nov 2026). It is a **complete architecture and implementation specification**, **not** confirmation that any capability described here has been implemented or security-tested.  
+**Parent:** `IAM_FINAL_CONSOLIDATION.md`, `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (the early master draft is superseded)  
+**Related:** Doc 11 `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md` (OD-27), Doc 14 `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (OD-30), Doc 15 `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (OD-31), Doc 23/23-A (OD-38/OD-46), `IAM_RESOURCE_AND_WORKLOAD_MANAGER_SPEC.md` (OD-39), `IAM_MODEL_EVOLUTION_AND_FINE_TUNING_SPEC.md` (OD-40), Doc 26 `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (OD-45), Doc 27 (OD-47 owner-confirmed 27 Nov 2026, not a signed Creator decision), Doc 28 `IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md` (OD-48, confirmed 27 November 2026), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `IAM_API_CONTRACTS.md`, `IAM_DATABASE_DESIGN.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-49 (BIWOS/TIPS as a permanent core browsing capability of IAM's local intelligence)  
 **Architecture status:** **FROZEN AT DESIGN LEVEL** — 20 of 20 coverage requirements met (see §13). Further capabilities are implementation requirements or future extensions, not new core modules.  
 **Governing distinctions:**
@@ -45,7 +45,7 @@ This document is complete before coding. It defines: complete browser and Tor ca
 ### 1.1 What this adds — and what it does not
 
 - **Adds:** a frozen browser architecture (BIWOS + TIPS), two enforcement gateways (Browser Security Gateway, Web Knowledge Integration), a standard internal browser API, task queue, permission model, evidence preservation, Tor privacy system, and an implementation phase plan.
-- **Extends and completes:** OD-27 (UWAIE — universal website interaction), OD-30 (global research), OD-31 (legal intelligence), proposed OD-47 (research acquisition) and OD-48 (IP/legal governance, confirmed 27 November 2026) with an operational browser substrate. This document supplies the *browser operating environment* those decisions assume; it does not reinterpret them.
+- **Extends and completes:** OD-27 (UWAIE — universal website interaction), OD-30 (global research), OD-31 (legal intelligence), OD-47 (research acquisition, owner-confirmed 27 November 2026, not a signed Creator decision) and OD-48 (IP/legal governance, confirmed 27 November 2026) with an operational browser substrate. This document supplies the *browser operating environment* those decisions assume; it does not reinterpret them.
 - **Does not:** change identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25), protected core (OD-11), Creator channels (OD-18/19/42), foundation-model set (OD-38/OD-46), resource control (OD-39), model development (OD-40), frozen research scope (OD-41) or HBI boundaries (OD-45).
 - **Does not:** grant IAM authority to create accounts, accept contracts, agree to subscriptions, make purchases or represent the Creator without authorisation.
 - **Does not:** claim that every capability is implemented, security-tested or operational. Implementation status is recorded only in phase exit criteria (§12).
@@ -423,7 +423,7 @@ IAM may research Tor architecture and documentation, privacy technologies, acade
 2. Calculate file hashes.
 3. Check file signatures and formats.
 4. Scan for malware.
-5. Check copyright and licensing (proposed OD-47/OD-48).
+5. Check copyright and licensing (OD-47/OD-48, confirmed 27 November 2026; OD-47 by owner confirmation, not a signed Creator decision).
 6. Quarantine suspicious files and require approval before opening or executing.
 
 ### 4.10 Tor privacy limitations
@@ -518,7 +518,7 @@ IAM must never create accounts, accept contracts, agree to subscriptions or repr
 
 ### 5.5 Legal and responsible browsing
 
-Integrated with the Legal & Copyright Intelligence system (OD-31, proposed OD-47/OD-48):
+Integrated with the Legal & Copyright Intelligence system (OD-31, OD-47/OD-48 confirmed 27 November 2026):
 
 - respect website terms and applicable access restrictions;
 - respect copyright and licensing conditions;
@@ -785,10 +785,10 @@ Owner confirmation was given for the following items on 27 November 2026 and is 
 5. The rule that browser research never silently modifies trusted knowledge or the production model (§6.2).
 6. The browser API as the single integration surface for all authorised subsystems (§7).
 7. The phase plan (§11), with no capability claimed complete without the §9 tests.
-8. Relationship to existing decisions: extends OD-27/OD-30/OD-31/OD-38/OD-39/OD-46 and proposed OD-47/OD-48; overrides nothing; does not change the system count, identity, signing, financial authority or protected-core rules.
+8. Relationship to existing decisions: extends OD-27/OD-30/OD-31/OD-38/OD-39/OD-46 and OD-47/OD-48 (both confirmed 27 November 2026; OD-47 by owner confirmation, not a signed Creator decision); overrides nothing; does not change the system count, identity, signing, financial authority or protected-core rules.
 
 ---
 
 ## 15. Change control
 
-This document is **confirmed** under OD-49 (27 November 2026), is recorded in `IAM_OWNER_DECISIONS.md`, and is part of the frozen baseline. Proposed OD-47 remains unconfirmed; OD-48 is confirmed (27 November 2026) and unaffected by this decision. Any later change to a locked decision requires explicit owner reopening with a date and reason; changes to identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25) or protected core (OD-11) additionally require a signed Creator approval.
+This document is **confirmed** under OD-49 (27 November 2026), is recorded in `IAM_OWNER_DECISIONS.md`, and is part of the frozen baseline. OD-47 is owner-confirmed (27 November 2026, not a signed Creator decision) and OD-48 is confirmed (27 November 2026); both are unaffected by this decision. Any later change to a locked decision requires explicit owner reopening with a date and reason; changes to identity (OD-01), signing (OD-03), financial authority (OD-04/OD-25) or protected core (OD-11) additionally require a signed Creator approval.

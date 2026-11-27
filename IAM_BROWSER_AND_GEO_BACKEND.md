@@ -1,6 +1,6 @@
 # UWAIE Browser Substrate and Geospatial Backend — First Slice
 
-**Status:** backend-only. Frontend scope remains home + suggestions; no map page was added.
+**Status:** backend-only. At the time of this slice the frontend scope was home + suggestions; the current tree also has conversations routes. No map page was added.
 
 Authority: `ARCHITECTURE_INDEX.md`, Doc 29 / OD-49 (`IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`,
 `IAM_BROWSER_PHASE1_IMPLEMENTATION_PLAN.md`) and Doc 16 / OD-32 (geospatial).

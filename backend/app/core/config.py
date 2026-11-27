@@ -93,6 +93,15 @@ class Settings(BaseSettings):
     # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
     # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     iam_sdk_default_model: str = "nvidia-nemotron-3.5-lightning"
+    # Free hosted specialist for background internal reasoning. OD-46 keeps the
+    # local primary as IAM's brain; this sub-agent uses the separate hosted
+    # pool so it cannot occupy the single OD-39 local residency slot that user
+    # chat needs. Never point this at a paid alias without owner approval.
+    autonomy_model: str = "nvidia-nemotron-3.5-lightning"
+    # Self/independent evaluation deliberately uses the local primary as the
+    # judge. Run it on a slower cadence so it cannot occupy the single OD-39
+    # residency slot for every 30s autonomy tick and starve user chat.
+    autonomy_evaluation_interval_s: int = 900
 
     # One shared primary model for the whole IAM experience (frontend and
     # backend). Hosted providers remain optional specialists reached only by
@@ -137,6 +146,10 @@ class Settings(BaseSettings):
 
     # Always-on live-information policy (proposed Doc 32). Automatic retrieval
     # uses free providers only; paid search stays fail-closed under OD-04/OD-25.
+    # Model-initiated web search. Only user chat may execute tools; internal
+    # workers stay tool-free so they cannot loop or spend search budget.
+    iam_tool_search_enabled: bool = True
+    iam_tool_search_max_rounds: int = 2
     iam_live_info_enabled: bool = True
     iam_live_info_max_results: int = 3
     iam_live_info_timeout_seconds: float = 20.0
@@ -148,7 +161,16 @@ class Settings(BaseSettings):
 
     # Search provider management (proposed Doc 32 §6). Free-first by default;
     # paid providers require signed Creator authorisation before use.
-    iam_search_provider_order: str = "wikipedia,duckduckgo,searxng"
+    iam_search_provider_order: str = (
+        "duckduckgo,google-news-rss,bing-news-rss,google-html,brave-html,"
+        "searxng,wikipedia"
+    )
+    # Independent free providers are queried in parallel; all results and all
+    # failures are retained for ranking and for reporting availability to IAM.
+    iam_search_concurrent_providers: int = 3
+    # Unhealthy providers are probed again after a cooldown so a transient
+    # rate limit cannot permanently remove an engine from the chain.
+    iam_search_provider_recovery_s: int = 300
     iam_search_searxng_url: str = ""
     iam_search_tavily_api_key: str = ""
 
@@ -205,7 +227,11 @@ class Settings(BaseSettings):
     adaptive_small_model: str = "local-qwen-3b"
     adaptive_standard_model: str = "local-qwen-3b"
     adaptive_large_model: str = "local-qwen-3b"
-    adaptive_delegate_model: str = "qwen3.5-9b"
+    # Hosted specialist used only as a helper to the local primary brain.
+    # OD-51: still requires a signed Creator authorization per task; the local
+    # model verifies and accepts findings. Verified free on the NVIDIA key in
+    # .env (27 Nov 2026); the previous Dashscope default had no configured key.
+    adaptive_delegate_model: str = "mistralai/mistral-large-4-1t-a52b"
     adaptive_delegate_node: Optional[str] = None
     adaptive_reserved_ram_mb: int = 1500  # protected core services (OD-39)
     adaptive_min_ram_mb_standard: int = 2500
@@ -344,6 +370,17 @@ class Settings(BaseSettings):
 
     # Model release evidence store (OD-40 self-improvement gates)
     model_release_artifact_root: str = ""
+    # Operator-supplied candidate inputs for unattended foundation-model
+    # development. All empty by default: IAM never invents a licence, a
+    # checkpoint or a served alias, and preparation fails closed without them.
+    model_development_candidate_model: str = ""
+    model_development_checkpoint_ref: str = ""
+    model_development_dataset_licence: str = ""
+
+    # Independent evaluation evidence lives outside IAM's writable database.
+    # The signing key is operator-held and must not be exposed to IAM tools.
+    independent_eval_artifact_root: str = ""
+    independent_eval_signing_key: str = ""
     # Durable research artifacts: "local" (temp/filesystem) or "s3" (MinIO/S3).
     research_artifact_store: str = "local"
     research_artifact_prefix: str = "research"

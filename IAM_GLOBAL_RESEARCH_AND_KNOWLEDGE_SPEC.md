@@ -3,7 +3,7 @@
 **Document:** 14 (addendum to Documents 01–13)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — research scope closed; implementation and validation remain  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_UNIVERSAL_WEBSITE_INTERACTION_SPEC.md`, `IAM_DISTRIBUTED_ARCHITECTURE.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-30 (global research and knowledge coverage)
 

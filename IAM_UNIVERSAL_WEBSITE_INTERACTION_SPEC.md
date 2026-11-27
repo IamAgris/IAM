@@ -3,7 +3,7 @@
 **Document:** 11 (addendum to Documents 01–10)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — formal part of IAM architecture, not an optional plugin  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_DYNAMIC_NODE_NETWORK_SPEC.md`, `IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md`, `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-27 (universal website interaction)
 

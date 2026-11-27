@@ -3,7 +3,7 @@
 **Document:** 22 (addendum to Documents 01–21)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — permanent IAM capability, confirmed 25 November 2026  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `IAM_DISTRIBUTED_ARCHITECTURE.md` §8 (OEDIE, OD-15), `IAM_FREE_INFRASTRUCTURE_NODE_DISCOVERY_AND_LIFECYCLE_SPEC.md` (Doc 19, OD-35), `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (Doc 10, OD-26), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** extends OD-15 and OD-35  
 **Implementation:** `backend/app/services/free_sandboxes/` (default-disabled)

@@ -3,7 +3,7 @@
 **Document:** 18 (addendum to Documents 01–17)  
 **Version:** 1.0 · 25 November 2026  
 **Status:** FROZEN — confirmed part of IAM architecture (owner confirmation 25 November 2026)  
-**Parent:** `IAM_MASTER_ARCHITECTURE.md`  
+**Parent:** `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` (via `IAM_FINAL_CONSOLIDATION.md`; the early master draft is superseded)  
 **Related:** `canonical/IAM_DOC_03_INTERNET_AUTONOMY_ECOSYSTEM.md` §7, `canonical/IAM_DOC_01_MASTER_ARCHITECTURE.md` §9, `IAM_AI_ASSISTANT_INTEROPERABILITY_SPEC.md` (Doc 12), `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (Doc 14), `IAM_WHITEHAT_AND_WORKSPACE.md` (Doc 06), `IAM_DYNAMIC_NODE_NETWORK_SPEC.md` (Doc 10), `IAM_SKILL_FORGE_SPEC.md`, `IAM_OWNER_DECISIONS.md`  
 **Confirmed decision:** OD-34 (external AI identity, interview and collaborative learning)
 

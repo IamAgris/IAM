@@ -1,8 +1,8 @@
-# IAM — Independent AI Entity
+# IAM — Intellectual Artificial Mainbrain
 
 **Project Codename:** AURA (Autonomous Unified Reasoning Architecture) — engineering codename only  
 **Real inference:** `GET /api/v1/models/readiness` reports hosted-provider or opt-in Ollama availability; chat and autonomy share the same resolver. Hosted keys stay free-only; no key means explicit offline mode, never fabricated output.  
-**Status:** Architecture frozen — 16 documents, 41 decisions, 7 resolved specs. All 5 acceptance levels passed (with a scoped admin API credential). Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation, signed sync, evidence-based public-records/vital/estate research the 8-stage legal-intelligence lifecycle, provider-independent geospatial knowledge with live-map freshness and location privacy, evidence-based human public-presence research and the internal assistant-interoperability learning lab are implemented.  
+**Status:** Architecture frozen — 53 locked decisions (OD-01…OD-52 plus OD-56), canonical Docs 01–04 plus numbered Docs 05–36, 7 resolved specs. Dated L1–L5 acceptance runs are recorded in `IAM_ARCHITECTURE_COMPLETION_AUDIT.md`; they are single-node test results, not production verification. Scoped API auth, node registry with the 1% ceiling, model-backed autonomy reasoning, core-authorised S3 storage, the first permission-gated/verified UWAIE slice, protected-core integrity measurement, Ed25519 node attestation, signed sync, evidence-based public-records/vital/estate research the 8-stage legal-intelligence lifecycle, provider-independent geospatial knowledge with live-map freshness and location privacy, evidence-based human public-presence research and the internal assistant-interoperability learning lab are implemented.  
 **Recently closed gaps:** attributed/unverified knowledge contributions, durable `GET /api/v1/events` SSE stream, audit-streamed Skill Runtime logs, an explicitly configured isolated network for permissioned skills, shared Redis rate limiting, Creator email dead-letter/alerting, the Phase 6 blocking white-hat gates (WH-01 authorised-target verification, WH-02 forbidden-capability taxonomy) WS-04 (signed approval + tested-change gate for protected deployments), and an isolation-first workspace manager (WS-01/WS-02: create/start/execute/save/destroy, no core access, no default network), short-lived host-scoped workspace credentials (WS-03), local fallback when an online provider is unavailable (WS-06), the remaining white-hat gates (WH-03…WH-09: isolated labs, remediation validation, P2P tool exclusion, structured audit, defensive study plan and learning≠capability), and opt-in, fail-closed Coder/Codespaces provider adapters are implemented. Outgoing spend now requires a signed per-action Creator authorization and configurable OD-04 caps ($1–$10 per transaction, $100 monthly); budgets cannot self-approve; business projects bind a legal entity; ledger reconciliation, P&L and separately authorised incoming receipts are implemented. Free-only blockchain and consent-gated banking adapters and risk-limited paper trading are available, all fail-closed without external credentials. The legacy standing owner-grant path is retired: it cannot create or grant authority, and all checks route through signed Creator authority. Protocol versions are enforced, workflows require approval before reuse, and external presence and accounts are signed and revocable, browser automation is API-independent with multi-engine/multi-tab sessions, bounded file transfer and recovery/re-inspection, and is backed by HAIS human handover, opt-in visual/ADB agents and an encrypted website credential vault. No reserved API endpoints remain.  
 **Interface:** The supplied HTML is the visual source of truth; displayed identity is **IAM** (Intellectual Artificial Mainbrain).  
 **Native skill system:** IAM Skill Forge — [specification](IAM_SKILL_FORGE_SPEC.md)  
@@ -10,7 +10,7 @@
 **Creator authority:** email + signed challenge, no Creator UI — [specification](IAM_CREATOR_APPROVAL_SPEC.md)  
 **API authentication:** scoped credentials and rate limiting — [specification](IAM_API_AUTH_SPEC.md)  
 **Skill Runtime:** gated, sandboxed execution — [specification](IAM_SKILL_RUNTIME_SPEC.md)  
-**Frontend:** home + suggestions only; all other functions are backend/email — [scope note](IAM_FRONTEND_IMPLEMENTATION.md)  
+**Frontend:** home, suggestions and conversations; underscore-prefixed legacy panels are non-routable; all other functions are backend/email — [scope note](IAM_FRONTEND_IMPLEMENTATION.md)  
 **CI & workers:** [pipeline and background jobs](IAM_CI_AND_WORKERS.md)  
 **Deployment:** [configuration and preflight](IAM_DEPLOYMENT_CONFIG.md)  
 **Privacy:** [secrets, encryption and data rights](IAM_PRIVACY_AND_SECRETS.md)  
@@ -102,7 +102,7 @@ project-aura/
 ├── docker-compose.yml         # Infrastructure stack
 ├── .env.example              # Environment template
 ├── backend/                  # Python + FastAPI (119 ORM tables, 41 routes)
-├── frontend/                 # Single immersive IAM interface at / (no other pages)
+├── frontend/                 # Home, suggestions and conversations routes; legacy _* panels are non-routable
 ├── tests/                    # Level 1–5 acceptance suites
 └── infra/                    # LiteLLM config, Postgres init
 ```
@@ -215,14 +215,15 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - `canonical/IAM_DOC_03_INTERNET_AUTONOMY_ECOSYSTEM.md`
 - `canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md`
 
+**Superseded — historical only (do not use as source of truth)**
+- `IAM_MASTER_ARCHITECTURE.md` — early 15-system baseline; superseded by canonical Doc 01 + `IAM_FINAL_CONSOLIDATION.md`
+- `IAM_INTELLIGENCE_EVOLUTION_SPEC.md` — superseded by canonical Doc 02
+- `IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md` — superseded by canonical Doc 03
+- `IAM_UI_GLOBAL_ACCESS_SPEC.md` — superseded by canonical Doc 04
+- `IAM_ARCHITECTURE_GAP_ANALYSIS.md`, `IAM_DISTRIBUTED_GAP_ANALYSIS.md` — superseded by `IAM_FINAL_CONSOLIDATION.md`
+
 **Derived / working specifications**
-- `IAM_MASTER_ARCHITECTURE.md` — complete integrated system, services, infrastructure
-- `IAM_INTELLIGENCE_EVOLUTION_SPEC.md` — models, NVIDIA, router, learning, self-development
-- `IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md` — web access, AI communication, operations, business
-- `IAM_UI_GLOBAL_ACCESS_SPEC.md` — exact HTML design, anonymous visitors, GeoIP, concurrency
-- **`IAM_ARCHITECTURE_GAP_ANALYSIS.md`** — consolidation review: contradictions, gaps, security, DB overlaps, decisions, reconciled architecture, roadmap
 - `IAM_DISTRIBUTED_ARCHITECTURE.md` — Document 05: creator authority, hybrid P2P, restricted reporting, IAM Aegis, OEDIE
-- `IAM_DISTRIBUTED_GAP_ANALYSIS.md` — gap analysis for the distributed network (trust, signing, sync, revocation, defence)
 - `IAM_WHITEHAT_AND_WORKSPACE.md` — Document 06: white-hat defensive identity, offensive restrictions, provider-independent dev environment
 - `IAM_COMMUNICATION_ARCHITECTURE.md` — Document 07: three channels (Gmail operational, domain Creator approvals, private user), email-based approval, privacy-preserving learning
 - `IAM_HARDWARE_ADAPTATION.md` — Document 08: ARM64/x86-64 architecture independence (AIHAE)
@@ -254,11 +255,11 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - `IAM_DATABASE_INTEGRATION_REPORT.md` — live Postgres verification, fixes and remaining migration issues
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
-- `IAM_OWNER_DECISIONS.md` — 44 owner decisions (ALL LOCKED)
+- `IAM_OWNER_DECISIONS.md` — 53 locked decisions (OD-01…OD-52 plus OD-56)
 - `IAM_OPENAPI.json` — generated OpenAPI schema (829 paths, 473 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 
-**Pre-implementation phase complete. Ready for Phase 0/1 build.**
+**Implementation status:** see `IAM_ARCHITECTURE_COMPLETION_AUDIT.md` for the evidence-qualified status. Acceptance results cited above are dated single-node test runs, not production verification.
 
 ## What IAM Is Not
 

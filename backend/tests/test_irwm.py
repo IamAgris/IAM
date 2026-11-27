@@ -1,5 +1,6 @@
 """OD-39 IRWM runtime enforcement tests."""
 
+import asyncio
 import unittest
 from unittest.mock import patch
 
@@ -12,7 +13,7 @@ class IRWMTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.unloaded = []
         self.irwm = IRWM(
-            ResourceSnapshot(8192, 6000, 4, False),
+            ResourceSnapshot(8192, 6000, 4, False, source="test"),
             unloader=lambda model: self.unloaded.append(model) or True,
         )
 
@@ -68,6 +69,75 @@ class IRWMTests(unittest.IsolatedAsyncioTestCase):
             decision = await self.irwm.admit("model-a", 2000)
             self.assertEqual(decision["decision"], "delegate")
             self.assertIn("reserve", decision["reason"])
+
+    async def test_auto_snapshot_refreshes_after_memory_is_freed(self):
+        stale = ResourceSnapshot(4096, 1000, 4, False, source="auto")
+        fresh = ResourceSnapshot(4096, 6000, 4, False, source="auto")
+        with patch("app.services.irwm.detect_resources", return_value=stale):
+            irwm = IRWM()  # auto-detected snapshot, not an injected fixed one
+        with patch.object(settings, "adaptive_reserved_ram_mb", 1500), patch(
+            "app.services.irwm.detect_resources", return_value=fresh
+        ):
+            decision = await irwm.admit("model-a", 2000)
+            self.assertEqual(decision["decision"], "admit")
+            self.assertGreaterEqual(irwm.usable_ram_mb, 2000)
+
+    async def test_cancelled_request_releases_its_lease(self):
+        manager = IRWM(ResourceSnapshot(8192, 6000, 4, False, source="test"))
+        with patch.object(settings, "adaptive_reserved_ram_mb", 1500):
+            admitted = await manager.admit("model-a", 2000, enqueue=False)
+        lease_id = admitted["lease_id"]
+        from app.services.model_inference import _register_lease_release
+
+        async def abandoned():
+            _register_lease_release("model-a", "ollama", lease_id)
+            raise asyncio.CancelledError()
+
+        with patch("app.services.irwm.irwm", manager):
+            task = asyncio.create_task(abandoned())
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            await asyncio.sleep(0.05)
+        self.assertEqual(manager.resident.in_flight, 0)
+        self.assertEqual(manager.resident.leases, {})
+
+    async def test_user_chat_preempts_internal_lease(self):
+        manager = IRWM(ResourceSnapshot(8192, 6000, 4, False, source="test"))
+        cancelled = []
+
+        class FakeTask:
+            def done(self):
+                return False
+
+            def cancel(self):
+                cancelled.append(True)
+
+        with patch.object(settings, "adaptive_reserved_ram_mb", 1500):
+            internal = await manager.admit(
+                "model-a", 2000, enqueue=False, purpose="internal", task=FakeTask()
+            )
+            self.assertEqual(internal["decision"], "admit")
+            user = await manager.admit(
+                "model-a", 2000, enqueue=False, purpose="user", preemptible=False
+            )
+
+        self.assertEqual(user["decision"], "admit")
+        self.assertEqual(len(cancelled), 1)
+        self.assertEqual(manager.resident.in_flight, 1)
+        self.assertIn(
+            "preempted_internal",
+            [d.get("decision") for d in manager.status()["recent_decisions"]],
+        )
+
+    async def test_lease_release_is_idempotent(self):
+        with patch.object(settings, "adaptive_reserved_ram_mb", 1500):
+            admitted = await self.irwm.admit("model-a", 2000)
+        lease_id = admitted["lease_id"]
+        first = await self.irwm.release("model-a", lease_id)
+        second = await self.irwm.release("model-a", lease_id)
+        self.assertTrue(first["released"])
+        self.assertFalse(second["released"])
+        self.assertEqual(self.irwm.status()["resident"]["in_flight"], 0)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 # IAM — Internet, Autonomy and Ecosystem Specification
 
-**Status:** FROZEN — companion to IAM Master Architecture
+> **HISTORICAL — SUPERSEDED.** Retained for development history only. Superseded by `canonical/IAM_DOC_03_INTERNET_AUTONOMY_ECOSYSTEM.md`. Do not use as a current source of truth.
+
+**Status:** SUPERSEDED — early draft companion to the superseded master architecture.
 
 ---
 

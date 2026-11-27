@@ -4,20 +4,27 @@
 
 ## What is live
 
-The frontend intentionally has only two pages:
+The frontend currently has these routable pages (verified against the working tree on 28 November 2026):
 
 - `frontend/app/page.tsx` — `IAMInterface` home view.
 - `frontend/app/suggestions/page.tsx` — Focus/Recall/Create prompts and public knowledge nodes.
+- `frontend/app/conversations/page.tsx` and `frontend/app/conversations/[id]/page.tsx` — conversation list and detail views.
+
+`frontend/app/iam-proxy/[...path]/route.ts` is a server-only route handler, not a page.
+The underscore-prefixed directories (`_ai-network`, `_financial-intelligence`,
+`_freesandboxes`, `_iics`, `_tone`) are retained as historical source only; Next.js
+does not route them, so they are not part of the live frontend surface.
 
 `frontend/lib/iam-server-api.ts` is a server-only Data Access Layer. It contains
 additional read helpers (capabilities, skills, languages, identity, memory,
 conversations) for reuse, but those views are **not** frontend pages.
 
-**Scope rule:** the frontend is user-only and consists only of the home interface
-and the suggestions page. Everything else is backend, email or service functionality:
-no Creator UI (OD-19), no operator/admin UI, no research, governance, Skill Forge,
-cybersecurity, ARTEX, identity, memory or learning pages. Do not add browser pages
-for those domains, and do not re-add the earlier standalone pages.
+**Scope rule:** the frontend is user-only and consists of the home interface,
+the suggestions page and the conversations views. Everything else is backend,
+email or service functionality: no Creator UI (OD-19), no operator/admin UI,
+no research, governance, Skill Forge, cybersecurity, ARTEX, identity, memory or
+learning pages. Do not add browser pages for those domains, and do not restore
+the earlier standalone pages as routes.
 
 ## Security model
 

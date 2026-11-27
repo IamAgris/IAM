@@ -160,7 +160,7 @@ class ModelPolicyTests(unittest.IsolatedAsyncioTestCase):
                 new=AsyncMock(return_value=SimpleNamespace(as_system_message=lambda: None)),
             ),
         ):
-            _messages, delegation, action = await models._prepare_messages(
+            _messages, delegation, action, _conv_id = await models._prepare_messages(
                 request, FakeDB(), status
             )
         self.assertIsNone(delegation)

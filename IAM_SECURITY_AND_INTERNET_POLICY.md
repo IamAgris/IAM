@@ -2,7 +2,7 @@
 
 **Version:** 1.0 · 24 November 2026  
 **Status:** Provisional — pending owner decisions  
-**Parent:** `IAM_ARCHITECTURE_GAP_ANALYSIS.md` (resolves C-06, M-10, S-01…S-14)
+**Parent:** `IAM_FINAL_CONSOLIDATION.md` (resolves C-06, M-10, S-01…S-14; the original gap analysis is superseded)
 
 ---
 

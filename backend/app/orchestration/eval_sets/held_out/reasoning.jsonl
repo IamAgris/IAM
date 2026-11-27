@@ -1,0 +1,15 @@
+{"prompt":"A rectangular garden is 8 meters wide and 12 meters long. What is its area in square meters? Reply with the number only.","expected":"96","domain":"reasoning","task_type":"arithmetic","difficulty":"easy"}
+{"prompt":"If today is Tuesday, what day of the week will it be in 45 days? Reply with the day name only.","expected":"Thursday","domain":"reasoning","task_type":"calendar","difficulty":"medium"}
+{"prompt":"Which number comes next in this sequence: 2, 6, 18, 54, ...? Reply with the number only.","expected":"162","domain":"reasoning","task_type":"sequence","difficulty":"medium"}
+{"prompt":"All A are B. All B are C. Is it necessarily true that all A are C? Reply yes or no only.","expected":"yes","domain":"reasoning","task_type":"syllogism","difficulty":"easy"}
+{"prompt":"A car travels at 60 km/h for 2.5 hours. How many kilometers does it travel? Reply with the number only.","expected":"150","domain":"reasoning","task_type":"arithmetic","difficulty":"easy"}
+{"prompt":"If x + 3 = 10, what is x? Reply with the number only.","expected":"7","domain":"reasoning","task_type":"algebra","difficulty":"easy"}
+{"prompt":"How many minutes are in 3.5 hours? Reply with the number only.","expected":"210","domain":"reasoning","task_type":"unit_conversion","difficulty":"easy"}
+{"prompt":"A pizza is cut into 8 equal slices. 3 slices are eaten. What fraction of the pizza remains? Reply as a simplified fraction only.","expected":"5/8","domain":"reasoning","task_type":"fractions","difficulty":"medium"}
+{"prompt":"True or false: The square of 9 is 81. Reply true or false only.","expected":"true","domain":"reasoning","task_type":"arithmetic","difficulty":"easy"}
+{"prompt":"If 5 machines take 5 minutes to make 5 widgets, how many minutes would 100 machines take to make 100 widgets? Reply with the number only.","expected":"5","domain":"reasoning","task_type":"logic","difficulty":"hard"}
+{"prompt":"What is the next prime number after 31? Reply with the number only.","expected":"37","domain":"reasoning","task_type":"number_theory","difficulty":"medium"}
+{"prompt":"A right triangle has legs of 6 and 8. What is the length of the hypotenuse? Reply with the number only.","expected":"10","domain":"reasoning","task_type":"geometry","difficulty":"medium"}
+{"prompt":"How many days are in a non-leap year? Reply with the number only.","expected":"365","domain":"reasoning","task_type":"calendar","difficulty":"easy"}
+{"prompt":"If 3/4 of a number is 18, what is the number? Reply with the number only.","expected":"24","domain":"reasoning","task_type":"algebra","difficulty":"medium"}
+{"prompt":"What is 15 percent of 200? Reply with the number only.","expected":"30","domain":"reasoning","task_type":"percentages","difficulty":"easy"}

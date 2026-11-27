@@ -1,11 +1,11 @@
 # IAM — Research Acquisition & Legal Intelligence System Specification
 
-**Document:** 27 (proposed addendum to Documents 01–26)  
+**Document:** 27 (confirmed addendum to Documents 01–26; OD-47 owner-confirmed 27 Nov 2026)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **FROZEN — CONFIRMED** under **OD-45-style owner confirmation (27 November 2026)**. The owner repeatedly instructed approval and asked that development not be gated on external approvals. This is recorded as **owner confirmation, not a signed Creator decision**; it authorises no OD-03 protected-core action. The signed Creator flow (`scripts/od47_creator_flow.py`, SMTP on a private domain) remains available if formal Creator authority is later required. Does not alter any earlier decision or system count.  
+**Status:** **FROZEN - CONFIRMED** under **OD-47 owner confirmation (27 November 2026; not a signed Creator decision)**. The owner repeatedly instructed approval and asked that development not be gated on external approvals. This is recorded as **owner confirmation, not a signed Creator decision**; it authorises no OD-03 protected-core action. The signed Creator flow (`scripts/od47_creator_flow.py`, SMTP on a private domain) remains available if formal Creator authority is later required. Does not alter any earlier decision or system count.  
 **Parent:** `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (Doc 26 / OD-45), `IAM_GLOBAL_RESEARCH_AND_KNOWLEDGE_SPEC.md` (Doc 14 / OD-30)  
 **Related:** `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` (Doc 25 / OD-44), `IAM_LEGAL_INTELLIGENCE_AND_COMPLIANCE_SPEC.md` (Doc 15), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_PRIVACY_AND_SECRETS.md`, `tools/rkie/notes/hbi-implementation.md`  
-**Proposed decision:** OD-47 (Research Acquisition & Legal Intelligence)  
+**Recorded decision:** OD-47 (Research Acquisition & Legal Intelligence) — owner-confirmed 27 Nov 2026, not a signed Creator decision.  
 **Governing principle:** Build IAM around **legal access to knowledge, original research, partnerships and independently developed intelligence** — not around owning unrestricted rights to other people's intellectual property.
 
 ---
