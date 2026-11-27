@@ -1,0 +1,51 @@
+[project]
+name = "aura-backend"
+version = "0.1.0"
+description = "Project AURA - Autonomous AI Backend API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.4.0",
+    "sqlalchemy>=2.0.36,<2.1",  # 2.1 requires C extensions blocked by Windows App Control
+    "pgvector>=0.3.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+    "redis>=5.0.0",
+    "httpx>=0.27.0",
+    # python-jose/ecdsa removed: unused by the codebase and affected by
+    # PYSEC-2026-1325 and PYSEC-2026-4298 with no upstream fix versions.
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.1",
+    "python-multipart>=0.0.9",
+    # Ed25519 signing/verification and AES-GCM: used by Creator authority and crypto service.
+    "cryptography>=42.0.0",
+    "loguru>=0.7.0",
+    "litellm>=1.40.0",
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint-sqlite>=2.0.0",
+    "playwright>=1.48.0",
+    "pytesseract>=0.3.13",  # local OCR binding; Tesseract binary required at runtime
+    "pypdf>=7.2.0",  # local PDF text extraction
+    "python-docx>=1.2.0",  # local DOCX text extraction
+    "openpyxl>=3.1.5",  # local XLSX table extraction
+    "stem>=1.8.2",  # local Tor control-port client; no proxy-only fallback
+    "socksio>=1.0.0",  # SOCKS transport for .onion availability checks
+    "boto3>=1.34.0",
+    "arq>=0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx[async]>=0.27.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

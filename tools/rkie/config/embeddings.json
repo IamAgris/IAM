@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "enabled": true,
+  "provider": "ollama",
+  "base_url": "http://localhost:11434",
+  "model": "nomic-embed-text",
+  "fallback": "tfidf",
+  "note": "Local-only. Enable only after a local embedding model is available; no private repository content is sent externally."
+}

@@ -1,0 +1,14 @@
+# Benchmark-only override — emulates the Contabo VPS 4 profile (4 vCPU / 8 GB).
+# Use together with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.benchmark.yml up -d --force-recreate ollama
+# This does NOT change the production Compose configuration. On the real 8 GB VPS,
+# Ollama must be capped below 8 GB so PostgreSQL/Redis/backend/LiteLLM still fit.
+services:
+  ollama:
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8G
+        reservations:
+          memory: 512M

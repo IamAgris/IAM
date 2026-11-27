@@ -1,0 +1,5 @@
+{"prompt":"When establishing a development environment, what must happen first: deploy or research providers? Reply with one word.","expected":"research"}
+{"prompt":"Before promoting a model to production, what must happen first: evaluate or deploy? Reply with one word.","expected":"evaluate"}
+{"prompt":"A task depends on another task finishing. What is the dependent task called? Reply with one word: blocked or independent.","expected":"blocked"}
+{"prompt":"If a plan has steps A then B, and B requires A, what should run first? Reply with the step letter only.","expected":"A"}
+{"prompt":"What is the final stage of the cognitive lifecycle: reflection or execution? Reply with one word.","expected":"reflection"}

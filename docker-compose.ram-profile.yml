@@ -1,0 +1,17 @@
+# RAM-management profile for the 4 vCPU / 8 GB Contabo core (OD-39).
+# Apply together with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.ram-profile.yml up -d ollama
+#
+# Do NOT combine with docker-compose.benchmark.yml — that override deliberately
+# uses an 8 GB ceiling to emulate the whole VPS for benchmarking. This profile
+# leaves headroom for PostgreSQL, Redis, backend and LiteLLM in production.
+#
+# Context window (4096) is a per-request Ollama option (num_ctx), not an env var.
+services:
+  ollama:
+    mem_limit: 6g
+    cpus: 4
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_KEEP_ALIVE: "2m"

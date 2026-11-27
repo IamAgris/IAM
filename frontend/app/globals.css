@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Registered color variables can be transitioned, so theme changes interpolate
+   instead of snapping between two complete palettes. */
+@property --bg1 { syntax: "<color>"; inherits: true; initial-value: #FFFFFF; }
+@property --bg2 { syntax: "<color>"; inherits: true; initial-value: #DDE2F5; }
+@property --ink { syntax: "<color>"; inherits: true; initial-value: #141A3A; }
+@property --mute { syntax: "<color>"; inherits: true; initial-value: #5A6394; }
+@property --glass { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.65); }
+@property --line { syntax: "<color>"; inherits: true; initial-value: rgba(40,55,140,.2); }
+@property --accent { syntax: "<color>"; inherits: true; initial-value: #3A4FD8; }
+
+:root,
+:root[data-theme="light"] {
+  --bg1: #FFFFFF;
+  --bg2: #DDE2F5;
+  --ink: #141A3A;
+  --mute: #5A6394;
+  --glass: rgba(255, 255, 255, .65);
+  --line: rgba(40, 55, 140, .2);
+  --accent: #3A4FD8;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: --bg1 .38s ease, --bg2 .38s ease, --ink .38s ease,
+              --mute .38s ease, --glass .38s ease, --line .38s ease,
+              --accent .38s ease;
+}
+
+:root[data-theme="dark"] {
+  --bg1: #0B0F26;
+  --bg2: #03040B;
+  --ink: #E9EDFF;
+  --mute: #8D96C4;
+  --glass: rgba(18, 22, 52, .55);
+  --line: rgba(160, 175, 255, .22);
+  --accent: #8FA6FF;
+  color-scheme: dark;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(120% 90% at 50% 38%, var(--bg1), var(--bg2));
+  color: var(--ink);
+  font: 300 16px/1.65 "Space Grotesk", system-ui, sans-serif;
+  overflow: hidden;
+  transition: background .4s ease, color .4s ease;
+}
+
+h1, h2, h3, .say {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+.say {
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+input::placeholder {
+  color: var(--mute);
+}
+
+/* Utility aliases used by admin pages */
+.border-border { border-color: var(--line); }
+.bg-card { background: var(--glass); }
+.text-muted-foreground { color: var(--mute); }
+.bg-muted { background: rgba(143, 166, 255, .08); }
+.bg-primary { background: var(--accent); }
+.text-primary { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

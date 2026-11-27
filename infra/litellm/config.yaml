@@ -1,0 +1,97 @@
+# =============================================================================
+# LiteLLM Configuration - IAM Model Gateway
+# =============================================================================
+# Provider switching, fallback and spend control.
+# IAM policy (OD-04): no standing paid budget — all spend requires owner approval.
+# LiteLLM's max_budget here is 0; free endpoints remain usable. To enable a paid
+# model, set an explicit budget only after owner authorization.
+#
+# Reference: https://docs.litellm.ai/docs/
+
+model_list:
+  # ---------------------------------------------------------------------------
+  # NVIDIA NIM / build.nvidia.com (free endpoints, OpenAI-compatible)
+  # ---------------------------------------------------------------------------
+  # OD-52 Phase C: one static bootstrap alias keeps the gateway usable before
+  # discovery runs. All other eligible free models are registered at runtime
+  # via /model/new by IAM's ProviderModelRegistrar, using this same single key.
+  # Never put a key literal in this file.
+  - model_name: nvidia-nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-lightning-30b-a3b
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  # ---------------------------------------------------------------------------
+  # Alibaba Dashscope (Qwen)
+  # ---------------------------------------------------------------------------
+  - model_name: qwen3.5-9b
+    litellm_params:
+      model: dashscope/qwen3.5-9b
+      api_key: os.environ/DASHSCOPE_API_KEY
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+  # ---------------------------------------------------------------------------
+  # Google Gemini — additional reasoning/research/coding provider (OD-38).
+  # GATED TEMPLATE: enable only after verifying the current free-tier model ID
+  # and applying the data-policy rule (no private/visitor data to third parties
+  # without creator approval). GOOGLE_API_KEY is passed via docker-compose.
+  # ---------------------------------------------------------------------------
+  # - model_name: gemini-free
+  #   litellm_params:
+  #     model: gemini/gemini-2.5-flash
+  #     api_key: os.environ/GOOGLE_API_KEY
+
+  # ---------------------------------------------------------------------------
+  # Local inference (Ollama) - private, no API key, no spend
+  # Owner-directed reopening of OD-46 (27 Nov 2026): Qwen2.5-3B is IAM's
+  # shared primary local brain. Pull first:
+  #   docker exec aura-ollama ollama pull qwen2.5:3b
+  # qwen2.5-coder:3b remains an optional secondary local model, not the default.
+  # Additional local models require an owner decision before being pulled or routed.
+  # ---------------------------------------------------------------------------
+  - model_name: local-qwen-3b
+    litellm_params:
+      model: ollama/qwen2.5:3b
+      api_base: http://ollama:11434
+      # CPU-only 3B cold start on the 4 vCPU core can exceed LiteLLM's 60s default.
+      timeout: 300
+
+  # Optional secondary (not the shared primary):
+  # - model_name: local-qwen-coder-3b
+  #   litellm_params:
+  #     model: ollama/qwen2.5-coder:3b
+  #     api_base: http://ollama:11434
+
+  # ---------------------------------------------------------------------------
+  # Adaptive selection tiers (OD-39 / OD-41) map to the approved primary local
+  # alias above. Other tier aliases are intentionally unavailable.
+  # ---------------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------------
+  # Fallback providers
+  # ---------------------------------------------------------------------------
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude-3-haiku
+    litellm_params:
+      model: anthropic/claude-3-haiku-20240307
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+# ---------------------------------------------------------------------------
+# General settings — zero standing budget (OD-04)
+# ---------------------------------------------------------------------------
+general_settings:
+  max_budget: 0  # paid inference disabled until owner authorization
+  num_retries: 3
+  retry_after: 2
+  # OD-52 Phase C: runtime-registered free models persist across restarts.
+  # Provider credentials are encrypted by LiteLLM using LITELLM_SALT_KEY.
+  store_model_in_db: true
+
+litellm_settings:
+  enable_tagging: true
+  detailed_usage: true

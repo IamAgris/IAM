@@ -1,0 +1,49 @@
+{
+  "ollama_reachable": true,
+  "aliases": [
+    {
+      "alias": "nvidia-llama-3.3-70b",
+      "status": "NO KEY (NVIDIA_API_KEY)"
+    },
+    {
+      "alias": "nvidia-qwen-2.5-72b",
+      "status": "NO KEY (NVIDIA_API_KEY)"
+    },
+    {
+      "alias": "nvidia-deepseek-r1",
+      "status": "NO KEY (NVIDIA_API_KEY)"
+    },
+    {
+      "alias": "nvidia-nemotron",
+      "status": "NO KEY (NVIDIA_API_KEY)"
+    },
+    {
+      "alias": "qwen3.5-9b",
+      "status": "NO KEY (DASHSCOPE_API_KEY)"
+    },
+    {
+      "alias": "gemini-free (template, disabled)",
+      "status": "NO KEY (GOOGLE_API_KEY)"
+    },
+    {
+      "alias": "gpt-4o-mini",
+      "status": "NO KEY (OPENAI_API_KEY)"
+    },
+    {
+      "alias": "claude-3-haiku",
+      "status": "NO KEY (ANTHROPIC_API_KEY)"
+    },
+    {
+      "alias": "local-qwen-coder-3b",
+      "status": "READY"
+    },
+    {
+      "alias": "local-qwen-3b",
+      "status": "READY"
+    },
+    {
+      "alias": "local-qwen3.5-4b",
+      "status": "READY"
+    }
+  ]
+}

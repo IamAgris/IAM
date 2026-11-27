@@ -1,0 +1,28 @@
+name: RKIE toolkit tests
+
+# Smoke-tests the deterministic repository-intelligence toolkit.
+# Defined as a new workflow so the modified ci.yml is left untouched.
+on:
+  push:
+    paths:
+      - 'tools/rkie/**'
+      - 'AGENTS.md'
+      - 'ARCHITECTURE_INDEX.md'
+  pull_request:
+    paths:
+      - 'tools/rkie/**'
+      - 'AGENTS.md'
+      - 'ARCHITECTURE_INDEX.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rkie-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run RKIE smoke tests
+        shell: pwsh
+        run: ./tools/rkie/tests/Test-RKIE.ps1

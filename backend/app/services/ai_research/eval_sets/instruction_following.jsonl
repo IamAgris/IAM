@@ -1,0 +1,5 @@
+{"prompt":"Reply with exactly: READY","expected":"READY"}
+{"prompt":"Answer with the single word: violet","expected":"violet"}
+{"prompt":"Respond with only the number 7.","expected":"7"}
+{"prompt":"Reply with the three lowercase letters: abc","expected":"abc"}
+{"prompt":"Output exactly: IAM","expected":"IAM"}

@@ -1,0 +1,33 @@
+# Authorized ARTEX lab only.
+#
+# Use this ONLY with systems you own or are explicitly authorized to test.
+# The console and MCP endpoint are bound to loopback and must never be exposed
+# to the public internet. Supply a verified fork image via ARTEX_IMAGE.
+#
+# IAM connector settings for this lab:
+#   ARTEX_ENABLED=true
+#   ARTEX_BASE_URL=http://127.0.0.1:8787
+#   ARTEX_DRY_RUN=true          # keep true until the IAM guard is verified
+#   ARTEX_MCP_TOKEN=<token created in the ARTEX console>
+
+services:
+  artex:
+    image: ${ARTEX_IMAGE:?Set ARTEX_IMAGE to a verified fork image}
+    container_name: iam-artex-lab
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+      - "127.0.0.1:8788:8788"
+    environment:
+      POSTGRES_PASSWORD: ${ARTEX_POSTGRES_PASSWORD:-change-me-securely}
+    volumes:
+      - artex_data:/data
+    networks:
+      - iam-artex-lab
+
+volumes:
+  artex_data:
+
+networks:
+  iam-artex-lab:
+    internal: true
