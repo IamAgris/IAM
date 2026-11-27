@@ -101,6 +101,12 @@
       "area": "universal-model-discovery"
     },
     {
+      "pattern": "^IAM_PAID_MODEL_ACCESS_DECISION\\.md$",
+      "spec": "IAM_PAID_MODEL_ACCESS_DECISION.md; IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
+      "decisions": ["OD-56"],
+      "area": "paid-model-access-proposed"
+    },
+    {
       "pattern": "^IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC\\.md$",
       "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
       "decisions": ["OD-52"],

@@ -1,14 +1,14 @@
 {
     "version":  1,
-    "generatedAt":  "2026-11-27T11:59:23Z",
-    "baseCommit":  "849e87c4f654171f24488fd3167672f0dc23d5c9",
+    "generatedAt":  "2026-11-27T12:15:53Z",
+    "baseCommit":  "41b8d8f0a76ef97132f0b3bf1aaa17f8f8d82a4e",
     "configVersion":  1,
     "stats":  {
-                  "files":  968,
-                  "added":  4,
-                  "changed":  19,
+                  "files":  978,
+                  "added":  0,
+                  "changed":  2,
                   "removed":  0,
-                  "unchanged":  945
+                  "unchanged":  976
               },
     "files":  [
                   {
@@ -208,8 +208,8 @@
                   },
                   {
                       "path":  "ARCHITECTURE_INDEX.md",
-                      "sha256":  "ca87161d8828bbaa78c4c8daee1cd3900ab71f5f123d19b929439e2952f0be4a",
-                      "bytes":  21329,
+                      "sha256":  "75db76537828efdbde6221e5ff2de4a02506e9fc6a96473617a4cc5a1495d528",
+                      "bytes":  21733,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-index",
@@ -522,6 +522,19 @@
                       "path":  "backend/app/api/routes/browser_knowledge.py",
                       "sha256":  "640d666379f02cea67f26acd9eebdfe4f18afb2967b0d8179356bd9c884301b3",
                       "bytes":  2941,
+                      "status":  "tracked",
+                      "category":  "api-route",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/app/api/routes/browser_lifecycle.py",
+                      "sha256":  "b3eb43ac799d864f744b8458b82ecf2b756a5209eb3e60cd14feceb626d0afce",
+                      "bytes":  3453,
                       "status":  "tracked",
                       "category":  "api-route",
                       "area":  "backend-core",
@@ -1145,8 +1158,8 @@
                   },
                   {
                       "path":  "backend/app/api/routes/ops.py",
-                      "sha256":  "3f0a0f9f12d4c6f1fe2a119ce5c5f84c38f50bb4f113f2acef00ecd4adf43a38",
-                      "bytes":  2966,
+                      "sha256":  "4738a7fb9b249eff9f7f237df8b2a38a540752aae56b716204018886fe85670e",
+                      "bytes":  3055,
                       "status":  "tracked",
                       "category":  "api-route",
                       "area":  "backend-core",
@@ -1471,7 +1484,7 @@
                   },
                   {
                       "path":  "backend/app/api/routes/web3.py",
-                      "sha256":  "bb93c1f3a49f3fa014173786ea357968d402c07358d06f036e10a70b1422ae53",
+                      "sha256":  "6dffaa51b7f142ba93d68211cc3f116f71e7a8790d20f0d089eda843cc8f1170",
                       "bytes":  11087,
                       "status":  "tracked",
                       "category":  "api-route",
@@ -1484,7 +1497,7 @@
                   },
                   {
                       "path":  "backend/app/api/routes/web3_extended.py",
-                      "sha256":  "35f29a4053a52fc70f1b4fbf4f0fc89e467bef59095800779be982d26266e8fa",
+                      "sha256":  "0c105be9375a00bfcfa74e66d97ab9307c9333f5758e45f1cdd13cbeba5537c9",
                       "bytes":  16997,
                       "status":  "tracked",
                       "category":  "api-route",
@@ -1562,7 +1575,7 @@
                   },
                   {
                       "path":  "backend/app/core/auth_policy.py",
-                      "sha256":  "b9441f3ea87bde2f16a09f55f79a1e7fc0659b4b26c0936599679e976d143146",
+                      "sha256":  "f0dc027936b7153cc87d7095d533c95db846b0e67c5ad5f26c231831a3c0b414",
                       "bytes":  3777,
                       "status":  "tracked",
                       "category":  "core",
@@ -1575,8 +1588,8 @@
                   },
                   {
                       "path":  "backend/app/core/config.py",
-                      "sha256":  "4d27df8433cbd7e199cb9f9994dc58331a01f52cd4ccb4084e740aebdbc9e105",
-                      "bytes":  24590,
+                      "sha256":  "d5dbfcbcae16f295f120cccceeea012f6914700dcd442b87626358de12ef3b1c",
+                      "bytes":  24752,
                       "status":  "tracked",
                       "category":  "core",
                       "area":  "backend-core",
@@ -2238,8 +2251,8 @@
                   },
                   {
                       "path":  "backend/app/db/migrations/045_iplci.sql",
-                      "sha256":  "4797634fb5154af2300fdc5c97682ebb1ae2f3eb428b47ac0b13dd06c93b2683",
-                      "bytes":  7303,
+                      "sha256":  "f5bd12af1dcbc92106e7c3c8e8776c18fd9e287e94c16f17be3726992892310f",
+                      "bytes":  7307,
                       "status":  "tracked",
                       "category":  "migration",
                       "area":  "backend-core",
@@ -2342,7 +2355,7 @@
                   },
                   {
                       "path":  "backend/app/db/migrations/054_web3_and_nodes.sql",
-                      "sha256":  "d2d226a78303817b7568386452b7f6c0068be87c1aeda5736cef14247b777836",
+                      "sha256":  "a008edf98f21e20708f84908f06c1a520cb6250facfdf6fd44561be79ba127c1",
                       "bytes":  9415,
                       "status":  "tracked",
                       "category":  "migration",
@@ -2497,6 +2510,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/app/db/migrations/068_browser_lifecycle.sql",
+                      "sha256":  "a5009d0c3ef8a38a8de0f8949e3a380fbdbcd0c38865be34852f267ca0c6e908",
+                      "bytes":  998,
+                      "status":  "tracked",
+                      "category":  "migration",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/app/db/migrations/env.py",
                       "sha256":  "fe164073b1f822c1048c91b64118861d51390b4180ee27b1fb68cb10d70a181d",
                       "bytes":  2154,
@@ -2524,8 +2550,8 @@
                   },
                   {
                       "path":  "backend/app/db/migrations/MIGRATION_ORDER.json",
-                      "sha256":  "b37ca71268b52f70e973af26401d94e1a486198ff057a97d023514a554fd6a39",
-                      "bytes":  6747,
+                      "sha256":  "a46eda4cf898da763aba2363ba83a4f471548303204e160cbaa0099450237352",
+                      "bytes":  6849,
                       "status":  "tracked",
                       "category":  "migration",
                       "area":  "backend-core",
@@ -2602,8 +2628,8 @@
                   },
                   {
                       "path":  "backend/app/main.py",
-                      "sha256":  "ee6e2119174aa20edfca0edb7d65db9e4f03cd6a4f3ba257cd1ab6ed33ffb71f",
-                      "bytes":  9575,
+                      "sha256":  "2ecb7c5b86668eee12cbc5283a18032737eae492c2aa53e9cf5c13a1254ba915",
+                      "bytes":  9643,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -2615,7 +2641,7 @@
                   },
                   {
                       "path":  "backend/app/models/__init__.py",
-                      "sha256":  "3e97cfd072721a83eb7ae7c4beda8c76f2603c93e55ace690a59be3a2f9a912c",
+                      "sha256":  "0ad8fe17db84c17b4b008604d38ade4a115e0dcfd882da067f915acc6fa2673e",
                       "bytes":  13305,
                       "status":  "tracked",
                       "category":  "orm-model",
@@ -3292,8 +3318,8 @@
                   },
                   {
                       "path":  "backend/app/models/web_knowledge.py",
-                      "sha256":  "94c6aaaaef2f70652a3c327664c830b33188068de51c935e032b86cab54c627a",
-                      "bytes":  21069,
+                      "sha256":  "2bad75dc356124a4913286109d39c0b40c83d4f35f5cc8ddd5aef41d54a7f32b",
+                      "bytes":  22205,
                       "status":  "tracked",
                       "category":  "orm-model",
                       "area":  "backend-core",
@@ -3305,7 +3331,7 @@
                   },
                   {
                       "path":  "backend/app/models/web3.py",
-                      "sha256":  "13629d64a14fa8b85f79f896785f02f12d55352ded0311917ee454e029847440",
+                      "sha256":  "b4d5fbd52a7ab6f5ce32fc8fbcff1925f60b4d72368abf366e015999dedd88d3",
                       "bytes":  13343,
                       "status":  "tracked",
                       "category":  "orm-model",
@@ -4047,8 +4073,8 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/activation.py",
-                      "sha256":  "87c2746991f8c0bb6aac1d28c2e229271479ba0d75c63e423d6427e9174122b3",
-                      "bytes":  3158,
+                      "sha256":  "5652bea47d13be914c915e1e7ec19d8d830fc7860c9852559152e7ba4547f74a",
+                      "bytes":  3269,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -4060,7 +4086,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/audit.py",
-                      "sha256":  "25c859553a3ffe7a7f6951383b9c322b945dafacbdfd3d718f822d8589e7ebcb",
+                      "sha256":  "9f487cece2d6a73b081effff993324a32eb3faaade686c778a538d65a5ccdbd9",
                       "bytes":  4996,
                       "status":  "tracked",
                       "category":  "service",
@@ -4073,7 +4099,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/business.py",
-                      "sha256":  "73d4afa9860c01a433a9674d5b77b7831bb7510d8447f9dfdc37c5ddd2ac459a",
+                      "sha256":  "097c7013759fa0ca92af88493f1ba21455c32d3854995e8839a6a07dea22dddf",
                       "bytes":  2116,
                       "status":  "tracked",
                       "category":  "service",
@@ -4086,7 +4112,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/contracts.py",
-                      "sha256":  "192a4e5b50d3d95c3f60b36c489ed725f04259378b3c28d125a3eba8cac21aa7",
+                      "sha256":  "ce2dc47a9b7f97a6c53f6fb27b22b26f7c8f80efdca91f56722705e192c23a9f",
                       "bytes":  4911,
                       "status":  "tracked",
                       "category":  "service",
@@ -4099,7 +4125,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/cross_chain.py",
-                      "sha256":  "3d77d1bee2905e348db02829488d210f0cb6634e7835cd26a8de4600ae62305e",
+                      "sha256":  "c2122b26261b0dbffd043d85cada2e6e490c8827b1a8ca0018664aaf34702c91",
                       "bytes":  3383,
                       "status":  "tracked",
                       "category":  "service",
@@ -4112,7 +4138,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/dao.py",
-                      "sha256":  "3758c6045cf1701a2fb6734370110952d89f23ceeb299adddfe7c5f2f0481962",
+                      "sha256":  "67518b647cde02c75465b496ec89ce95b5d27afc9629bdb47f8e2a5c5b48345f",
                       "bytes":  3328,
                       "status":  "tracked",
                       "category":  "service",
@@ -4125,7 +4151,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/defi.py",
-                      "sha256":  "3543659f8aeed63d880aec88a06e4fdf9a0cc07ff7ab920a00ed339f6217372c",
+                      "sha256":  "2a7f0a427d34d758157059e7d6a03b662f2ddb0dcb0553d383ed47de407f462d",
                       "bytes":  5495,
                       "status":  "tracked",
                       "category":  "service",
@@ -4151,7 +4177,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/fiat.py",
-                      "sha256":  "0988d8597c6e806a48a0569b03da373afe3a043cf43a8f377a328eb116f385bf",
+                      "sha256":  "4d787abff98a1163935f81a079c38d4366a41c6dd2497d3b6f74cdd25ef7ab3c",
                       "bytes":  2191,
                       "status":  "tracked",
                       "category":  "service",
@@ -4164,7 +4190,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/governance.py",
-                      "sha256":  "e971ac93134ccda48f1dbe345d656b9870b1488104661d1842f4a4bd3f14246d",
+                      "sha256":  "e35cdd8f54857778ce0413756c1147135d708f2bbc6be4d7fa6b17e02c3d28e2",
                       "bytes":  7649,
                       "status":  "tracked",
                       "category":  "service",
@@ -4190,7 +4216,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/monitoring.py",
-                      "sha256":  "ee2250fe92aa09076f6cfc637aabae6161ed0b51faafc98c97c134b5f53fbd2d",
+                      "sha256":  "1db1ae432e34d6089c8022f7a670e69fe9b7ce9532494300a70711d3162f6cd4",
                       "bytes":  5048,
                       "status":  "tracked",
                       "category":  "service",
@@ -4203,7 +4229,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/network_registry.py",
-                      "sha256":  "fbd6493d9cf1656bb604994662ec51ced829c2d2a1481d323a8fd09809e76e42",
+                      "sha256":  "8901c67b0947572e88bc4a90705ecba33173979b133051117403c1605d7e5772",
                       "bytes":  3762,
                       "status":  "tracked",
                       "category":  "service",
@@ -4216,7 +4242,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/nft.py",
-                      "sha256":  "f2aa2227fa059155a8c1f127425e458e58f5e5c73db43fcde61371b26f143442",
+                      "sha256":  "b7c6e23dc2d5ec4b597c6af5ca20928088a3408fcedecb5e97490828dd300cb9",
                       "bytes":  3731,
                       "status":  "tracked",
                       "category":  "service",
@@ -4229,7 +4255,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/node_service.py",
-                      "sha256":  "44a4a2dd0278613073e7008e7ff407509f05a0e12b963cc1cf3e5d14fa3b845b",
+                      "sha256":  "42efff888085f8d5bd74f686d7c559f825faefe81155505cd8dee890e3679af6",
                       "bytes":  5264,
                       "status":  "tracked",
                       "category":  "service",
@@ -4242,7 +4268,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/non_evm.py",
-                      "sha256":  "7f8c9053598736224bfbe62a6ad44c55c32f07a4d6a4dafa480addee1943e304",
+                      "sha256":  "32df553396ddd28598ee980257a1903562cecb537f83e3ef098f23b74304b877",
                       "bytes":  2331,
                       "status":  "tracked",
                       "category":  "service",
@@ -4255,7 +4281,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/onchain_analysis.py",
-                      "sha256":  "0b1536d5679a6aa30a52033000c096acb1f4fddf121ab89f41cca22ff387b7ec",
+                      "sha256":  "64a3efc25f9e1343bb835ef3a95e3501254e3f612396758acd62d2aa70f093b3",
                       "bytes":  3938,
                       "status":  "tracked",
                       "category":  "service",
@@ -4268,7 +4294,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/providers/__init__.py",
-                      "sha256":  "e7c4f4184d9d46cb32b50fc6344049a34bedcdb0737fe5c93cf8753a5cdca33a",
+                      "sha256":  "c76eba373d718beb0cd8226625e5283f6138c79d528304fb594e83ed45e7f0f1",
                       "bytes":  469,
                       "status":  "tracked",
                       "category":  "service",
@@ -4281,7 +4307,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/providers/base.py",
-                      "sha256":  "eacbd3b4a4e1f318eb47427a223cf56adb8b12145ca630e3c514a50fd57d0015",
+                      "sha256":  "d42fc88532ad8748b435f04e67ed6cf94b1e9f180d99a40d17f5469d3626083a",
                       "bytes":  3855,
                       "status":  "tracked",
                       "category":  "service",
@@ -4346,7 +4372,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/reconciliation.py",
-                      "sha256":  "f69df3fa62725606ff8d20c70f3b41ef444df733775bd0ba2702d92ace48f602",
+                      "sha256":  "9e9d386a9b5ad0da124c92e18f2b35ee6cdb6f74b4e9b0dc45477246c3072213",
                       "bytes":  2584,
                       "status":  "tracked",
                       "category":  "service",
@@ -4359,7 +4385,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/registries.py",
-                      "sha256":  "4ef9ab8c5ee9c7f083c043f61e760293c2b199e8842a47cad81385af5bc942df",
+                      "sha256":  "7dbbf71401f3f377508dc0c68fd9c7d7a61cd25497ac27c9b10c35ad797f77ba",
                       "bytes":  5256,
                       "status":  "tracked",
                       "category":  "service",
@@ -4398,7 +4424,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/threat_intel.py",
-                      "sha256":  "54cd104481e848403fce1cd8621c62c2e0a08aa2c9bb9709f7c52e7eb004d9a4",
+                      "sha256":  "76996aa3c3baf1c27ab9d6d8dea01b1e0bd60b8c741c0c6d41243c7d97992170",
                       "bytes":  2597,
                       "status":  "tracked",
                       "category":  "service",
@@ -4411,7 +4437,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/transaction_manager.py",
-                      "sha256":  "29cb3bc464092e08e92592e67ebf86aa0e099cb0f55cbfd06ffe9913b253d3f4",
+                      "sha256":  "5b289ee95277ee83e7fa72e9d11d46fba3b16d9db25e867e69b08cd70707ce44",
                       "bytes":  12745,
                       "status":  "tracked",
                       "category":  "service",
@@ -4450,7 +4476,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/wallet_registry.py",
-                      "sha256":  "0782f6e58e293455ed9219dd8adf89e2e749f17995ea25259a54e6e35a7aa980",
+                      "sha256":  "5575519585a9b2898c8dd374fcb02fae9db5e5a7fb98a7a922a3cbfa00329a06",
                       "bytes":  5723,
                       "status":  "tracked",
                       "category":  "service",
@@ -4463,7 +4489,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/web3_learning.py",
-                      "sha256":  "e2b3036883e3e018218e705f8534ed8276938e4afb448451dcf8eada182a8aa2",
+                      "sha256":  "ca870c2b8b3355428abd08e8b1119d4c371ea976b530d3bf188c1f59aca09207",
                       "bytes":  3287,
                       "status":  "tracked",
                       "category":  "service",
@@ -4476,7 +4502,7 @@
                   },
                   {
                       "path":  "backend/app/services/blockchain/x402.py",
-                      "sha256":  "164951677ddd3812c1689abdfc0376a9cca7973766251111687f4ffb4167fe5a",
+                      "sha256":  "61bb9f30072e25f007f3ee781a670e79ebc30554534d4a721b7186abecac792e",
                       "bytes":  4258,
                       "status":  "tracked",
                       "category":  "service",
@@ -4566,6 +4592,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/app/services/browser_lifecycle.py",
+                      "sha256":  "bfd7dd4d8c7755f910a7c859c8e9a966995ba3ad410eb1bf0e6340f649b822fa",
+                      "bytes":  10890,
+                      "status":  "tracked",
+                      "category":  "service",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/app/services/browser_multi_agent.py",
                       "sha256":  "91b4175a4d063add3c5a357e3e2ef4f1afc130bd65063974c57a1b645cb1666c",
                       "bytes":  11099,
@@ -4593,8 +4632,8 @@
                   },
                   {
                       "path":  "backend/app/services/browser_service.py",
-                      "sha256":  "01df24184cce01aef0107f773fdb2d8fdff6239e77c2820350baeafa0ba29dc8",
-                      "bytes":  22212,
+                      "sha256":  "0a3fc331e9f8d3b44ba33b6d17fc717ea3e91c0ac7d716c4773e9def05ecc224",
+                      "bytes":  22413,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -4814,7 +4853,7 @@
                   },
                   {
                       "path":  "backend/app/services/deployment_preflight.py",
-                      "sha256":  "21f1661c305be20a800733c546fd6d8bd661678f3524d6fe713c46411cd656c9",
+                      "sha256":  "2e961ad903f11fc5da093610fa78a573920291392bf4dd7589d7deaf9d3ab0e5",
                       "bytes":  6254,
                       "status":  "tracked",
                       "category":  "service",
@@ -4931,7 +4970,7 @@
                   },
                   {
                       "path":  "backend/app/services/financial_intelligence/provider_catalogue.py",
-                      "sha256":  "48d961ac8289f4d5d23266bd40d98fad89c540b6bfdba96845ed67f50b569f9b",
+                      "sha256":  "92059fc027a8a72c92a9b62be25e50be45e55c4592ee9233fe95914eeaff17b0",
                       "bytes":  4455,
                       "status":  "tracked",
                       "category":  "service",
@@ -6478,6 +6517,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/app/services/model_improvement.py",
+                      "sha256":  "974bc4386db9ec6c75a18bd1c55d0634fb0be4b5e8fb86bf3fd8084456b6a557",
+                      "bytes":  2156,
+                      "status":  "tracked",
+                      "category":  "service",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/app/services/model_independence.py",
                       "sha256":  "c61f78ffa7d470e506c5f81147aea355f1d3807fb785c73c43b5b2c41d127dd2",
                       "bytes":  10637,
@@ -6492,8 +6544,8 @@
                   },
                   {
                       "path":  "backend/app/services/model_inference.py",
-                      "sha256":  "589741d6b7fb69b8bf3567065276b9527294a8fc3201956a37a0195e0de06548",
-                      "bytes":  24875,
+                      "sha256":  "12c3804458a24bda60bdded47c156048700f432f6eccf1be1451e8f3a72c8cdd",
+                      "bytes":  27831,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "model-routing-and-inference",
@@ -7444,8 +7496,8 @@
                   },
                   {
                       "path":  "backend/mypy-full.ini",
-                      "sha256":  "e1b5f975a2268345251222e0373b2acd3c8f14833af1c3bb797d1d727d53b11d",
-                      "bytes":  264,
+                      "sha256":  "7ced0982baeb8612d10ab979b9a41f873aca4da0d2bf7bd75f98e5ee5a98904b",
+                      "bytes":  494,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -7888,6 +7940,19 @@
                       "path":  "backend/tests/test_browser_intelligence.py",
                       "sha256":  "25106e1c6fc5a52e8e7e9f04cd19b05448a06f92df49653fcea7e850ac428019",
                       "bytes":  8473,
+                      "status":  "tracked",
+                      "category":  "test",
+                      "area":  "acceptance-tests",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/tests/test_browser_lifecycle.py",
+                      "sha256":  "697a9be6c14d1bf815eeb32d7378ecb206351e165ef068e95b4aec4cdd6cf1d3",
+                      "bytes":  6269,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8561,6 +8626,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "backend/tests/test_model_improvement.py",
+                      "sha256":  "f46b34f0c38936fb8bc9d5615fa32adabeeca1fd0b553b79022a562a33c55836",
+                      "bytes":  1373,
+                      "status":  "tracked",
+                      "category":  "test",
+                      "area":  "acceptance-tests",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "backend/tests/test_model_independence.py",
                       "sha256":  "2f240f5b090995c524c3a6e3ce5fe57df107b4f45279ac4ad859049a2c7e6a09",
                       "bytes":  5453,
@@ -8603,6 +8681,19 @@
                       "path":  "backend/tests/test_model_usage.py",
                       "sha256":  "b683b7ef7bd3e9473a17e3a61d4c94d6ed440ed1c84cee706309d4cd5c391ddd",
                       "bytes":  5041,
+                      "status":  "tracked",
+                      "category":  "test",
+                      "area":  "acceptance-tests",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/tests/test_od52_hardening.py",
+                      "sha256":  "1da9c93c7fc2ed3b8413ca3fd5d870706d460c372c8d8aa5131defcd312c9d0d",
+                      "bytes":  2726,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8887,8 +8978,8 @@
                   },
                   {
                       "path":  "backend/tests/test_web3_adapters.py",
-                      "sha256":  "91b44785c3af051ca1d40249ed5826d5972e415b73222d608086b314b7c6ff2d",
-                      "bytes":  17192,
+                      "sha256":  "47798162dd1a219ce3aca305a55b337ffa152625bbcd7d2bd7e6907ed7017e36",
+                      "bytes":  17247,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8900,7 +8991,7 @@
                   },
                   {
                       "path":  "backend/tests/test_web3_extended.py",
-                      "sha256":  "fba96ea8f62bad0f1baec35018df7261f8980e435183a90618f99d6b260fa4b2",
+                      "sha256":  "a3da3fc8e92d56e906887de72a93bc2790765c393f7c19d1537247786d239a0f",
                       "bytes":  8508,
                       "status":  "tracked",
                       "category":  "test",
@@ -9225,8 +9316,8 @@
                   },
                   {
                       "path":  "frontend/components/iam/interface.tsx",
-                      "sha256":  "420027b6c6129e24408a25d6284994a54fb837d243b343de436490f2249ba9c8",
-                      "bytes":  59719,
+                      "sha256":  "108421b5fcb170d3cdaa717440ce997f0030f009af884fecd52d9403d8164983",
+                      "bytes":  62219,
                       "status":  "tracked",
                       "category":  "frontend",
                       "area":  "frontend",
@@ -9433,8 +9524,8 @@
                   },
                   {
                       "path":  "frontend/next-env.d.ts",
-                      "sha256":  "b8b3a344484b959af5e4e3fc1a1609dac3cb9ece0cdeb6c145be29bc4c491000",
-                      "bytes":  303,
+                      "sha256":  "1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37",
+                      "bytes":  295,
                       "status":  "tracked",
                       "category":  "frontend",
                       "area":  "frontend",
@@ -9680,8 +9771,8 @@
                   },
                   {
                       "path":  "IAM_ARCHITECTURE_COMPLETION_AUDIT.md",
-                      "sha256":  "6979234bfb3977ae1e8ce8027cec7ced31b50af8345a178ce5c8d341ef609db7",
-                      "bytes":  40018,
+                      "sha256":  "8b04d29f3d9652798517a21039e537f1e77bc4839e7b9c24e25b6110d270a3d6",
+                      "bytes":  41066,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -9758,8 +9849,8 @@
                   },
                   {
                       "path":  "IAM_BROWSER_PHASE1_IMPLEMENTATION_PLAN.md",
-                      "sha256":  "cb102693613f1dcf3dcfb5c61c3b023faa0f394d1154abc70afc0021580821f0",
-                      "bytes":  37040,
+                      "sha256":  "1ab3060fafaf0349af57e135da172b7fb46df8df237061e65a96c10071ae2c83",
+                      "bytes":  38881,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -9966,8 +10057,8 @@
                   },
                   {
                       "path":  "IAM_FINAL_CONSOLIDATION.md",
-                      "sha256":  "3f52cc325ffbfe01b81c692557889e247b382255d690186a86ba535f4d9f11c0",
-                      "bytes":  22174,
+                      "sha256":  "e559ad4cafc378a09eda85c76a67b74062a48cb6fbb7f2b3bd9e0c90ffad2321",
+                      "bytes":  22953,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "master-architecture",
@@ -9979,8 +10070,8 @@
                   },
                   {
                       "path":  "IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md",
-                      "sha256":  "6103451dfdb6b77b6fbbe8baf92b7fda940f764f1a5bc556c61f57fddd0eb25a",
-                      "bytes":  26844,
+                      "sha256":  "d45bc6151e959c1f18c3cdbe1e6bfeaa5ca18131f1ef6c17fcf4fa9c713c5031",
+                      "bytes":  26936,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10316,9 +10407,9 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "IAM_OD53_SIGNOFF_SHEET.md",
-                      "sha256":  "01e9a6e6e1520d0e3d736a155ae488a49f601825be0f11d92b18a575234cd9dc",
-                      "bytes":  8434,
+                      "path":  "IAM_OD54_SIGNOFF_SHEET.md",
+                      "sha256":  "3a7385b9e203ae002b65ce19e49c21880995fd524f3f1d549df5e57cb4b1c5a1",
+                      "bytes":  11459,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10329,9 +10420,9 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "IAM_OD54_SIGNOFF_SHEET.md",
-                      "sha256":  "b6055b4a72b1db48aa1994754c37704d1ccb3c5c7677f4a62ec7ff91e10af384",
-                      "bytes":  11392,
+                      "path":  "IAM_OD55_SIGNOFF_SHEET.md",
+                      "sha256":  "f616beefe82b39d07aa9153d7a409864deef95efc6db1f0f7bd9d06c56e63b83",
+                      "bytes":  8434,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10356,8 +10447,8 @@
                   },
                   {
                       "path":  "IAM_OPENAPI.json",
-                      "sha256":  "4fe298206341b9e40dbdbff7e1286a72128a4aba8514fa44d3be56ad053e52c8",
-                      "bytes":  1441220,
+                      "sha256":  "920a5ec0c2ecf884649273147b191fc0410815b68320dfe99daf5c4dbf160264",
+                      "bytes":  1450618,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -10369,12 +10460,25 @@
                   },
                   {
                       "path":  "IAM_OWNER_DECISIONS.md",
-                      "sha256":  "51368672116042e5dcf1ec7b026e6820a9806387eb687151421e826113f4e8ae",
-                      "bytes":  50769,
+                      "sha256":  "3b699fbb71d880df17f561ba66d8a5d4988dedcd7522bebce3502f66e04eb935",
+                      "bytes":  52924,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "owner-decisions",
                       "spec":  "IAM_OWNER_DECISIONS.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "IAM_PAID_MODEL_ACCESS_DECISION.md",
+                      "sha256":  "b4bcb9d74eca37129c3fb5a6cb0ffe76116db268a4d362907f8634ca58351edb",
+                      "bytes":  3313,
+                      "status":  "tracked",
+                      "category":  "document-authoritative",
+                      "area":  "architecture-documents",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
                       "decisions":  [
 
                                     ],
@@ -10486,8 +10590,8 @@
                   },
                   {
                       "path":  "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md",
-                      "sha256":  "4757cca8d76aeec02b7e61d7a838e486396db01c6bfbe2d788edd9fa4531de2a",
-                      "bytes":  15898,
+                      "sha256":  "4c1f54537268376ed919ea2a56c675c8cfbc87f364943837e1684deaeabc790b",
+                      "bytes":  16533,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "universal-model-provider",
@@ -10526,8 +10630,8 @@
                   },
                   {
                       "path":  "IAM_WEB3_ACTIVATION_RUNBOOK.md",
-                      "sha256":  "57afe673b6cb557b8b25bc7b73a42896058bf3c90f9be16b1c0561b59b9a05c1",
-                      "bytes":  9152,
+                      "sha256":  "2f1c5a7141745ab9fee5957237f292d341ec9d1dcdcc014579fbc6300fbc2f01",
+                      "bytes":  9708,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10539,7 +10643,7 @@
                   },
                   {
                       "path":  "IAM_WEB3_AND_NODE_INTEGRATION_PLAN.md",
-                      "sha256":  "272cf8e9d663abcb9c401d6c422ccc6dd4db64dcc247139d9b5c458c069ee96e",
+                      "sha256":  "f7233f16636e09c7f74241a96dab5f82dda485f73d65b0a633f3e1615da48165",
                       "bytes":  23357,
                       "status":  "tracked",
                       "category":  "document-authoritative",
@@ -10552,7 +10656,7 @@
                   },
                   {
                       "path":  "IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md",
-                      "sha256":  "5629680d54441ecb41f0264bc4da293d09027b26004dca7c0660c36d987ed478",
+                      "sha256":  "34d576b04a6709ead1af878f2daa8a4b3697a95c92e504b84abd9b1c95ede3a8",
                       "bytes":  31800,
                       "status":  "tracked",
                       "category":  "document-authoritative",
@@ -10696,8 +10800,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "sha256":  "c8a06d6eb2cf3eac354048040d49f842a324dc56cac0614dbbf4db189ae7f8d5",
-                      "bytes":  19114,
+                      "sha256":  "b9bc1b5a650dd117d0206c8e40fd5b2958414c300b116d46eb8894ed8c5be418",
+                      "bytes":  19121,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "general",
@@ -10786,6 +10890,19 @@
                       "superseded":  false
                   },
                   {
+                      "path":  "scripts/check_web3_activation.py",
+                      "sha256":  "c0015da92300e3744cc3e8ab6a81ff31ef29dfce9d7d25e7fbf276224e60c345",
+                      "bytes":  2693,
+                      "status":  "tracked",
+                      "category":  "tooling",
+                      "area":  "tooling",
+                      "spec":  "ARCHITECTURE_INDEX.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
                       "path":  "scripts/ci_local.ps1",
                       "sha256":  "f38c48e69774c5bc5d60b967b02cce3234b64b270e69d32968a3a8177b7ed822",
                       "bytes":  1864,
@@ -10825,9 +10942,9 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "scripts/creator_request_od53.py",
-                      "sha256":  "237046d3754c8506496c1a320bfad3130a6c8a5b214b3bbacb4f899898f7d984",
-                      "bytes":  3245,
+                      "path":  "scripts/creator_request_od54.py",
+                      "sha256":  "656cf54cc985b4a8ca90988db0bbac760e99a52cb32adb46ba84de0bcdc98431",
+                      "bytes":  3604,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -10838,9 +10955,9 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "scripts/creator_request_od54.py",
-                      "sha256":  "656cf54cc985b4a8ca90988db0bbac760e99a52cb32adb46ba84de0bcdc98431",
-                      "bytes":  3604,
+                      "path":  "scripts/creator_request_od55.py",
+                      "sha256":  "4f5752f20f74b14e5eed1e6d609c7736e931b42541e4ca0a2d8dc4d84e821ce7",
+                      "bytes":  3245,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -10906,6 +11023,19 @@
                       "path":  "scripts/set-model-key.ps1",
                       "sha256":  "18ffea318da6dc66732cfc07d0b29d69ca5fd1497638d2a38aa2ef5d219e23ae",
                       "bytes":  1417,
+                      "status":  "tracked",
+                      "category":  "tooling",
+                      "area":  "tooling",
+                      "spec":  "ARCHITECTURE_INDEX.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "scripts/umbrel_inspect.sh",
+                      "sha256":  "d2335fd9d53c2649a8add78a1de32e6f461cd78ac8280c8413b7e9d79889d56b",
+                      "bytes":  1667,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -11983,8 +12113,8 @@
                   },
                   {
                       "path":  "tools/rkie/config/architecture-links.json",
-                      "sha256":  "9a431dcf3fdd9288895786ce4c2215342bcadd72ebb079fe75fa5ff2fcf56d19",
-                      "bytes":  7322,
+                      "sha256":  "66f4f2cf95f73d16c0f3e8cee0b09c8e77bf058a81b3d0b1a96272c5466ac3bc",
+                      "bytes":  7618,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -12217,8 +12347,8 @@
                   },
                   {
                       "path":  "tools/rkie/notes/financial-intelligence-amendment-a.md",
-                      "sha256":  "86cef38588a802a3ae196532c5220f04549acd21981a3d72de93dfec883024f8",
-                      "bytes":  2915,
+                      "sha256":  "5553a2d3eb930abca1882bc9928f131692ace34b299d51b42c2d61c8a62117f9",
+                      "bytes":  3023,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",
@@ -12424,8 +12554,8 @@
                       "superseded":  false
                   },
                   {
-                      "path":  "tools/rkie/notes/web3-doc33-implementation.md",
-                      "sha256":  "67a2c7973c8dd5ae4f92435e2a71db7f73df3613cb7a84858e91cd647d88d0cb",
+                      "path":  "tools/rkie/notes/web3-doc35-implementation.md",
+                      "sha256":  "4d6f093591b0af63be3723d0b80f9aa5d322d3aa24c64179073c50ddf56ac180",
                       "bytes":  3488,
                       "status":  "tracked",
                       "category":  "document",

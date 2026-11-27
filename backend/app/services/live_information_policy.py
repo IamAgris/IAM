@@ -525,21 +525,72 @@ async def collect_live_evidence(
     providers: List[str] = []
     preferred = trigger.preferred_sources
 
-    # User-supplied documents are parsed locally as untrusted evidence (Doc 29
-    # document handling). No document is fetched unless the user provided URL.
+    # User-supplied media is parsed locally as untrusted evidence (Doc 29
+    # document handling). Nothing is fetched unless the user provided a URL.
+    urls = [match.group(0) for match in _URL.finditer(query)]
     document_urls = [
-        match.group(0)
-        for match in _URL.finditer(query)
-        if urlparse(match.group(0)).path.lower().endswith(
-            (".pdf", ".docx", ".xlsx", ".csv", ".txt", ".md")
-        )
+        url for url in urls
+        if urlparse(url).path.lower().endswith((".pdf", ".docx", ".xlsx", ".csv", ".txt", ".md"))
     ]
-    if document_urls:
-        try:
-            from app.services.browser_document_service import BrowserDocumentService
+    image_urls = [
+        url for url in urls
+        if urlparse(url).path.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp"))
+    ]
+    audio_urls = [
+        url for url in urls
+        if urlparse(url).path.lower().endswith((".wav", ".mp3", ".m4a", ".ogg", ".flac"))
+    ]
+    try:
+        from app.services.browser_document_service import BrowserDocumentService
 
+        documents = BrowserDocumentService(db)
+        if image_urls:
+            raw, final_url, mime = await asyncio.wait_for(
+                documents.fetch(image_urls[0]), timeout=timeout
+            )
+            from app.services.live_media_service import live_media_service
+
+            ocr = await live_media_service.ocr(raw)
+            if ocr.get("text"):
+                merged.append(
+                    {
+                        "title": str(ocr.get("provider") or "Image OCR")[:200],
+                        "url": final_url,
+                        "description": str(ocr["text"])[:400],
+                        "published": "date not available",
+                        "source": _host(final_url),
+                        "document_kind": "image-ocr",
+                    }
+                )
+                providers.append("image-ocr")
+            else:
+                errors.append(f"OCR failed: {str(ocr.get('error'))[:150]}")
+        elif audio_urls:
+            raw, final_url, mime = await asyncio.wait_for(
+                documents.fetch(audio_urls[0]), timeout=timeout
+            )
+            from app.services.live_media_service import live_media_service
+
+            transcript = await live_media_service.transcribe(raw, mime)
+            if transcript.get("text"):
+                merged.append(
+                    {
+                        "title": str(transcript.get("provider") or "Audio transcript")[:200],
+                        "url": final_url,
+                        "description": str(transcript["text"])[:400],
+                        "published": "date not available",
+                        "source": _host(final_url),
+                        "document_kind": "audio-transcript",
+                    }
+                )
+                providers.append("audio-transcript")
+            else:
+                errors.append(
+                    f"transcription unavailable: {str(transcript.get('error'))[:150]}"
+                )
+        elif document_urls:
             parsed = await asyncio.wait_for(
-                BrowserDocumentService(db).parse_url(document_urls[0]), timeout=timeout
+                documents.parse_url(document_urls[0]), timeout=timeout
             )
             source = dict(parsed.get("source") or {})
             final_url = str(source.get("url") or document_urls[0])
@@ -554,10 +605,10 @@ async def collect_live_evidence(
                 }
             )
             providers.append("document-extraction")
-        except asyncio.TimeoutError:
-            errors.append("document extraction timed out")
-        except Exception as exc:  # pragma: no cover - defensive
-            errors.append(f"document extraction failed: {type(exc).__name__}")
+    except asyncio.TimeoutError:
+        errors.append("media extraction timed out")
+    except Exception as exc:  # pragma: no cover - defensive
+        errors.append(f"media extraction failed: {type(exc).__name__}")
 
     def preferred_found() -> bool:
         return any(

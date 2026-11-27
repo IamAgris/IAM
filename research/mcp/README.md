@@ -49,8 +49,14 @@ This is authored infrastructure, **not yet executed** — no runtime has been cr
 The backend cannot call MCP tools directly. `backend/app/services/ai_research/mcp_bridge.py`
 provides `HttpMCPToolCaller`: it POSTs `{"tool": "...", "arguments": {...}}` to
 `COLAB_MCP_BRIDGE_URL` with a bearer token from `COLAB_MCP_BRIDGE_TOKEN`, and expects
-`{"result": {...}}` (or `{...}`) back. Errors are fail-closed. **No HTTP bridge process
-is shipped** — one must be provided by the agent-side runtime that has MCP tools.
+`{"result": {...}}` (or `{...}`) back. Errors are fail-closed.
+
+`scripts/mcp_bridge_server.py` ships the local HTTP process implementing that
+contract. It listens on `COLAB_MCP_BRIDGE_BIND` (default `127.0.0.1:8788`), requires
+the bearer token, validates tool names, and never logs arguments or tokens. It is
+**fail-closed until an operator supplies `COLAB_MCP_DISPATCHER=module:callable`** —
+a function with access to the signed-in OpenCode MCP tools that returns a dict.
+Without a dispatcher it answers 503; no runtime is created and no tool is invoked.
 
 After you complete `/mcps` sign-in:
 

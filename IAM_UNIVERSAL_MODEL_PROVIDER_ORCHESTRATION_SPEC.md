@@ -150,6 +150,8 @@ OD-51 (Doc 31) is confirmed and covers encrypted credentials, isolation, fail-cl
 
 ### Implementation status
 
+All phases A–H are implemented. Phase F adds bounded retry with exponential backoff for 429/5xx, context-window fitting, malformed-response rejection and tool-call normalisation in `model_inference.py`. Phase G extends the single sphere options panel with a searchable free-model catalogue, endpoint status, last sync and agent-assignment summary — no new route. Phase H adds `services/model_improvement.py`, which emits evidence-only capability proposals with `promotion_performed=False` and `training_performed=False`. Paid access is **not** enabled; a separate decision request is `IAM_PAID_MODEL_ACCESS_DECISION.md` (Doc 36 / proposed OD-56).
+
 Phases A–E and the scheduled refresh worker are implemented and, under OD-52, activated by config. Phase D adds `services/endpoint_availability.py` (gateway probes, failure classification, `endpoint_status`, `last_tested`, last-known-good). Phase E adds `services/capability_evaluator.py` and capability-based model selection inside `delegation_orchestrator.py`. The refresh worker `workers/arq_model_catalog.py` runs under the `catalog-arq` compose profile. OD-39 conflict resolved: hosted inference no longer consumes a local residency slot; a separate bounded pool of 3 protects the shared account while local models keep the one-resident rule. Paid access remains blocked.
 
 Phase C adds `services/provider_model_registrar.py`, `store_model_in_db: true` and `LITELLM_SALT_KEY` wiring, one static NVIDIA bootstrap alias (the ten static multi-key deployments were removed), and `model_catalog_registration_enabled` — **enabled under OD-52**. Discovery calls the registrar. Registered models use `api_key: os.environ/NVIDIA_API_KEY` and are marked `iam_managed` so static config models are never deleted.
@@ -165,5 +167,5 @@ Phase A registry fields and migration `060_model_catalog.sql` (registered in `MI
 | OD-52 universal provider architecture | ✅ **CONFIRMED** (27 November 2026) |
 | Replace static multi-key deployments with one-key dynamic catalogue | ✅ **CONFIRMED** |
 | New registry fields and migration 060 | ✅ **CONFIRMED** |
-| Phases A–E and scheduled refresh | ✅ **CONFIRMED**; phases F–H remain future work |
+| Phases A–H and scheduled refresh | ✅ **CONFIRMED** and implemented |
 | Paid NVIDIA access | ❌ **NOT AUTHORISED** — blocked under OD-04; separate signed decision required |

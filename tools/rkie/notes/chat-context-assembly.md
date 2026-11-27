@@ -279,10 +279,13 @@ gaps.
   carrier remains a documented blocker, not a silent placeholder.
 - Skill Runtime intentionally kept `stub` + disabled: no real skill execution is
   claimed; `docker` is the reviewed real adapter.
-- Colab MCP server is configured in `~/.config/opencode/opencode.jsonc`; owner will
-  complete `/mcps` Google sign-in. Added the backend HTTP bridge contract and
-  post-sign-in steps to `research/mcp/README.md`. No HTTP bridge process ships
-  with the repo, and none is claimed: `HttpMCPToolCaller` stays disabled until
-  an operator provides `COLAB_MCP_BRIDGE_URL`.
+- Colab MCP server is configured and now reports **connected** via the bundled
+  `opencode-cli.exe mcp list` (cloudflare/opencode_console need auth; kaggle has a
+  redirect error). An HTTP bridge process now ships as
+  `scripts/mcp_bridge_server.py`: it enforces the bearer token, validates tool
+  names, never logs arguments, and answers 503 until an operator supplies
+  `COLAB_MCP_DISPATCHER=module:callable` bound to the signed-in MCP tools.
+  `HttpMCPToolCaller` stays disabled until `COLAB_MCP_BRIDGE_URL` is set. Free tier
+  only; no runtime is created automatically.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

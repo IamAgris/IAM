@@ -20,7 +20,8 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.store = MemoryStore()
         self.service = IPLCIService(self.store)
-        self.gateway = ComplianceGateway(self.service)
+        # Rights tests isolate rights logic; the legal-readiness gate has its own tests.
+        self.gateway = ComplianceGateway(self.service, require_legal_readiness=False)
         self.policy = policy.sign_policy(
             {rule: True for rule in policy.PROTECTED_RULES},
             version="1.0", signed_by="creator", signed_at="2026-11-27T00:00:00+00:00",
@@ -331,6 +332,39 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
         final = await self.service.readiness_report()
         self.assertTrue(final["complete"])
         self.assertEqual(final["verified_tasks"], 1)
+
+    async def test_consequential_operations_wait_for_counsel(self):
+        source = await self._source()
+        signed = await self.service.record_policy({
+            "version": "production-1",
+            "rules": {rule: True for rule in policy.PROTECTED_RULES},
+            "signed_by": "creator",
+            "human_approval_reference": "OD-48",
+        })
+        gate = ComplianceGateway(self.service)
+        gate.set_policy(signed)
+
+        with self.assertRaises(GovernanceRefusal) as ctx:
+            await gate.enforce("commercialise", source_id=source["id"])
+        self.assertEqual(ctx.exception.code, "IPLCI_LEGAL_VALIDATION_INCOMPLETE")
+
+        # Study and analysis remain available while validation is pending.
+        study = await gate.enforce("read", source_id=source["id"])
+        self.assertIn(study["decision"], ("APPROVED", "CONDITIONAL"))
+
+        task = await self.service.open_validation_task({
+            "domain": "privacy", "subject": "POPIA research basis",
+            "question": "Do the section 27 conditions apply?", "jurisdiction": "ZA",
+        })
+        await self.service.record_validation_evidence(task["id"], {
+            "evidence_ref": "official-gazette-2026",
+        })
+        await self.service.verify_validation_task(task["id"], {
+            "reviewer_reference": "qualified-counsel@example.org",
+        })
+        self.assertTrue((await self.service.readiness_report())["complete"])
+        commercial = await gate.enforce("commercialise", source_id=source["id"])
+        self.assertIn(commercial["decision"], ("APPROVED", "CONDITIONAL"))
 
     async def test_api_training_route_requires_governance_context(self):
         from fastapi import HTTPException, Request

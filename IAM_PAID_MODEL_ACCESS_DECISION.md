@@ -49,5 +49,5 @@ Nothing here changes IAM's identity, shared local primary, LiteLLM gateway, sing
 | Item | Decision |
 |------|----------|
 | Paid NVIDIA access | ❌ **NOT AUTHORISED** — current standing position |
-| OD-53 | ⏳ **PROPOSED** — owner confirmation required |
-| Any paid API call | Blocked until OD-53 confirmed *and* a signed per-expenditure approval exists |
+| OD-56 | ⏳ **PROPOSED** — owner confirmation required |
+| Any paid API call | Blocked until OD-56 confirmed *and* a signed per-expenditure approval exists |

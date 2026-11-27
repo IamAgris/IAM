@@ -10,10 +10,16 @@ from __future__ import annotations
 
 from typing import Any, Dict, Mapping, Optional
 
-from app.services.iplci import policy
+from app.services.iplci import core, policy
 from app.services.iplci.service import IPLCIService
 
 _ALLOWED = ("APPROVED", "CONDITIONAL")
+
+# Study, discussion and analysis stay available. Legally consequential uses are
+# blocked until qualified counsel has closed the validation checklist.
+LEGALLY_CONSEQUENTIAL_RIGHTS = frozenset({
+    "commercialise", "distribute", "disclose", "train",
+})
 
 
 class GovernanceRefusal(Exception):
@@ -35,8 +41,14 @@ class GovernanceRefusal(Exception):
 
 
 class ComplianceGateway:
-    def __init__(self, service: Optional[IPLCIService] = None):
+    def __init__(
+        self,
+        service: Optional[IPLCIService] = None,
+        *,
+        require_legal_readiness: bool = True,
+    ):
         self.service = service or IPLCIService()
+        self.require_legal_readiness = require_legal_readiness
         self._policy: Optional[Dict[str, Any]] = None
 
     def set_policy(self, document: Mapping[str, Any]) -> Dict[str, Any]:
@@ -77,6 +89,23 @@ class ComplianceGateway:
             result.get("audit_event_id"),
         )
 
+    async def _check_legal_readiness(self, operation: str) -> None:
+        if not self.require_legal_readiness:
+            return
+        try:
+            right = core.normalise_operation(operation)
+        except core.IPLCIError:
+            right = ""
+        if right not in LEGALLY_CONSEQUENTIAL_RIGHTS:
+            return
+        report = await self.service.readiness_report()
+        if not report.get("complete"):
+            blockers = ", ".join(str(item) for item in (report.get("blockers") or [])[:3])
+            raise GovernanceRefusal(
+                "IPLCI_LEGAL_VALIDATION_INCOMPLETE", "BLOCKED", "CRITICAL",
+                f"legal validation incomplete for a consequential operation: {blockers}",
+            )
+
     async def enforce(
         self,
         operation: str,
@@ -89,6 +118,7 @@ class ComplianceGateway:
     ) -> Dict[str, Any]:
         """Generic pre-execution permission check. Fail-closed on any error."""
         self._verify_policy()
+        await self._check_legal_readiness(operation)
         try:
             result = await self.service.gate_check({
                 "operation": operation,
@@ -116,6 +146,7 @@ class ComplianceGateway:
     ) -> Dict[str, Any]:
         """Independent training gate — analysis approval is not sufficient."""
         self._verify_policy()
+        await self._check_legal_readiness("train")
         if not source_id or not dataset_id:
             raise GovernanceRefusal(
                 "IPLCI_PROVENANCE_REQUIRED", "BLOCKED", "CRITICAL",

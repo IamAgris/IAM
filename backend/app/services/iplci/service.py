@@ -1374,6 +1374,8 @@ class IPLCIService:
         blockers: List[str] = []
         if not policy_status["valid"]:
             blockers.append("no active signed compliance policy")
+        if not tasks:
+            blockers.append("no legal validation tasks exist; absence of evidence is not completion")
         unresolved = [task for task in tasks if task.get("status") != "verified"]
         if unresolved:
             blockers.append(f"{len(unresolved)} legal validation task(s) unresolved")
