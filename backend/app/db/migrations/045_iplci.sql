@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS ip_legal_permissions (
     assessed_at TIMESTAMPTZ,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT ck_ip_legal_permission_right CHECK (right IN (
+    CONSTRAINT ck_ip_legal_permission_right CHECK ("right" IN (
         'read','analyse','store','reproduce','derive','modify',
         'distribute','train','commercialise','disclose')),
     CONSTRAINT ck_ip_legal_permission_state CHECK (state IN ('PERMITTED','PROHIBITED','UNKNOWN'))

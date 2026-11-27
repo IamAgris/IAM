@@ -9,7 +9,7 @@ Doc 25 `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` was expand
 (v1.2, §§11–24): prediction markets, gaming/casino intelligence, investments, provider
 ecosystem, South African boundaries, autonomy matrix and implementation status.
 Sections 1–10 and OD-04/OD-25 financial authority were unchanged. Amendment A was
-recorded as **OD-55** (OD-53/OD-54 are reserved Web3/live-information proposals).
+recorded as **OD-56** (OD-53/OD-55 are reserved Web3 proposals; OD-54 is live information).
 
 Code (research-only; no wagering, wallet funding or real orders):
 

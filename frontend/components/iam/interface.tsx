@@ -214,8 +214,11 @@ export function IAMInterface() {
               .map((item: any) => ({
                 model_id: String(item.model_id),
                 display_name: item.display_name ? String(item.display_name) : null,
-              }))
-              .slice(0, 8),
+                endpoint_status: String(item.endpoint_status || "unknown"),
+                capabilities: Array.isArray(item.capabilities) ? item.capabilities.map(String) : [],
+                context_length: item.context_length ? Number(item.context_length) : null,
+                last_checked_at: item.last_checked_at ? String(item.last_checked_at) : null,
+              })),
           );
           setProviderKeys(
             Array.isArray(keys.data?.keys) ? keys.data.keys : [],
@@ -1037,19 +1040,32 @@ export function IAMInterface() {
           </div>
 
           {modelMode === "manual" && (
-            <div className="mb-3 max-h-28 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+            <div className="mb-3 rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px]"
               style={{ background: "rgba(255,255,255,.035)" }}>
-              <div className="opacity-60">Free models only · paid access needs signed approval</div>
-              {freeModels.length === 0 && <div className="opacity-50">No free models discovered yet.</div>}
-              {freeModels.map((item) => (
-                <button key={item.model_id}
-                  onClick={() => setSelectedModel(item.model_id)}
-                  aria-pressed={selectedModel === item.model_id}
-                  className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
-                  <span className="truncate">{item.display_name || item.model_id}</span>
-                  <span className="opacity-50">{selectedModel === item.model_id ? "selected" : "free"}</span>
-                </button>
-              ))}
+              <div className="opacity-60 mb-1">Free models only · paid access needs signed approval</div>
+              <input
+                value={catalogSearch}
+                onChange={(event) => setCatalogSearch(event.target.value)}
+                placeholder="Search catalogue"
+                aria-label="Search free model catalogue"
+                className="w-full mb-1 rounded border border-[var(--line)] bg-transparent px-2 py-1 text-[10px]"
+              />
+              <div className="max-h-28 overflow-y-auto space-y-1">
+                {freeModels.length === 0 && <div className="opacity-50">No free models discovered yet.</div>}
+                {freeModels
+                  .filter((item) => `${item.display_name || ""} ${item.model_id}`.toLowerCase().includes(catalogSearch.toLowerCase()))
+                  .map((item) => (
+                    <button key={item.model_id}
+                      onClick={() => setSelectedModel(item.model_id)}
+                      aria-pressed={selectedModel === item.model_id}
+                      className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
+                      <span className="truncate">{item.display_name || item.model_id}</span>
+                      <span className="opacity-50">
+                        {item.endpoint_status === "available" ? "ready" : item.endpoint_status} · {item.capabilities.slice(0, 2).join(",") || "general"}
+                      </span>
+                    </button>
+                  ))}
+              </div>
             </div>
           )}
 
@@ -1061,6 +1077,24 @@ export function IAMInterface() {
               <div key={`${key.provider}-${key.key_alias}`} className="flex justify-between gap-2">
                 <span className="truncate">{key.provider} · {key.key_alias}</span>
                 <span className="opacity-60">{key.is_enabled ? key.health : "disabled"}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model catalogue</p>
+          <div className="mb-3 max-h-28 overflow-y-auto rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px] space-y-1"
+            style={{ background: "rgba(255,255,255,.035)" }}>
+            <div className="opacity-60">
+              {freeModels.length} free · ready {freeModels.filter((item) => item.endpoint_status === "available").length}
+              {' '}· last sync {freeModels[0]?.last_checked_at ? new Date(freeModels[0].last_checked_at).toLocaleTimeString() : "never"}
+            </div>
+            <div className="opacity-50">Research → auto · Coding → auto · Reviewer → independent · Local primary evaluates</div>
+            {freeModels.slice(0, 5).map((item) => (
+              <div key={`catalog-${item.model_id}`} className="flex justify-between gap-2">
+                <span className="truncate">{item.display_name || item.model_id}</span>
+                <span className="opacity-60">
+                  {item.endpoint_status}{item.context_length ? ` · ${Math.round(item.context_length / 1000)}k` : ""}
+                </span>
               </div>
             ))}
           </div>

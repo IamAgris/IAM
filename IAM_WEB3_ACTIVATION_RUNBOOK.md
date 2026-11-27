@@ -21,6 +21,11 @@ None can be produced by the coding agent. The activation gate correctly blocks u
 
 ## 1. Inspect before changing anything
 
+A read-only helper is provided: copy `scripts/umbrel_inspect.sh` to the Umbrel host and
+run `bash umbrel_inspect.sh`. It writes `umbrel-web3-inspection.txt` with OS, Docker,
+container/ports, IPs and Tailscale status — no credential values. Paste that report.
+The manual equivalent is below.
+
 On the Umbrel host (SSH):
 
 ```bash
@@ -144,7 +149,9 @@ approval-request flow still works; `broadcast` will deny because no executor is 
 
 ## 6. Configure IAM (names only — no values)
 
-Set these in the Contabo environment / Docker secrets:
+`.env.example` contains a complete `Doc 35 / OD-55` section with every variable,
+all default-off and no secret values. Copy the relevant lines into the Contabo
+environment / Docker secrets:
 
 | Variable | Purpose |
 |---|---|
@@ -172,7 +179,10 @@ Enable in this order, one flag at a time:
 ## 7. Activation checks
 
 ```powershell
-# Redacted; returns names and statuses, never secret values
+# Local, offline, redacted check — no network call, no secret values printed
+python scripts/check_web3_activation.py
+
+# Authoritative runtime checks (redacted; names and statuses only)
 GET /api/v1/web3/activation
 GET /api/v1/deployment/preflight
 ```

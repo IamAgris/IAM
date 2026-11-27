@@ -1,7 +1,7 @@
 # IAM — Owner Decision Register
 
-**Status:** ALL 53 LOCKED DECISIONS (OD-01…OD-52 plus OD-55; OD-53 Web3 and OD-54 live-information proposals await signed owner approval).  
-**Purpose:** Record of every locked owner decision (OD-01…OD-52 and OD-55) made during architecture finalisation. OD-47 is confirmed by explicit owner instruction; no decision remains pending.
+**Status:** ALL 53 LOCKED DECISIONS (OD-01…OD-52 plus OD-56; OD-53/OD-54 Web3 and live-information and OD-55 Web3 phase-2 proposals await signed owner approval).  
+**Purpose:** Record of every locked owner decision (OD-01…OD-52 and OD-56) made during architecture finalisation. OD-47 is confirmed by explicit owner instruction; no decision remains pending.
 
 ---
 
@@ -272,18 +272,18 @@ Confirmation activates the implemented phases A–E and the refresh worker. It d
 
 ---
 
-### OD-55 — Financial Intelligence Amendment A (confirmed 27 November 2026)
+### OD-56 — Financial Intelligence Amendment A (confirmed 27 November 2026)
 
 | ID | Decision | Confirmed value | Status |
 |----|----------|-----------------|--------|
-| OD-55 | Financial Intelligence Amendment A | **Extend Doc 25 from five modules to eight research departments: prediction-market intelligence, gaming/casino mathematics and industry research, and investment/portfolio research, alongside income, forex, crypto, payments and governance.** Confirmed scope: public market-data research and independent probability forecasting; a provider-independent registry of §18 candidates with all gates unreviewed and adapters disabled; a read-only Polymarket Gamma/CLOB/Data API adapter behind default-off flags; gaming study of probability, RNG, RTP, house edge, fraud detection and responsible gambling without wagering; investment research without real orders. All new capability is **research-only**: no deposits, wallet funding, contract trading, casino wagering, overseas casino account funding or real investment orders. Real-money activity requires separate legal clearance and a signed Creator execution policy; South African prediction-market and gambling status requires specialist legal advice. This extends OD-44 and does not alter OD-02 ownership, OD-04/OD-25 financial authority or OD-11 protected-core rules. Specified in `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` v1.2 §§11–24. | ✅ **CONFIRMED** (27 November 2026) |
+| OD-56 | Financial Intelligence Amendment A | **Extend Doc 25 from five modules to eight research departments: prediction-market intelligence, gaming/casino mathematics and industry research, and investment/portfolio research, alongside income, forex, crypto, payments and governance.** Confirmed scope: public market-data research and independent probability forecasting; a provider-independent registry of §18 candidates with all gates unreviewed and adapters disabled; a read-only Polymarket Gamma/CLOB/Data API adapter behind default-off flags; gaming study of probability, RNG, RTP, house edge, fraud detection and responsible gambling without wagering; investment research without real orders. All new capability is **research-only**: no deposits, wallet funding, contract trading, casino wagering, overseas casino account funding or real investment orders. Real-money activity requires separate legal clearance and a signed Creator execution policy; South African prediction-market and gambling status requires specialist legal advice. This extends OD-44 and does not alter OD-02 ownership, OD-04/OD-25 financial authority or OD-11 protected-core rules. Specified in `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` v1.2 §§11–24. | ✅ **CONFIRMED** (27 November 2026) |
 
-Identifier note: OD-53 is reserved for the Web3/node proposal (`IAM_OD53_SIGNOFF_SHEET.md`) and OD-54 for the live-information proposal (`IAM_OD54_SIGNOFF_SHEET.md`); this decision therefore uses the next free identifier, OD-55. Confirmation covers research autonomy and the implementation status recorded in §24. It grants no transaction or wagering authority; every feature flag remains default-off and execution adapters stay disabled until separately authorised.
+Identifier note: OD-53 and OD-55 are reserved for Web3/node proposals (`IAM_OD53_SIGNOFF_SHEET.md`, `IAM_OD55_SIGNOFF_SHEET.md`) and OD-54 for live information (`IAM_OD54_SIGNOFF_SHEET.md`); this decision therefore uses the next free identifier, OD-56. Confirmation covers research autonomy and the implementation status recorded in §24. It grants no transaction or wagering authority; every feature flag remains default-off and execution adapters stay disabled until separately authorised.
 
 ---
 
 ## Change control (frozen)
 
-This register is frozen at 53 locked decisions (OD-01…OD-52 and OD-55); OD-53 and OD-54 remain proposed and are not part of the frozen baseline. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.
+This register is frozen at 53 locked decisions (OD-01…OD-52 and OD-56); OD-53, OD-54 and OD-55 remain proposed and are not part of the frozen baseline. Any change to a locked decision requires the owner to explicitly reopen it and record the new value with a date and reason. Changes to OD-01 (identity), OD-03 (signing), OD-04/OD-25 (financial authority) or OD-11 (protected core) additionally require a signed creator approval.
 
 Cross-cutting implementation technology (the hybrid Python + Rust + TypeScript allocation) is recorded in `IAM_IMPLEMENTATION_TECHNOLOGY_ADDENDUM.md`. That addendum is **not** a decision, does not change the decision count, and does not alter any technology mandated by a locked decision (including OD-08 ARQ and the Doc 01 §5 baseline).

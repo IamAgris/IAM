@@ -314,6 +314,7 @@ class ApprovalTests(unittest.IsolatedAsyncioTestCase):
 class ActivationTests(unittest.TestCase):
     def test_all_flags_off_is_ready(self):
         result = check_web3_activation()
+        self.assertEqual(result["status"], "inactive")
         self.assertTrue(result["ready"])
         self.assertEqual(result["blockers"], [])
         self.assertTrue(

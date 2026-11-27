@@ -85,7 +85,9 @@ def check_web3_activation() -> Dict[str, Any]:
 
     blockers = [item["name"] for item in checks if item["status"] == "blocker"]
     warnings = [item["name"] for item in checks if item["status"] == "warning"]
+    status = "inactive" if not any_enabled else ("blocked" if blockers else "ready")
     return {
+        "status": status,
         "ready": not blockers,
         "checks": checks,
         "blockers": blockers,
