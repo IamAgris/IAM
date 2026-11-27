@@ -58,7 +58,15 @@ async def apply_migrations() -> None:
     # now the authoritative path. 002-005 are raw SQL and are idempotent.
     result = await asyncio.to_thread(
         subprocess.run,
-        [sys.executable, "-m", "alembic", "-c", str(ROOT / "alembic.ini"), "upgrade", "head"],
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            str(ROOT / "alembic.ini"),
+            "upgrade",
+            "0001_initial",
+        ],
         cwd=ROOT.parent,
         env=os.environ.copy(),
         capture_output=True,
@@ -82,6 +90,7 @@ async def apply_migrations() -> None:
         "009_skill_runtime.sql",
         "010_creator_email_dead_letter.sql",
         "011_skill_runtime_logs.sql",
+        "012_p2p_skill_candidates.sql",
         "029_hbi.sql",
         "030_hbi_history_graph.sql",
         "031_hbi_governance.sql",
@@ -499,8 +508,32 @@ async def run_checks() -> None:
                 headers=admin_headers,
             )
             assert sync.status_code == 400
+
+            # Signed P2P skill exchange: published -> untrusted candidate -> gated skill.
+            published = await client.post(
+                "/api/v1/p2p/skills/publish",
+                json={"skill_id": sid},
+                headers=admin_headers,
+            )
+            assert published.status_code == 200, published.text
+            envelope = published.json()["envelope"]
+            received = await client.post(
+                "/api/v1/p2p/skills/receive",
+                json={"envelope": envelope},
+                headers=admin_headers,
+            )
+            assert received.status_code == 201, received.text
+            candidate = received.json()
+            assert candidate["status"] == "candidate_untrusted"
+            approved = await client.post(
+                f"/api/v1/p2p/skills/candidates/{candidate['id']}/approve",
+                headers=admin_headers,
+            )
+            assert approved.status_code == 200, approved.text
+            assert approved.json()["requires_creator_approval"] is True
         print("  PASS auth + approval + visitor data rights + encryption at rest")
         print("  PASS P2P/Aegis/integrity HTTP routes")
+        print("  PASS signed P2P skill exchange")
 
         # Redis limiter is optional; exercised when REDIS_URL is provided.
         redis_url = os.environ.get("REDIS_URL")

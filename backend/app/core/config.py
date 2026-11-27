@@ -44,6 +44,16 @@ class Settings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     database_url: Optional[str] = None
+    # Development may create tables from ORM metadata. Production must use
+    # Alembic migrations; None resolves to "enabled only outside production".
+    db_create_all_on_startup: Optional[bool] = None
+
+    @property
+    def create_all_enabled(self) -> bool:
+        """Whether startup may create tables from SQLAlchemy metadata."""
+        if self.db_create_all_on_startup is not None:
+            return self.db_create_all_on_startup
+        return self.app_env != "production"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"

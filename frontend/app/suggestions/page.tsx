@@ -35,7 +35,7 @@ export default async function SuggestionsPage() {
   const groups = { focus, recall, create };
 
   return (
-    <main className="p-4 lg:p-8 space-y-6">
+    <main className="h-[100dvh] overflow-y-auto p-4 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Suggestions</h1>

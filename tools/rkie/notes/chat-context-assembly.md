@@ -80,3 +80,35 @@ gaps.
 - Still open: `modelrouter.py` `allow_paid` remains a caller boolean without a
   signed check; action governance in chat is not wired; the self-improvement
   dataset/orchestrator gaps remain.
+
+## Update — governance and self-improvement (27 November 2026)
+
+- `backend/app/services/model_policy.py` now makes signed Creator authorization
+  authoritative for `model.paid_inference` and `model.skill_invocation`.
+  `modelrouter.py` rejects `allow_paid=true` without it (403), and chat requests
+  do the same before any provider call. A `skill` on chat is denied in
+  `iam_action` unless authorized, then still passes the Skill Runtime's own
+  effective-permission check.
+- `backend/app/services/ai_research/dataset_engine.py` builds a checksummed
+  `ArtifactKind.DATASET` JSONL plus `poisoning.json` and a provenance manifest.
+  It reads only `KnowledgeItem.verification_status="verified"` with a confidence
+  floor. Visitor interactions require BOTH a granted allowlisted consent type
+  and `allow_shared_knowledge`; the consent allowlist is empty by default, so
+  zero interactions enter. Private memories/tables are never queried, markers
+  fail closed, and instruction-like/duplicate rows abort the build.
+  `consent_recorded` records the basis (`no_personal_data` or
+  `explicit_granted_consent`), not a bare boolean claim.
+- `backend/app/services/ai_research/self_improvement.py` links diagnosis ->
+  dataset -> `FineTuneSpec.validate_provenance()` -> `TrainingService.submit` ->
+  two reproducible `BenchmarkRunner` runs -> `ModelReleaseService.register`.
+  Default `promoted=False`; only the signed `promote` gate can change serving.
+  It fails closed without a driver, a trusted evaluate callable, a checkpoint
+  or measured improvement.
+- New endpoints: `POST /api/v1/development/datasets` and
+  `POST /api/v1/development/self-improvement/cycle` (existing router; no new
+  table). The cycle endpoint has no trusted evaluator in the default deployment,
+  so it returns 400 until one is configured — by design.
+- Tests: 495 backend tests pass (new: 5 model-policy, 4 dataset, 4 pipeline).
+- Still open: real platform drivers / MCP caller, real lm-eval driver, durable
+  S3 artifact root, post-deploy regression monitoring, and the model-router
+  paid gate on non-router paths beyond chat.

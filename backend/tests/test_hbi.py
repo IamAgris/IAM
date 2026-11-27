@@ -196,10 +196,22 @@ class HBIEngineTests(unittest.IsolatedAsyncioTestCase):
             question="community behaviour", purpose="community_planning",
         ))
         self.assertEqual(result["status"], "implemented")
-        pending = await self.service.analyse_module(15, ModuleAnalysisRequest(
+        evaluation = await self.service.analyse_module(15, ModuleAnalysisRequest(
             question="evaluation", purpose="community_planning",
         ))
-        self.assertEqual(pending["refusal"]["code"], "A8_CAPABILITY_NOT_VALIDATED")
+        self.assertEqual(evaluation["status"], "implemented")
+        unknown = await self.service.analyse_module(99, ModuleAnalysisRequest(
+            question="unknown", purpose="community_planning",
+        ))
+        self.assertEqual(unknown["error"], "UNKNOWN_MODULE")
+
+    async def test_module_15_evaluation_surface(self):
+        result = await self.service.analyse_module(15, ModuleAnalysisRequest(
+            question="model performance", purpose="evaluation",
+        ))
+        self.assertEqual(result["module_id"], 15)
+        self.assertTrue(result["models"])
+        self.assertIn("not an authorisation", result["caveat"])
 
     async def test_module_governance_gate(self):
         with self.assertRaises(GovernanceRefusal):

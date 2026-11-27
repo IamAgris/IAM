@@ -192,7 +192,9 @@ class SkillForgeService:
             provider=manifest.provider,
             category=category,
             classification=manifest.classification,
-            status="pending" if built["staged"] else "draft",
+            # Imported candidates are staged on disk but remain 'draft' in the
+            # registry until they pass tests and creator approval.
+            status="draft",
             version=manifest.version,
             manifest=manifest.to_dict(),
             permissions=manifest.permissions,

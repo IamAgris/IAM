@@ -587,7 +587,7 @@
           "models"
         ],
         "summary": "Chat Completion",
-        "description": "Chat completion through the resolved provider (hosted or local Ollama).",
+        "description": "Chat completion with IAM context through the resolved provider.",
         "operationId": "chat_completion_api_v1_models_chat_post",
         "requestBody": {
           "content": {
@@ -5305,6 +5305,185 @@
         }
       }
     },
+    "/api/v1/p2p/skills/candidates": {
+      "get": {
+        "tags": [
+          "p2p"
+        ],
+        "summary": "List Skill Candidates",
+        "operationId": "list_skill_candidates_api_v1_p2p_skills_candidates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/p2p/skills/publish": {
+      "post": {
+        "tags": [
+          "p2p"
+        ],
+        "summary": "Publish Skill Release",
+        "description": "Broadcast a signed release of an active skill. Payload is learning-only.",
+        "operationId": "publish_skill_release_api_v1_p2p_skills_publish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillPublishRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/p2p/skills/receive": {
+      "post": {
+        "tags": [
+          "p2p"
+        ],
+        "summary": "Receive Skill Release",
+        "description": "Verify a signed release and store it as an untrusted candidate.",
+        "operationId": "receive_skill_release_api_v1_p2p_skills_receive_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillReleaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/p2p/skills/candidates/{candidate_id}/approve": {
+      "post": {
+        "tags": [
+          "p2p"
+        ],
+        "summary": "Approve Skill Candidate",
+        "operationId": "approve_skill_candidate_api_v1_p2p_skills_candidates__candidate_id__approve_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/p2p/skills/candidates/{candidate_id}/reject": {
+      "post": {
+        "tags": [
+          "p2p"
+        ],
+        "summary": "Reject Skill Candidate",
+        "operationId": "reject_skill_candidate_api_v1_p2p_skills_candidates__candidate_id__reject_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/aegis/analyze": {
       "post": {
         "tags": [
@@ -8993,6 +9172,319 @@
         }
       }
     },
+    "/api/v1/interface/clusters": {
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Knowledge Clusters",
+        "description": "Public topic clusters built only from verified knowledge records.",
+        "operationId": "public_knowledge_clusters_api_v1_interface_clusters_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 8,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/connections": {
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Knowledge Connections",
+        "description": "Recent, privacy-filtered links between public knowledge nodes.",
+        "operationId": "public_knowledge_connections_api_v1_interface_connections_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/freshness": {
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Freshness Map",
+        "description": "Privacy-safe freshness/verification state for sphere nodes.",
+        "operationId": "public_freshness_map_api_v1_interface_freshness_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/provenance": {
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Cluster Provenance",
+        "description": "Sources behind a verified public knowledge cluster.\n\nProvenance only — no private memory, conversations or unverified claims.",
+        "operationId": "public_cluster_provenance_api_v1_interface_provenance_get",
+        "parameters": [
+          {
+            "name": "cluster",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cluster"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 8,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/activity": {
+      "post": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Activity Snapshot",
+        "description": "Finite activity snapshot for polling through proxies that buffer SSE.",
+        "operationId": "public_activity_snapshot_api_v1_interface_activity_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Activity Stream",
+        "description": "Public, privacy-filtered activity events for the living sphere.\n\nOnly research/provenance signals are exposed. No research query text,\nactor identity, private memory or visitor data is streamed.",
+        "operationId": "public_activity_stream_api_v1_interface_activity_get",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 1.5,
+              "title": "Interval"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/activity/stream": {
+      "post": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Activity Stream Post",
+        "description": "POST variant of the activity stream (works through dev proxy streaming).",
+        "operationId": "public_activity_stream_post_api_v1_interface_activity_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/development/projects": {
       "get": {
         "tags": [
@@ -9749,6 +10241,86 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/development/datasets": {
+      "post": {
+        "tags": [
+          "development"
+        ],
+        "summary": "Build Dataset Artifact",
+        "description": "Build a provenance-bearing dataset from verified knowledge only.\n\nConsent types default to empty, so no visitor interaction is included until\nthe owner explicitly configures an allowed consent type.",
+        "operationId": "build_dataset_artifact_api_v1_development_datasets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetBuildRequestModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/development/self-improvement/cycle": {
+      "post": {
+        "tags": [
+          "development"
+        ],
+        "summary": "Run Self Improvement Cycle",
+        "description": "Prepare a benchmarked candidate. Promotion remains a separate signed gate.",
+        "operationId": "run_self_improvement_cycle_api_v1_development_self_improvement_cycle_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRequestModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -12326,7 +12898,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StatusRequest"
+                "$ref": "#/components/schemas/app__api__routes__creator_communication__StatusRequest"
               }
             }
           },
@@ -23079,6 +23651,1448 @@
         }
       }
     },
+    "/api/v1/hbi/behaviour/forecast": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Forecast",
+        "description": "Module 13: probability distribution over scenarios, gated by A8 and validation.",
+        "operationId": "forecast_api_v1_hbi_behaviour_forecast_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForecastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/history/modules/{module_id}/analyse": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Historical Module",
+        "description": "Modules 16–23: historical analysis with preserved contested evidence.",
+        "operationId": "historical_module_api_v1_hbi_history_modules__module_id__analyse_post",
+        "parameters": [
+          {
+            "name": "module_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Module Id"
+            }
+          },
+          {
+            "name": "question",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "historical_research",
+              "title": "Purpose"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/history/analogy/evaluate": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Evaluate Analogies",
+        "description": "Measure whether strong analogies actually predicted documented outcomes.",
+        "operationId": "evaluate_analogies_api_v1_hbi_history_analogy_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalogyEvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/causal/assess": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Causal",
+        "description": "Return whether causal language is permitted for this question.",
+        "operationId": "causal_api_v1_hbi_causal_assess_get",
+        "parameters": [
+          {
+            "name": "question",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/history/civilisation/analyse": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Civilisation",
+        "description": "Module 27: multi-factor development and decline analysis.",
+        "operationId": "civilisation_api_v1_hbi_history_civilisation_analyse_post",
+        "parameters": [
+          {
+            "name": "question",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "historical_research",
+              "title": "Purpose"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/ingest/multilingual": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Ingest Multilingual",
+        "description": "Batch ingestion with language/script detection and duplicate screening.",
+        "operationId": "ingest_multilingual_api_v1_hbi_knowledge_ingest_multilingual_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultilingualIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/acceptance/run": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Run Acceptance",
+        "description": "Run all §11.7 acceptance gates; a failed gate blocks promotion.",
+        "operationId": "run_acceptance_api_v1_hbi_acceptance_run_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/ingest": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Ingest Corpus",
+        "description": "Ingest a local corpus; every source must first pass the fail-closed gate.",
+        "operationId": "ingest_corpus_api_v1_hbi_knowledge_corpus_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorpusIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/review": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Review Corpus Source",
+        "description": "Approve, reject or quarantine a source with an auditable reason.",
+        "operationId": "review_corpus_source_api_v1_hbi_knowledge_corpus_review_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorpusReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/state": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Corpus State",
+        "description": "Overall corpus state: not_validated, validated or restricted.",
+        "operationId": "corpus_state_api_v1_hbi_knowledge_corpus_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/audit": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Corpus Audit",
+        "description": "Who approved a source, when, and which rules were applied.",
+        "operationId": "corpus_audit_api_v1_hbi_knowledge_corpus_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/restrict": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Restrict Corpus Source",
+        "description": "Suspend a previously accepted source and record the reason.",
+        "operationId": "restrict_corpus_source_api_v1_hbi_knowledge_corpus_restrict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorpusRestrictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/models/calibrate-sources": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Calibrate Sources",
+        "description": "Learn empirical source reliability from labelled outcomes.",
+        "operationId": "calibrate_sources_api_v1_hbi_models_calibrate_sources_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCalibrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/backtest/library": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Backtest Library",
+        "description": "Inspect the versioned backtest case library and its provenance status.",
+        "operationId": "backtest_library_api_v1_hbi_backtest_library_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/models/validate-library": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Validate Library",
+        "description": "Validate a model on the illustrative fixture library.",
+        "operationId": "validate_library_api_v1_hbi_models_validate_library_post",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ensemble",
+              "title": "Model Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/governance/dual-use/review": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Dual Use Review",
+        "description": "Classify a capability before deployment; prohibited capabilities are blocked.",
+        "operationId": "dual_use_review_api_v1_hbi_governance_dual_use_review_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DualUseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/governance/dpia": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Dpia",
+        "description": "Technical DPIA input for an authorised reviewer; not legal clearance.",
+        "operationId": "dpia_api_v1_hbi_governance_dpia_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/governance/oversight/check": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Oversight",
+        "description": "Consequential decisions always require an accountable human reviewer.",
+        "operationId": "oversight_api_v1_hbi_governance_oversight_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OversightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/governance/dpia/signoff": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Sign Off Dpia",
+        "description": "Record an authorised reviewer's DPIA decision.",
+        "operationId": "sign_off_dpia_api_v1_hbi_governance_dpia_signoff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DPIASignoffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/governance/deployment/readiness": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Deployment Readiness",
+        "description": "Go/no-go check for production activation; IAM cannot self-approve.",
+        "operationId": "deployment_readiness_api_v1_hbi_governance_deployment_readiness_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Config"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/validation/cases": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Validation Cases",
+        "description": "Derive leakage-safe backtest cases from graded, dated records only.",
+        "operationId": "validation_cases_api_v1_hbi_validation_cases_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/validation/bias": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Validation Bias",
+        "description": "Measure performance disparities across recorded populations.",
+        "operationId": "validation_bias_api_v1_hbi_validation_bias_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/validation/report": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Validation Report",
+        "description": "Validation verdict; refuses to claim validation without real evidence.",
+        "operationId": "validation_report_api_v1_hbi_validation_report_get",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ensemble",
+              "title": "Model Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/validation/corpus-readiness": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Corpus Readiness",
+        "description": "Report whether licensed corpus evidence — not fixtures — is available.",
+        "operationId": "corpus_readiness_api_v1_hbi_validation_corpus_readiness_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/lifecycle/drift": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Drift",
+        "description": "Detect confidence drift across dated periods.",
+        "operationId": "drift_api_v1_hbi_lifecycle_drift_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/lifecycle/re-evaluation": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Re Evaluation",
+        "description": "List models needing periodic re-evaluation.",
+        "operationId": "re_evaluation_api_v1_hbi_lifecycle_re_evaluation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/lifecycle/rollback-drill": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Rollback Drill",
+        "description": "Exercise rollback without promoting an unvalidated model.",
+        "operationId": "rollback_drill_api_v1_hbi_lifecycle_rollback_drill_post",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ensemble",
+              "title": "Model Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/technology-registry/": {
+      "post": {
+        "tags": [
+          "technology-registry"
+        ],
+        "summary": "Register",
+        "description": "Record a researched third-party technology. No install or execution occurs.",
+        "operationId": "register_api_v1_technology_registry__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/technology-registry": {
+      "get": {
+        "tags": [
+          "technology-registry"
+        ],
+        "summary": "List Technologies",
+        "operationId": "list_technologies_api_v1_technology_registry_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/technology-registry/{tech_id}": {
+      "get": {
+        "tags": [
+          "technology-registry"
+        ],
+        "summary": "Get Technology",
+        "operationId": "get_technology_api_v1_technology_registry__tech_id__get",
+        "parameters": [
+          {
+            "name": "tech_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tech Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/technology-registry/{tech_id}/state": {
+      "patch": {
+        "tags": [
+          "technology-registry"
+        ],
+        "summary": "Set State",
+        "description": "Advance lifecycle state. 'integrated' requires prior approval (OD-11).",
+        "operationId": "set_state_api_v1_technology_registry__tech_id__state_patch",
+        "parameters": [
+          {
+            "name": "tech_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tech Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/technology-registry/{tech_id}/benchmarks": {
+      "post": {
+        "tags": [
+          "technology-registry"
+        ],
+        "summary": "Record Benchmark",
+        "operationId": "record_benchmark_api_v1_technology_registry__tech_id__benchmarks_post",
+        "parameters": [
+          {
+            "name": "tech_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tech Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/free-nodes/": {
+      "post": {
+        "tags": [
+          "free-node-lifecycle"
+        ],
+        "summary": "Record Candidate",
+        "operationId": "record_candidate_api_v1_free_nodes__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/free-nodes": {
+      "get": {
+        "tags": [
+          "free-node-lifecycle"
+        ],
+        "summary": "List Candidates",
+        "operationId": "list_candidates_api_v1_free_nodes_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/free-nodes/{candidate_id}/verify-terms": {
+      "post": {
+        "tags": [
+          "free-node-lifecycle"
+        ],
+        "summary": "Verify Terms",
+        "operationId": "verify_terms_api_v1_free_nodes__candidate_id__verify_terms_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/free-nodes/{candidate_id}/status": {
+      "patch": {
+        "tags": [
+          "free-node-lifecycle"
+        ],
+        "summary": "Set Status",
+        "operationId": "set_status_api_v1_free_nodes__candidate_id__status_patch",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__freenodes__StatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/free-nodes/{candidate_id}/migration-plan": {
+      "post": {
+        "tags": [
+          "free-node-lifecycle"
+        ],
+        "summary": "Plan Migration",
+        "operationId": "plan_migration_api_v1_free_nodes__candidate_id__migration_plan_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MigrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Health Live",
+        "description": "Liveness only — no dependency checks.",
+        "operationId": "health_live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Live Health Live Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Health Ready",
+        "description": "Readiness: database and Redis; model gateway is reported, not required.\n\nOffline operation is an approved IAM mode, so an unavailable model gateway\ndoes not make the process unready.",
+        "operationId": "health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "description": "Minimal Prometheus-format process metrics, with no external dependency.",
+        "operationId": "metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -23430,6 +25444,23 @@
         ],
         "title": "ActivityCreate"
       },
+      "ActivityRequest": {
+        "properties": {
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          }
+        },
+        "type": "object",
+        "title": "ActivityRequest"
+      },
       "AdapterRequest": {
         "properties": {
           "assistant_id": {
@@ -23746,6 +25777,33 @@
         },
         "type": "object",
         "title": "AmendmentRequest"
+      },
+      "AnalogyEvaluationRequest": {
+        "properties": {
+          "current": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Current"
+          },
+          "precedents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Precedents"
+          },
+          "cases": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "title": "AnalogyEvaluationRequest"
       },
       "AnalogyRequest": {
         "properties": {
@@ -24157,6 +26215,20 @@
         ],
         "title": "BackupVerificationRequest"
       },
+      "BenchmarkRequest": {
+        "properties": {
+          "benchmark": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Benchmark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmark"
+        ],
+        "title": "BenchmarkRequest"
+      },
       "Body_analyze_video_api_v1_vision_analyze_video_post": {
         "properties": {
           "video": {
@@ -24442,6 +26514,190 @@
         ],
         "title": "BudgetCreate"
       },
+      "CandidateRequest": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "instance_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Class"
+          },
+          "architecture": {
+            "type": "string",
+            "title": "Architecture"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "cpu_cores": {
+            "type": "number",
+            "title": "Cpu Cores",
+            "default": 0
+          },
+          "ram_mb": {
+            "type": "integer",
+            "title": "Ram Mb",
+            "default": 0
+          },
+          "disk_gb": {
+            "type": "number",
+            "title": "Disk Gb",
+            "default": 0
+          },
+          "cost_status": {
+            "type": "string",
+            "title": "Cost Status",
+            "default": "free"
+          },
+          "terms_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Source"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "run_compatible": {
+            "type": "boolean",
+            "title": "Run Compatible",
+            "default": false
+          },
+          "operational_overhead": {
+            "type": "string",
+            "title": "Operational Overhead",
+            "default": "high"
+          },
+          "security_exposure": {
+            "type": "string",
+            "title": "Security Exposure",
+            "default": "unknown"
+          },
+          "net_benefit": {
+            "type": "boolean",
+            "title": "Net Benefit",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "architecture"
+        ],
+        "title": "CandidateRequest"
+      },
+      "CandidateRequestModel": {
+        "properties": {
+          "experiment_id": {
+            "type": "string",
+            "title": "Experiment Id"
+          },
+          "licence": {
+            "type": "string",
+            "title": "Licence"
+          },
+          "base_model": {
+            "type": "string",
+            "title": "Base Model",
+            "default": ""
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "candidate"
+          },
+          "task_type": {
+            "type": "string",
+            "title": "Task Type",
+            "default": "coding"
+          },
+          "checkpoint_ref": {
+            "type": "string",
+            "title": "Checkpoint Ref"
+          },
+          "baseline_score": {
+            "type": "number",
+            "title": "Baseline Score",
+            "default": 0.0
+          },
+          "min_improvement": {
+            "type": "number",
+            "title": "Min Improvement",
+            "default": 0.01
+          },
+          "min_confidence": {
+            "type": "number",
+            "title": "Min Confidence",
+            "default": 0.7
+          },
+          "max_rows": {
+            "type": "integer",
+            "title": "Max Rows",
+            "default": 200
+          },
+          "consent_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consent Types",
+            "default": []
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "experiment_id",
+          "licence",
+          "checkpoint_ref"
+        ],
+        "title": "CandidateRequestModel"
+      },
       "CapabilityCreate": {
         "properties": {
           "ai_identity_id": {
@@ -24687,14 +26943,12 @@
           "include_memory": {
             "type": "boolean",
             "title": "Include Memory",
-            "default": false,
-            "description": "Private memories are injected only on a local primary, only when explicitly requested, and only when iam_context_include_private_memory is enabled. Never sent to hosted providers by default."
+            "default": false
           },
           "delegate": {
             "type": "boolean",
             "title": "Delegate",
-            "default": false,
-            "description": "Opt in to an optional hosted specialist. Requires an active signed Creator authorization for model.delegate. The specialist is never IAM; its findings are reviewed by the primary model and stored as unverified knowledge only when accepted."
+            "default": false
           },
           "delegate_model": {
             "anyOf": [
@@ -24705,8 +26959,33 @@
                 "type": "null"
               }
             ],
-            "title": "Delegate Model",
-            "description": "Gateway alias of the hosted specialist. Defaults to adaptive_delegate_model."
+            "title": "Delegate Model"
+          },
+          "allow_paid": {
+            "type": "boolean",
+            "title": "Allow Paid",
+            "default": false
+          },
+          "skill": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill"
+          },
+          "skill_permission": {
+            "type": "string",
+            "title": "Skill Permission",
+            "default": "execute"
+          },
+          "skill_arguments": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Skill Arguments"
           }
         },
         "type": "object",
@@ -25166,6 +27445,329 @@
         ],
         "title": "ConversationResponse"
       },
+      "CorpusGovernance": {
+        "properties": {
+          "validation_status": {
+            "type": "string",
+            "title": "Validation Status",
+            "default": "pending"
+          },
+          "validated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validated By"
+          },
+          "validation_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Date"
+          },
+          "restrictions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Restrictions"
+          }
+        },
+        "type": "object",
+        "title": "CorpusGovernance"
+      },
+      "CorpusIngestRequest": {
+        "properties": {
+          "manifest_path": {
+            "type": "string",
+            "title": "Manifest Path"
+          },
+          "root": {
+            "type": "string",
+            "title": "Root",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest_path"
+        ],
+        "title": "CorpusIngestRequest"
+      },
+      "CorpusLawfulBasis": {
+        "properties": {
+          "applies_to_living_persons": {
+            "type": "boolean",
+            "title": "Applies To Living Persons",
+            "default": false
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis",
+            "default": "not_applicable"
+          },
+          "evidence_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Reference"
+          }
+        },
+        "type": "object",
+        "title": "CorpusLawfulBasis"
+      },
+      "CorpusLicensing": {
+        "properties": {
+          "licence_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence Id"
+          },
+          "licence_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence Url"
+          },
+          "permission_evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permission Evidence"
+          },
+          "commercial_use_allowed": {
+            "type": "boolean",
+            "title": "Commercial Use Allowed",
+            "default": false
+          },
+          "attribution_required": {
+            "type": "boolean",
+            "title": "Attribution Required",
+            "default": false
+          },
+          "ingestion_allowed": {
+            "type": "boolean",
+            "title": "Ingestion Allowed",
+            "default": false
+          },
+          "storage_allowed": {
+            "type": "boolean",
+            "title": "Storage Allowed",
+            "default": false
+          },
+          "analysis_allowed": {
+            "type": "boolean",
+            "title": "Analysis Allowed",
+            "default": false
+          },
+          "model_training_allowed": {
+            "type": "boolean",
+            "title": "Model Training Allowed",
+            "default": false
+          },
+          "licence_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence Expires At"
+          },
+          "revocation_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revocation Reference"
+          }
+        },
+        "type": "object",
+        "title": "CorpusLicensing"
+      },
+      "CorpusPrivacy": {
+        "properties": {
+          "contains_personal_information": {
+            "type": "boolean",
+            "title": "Contains Personal Information",
+            "default": false
+          },
+          "contains_sensitive_personal_information": {
+            "type": "boolean",
+            "title": "Contains Sensitive Personal Information",
+            "default": false
+          },
+          "identifiable_profiles": {
+            "type": "boolean",
+            "title": "Identifiable Profiles",
+            "default": false
+          },
+          "sensitive_trait_inference": {
+            "type": "boolean",
+            "title": "Sensitive Trait Inference",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "CorpusPrivacy"
+      },
+      "CorpusRestrictionRequest": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "reason"
+        ],
+        "title": "CorpusRestrictionRequest"
+      },
+      "CorpusReviewRequest": {
+        "properties": {
+          "manifest": {
+            "$ref": "#/components/schemas/CorpusSourceManifest"
+          },
+          "intended_purpose": {
+            "type": "string",
+            "title": "Intended Purpose",
+            "default": "research"
+          },
+          "approved_by": {
+            "type": "string",
+            "title": "Approved By",
+            "default": "corpus_ingestion_gate"
+          },
+          "model_training": {
+            "type": "boolean",
+            "title": "Model Training",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest"
+        ],
+        "title": "CorpusReviewRequest"
+      },
+      "CorpusSourceManifest": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Id"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "source": {
+            "$ref": "#/components/schemas/CorpusSourceMeta"
+          },
+          "licensing": {
+            "$ref": "#/components/schemas/CorpusLicensing"
+          },
+          "permitted_purposes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permitted Purposes"
+          },
+          "lawful_basis": {
+            "$ref": "#/components/schemas/CorpusLawfulBasis"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/CorpusPrivacy"
+          },
+          "governance": {
+            "$ref": "#/components/schemas/CorpusGovernance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "source",
+          "licensing"
+        ],
+        "title": "CorpusSourceManifest"
+      },
+      "CorpusSourceMeta": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Origin"
+          },
+          "collection_date": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Collection Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "origin",
+          "collection_date"
+        ],
+        "title": "CorpusSourceMeta"
+      },
       "CredentialCreate": {
         "properties": {
           "purpose": {
@@ -25410,6 +28012,32 @@
         ],
         "title": "CycleStateRequest"
       },
+      "DPIASignoffRequest": {
+        "properties": {
+          "reviewer": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reviewer"
+          },
+          "decision": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Decision"
+          },
+          "basis": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Basis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reviewer",
+          "decision",
+          "basis"
+        ],
+        "title": "DPIASignoffRequest"
+      },
       "DataCorrectionRequest": {
         "properties": {
           "preferences": {
@@ -25447,6 +28075,47 @@
           "path"
         ],
         "title": "DataQueryCreate"
+      },
+      "DatasetBuildRequestModel": {
+        "properties": {
+          "experiment_id": {
+            "type": "string",
+            "title": "Experiment Id"
+          },
+          "licence": {
+            "type": "string",
+            "title": "Licence"
+          },
+          "min_confidence": {
+            "type": "number",
+            "title": "Min Confidence",
+            "default": 0.7
+          },
+          "max_rows": {
+            "type": "integer",
+            "title": "Max Rows",
+            "default": 200
+          },
+          "consent_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consent Types",
+            "default": []
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "experiment_id",
+          "licence"
+        ],
+        "title": "DatasetBuildRequestModel"
       },
       "DecisionCreate": {
         "properties": {
@@ -25682,6 +28351,36 @@
           "owner_entity"
         ],
         "title": "DomainCreate"
+      },
+      "DualUseRequest": {
+        "properties": {
+          "capability": {
+            "type": "string",
+            "title": "Capability"
+          },
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Markers"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Purpose"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope",
+            "default": "aggregate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "capability",
+          "purpose"
+        ],
+        "title": "DualUseRequest"
       },
       "EgressRequest": {
         "properties": {
@@ -26258,6 +28957,72 @@
           "source"
         ],
         "title": "ForecastEvidence"
+      },
+      "ForecastRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Question"
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Target"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Purpose"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope",
+            "default": "aggregate"
+          },
+          "time_horizon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Horizon"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "features": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Features"
+          },
+          "context_refs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Context Refs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "target",
+          "purpose"
+        ],
+        "title": "ForecastRequest"
       },
       "ForecastRunCreate": {
         "properties": {
@@ -28078,6 +30843,11 @@
           "tier": {
             "$ref": "#/components/schemas/Tier",
             "default": "T0"
+          },
+          "provenance_kind": {
+            "type": "string",
+            "title": "Provenance Kind",
+            "default": "direct_observation"
           }
         },
         "type": "object",
@@ -29098,6 +31868,17 @@
         ],
         "title": "MessageResponse"
       },
+      "MigrationRequest": {
+        "properties": {
+          "days_before_expiry": {
+            "type": "integer",
+            "title": "Days Before Expiry",
+            "default": 7
+          }
+        },
+        "type": "object",
+        "title": "MigrationRequest"
+      },
       "ModeRequest": {
         "properties": {
           "session_token": {
@@ -29270,6 +32051,19 @@
           "target_url"
         ],
         "title": "MonitorRequest"
+      },
+      "MultilingualIngestRequest": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchDocumentInput"
+            },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "title": "MultilingualIngestRequest"
       },
       "NodeRegistrationRequest": {
         "properties": {
@@ -29462,6 +32256,24 @@
           "price"
         ],
         "title": "OrderCreate"
+      },
+      "OversightRequest": {
+        "properties": {
+          "decision_type": {
+            "type": "string",
+            "title": "Decision Type"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision_type"
+        ],
+        "title": "OversightRequest"
       },
       "PathRequest": {
         "properties": {
@@ -30668,6 +33480,153 @@
         ],
         "title": "RegisterComplete"
       },
+      "RegisterRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "official_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Official Source"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "architectures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Architectures",
+            "default": []
+          },
+          "licence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence"
+          },
+          "commercial_use_ok": {
+            "type": "boolean",
+            "title": "Commercial Use Ok",
+            "default": false
+          },
+          "cost_status": {
+            "type": "string",
+            "title": "Cost Status",
+            "default": "free"
+          },
+          "hardware_requirements": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Hardware Requirements",
+            "default": {}
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities",
+            "default": []
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations",
+            "default": []
+          },
+          "security_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Security Status"
+          },
+          "maintenance_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Status"
+          },
+          "compatibility": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Compatibility",
+            "default": {}
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RegisterRequest"
+      },
       "ReleaseRequest": {
         "properties": {
           "model": {
@@ -30993,7 +33952,7 @@
           "model": {
             "type": "string",
             "title": "Model",
-            "default": "local-qwen-3b"
+            "default": "local-qwen-coder-3b"
           },
           "dataset_ref": {
             "type": "string",
@@ -31826,6 +34785,55 @@
         ],
         "title": "SkillCreate"
       },
+      "SkillPublishRequest": {
+        "properties": {
+          "skill_id": {
+            "type": "string",
+            "title": "Skill Id"
+          },
+          "peer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_id"
+        ],
+        "title": "SkillPublishRequest"
+      },
+      "SkillReleaseRequest": {
+        "properties": {
+          "envelope": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Envelope"
+          },
+          "peer_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "envelope"
+        ],
+        "title": "SkillReleaseRequest"
+      },
       "SkillResponse": {
         "properties": {
           "id": {
@@ -31965,6 +34973,20 @@
         "type": "object",
         "title": "SkillUpdate"
       },
+      "SourceCalibrationRequest": {
+        "properties": {
+          "cases": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "title": "SourceCalibrationRequest"
+      },
       "SourceRegisterRequest": {
         "properties": {
           "source_id": {
@@ -32006,29 +35028,18 @@
         ],
         "title": "SourceRegisterRequest"
       },
-      "StatusRequest": {
+      "StateRequest": {
         "properties": {
-          "update": {
+          "state": {
             "type": "string",
-            "title": "Update"
-          },
-          "context": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Context"
+            "title": "State"
           }
         },
         "type": "object",
         "required": [
-          "update"
+          "state"
         ],
-        "title": "StatusRequest"
+        "title": "StateRequest"
       },
       "StopUpdate": {
         "properties": {
@@ -33301,6 +36312,24 @@
         ],
         "title": "VerificationCreate"
       },
+      "VerificationRequest": {
+        "properties": {
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "evidence": {
+            "type": "string",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_url",
+          "evidence"
+        ],
+        "title": "VerificationRequest"
+      },
       "VerifyAssertion": {
         "properties": {
           "challenge_id": {
@@ -33909,6 +36938,30 @@
         ],
         "title": "MessageCreate"
       },
+      "app__api__routes__creator_communication__StatusRequest": {
+        "properties": {
+          "update": {
+            "type": "string",
+            "title": "Update"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "update"
+        ],
+        "title": "StatusRequest"
+      },
       "app__api__routes__creator_keys__VerifyRequest": {
         "properties": {
           "public_key": {
@@ -34184,6 +37237,19 @@
           "account_ref"
         ],
         "title": "ConsentCreate"
+      },
+      "app__api__routes__freenodes__StatusRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StatusRequest"
       },
       "app__api__routes__humanpresence__CorrectionRequest": {
         "properties": {

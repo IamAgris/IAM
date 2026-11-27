@@ -89,6 +89,7 @@ from app.api.routes import (
     ai_communication,
     hbi,
     technology_registry,
+    freenodes,
 )
 from app.workers.autonomy_worker import autonomy_worker
 from app.workers.creator_email_worker import creator_email_worker
@@ -106,11 +107,13 @@ async def lifespan(app: FastAPI):
 
     enforce_secret_policy()
 
-    # Create database tables (in production, use Alembic migrations)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    logger.info("Database initialized.")
+    # Development convenience only: production schema comes from Alembic.
+    if settings.create_all_enabled:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database initialized from ORM metadata (development).")
+    else:
+        logger.info("Production mode: schema managed by Alembic migrations.")
 
     # Initialize IAM identity, constitution and default policies (idempotent)
     from app.core.database import AsyncSessionLocal
@@ -239,6 +242,7 @@ app.include_router(autonomous_web_task.router)
 app.include_router(browser_infrastructure.router)
 app.include_router(hbi.router)
 app.include_router(technology_registry.router)
+app.include_router(freenodes.router)
 
 # Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
 app.include_router(ops.router)

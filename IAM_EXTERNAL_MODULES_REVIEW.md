@@ -38,5 +38,12 @@ registry and economy adapters.
 
 ## Remaining
 
-- WebSocket peer sessions and full signed P2P skill-exchange flows remain
-  future work; services and primary HTTP routes are covered.
+- Signed P2P skill exchange is implemented: `POST /p2p/skills/publish`,
+  `POST /p2p/skills/receive`, `GET /p2p/skills/candidates`,
+  `POST /p2p/skills/candidates/{id}/{approve,reject}`. Received releases are
+  always untrusted candidates, re-inspected and gated by creator approval.
+- Fixed outbound/inbound sequence collision in `P2PTransport.next_seq()`: a
+  locally published envelope was otherwise rejected as a replay.
+- Fixed `SkillForgeService.create()` assigning invalid status `pending` to
+  imported skills; staged imports now remain `draft`.
+- Integration check exercises publish → receive → approve end to end.

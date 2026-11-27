@@ -53,7 +53,7 @@ MODULE_REGISTRY: Dict[int, Dict[str, str]] = {
 
 IMPLEMENTED = {
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20,
-    21, 22, 23, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+    15, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
 }
 
 MODULE_CUES = {
@@ -83,6 +83,9 @@ MODULE_CUES = {
     38: {"resilience", "adversity", "adaptation", "coping", "recovery"},
     13: {"forecast", "possible outcome", "probability", "scenario", "future"},
     14: {"manipulation", "coercion", "propaganda", "deception", "threat"},
+    15: {"evaluation", "calibration", "prediction accuracy", "model performance"},
+    24: {"evolution", "hominin", "migration", "prehistory", "adaptation"},
+    25: {"development", "childhood", "adulthood", "ageing", "life course"},
     16: {"historical source", "archive", "document", "chronicle"},
     17: {"historical behaviour", "period", "century", "past response"},
     18: {"historical motivation", "historical fear", "belief", "leader psychology"},

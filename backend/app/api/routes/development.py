@@ -26,7 +26,10 @@ from app.services.ai_research.release_gate import (
     ModelReleaseError,
     ModelReleaseService,
 )
-from app.services.ai_research.continuous_improvement import ContinuousImprovement
+from app.services.ai_research.continuous_improvement import ContinuousImprovement, default_adapters
+from app.services.ai_research.base import ResearchError
+from app.services.ai_research.dataset_engine import DatasetBuildRequest, build as build_dataset
+from app.services.ai_research.self_improvement import CandidateRequest, prepare_candidate
 from app.services.ai_research.artifacts import new_experiment_id
 from app.services.ai_research.jobs import HardwareRequirement, ResearchJob, ResearchMethod
 from app.services.free_sandboxes.base import ProviderUnavailable, SandboxError
@@ -100,6 +103,30 @@ class ModelPromoteRequest(BaseModel):
 class ModelRollbackRequest(BaseModel):
     version: str
     reason: str = ""
+
+
+class DatasetBuildRequestModel(BaseModel):
+    experiment_id: str
+    licence: str
+    min_confidence: float = 0.7
+    max_rows: int = 200
+    consent_types: List[str] = []
+    diagnosis: str = ""
+
+
+class CandidateRequestModel(BaseModel):
+    experiment_id: str
+    licence: str
+    base_model: str = ""
+    version: str = "candidate"
+    task_type: str = "coding"
+    checkpoint_ref: str
+    baseline_score: float = 0.0
+    min_improvement: float = 0.01
+    min_confidence: float = 0.7
+    max_rows: int = 200
+    consent_types: List[str] = []
+    diagnosis: str = ""
 
 
 class ResearchRunRequest(BaseModel):
@@ -438,3 +465,62 @@ async def run_research_cycle(
 @router.get("/research-history")
 async def research_history(db: AsyncSession = Depends(get_db_session)):
     return await ContinuousImprovement(db).history()
+
+
+@router.post("/datasets")
+async def build_dataset_artifact(
+    payload: DatasetBuildRequestModel,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Build a provenance-bearing dataset from verified knowledge only.
+
+    Consent types default to empty, so no visitor interaction is included until
+    the owner explicitly configures an allowed consent type.
+    """
+    try:
+        result = await build_dataset(
+            db,
+            DatasetBuildRequest(
+                experiment_id=payload.experiment_id,
+                licence=payload.licence,
+                min_confidence=payload.min_confidence,
+                max_rows=payload.max_rows,
+                consent_types=frozenset(payload.consent_types),
+                diagnosis=payload.diagnosis,
+            ),
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result.as_dict()
+
+
+@router.post("/self-improvement/cycle")
+async def run_self_improvement_cycle(
+    payload: CandidateRequestModel,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Prepare a benchmarked candidate. Promotion remains a separate signed gate."""
+    try:
+        result = await prepare_candidate(
+            db,
+            CandidateRequest(
+                experiment_id=payload.experiment_id,
+                licence=payload.licence,
+                base_model=payload.base_model or settings.iam_primary_model,
+                version=payload.version,
+                task_type=payload.task_type,
+                checkpoint_ref=payload.checkpoint_ref,
+                baseline_score=payload.baseline_score,
+                min_improvement=payload.min_improvement,
+                min_confidence=payload.min_confidence,
+                max_rows=payload.max_rows,
+                consent_types=frozenset(payload.consent_types),
+                diagnosis=payload.diagnosis,
+            ),
+            adapters=default_adapters(),
+            actor=_release_actor(request),
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result

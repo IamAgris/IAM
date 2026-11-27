@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional
 from app.services.hbi import (
     acceptance, advanced, backtest_library, calibration, civilisation,
     contradictions, deployment, dual_use, dpia, forecasting, gaps, historical,
-    lifecycle, manipulation, modules, oversight, temporal, uncertainty, validation,
+    evaluation_module, lifecycle, manipulation, modules, oversight, temporal,
+    uncertainty, validation,
 )
 from app.services.hbi.corpus import ingest_corpus as load_corpus
 from app.services.hbi.corpus_gate import CorpusGovernance
@@ -202,7 +203,11 @@ class HBIService:
 
     async def analyse_module(self, module_id: int, payload: ModuleAnalysisRequest) -> Dict[str, Any]:
         self.core.check_governance(payload.purpose, payload.scope.value)
-        result = modules.analyse(module_id, payload.question, await self.ensure_loaded())
+        records = await self.ensure_loaded()
+        if module_id == 15:
+            result = evaluation_module.analyse(records, self.predictor)
+        else:
+            result = modules.analyse(module_id, payload.question, records)
         self.core._audit("module_analysis", payload.purpose, payload.scope.value,
                          result.get("status", "unknown"), {"module_id": module_id})
         return result

@@ -2,7 +2,8 @@
 
 Implements the transport layer specified in IAM_DISTRIBUTED_ARCHITECTURE.md (C)
 and IAM_DYNAMIC_NODE_NETWORK_SPEC.md (OD-26):
-  - Signed message envelopes (Ed25519 where keys available, HMAC fallback)
+  - Signed message envelopes (HMAC-SHA256 over the canonical body; Ed25519 is
+    not implemented in this transport — do not describe these as Ed25519)
   - Persistent WebSocket connections between nodes
   - Store-and-forward for offline peers
   - Replay protection via monotonic sequence numbers
@@ -73,7 +74,8 @@ class P2PTransport:
 
     def __init__(self):
         self.connections: Dict[str, Any] = {}       # node_id -> WebSocket
-        self.seq: Dict[str, int] = defaultdict(int)  # sender -> last seq seen
+        self.seq: Dict[str, int] = defaultdict(int)  # sender -> last seq seen (inbound)
+        self.outgoing_seq: Dict[str, int] = defaultdict(int)  # node -> next seq to send
         self.seen: Dict[str, float] = {}            # envelope id -> ts (dedup)
         self.outbox: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         self.local_secret: str = secrets.token_hex(32)
@@ -85,8 +87,10 @@ class P2PTransport:
             self.local_secret = secret
 
     def next_seq(self) -> int:
-        self.seq[self.node_id] += 1
-        return self.seq[self.node_id]
+        # Outbound counters must not be confused with inbound replay tracking:
+        # a locally published envelope would otherwise look like a replay.
+        self.outgoing_seq[self.node_id] += 1
+        return self.outgoing_seq[self.node_id]
 
     def accept(self, env: Dict[str, Any], peer_secret: Optional[str] = None) -> Dict[str, Any]:
         """Accept an inbound envelope: verify, dedup, replay-check, store."""

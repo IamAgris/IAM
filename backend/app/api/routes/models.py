@@ -178,7 +178,10 @@ async def chat_completion(
 ):
     """Chat completion with IAM context through the resolved provider."""
     status = await inference_service.resolve()
-    messages, delegation = await _prepare_messages(request, db, status)
+    try:
+        messages, delegation, action = await _prepare_messages(request, db, status)
+    except ModelPolicyDenied as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     try:
         result = await inference_service.chat(
             messages,
@@ -188,6 +191,8 @@ async def chat_completion(
         )
         if delegation is not None:
             result["iam_delegation"] = delegation
+        if action is not None:
+            result["iam_action"] = action
         return result
     except InferenceUnavailable as exc:
         logger.warning(f"Inference unavailable: {exc}")
@@ -213,7 +218,10 @@ async def chat_stream(
     """
     request_id = str(__import__("uuid").uuid4())
     status = await inference_service.resolve()
-    messages, delegation = await _prepare_messages(request, db, status)
+    try:
+        messages, delegation, action = await _prepare_messages(request, db, status)
+    except ModelPolicyDenied as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
     async def generate() -> AsyncGenerator[str, None]:
         def evt(event: str, data: dict) -> str:
@@ -242,6 +250,8 @@ async def chat_stream(
                     data["request_id"] = request_id
                     if delegation is not None:
                         data["delegation"] = delegation
+                    if action is not None:
+                        data["action"] = action
                 yield evt(item["event"], data)
         except Exception as exc:
             logger.error(f"Stream error: {exc}")

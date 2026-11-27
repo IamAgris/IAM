@@ -163,6 +163,7 @@ export function IAMInterface() {
   const abortRef = React.useRef<AbortController | null>(null);
   const timersRef = React.useRef<number[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const lastHoverRef = React.useRef<string | null>(null);
 
   // Check backend connectivity (subtle, unobtrusive)
   React.useEffect(() => {
@@ -319,8 +320,10 @@ export function IAMInterface() {
         if (raw) stored = JSON.parse(raw);
       } catch {}
       if (stored?.session_token) {
+        const restoredMode: Mode = stored.mode || "focus";
         setSession(stored);
-        setMode(stored.mode || "focus");
+        setMode(restoredMode);
+        setStatus(MODE_CONFIG[restoredMode].status);
         await loadMessages(stored.session_token);
         return;
       }
@@ -372,7 +375,7 @@ export function IAMInterface() {
   React.useEffect(() => {
     loadNodes();
     loadSuggestions(mode, session?.session_token);
-  }, [loadNodes, loadSuggestions]);
+  }, [loadNodes, loadSuggestions, mode, session?.session_token]);
 
   const loadMessages = async (token: string) => {
     try {
@@ -424,8 +427,8 @@ export function IAMInterface() {
     setGenerating(true);
     try {
       const form = new FormData();
-      form.append("image", file);
       const isImage = file.type.startsWith("image/");
+      form.append(isImage ? "image" : "video", file);
       const url = isImage ? "/api/v1/vision/understand-image" : "/api/v1/vision/analyze-video";
       const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
       const res = await fetch(base + url, { method: "POST", body: form });
@@ -472,7 +475,7 @@ export function IAMInterface() {
 
   const ask = async (query: string) => {
     query = query.trim();
-    if (!query) return;
+    if (!query || generating) return;
     setInput("");
     setResponse("");
     setResponseMinimized(false);
@@ -505,9 +508,8 @@ export function IAMInterface() {
       content: m.content,
     }));
 
-    // Real SSE streaming from the backend
-    setState("speaking");
-    setStatus("Speaking");
+    // Real SSE streaming from the backend. Stay in "thinking" until the
+    // backend emits start/first token so the sphere reflects reality.
     let answer = "";
     try {
       const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
@@ -554,6 +556,7 @@ export function IAMInterface() {
 
           if (event === "start") {
             setState("speaking");
+            setStatus("Speaking");
           } else if (event === "delta") {
             full += data.text || "";
             setResponse(full);
@@ -566,7 +569,11 @@ export function IAMInterface() {
         }
       }
       answer = full || "I could not generate a response.";
-    } catch {
+    } catch (err) {
+      // User-initiated Stop is not an outage — do not record it as an answer.
+      if ((err as DOMException)?.name === "AbortError" || abortRef.current?.signal.aborted) {
+        return;
+      }
       answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
       setResponse(answer);
     }
@@ -596,7 +603,13 @@ export function IAMInterface() {
     setState(on ? "listening" : "idle");
     setStatus(on ? "Listening…" : MODE_CONFIG[mode].status);
 
-    if (on && typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+    if (!on) {
+      try { recognitionRef.current?.stop(); } catch {}
+      recognitionRef.current = null;
+      return;
+    }
+
+    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
       try {
         const SR = (window as any).webkitSpeechRecognition;
         const rec = new SR();
@@ -928,6 +941,9 @@ export function IAMInterface() {
 
       {/* Center response + input */}
       <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-4 pb-6 pointer-events-none">
+        <span className="sr-only" aria-live="polite">
+          {generating ? "IAM is responding" : response && !responseDismissed ? "Response ready" : ""}
+        </span>
         {!responseDismissed && (
           <div
             className={`say w-full max-w-[720px] leading-relaxed min-h-[1.5em] transition-opacity duration-300 overflow-y-auto pointer-events-auto ${
@@ -941,8 +957,7 @@ export function IAMInterface() {
               background: compactResponse ? undefined : "var(--glass)",
               backdropFilter: compactResponse ? undefined : "blur(18px)",
             }}
-            aria-live="polite"
-          >
+            >
             {response && !compactResponse && !responseMinimized ? (
               <div className="flex justify-end gap-1.5 mb-2">
                 <button
@@ -1030,8 +1045,9 @@ export function IAMInterface() {
             {suggestions.map((s) => (
               <button
                 key={s}
+                disabled={generating}
                 onClick={() => ask(s)}
-                className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-md transition-colors hover:border-[var(--accent)]"
+                className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-md transition-colors hover:border-[var(--accent)] disabled:opacity-40 disabled:pointer-events-none"
                 style={{ background: "var(--glass)", color: "var(--mute)" }}
               >
                 {s}
@@ -1042,7 +1058,7 @@ export function IAMInterface() {
 
         <form
           onSubmit={(e) => { e.preventDefault(); ask(input); }}
-          className="bar pointer-events-auto w-full max-w-[600px] flex items-center gap-2 py-1.5 pl-5 pr-1.5 rounded-full border border-[var(--line)] backdrop-blur-xl transition-all focus-within:border-[var(--accent)]"
+          className="bar pointer-events-auto group w-full max-w-[600px] flex items-center gap-2 py-2 pl-5 pr-2 rounded-[22px] border border-[var(--line)] backdrop-blur-2xl shadow-[0_12px_40px_-18px_rgba(0,0,0,.55)] ring-1 ring-white/5 transition-all duration-300 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_rgba(143,166,255,.14)]"
           style={{ background: "var(--glass)" }}
         >
           <input
@@ -1058,7 +1074,7 @@ export function IAMInterface() {
             placeholder={MODE_CONFIG[mode].placeholder}
             aria-label="Message to IAM"
             autoComplete="off"
-            className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2.5 text-inherit"
+            className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2 text-[15px] tracking-wide caret-[var(--accent)] placeholder:opacity-40"
             style={{ color: "var(--ink)" }}
           />
           <input
@@ -1076,7 +1092,7 @@ export function IAMInterface() {
             type="button"
             onClick={() => fileRef.current?.click()}
             aria-label="Attach image or video"
-            className="w-[36px] h-[36px] rounded-full border grid place-items-center transition-colors hover:border-[var(--accent)]"
+            className="w-9 h-9 rounded-full border grid place-items-center opacity-60 transition-all duration-200 hover:opacity-100 hover:border-[var(--accent)] hover:bg-white/5 active:scale-95"
             style={{ borderColor: "var(--line)" }}
           >
             <Paperclip size={16} />
@@ -1086,7 +1102,9 @@ export function IAMInterface() {
             onClick={toggleMic}
             aria-pressed={listening}
             aria-label="Listen"
-            className="w-[42px] h-[42px] rounded-full border grid place-items-center transition-colors"
+            className={`w-[42px] h-[42px] rounded-full border grid place-items-center transition-all duration-200 active:scale-95 ${
+              listening ? "shadow-[0_0_0_4px_rgba(143,166,255,.18)] animate-pulse" : "opacity-60 hover:opacity-100 hover:bg-white/5"
+            }`}
             style={listening
               ? { background: "var(--accent)", color: "var(--bg2)", borderColor: "transparent" }
               : { borderColor: "var(--line)" }}
@@ -1095,9 +1113,10 @@ export function IAMInterface() {
           </button>
           <button
             type="submit"
+            disabled={!input.trim() && !listening}
             aria-label="Send"
-            className="w-[42px] h-[42px] rounded-full grid place-items-center border-0 transition-opacity hover:opacity-90"
-            style={{ background: "var(--ink)", color: "var(--bg2)" }}
+            className="w-[42px] h-[42px] rounded-full grid place-items-center border-0 transition-all duration-200 hover:scale-[1.05] active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+            style={{ background: "var(--ink)", color: "var(--bg2)", boxShadow: "0 8px 22px -10px var(--accent)" }}
           >
             <ArrowRight size={18} />
           </button>

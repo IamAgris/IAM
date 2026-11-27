@@ -9,6 +9,7 @@ from . import (
     auth, skillruntime, deployment, tone, ownerauth, p2p, creator_communication, aegis,
     freesandboxes, creator_keys, events, workspaces, whitehat, irwm, modelindependence, financial_adapters, digitalassets, socialpresence, assistance, computer_use, mobile, websitecredentials, mfa, web_knowledge, web_account, digital_reputation, web_consent, digital_security, autonomous_web_task, browser_infrastructure, ai_communication, hbi,
     technology_registry,
+    freenodes,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "auth", "skillruntime", "deployment", "tone", "ownerauth", "p2p", "creator_communication", "aegis",
     "freesandboxes", "creator_keys", "events", "workspaces", "whitehat", "irwm", "modelindependence", "financial_adapters", "digitalassets", "socialpresence", "assistance", "computer_use", "mobile", "websitecredentials", "mfa", "web_knowledge", "web_account", "digital_reputation", "web_consent", "digital_security", "autonomous_web_task", "browser_infrastructure", "ai_communication", "hbi",
     "technology_registry",
+    "freenodes",
 ]

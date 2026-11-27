@@ -7,6 +7,29 @@ import type { AddressInfo } from "node:net";
 
 import { IAM } from "./index.js";
 
+test("HBI interface uses versioned /api/v1/hbi paths", async () => {
+  await withServer(
+    () => ({ status: 200, body: { ok: true } }),
+    async (endpoint, seen) => {
+      const iam = new IAM({ endpoint });
+      assert.deepEqual(await iam.hbi.status(), { ok: true });
+      await iam.hbi.research.search("community", "research");
+      await iam.hbi.behaviour.predict({
+        question: "Will participation rise?",
+        target: "participation",
+        purpose: "research",
+      });
+      await iam.hbi.corpus.state();
+      await iam.hbi.validation.report();
+      const paths = seen.map((item) => item.url);
+      assert.equal(paths[0], "/api/v1/hbi/status");
+      assert.ok(paths.includes("/api/v1/hbi/behaviour/forecast"));
+      assert.ok(paths.includes("/api/v1/hbi/knowledge/corpus/state"));
+      assert.ok(paths.some((path) => path.startsWith("/api/v1/hbi/validation/report")));
+    },
+  );
+});
+
 type Seen = { method: string; url: string; headers: IncomingMessage["headers"]; body: string };
 
 async function withServer(

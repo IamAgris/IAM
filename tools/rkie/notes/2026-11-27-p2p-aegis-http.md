@@ -11,4 +11,8 @@ Based on the current checkout; re-verify before reuse.
   previously caused a DBAPIError (HTTP 500), now `AttestationError` (HTTP 400).
 - Tests: `backend/tests/test_p2p_and_aegis.py` (service-level, 8 tests) and
   HTTP-level checks in `backend/tests/integration_db_check.py`.
-- Integration check exits 0 with Postgres + Redis; 364 unit tests pass.
+- Signed P2P skill exchange added (`services/skill_exchange_service.py`, routes
+  in `routes/p2p.py`, model `p2p_skills.py`, migration 012). Fixed outbound seq
+  collision in `p2p_transport.py` and invalid `pending` status in
+  `SkillForgeService.create()` for imported skills.
+- Integration check exits 0 with Postgres + Redis; 421 unit tests pass.

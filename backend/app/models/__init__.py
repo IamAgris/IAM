@@ -89,6 +89,7 @@ from app.models.freesandbox import (
     FreeSandboxEnvironment,
     FreeSandboxResult,
 )
+from app.models.freenode import FreeNodeCandidate
 from app.models.publicrecords import PublicSource, PublicRecord, RecordRelationship
 from app.models.legal import LegalSource, LegalInstrument, LegalVersion, LegalChange, LegalImpact
 from app.models.geo import (
@@ -220,6 +221,8 @@ __all__ = [
     # OEDIE free infrastructure adapters (Doc 22)
     "FreeSandboxProvider", "FreeSandboxQuotaSnapshot",
     "FreeSandboxEnvironment", "FreeSandboxResult",
+    # Free infrastructure node lifecycle (Doc 19)
+    "FreeNodeCandidate",
     # Workspace manager
     "WorkspaceEnvironment", "WorkspaceCredential", "SecurityWorkSession",
     "BankingConsent", "PaperOrder", "PaperPortfolio", "AssistanceRequest", "WebsiteCredential",

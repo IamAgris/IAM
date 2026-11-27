@@ -173,13 +173,9 @@ export function PresenceSphere({
       P.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r, s: Math.random() });
     }
 
-    const orbitalNodes = nodesRef.current.map((n, i) => ({
-      ...n,
-      a: (i / Math.max(nodesRef.current.length, 1)) * Math.PI * 2,
-      r: 1.6 + (i % 3) * 0.15,
-      sp: (i % 2 === 0 ? 0.08 : -0.07),
-      g: 0,
-    }));
+    // Memory nodes can change after mount — rebuild their orbits from live refs
+    // each frame while preserving angle/glow state by label.
+    const orbitalStates: Record<string, { a: number; g: number }> = {};
 
     // Live research source nodes — keyed by node id so updates never rebuild
     // the particle sphere or restart the animation loop.
@@ -261,27 +257,37 @@ export function PresenceSphere({
       // Orbiting memory nodes
       const fs = W < 600 ? 11 : 13;
       ctx.font = `300 ${fs}px 'Space Grotesk', sans-serif`;
-      orbitalNodes.forEach((n) => {
-        const an = n.a + animT * n.sp;
-        const x = ox + Math.cos(an) * R * n.r;
-        const y = oy + Math.sin(an) * R * n.r * 0.42;
+      const memoryNodes = nodesRef.current;
+      memoryNodes.forEach((n, i) => {
+        if (!orbitalStates[n.text]) {
+          orbitalStates[n.text] = {
+            a: (i / Math.max(memoryNodes.length, 1)) * Math.PI * 2,
+            g: 0,
+          };
+        }
+        const st = orbitalStates[n.text];
+        const sp = i % 2 === 0 ? 0.08 : -0.07;
+        const radius = 1.6 + (i % 3) * 0.15;
+        const an = st.a + animT * sp;
+        const x = ox + Math.cos(an) * R * radius;
+        const y = oy + Math.sin(an) * R * radius * 0.42;
         const front = Math.sin(an) > 0;
-        n.g += ((n.hit ? 1 : 0) - n.g) * Math.min(1, dt * 3);
-        if (n.g > 0.02) {
-          ctx.strokeStyle = `hsla(${hue},90%,${L}%,${0.7 * n.g})`;
+        st.g += ((n.hit ? 1 : 0) - st.g) * Math.min(1, dt * 3);
+        if (st.g > 0.02) {
+          ctx.strokeStyle = `hsla(${hue},90%,${L}%,${0.7 * st.g})`;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
           ctx.moveTo(x, y);
-          ctx.quadraticCurveTo((x + ox) / 2, (y + oy) / 2 - 30 * n.g, ox, oy);
+          ctx.quadraticCurveTo((x + ox) / 2, (y + oy) / 2 - 30 * st.g, ox, oy);
           ctx.stroke();
         }
-        ctx.fillStyle = `hsla(${hue},90%,${D ? 75 : 40}%,${0.5 + 0.5 * n.g})`;
+        ctx.fillStyle = `hsla(${hue},90%,${D ? 75 : 40}%,${0.5 + 0.5 * st.g})`;
         ctx.beginPath();
-        ctx.arc(x, y, 3 + 4 * n.g, 0, 6.2832);
+        ctx.arc(x, y, 3 + 4 * st.g, 0, 6.2832);
         ctx.fill();
-        ctx.fillStyle = D ? `rgba(225,230,255,${0.28 + 0.7 * n.g})` : `rgba(20,26,58,${0.35 + 0.65 * n.g})`;
+        ctx.fillStyle = D ? `rgba(225,230,255,${0.28 + 0.7 * st.g})` : `rgba(20,26,58,${0.35 + 0.65 * st.g})`;
         ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
-        if (front || n.g > 0.1) {
+        if (front || st.g > 0.1) {
           ctx.fillText(n.text, x + (Math.cos(an) > 0 ? 12 : -12), y + 4);
         }
       });

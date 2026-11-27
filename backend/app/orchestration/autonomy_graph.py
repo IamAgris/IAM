@@ -120,7 +120,30 @@ async def execute(state: AutonomyState) -> dict:
     if not plan:
         return {"action_result": {"status": "skipped"}, "steps": ["execute:skip"]}
     obj = plan.get("objective", {})
+    tool_name = state.get("tool_name") or obj.get("tool_name")
     async with get_session_factory()() as db:
+        # ToolPermission is enforced at call time, not only in the registry API.
+        if tool_name:
+            from app.services.tool_authorization import (
+                ToolAuthorizationError,
+                authorize_tool_call,
+            )
+
+            try:
+                await authorize_tool_call(
+                    db,
+                    str(tool_name),
+                    approval_granted=bool(state.get("approval_granted")),
+                )
+            except ToolAuthorizationError as exc:
+                return {
+                    "action_result": {
+                        "status": "blocked",
+                        "reason": exc.reason,
+                        "code": exc.code,
+                    },
+                    "steps": ["execute:blocked"],
+                }
         decision = DecisionRecord(
             decision=f"Autonomous step toward: {obj.get('title', 'objective')}",
             reasoning=state.get("reasoning"),

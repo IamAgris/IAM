@@ -157,7 +157,7 @@ through the signed-email gateway. No Creator UI exists (OD-19).
 | 2 — Security & testing: permissions, static inspection, tests, quarantine, rollback | **Core done** |
 | 3 — Autonomous development: automated design, improvement, duplicate detection | Scaffold (`discover_gaps`, version/tests hooks) |
 | 4 — External ecosystem: OpenAI/NVIDIA/Google/xAI (Grok) and community skill adapters with verification | Folder + origin/provider support; adapters not implemented. External skill packages (e.g. xAI/Grok skills) are candidate sources — see Doc 18 §15 |
-| 5 — IAM network: P2P skill exchange, signed releases, trust policy | Not implemented |
+| 5 — IAM network: P2P skill exchange, signed releases, trust policy | Implemented — signed envelopes, untrusted candidates, re-inspection and creator-gated approval |
 
 ### Remaining work
 

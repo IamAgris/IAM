@@ -110,3 +110,58 @@ async def peer_socket(websocket: WebSocket, peer_id: str, secret: Optional[str] 
         pass
     finally:
         transport.unregister_ws(peer_id)
+
+
+# --- Signed skill exchange ----------------------------------------------------
+
+@router.get("/skills/candidates")
+async def list_skill_candidates(db: AsyncSession = Depends(get_db_session)):
+    return await SkillExchangeService(db).candidates()
+
+
+@router.post("/skills/publish")
+async def publish_skill_release(
+    request: SkillPublishRequest, db: AsyncSession = Depends(get_db_session)
+):
+    """Broadcast a signed release of an active skill. Payload is learning-only."""
+    try:
+        return await SkillExchangeService(db).publish(request.skill_id, request.peer_id)
+    except SkillExchangeError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/skills/receive", status_code=201)
+async def receive_skill_release(
+    request: SkillReleaseRequest, db: AsyncSession = Depends(get_db_session)
+):
+    """Verify a signed release and store it as an untrusted candidate."""
+    try:
+        return await SkillExchangeService(db).receive(
+            request.envelope, request.peer_secret
+        )
+    except SkillExchangeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/skills/candidates/{candidate_id}/approve")
+async def approve_skill_candidate(
+    candidate_id: str, db: AsyncSession = Depends(get_db_session)
+):
+    try:
+        return await SkillExchangeService(db).approve(candidate_id)
+    except SkillExchangeError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/skills/candidates/{candidate_id}/reject")
+async def reject_skill_candidate(
+    candidate_id: str, db: AsyncSession = Depends(get_db_session)
+):
+    try:
+        return await SkillExchangeService(db).reject(candidate_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

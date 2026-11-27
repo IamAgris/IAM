@@ -19,6 +19,23 @@ CREATE TABLE ai_identity (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE ai_identity_registry (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	provider TEXT NOT NULL, 
+	model_id TEXT, 
+	communication_channel TEXT NOT NULL, 
+	is_local BOOLEAN NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	communication_permitted BOOLEAN NOT NULL, 
+	trust_level TEXT NOT NULL, 
+	description TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_identity_trust_level CHECK (trust_level IN ('untrusted', 'trusted', 'restricted'))
+);
+
 CREATE TABLE ai_providers (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -73,6 +90,19 @@ CREATE TABLE approval_policies (
 	CONSTRAINT ck_approval_policy_level CHECK (min_authority_level IN ('1', '2', '3', '4'))
 );
 
+CREATE TABLE assistance_requests (
+	id UUID NOT NULL, 
+	level TEXT NOT NULL, 
+	reason TEXT NOT NULL, 
+	context JSON NOT NULL, 
+	task_ref TEXT, 
+	status TEXT NOT NULL, 
+	resolved_by TEXT, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id)
+);
+
 CREATE TABLE assistant_systems (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -118,6 +148,36 @@ CREATE TABLE backup_verifications (
 	success BOOLEAN NOT NULL, 
 	restored_items INTEGER, 
 	verified_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE banking_consents (
+	id UUID NOT NULL, 
+	institution TEXT NOT NULL, 
+	account_ref TEXT NOT NULL, 
+	capabilities JSON NOT NULL, 
+	authorization_id TEXT, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE browser_infrastructure (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	browser_type TEXT NOT NULL, 
+	mode TEXT NOT NULL, 
+	profile_name TEXT, 
+	remote_endpoint TEXT, 
+	device_serial TEXT, 
+	health_status TEXT NOT NULL, 
+	last_health_check_at TIMESTAMP WITH TIME ZONE, 
+	resource_allocation JSON NOT NULL, 
+	concurrent_session_limit INTEGER NOT NULL, 
+	active_session_count INTEGER NOT NULL, 
+	is_available BOOLEAN NOT NULL, 
 	PRIMARY KEY (id)
 );
 
@@ -194,7 +254,7 @@ CREATE TABLE communication_audit (
 	details JSON NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
-	CONSTRAINT ck_communication_channel CHECK (channel IN ('creator_email', 'operational_email', 'private_user')), 
+	CONSTRAINT ck_communication_channel CHECK (channel IN ('creator_email', 'creator_cli', 'creator_webhook', 'creator_node', 'creator_file', 'operational_email', 'private_user')), 
 	CONSTRAINT ck_communication_direction CHECK (direction IN ('outbound', 'inbound'))
 );
 
@@ -483,6 +543,23 @@ CREATE TABLE free_sandbox_providers (
 	UNIQUE (name)
 );
 
+CREATE TABLE gaming_research_records (
+	id UUID NOT NULL, 
+	game TEXT NOT NULL, 
+	provider TEXT, 
+	rtp NUMERIC(5, 4) NOT NULL, 
+	house_edge NUMERIC(5, 4) NOT NULL, 
+	sample_size INTEGER NOT NULL, 
+	methodology TEXT NOT NULL, 
+	findings JSON NOT NULL, 
+	wagering_enabled BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_gaming_rtp_range CHECK (rtp >= 0 AND rtp <= 1), 
+	CONSTRAINT ck_gaming_house_edge_range CHECK (house_edge >= 0 AND house_edge <= 1), 
+	CONSTRAINT ck_gaming_sample_size CHECK (sample_size >= 0)
+);
+
 CREATE TABLE geo_data_files (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -659,6 +736,19 @@ CREATE TABLE internet_sessions (
 );
 
 CREATE UNIQUE INDEX ix_internet_sessions_session_token ON internet_sessions (session_token);
+
+CREATE TABLE investment_research_records (
+	id UUID NOT NULL, 
+	asset_class TEXT NOT NULL, 
+	symbol TEXT NOT NULL, 
+	thesis TEXT NOT NULL, 
+	risk_notes TEXT, 
+	evidence JSON NOT NULL, 
+	execution_enabled BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_investment_asset_class CHECK (asset_class IN ('stocks', 'etfs', 'commodities', 'futures', 'bonds', 'precious_metals', 'indices', 'portfolio'))
+);
 
 CREATE TABLE knowledge_items (
 	id UUID NOT NULL, 
@@ -837,6 +927,8 @@ CREATE TABLE online_accounts (
 	is_authorised BOOLEAN NOT NULL, 
 	authorised_by TEXT, 
 	credential_reference TEXT, 
+	credential_rotated_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id), 
 	CONSTRAINT ck_online_account_type CHECK (account_type IN ('service', 'community', 'social', 'business'))
@@ -883,6 +975,53 @@ CREATE TABLE owner_authorizations (
 
 CREATE INDEX ix_owner_authorizations_action_type ON owner_authorizations (action_type);
 
+CREATE TABLE p2p_skill_candidates (
+	id UUID NOT NULL, 
+	envelope_id TEXT NOT NULL, 
+	publisher TEXT NOT NULL, 
+	skill_id TEXT NOT NULL, 
+	version TEXT NOT NULL, 
+	instructions TEXT NOT NULL, 
+	permissions JSON NOT NULL, 
+	checksum TEXT, 
+	status TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_p2p_skill_candidate_status CHECK (status IN ('candidate', 'approved', 'rejected'))
+);
+
+CREATE UNIQUE INDEX ix_p2p_skill_candidates_envelope_id ON p2p_skill_candidates (envelope_id);
+
+CREATE TABLE paper_portfolios (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	cash_balance NUMERIC(15, 4) NOT NULL, 
+	holdings JSON NOT NULL, 
+	risk_limits JSON NOT NULL, 
+	emergency_stop BOOLEAN NOT NULL, 
+	simulation_only BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE prediction_markets (
+	id UUID NOT NULL, 
+	platform TEXT NOT NULL, 
+	market_ref TEXT NOT NULL, 
+	event_name TEXT NOT NULL, 
+	outcomes JSON NOT NULL, 
+	implied_probabilities JSON NOT NULL, 
+	source_url TEXT, 
+	legal_status TEXT NOT NULL, 
+	real_money_enabled BOOLEAN NOT NULL, 
+	observed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_prediction_market_ref UNIQUE (platform, market_ref), 
+	CONSTRAINT ck_prediction_market_legal_status CHECK (legal_status IN ('research_only', 'legal_review_required', 'cleared'))
+);
+
 CREATE TABLE project_portfolios (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -892,6 +1031,28 @@ CREATE TABLE project_portfolios (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
+);
+
+CREATE TABLE provider_registry_entries (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	category TEXT NOT NULL, 
+	access_model TEXT NOT NULL, 
+	documented_api_and_auth BOOLEAN NOT NULL, 
+	commercial_use BOOLEAN NOT NULL, 
+	automated_use BOOLEAN NOT NULL, 
+	south_africa_supported BOOLEAN NOT NULL, 
+	sandbox_available BOOLEAN NOT NULL, 
+	licence_required BOOLEAN NOT NULL, 
+	licence_requirements_recorded BOOLEAN NOT NULL, 
+	gates_reviewed BOOLEAN NOT NULL, 
+	notes TEXT, 
+	adapter_enabled BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_provider_registry_name UNIQUE (name), 
+	CONSTRAINT ck_provider_access_model CHECK (access_model IN ('free', 'paid', 'mixed'))
 );
 
 CREATE TABLE provider_usage (
@@ -1224,6 +1385,19 @@ CREATE TABLE skills (
 	CONSTRAINT ck_skill_proficiency_level CHECK (proficiency_level BETWEEN 0 AND 100)
 );
 
+CREATE TABLE social_presences (
+	id UUID NOT NULL, 
+	platform TEXT NOT NULL, 
+	handle TEXT NOT NULL, 
+	profile_url TEXT NOT NULL, 
+	owner_entity TEXT NOT NULL, 
+	verified BOOLEAN NOT NULL, 
+	verification_ref TEXT, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id)
+);
+
 CREATE TABLE social_profiles (
 	id UUID NOT NULL, 
 	entity_name TEXT NOT NULL, 
@@ -1265,6 +1439,38 @@ CREATE TABLE stored_objects (
 	CONSTRAINT ck_stored_object_size CHECK (size_bytes >= 0), 
 	UNIQUE (s3_key)
 );
+
+CREATE TABLE technology_capabilities (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	version TEXT, 
+	official_source TEXT, 
+	source_url TEXT, 
+	language TEXT, 
+	architectures JSON NOT NULL, 
+	licence TEXT, 
+	commercial_use_ok BOOLEAN NOT NULL, 
+	cost_status TEXT NOT NULL, 
+	hardware_requirements JSON NOT NULL, 
+	capabilities JSON NOT NULL, 
+	limitations JSON NOT NULL, 
+	security_status TEXT, 
+	maintenance_status TEXT, 
+	compatibility JSON NOT NULL, 
+	test_results JSON NOT NULL, 
+	benchmarks JSON NOT NULL, 
+	lifecycle_state TEXT NOT NULL, 
+	notes TEXT, 
+	discovered_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_reviewed_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_tech_cost_status CHECK (cost_status IN ('free', 'open_source', 'paid', 'mixed')), 
+	CONSTRAINT ck_tech_lifecycle_state CHECK (lifecycle_state IN ('researched', 'tested', 'approved', 'integrated', 'deprecated', 'rejected'))
+);
+
+CREATE INDEX ix_technology_capabilities_lifecycle_state ON technology_capabilities (lifecycle_state);
+
+CREATE INDEX ix_technology_capabilities_name ON technology_capabilities (name);
 
 CREATE TABLE tone_analyses (
 	id UUID NOT NULL, 
@@ -1319,6 +1525,44 @@ CREATE TABLE visitor_rate_limits (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE website_credentials (
+	id UUID NOT NULL, 
+	site TEXT NOT NULL, 
+	url TEXT NOT NULL, 
+	username TEXT NOT NULL, 
+	secret_ciphertext TEXT NOT NULL, 
+	secret_env_var TEXT, 
+	owner_entity TEXT NOT NULL, 
+	provenance JSON NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	rotated_at TIMESTAMP WITH TIME ZONE, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE website_knowledge (
+	id UUID NOT NULL, 
+	domain TEXT NOT NULL, 
+	display_name TEXT, 
+	homepage_url TEXT, 
+	login_procedure JSON NOT NULL, 
+	auth_methods JSON NOT NULL, 
+	registration_procedure JSON NOT NULL, 
+	supported_passkeys BOOLEAN NOT NULL, 
+	mfa_methods JSON NOT NULL, 
+	known_restrictions JSON NOT NULL, 
+	browser_compatibility JSON NOT NULL, 
+	verification_requirements JSON NOT NULL, 
+	prior_failures JSON NOT NULL, 
+	success_patterns JSON NOT NULL, 
+	last_verified_at TIMESTAMP WITH TIME ZONE, 
+	is_active BOOLEAN DEFAULT 'true' NOT NULL, 
+	PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX ix_website_knowledge_domain ON website_knowledge (domain);
+
 CREATE TABLE website_workflows (
 	id UUID NOT NULL, 
 	name TEXT NOT NULL, 
@@ -1340,6 +1584,24 @@ CREATE TABLE workflow_checkpoints (
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
 	PRIMARY KEY (id)
 );
+
+CREATE TABLE workspace_environments (
+	id UUID NOT NULL, 
+	name TEXT NOT NULL, 
+	project_id UUID, 
+	provider TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	isolation JSON NOT NULL, 
+	credential_env_var TEXT, 
+	directory TEXT NOT NULL, 
+	last_output TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_workspace_status CHECK (status IN ('provisioning', 'active', 'saved', 'destroyed', 'failed'))
+);
+
+CREATE INDEX ix_workspace_environments_project_id ON workspace_environments (project_id);
 
 CREATE TABLE world_entities (
 	id UUID NOT NULL, 
@@ -1424,6 +1686,70 @@ CREATE TABLE agent_trust_records (
 	FOREIGN KEY(agent_id) REFERENCES external_agents (id) ON DELETE CASCADE
 );
 
+CREATE TABLE ai_capability_registry (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	capability TEXT NOT NULL, 
+	confidence_score INTEGER NOT NULL, 
+	last_verified_at TIMESTAMP WITH TIME ZONE, 
+	evidence JSON NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_capability_confidence_score CHECK (confidence_score BETWEEN 0 AND 100), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ai_capability_registry_ai_identity_id ON ai_capability_registry (ai_identity_id);
+
+CREATE TABLE ai_communication_audit (
+	id UUID NOT NULL, 
+	ai_identity_id UUID, 
+	actor TEXT NOT NULL, 
+	action TEXT NOT NULL, 
+	event_type TEXT NOT NULL, 
+	target TEXT, 
+	details JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_ai_communication_audit_ai_identity_id ON ai_communication_audit (ai_identity_id);
+
+CREATE TABLE ai_communication_permissions (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	can_share_project_context BOOLEAN NOT NULL, 
+	can_share_research_findings BOOLEAN NOT NULL, 
+	can_share_code BOOLEAN NOT NULL, 
+	can_receive_private_data BOOLEAN NOT NULL, 
+	can_initiate_contact BOOLEAN NOT NULL, 
+	can_receive_responses BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX ix_ai_communication_permissions_ai_identity_id ON ai_communication_permissions (ai_identity_id);
+
+CREATE TABLE ai_conversation_threads (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	title TEXT NOT NULL, 
+	topic TEXT, 
+	status TEXT NOT NULL, 
+	is_human_mediated BOOLEAN NOT NULL, 
+	message_count INTEGER NOT NULL, 
+	last_message_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_conversation_status CHECK (status IN ('active', 'paused', 'completed', 'archived')), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ai_conversation_threads_ai_identity_id ON ai_conversation_threads (ai_identity_id);
+
 CREATE TABLE ai_personality (
 	id UUID NOT NULL, 
 	identity_id UUID NOT NULL, 
@@ -1436,6 +1762,25 @@ CREATE TABLE ai_personality (
 	CONSTRAINT ck_personality_formality_level CHECK (formality_level BETWEEN 1 AND 10), 
 	FOREIGN KEY(identity_id) REFERENCES ai_identity (id) ON DELETE CASCADE
 );
+
+CREATE TABLE ai_reputation_records (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	accuracy_score INTEGER NOT NULL, 
+	honesty_score INTEGER NOT NULL, 
+	helpfulness_score INTEGER NOT NULL, 
+	total_interactions INTEGER NOT NULL, 
+	correct_predictions INTEGER NOT NULL, 
+	incorrect_predictions INTEGER NOT NULL, 
+	last_updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_reputation_accuracy_score CHECK (accuracy_score BETWEEN 0 AND 100), 
+	CONSTRAINT ck_ai_reputation_honesty_score CHECK (honesty_score BETWEEN 0 AND 100), 
+	CONSTRAINT ck_ai_reputation_helpfulness_score CHECK (helpfulness_score BETWEEN 0 AND 100), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ai_reputation_records_ai_identity_id ON ai_reputation_records (ai_identity_id);
 
 CREATE TABLE asset_licences (
 	id UUID NOT NULL, 
@@ -1481,6 +1826,35 @@ CREATE TABLE assistant_research_notes (
 
 CREATE INDEX ix_assistant_research_notes_assistant_id ON assistant_research_notes (assistant_id);
 
+CREATE TABLE autonomous_web_tasks (
+	id UUID NOT NULL, 
+	title TEXT NOT NULL, 
+	description TEXT, 
+	website_knowledge_id UUID, 
+	task_type TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	priority INTEGER NOT NULL, 
+	decomposition JSON NOT NULL, 
+	checkpoints JSON NOT NULL, 
+	dependencies JSON NOT NULL, 
+	schedule_at TIMESTAMP WITH TIME ZONE, 
+	started_at TIMESTAMP WITH TIME ZONE, 
+	completed_at TIMESTAMP WITH TIME ZONE, 
+	cancelled_at TIMESTAMP WITH TIME ZONE, 
+	progress_percentage INTEGER NOT NULL, 
+	error_message TEXT, 
+	retry_count INTEGER NOT NULL, 
+	max_retries INTEGER NOT NULL, 
+	is_background BOOLEAN NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_autonomous_web_task_status CHECK (status IN ('pending', 'planning', 'executing', 'paused', 'completed', 'failed', 'cancelled')), 
+	CONSTRAINT ck_autonomous_web_task_priority CHECK (priority BETWEEN 1 AND 10), 
+	CONSTRAINT ck_autonomous_web_task_progress CHECK (progress_percentage BETWEEN 0 AND 100), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_autonomous_web_tasks_website_knowledge_id ON autonomous_web_tasks (website_knowledge_id);
+
 CREATE TABLE browser_actions (
 	id UUID NOT NULL, 
 	session_id UUID NOT NULL, 
@@ -1501,6 +1875,7 @@ CREATE TABLE business_projects (
 	name TEXT NOT NULL, 
 	description TEXT, 
 	opportunity_id UUID, 
+	legal_entity TEXT, 
 	status TEXT NOT NULL, 
 	revenue NUMERIC(15, 4) NOT NULL, 
 	expenses NUMERIC(15, 4) NOT NULL, 
@@ -1642,6 +2017,51 @@ CREATE TABLE deployment_records (
 	FOREIGN KEY(project_id) REFERENCES software_projects (id) ON DELETE CASCADE
 );
 
+CREATE TABLE digital_reputation (
+	id UUID NOT NULL, 
+	website_knowledge_id UUID NOT NULL, 
+	account_username TEXT NOT NULL, 
+	verification_status TEXT NOT NULL, 
+	platform_warnings JSON NOT NULL, 
+	suspensions JSON NOT NULL, 
+	restrictions JSON NOT NULL, 
+	tos_changes JSON NOT NULL, 
+	privacy_changes JSON NOT NULL, 
+	service_reliability_score INTEGER NOT NULL, 
+	account_security_score INTEGER NOT NULL, 
+	identity_consistency_score INTEGER NOT NULL, 
+	ownership_evidence JSON NOT NULL, 
+	last_assessed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_digital_reputation_service_score CHECK (service_reliability_score BETWEEN 0 AND 100), 
+	CONSTRAINT ck_digital_reputation_security_score CHECK (account_security_score BETWEEN 0 AND 100), 
+	CONSTRAINT ck_digital_reputation_identity_score CHECK (identity_consistency_score BETWEEN 0 AND 100), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_digital_reputation_website_knowledge_id ON digital_reputation (website_knowledge_id);
+
+CREATE TABLE digital_security_incidents (
+	id UUID NOT NULL, 
+	website_knowledge_id UUID NOT NULL, 
+	incident_type TEXT NOT NULL, 
+	severity TEXT NOT NULL, 
+	title TEXT NOT NULL, 
+	description TEXT, 
+	detected_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	status TEXT NOT NULL, 
+	affected_accounts JSON NOT NULL, 
+	remediation_actions JSON NOT NULL, 
+	evidence JSON NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_digital_security_incident_severity CHECK (severity IN ('low', 'medium', 'high', 'critical')), 
+	CONSTRAINT ck_digital_security_incident_status CHECK (status IN ('open', 'investigating', 'resolved', 'closed', 'false_positive')), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_digital_security_incidents_website_knowledge_id ON digital_security_incidents (website_knowledge_id);
+
 CREATE TABLE entity_relationships (
 	id UUID NOT NULL, 
 	source_entity_id UUID NOT NULL, 
@@ -1667,6 +2087,24 @@ CREATE TABLE financial_ledger (
 	FOREIGN KEY(transaction_id) REFERENCES financial_transactions (id) ON DELETE CASCADE
 );
 
+CREATE TABLE forecast_runs (
+	id UUID NOT NULL, 
+	market_id UUID NOT NULL, 
+	method TEXT NOT NULL, 
+	inputs JSON NOT NULL, 
+	probabilities JSON NOT NULL, 
+	evidence JSON NOT NULL, 
+	rationale TEXT NOT NULL, 
+	confidence NUMERIC(3, 3) NOT NULL, 
+	market_implied_probabilities_used BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_forecast_run_method CHECK (method IN ('evidence_weighted', 'base_rate')), 
+	FOREIGN KEY(market_id) REFERENCES prediction_markets (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_forecast_runs_market_id ON forecast_runs (market_id);
+
 CREATE TABLE free_sandbox_environments (
 	id UUID NOT NULL, 
 	provider_id UUID NOT NULL, 
@@ -1682,9 +2120,9 @@ CREATE TABLE free_sandbox_environments (
 	FOREIGN KEY(provider_id) REFERENCES free_sandbox_providers (id) ON DELETE CASCADE
 );
 
-CREATE INDEX ix_free_sandbox_environments_task_id ON free_sandbox_environments (task_id);
-
 CREATE INDEX ix_free_sandbox_environments_provider_id ON free_sandbox_environments (provider_id);
+
+CREATE INDEX ix_free_sandbox_environments_task_id ON free_sandbox_environments (task_id);
 
 CREATE TABLE free_sandbox_quota_snapshots (
 	id UUID NOT NULL, 
@@ -1744,6 +2182,20 @@ CREATE TABLE identity_matches (
 	FOREIGN KEY(person_id) REFERENCES public_people (id) ON DELETE CASCADE, 
 	FOREIGN KEY(other_person_id) REFERENCES public_people (id) ON DELETE CASCADE
 );
+
+CREATE TABLE incoming_receipts (
+	id UUID NOT NULL, 
+	transaction_id UUID NOT NULL, 
+	source TEXT NOT NULL, 
+	reference TEXT NOT NULL, 
+	amount NUMERIC(15, 4) NOT NULL, 
+	authorization_id TEXT, 
+	received_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(transaction_id) REFERENCES financial_transactions (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_incoming_receipts_transaction_id ON incoming_receipts (transaction_id);
 
 CREATE TABLE integration_permissions (
 	id UUID NOT NULL, 
@@ -1914,6 +2366,35 @@ CREATE TABLE node_resource_reports (
 
 CREATE INDEX ix_node_resource_reports_node_id ON node_resource_reports (node_id);
 
+CREATE TABLE paper_orders (
+	id UUID NOT NULL, 
+	portfolio_id UUID NOT NULL, 
+	symbol TEXT NOT NULL, 
+	side TEXT NOT NULL, 
+	quantity NUMERIC(20, 8) NOT NULL, 
+	price NUMERIC(15, 4) NOT NULL, 
+	notional NUMERIC(15, 4) NOT NULL, 
+	fee NUMERIC(15, 4) NOT NULL, 
+	status TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(portfolio_id) REFERENCES paper_portfolios (id) ON DELETE CASCADE
+);
+
+CREATE TABLE passkey_credentials (
+	id UUID NOT NULL, 
+	website_credential_id UUID NOT NULL, 
+	credential_id TEXT NOT NULL, 
+	public_key_pem TEXT NOT NULL, 
+	rp_id TEXT NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	last_used_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(website_credential_id) REFERENCES website_credentials (id) ON DELETE CASCADE, 
+	UNIQUE (credential_id)
+);
+
 CREATE TABLE plans (
 	id UUID NOT NULL, 
 	goal_id UUID NOT NULL, 
@@ -1926,6 +2407,21 @@ CREATE TABLE plans (
 	CONSTRAINT ck_plan_status CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')), 
 	FOREIGN KEY(goal_id) REFERENCES goals (id) ON DELETE CASCADE
 );
+
+CREATE TABLE probability_estimates (
+	id UUID NOT NULL, 
+	market_id UUID NOT NULL, 
+	outcome TEXT NOT NULL, 
+	iam_probability NUMERIC(5, 4) NOT NULL, 
+	evidence JSON NOT NULL, 
+	analyst TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_probability_estimate_range CHECK (iam_probability >= 0 AND iam_probability <= 1), 
+	FOREIGN KEY(market_id) REFERENCES prediction_markets (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_probability_estimates_market_id ON probability_estimates (market_id);
 
 CREATE TABLE public_profiles (
 	id UUID NOT NULL, 
@@ -2118,6 +2614,19 @@ CREATE TABLE tool_permissions (
 	FOREIGN KEY(tool_id) REFERENCES tool_registry (id) ON DELETE CASCADE
 );
 
+CREATE TABLE totp_enrollments (
+	id UUID NOT NULL, 
+	website_credential_id UUID NOT NULL, 
+	secret_ciphertext TEXT NOT NULL, 
+	issuer TEXT, 
+	account TEXT, 
+	recovery_hashes JSON NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(website_credential_id) REFERENCES website_credentials (id) ON DELETE CASCADE
+);
+
 CREATE TABLE visitor_consents (
 	id UUID NOT NULL, 
 	visitor_id UUID NOT NULL, 
@@ -2165,6 +2674,138 @@ CREATE TABLE visitor_sessions (
 );
 
 CREATE UNIQUE INDEX ix_visitor_sessions_session_token ON visitor_sessions (session_token);
+
+CREATE TABLE webauthn_challenges (
+	id UUID NOT NULL, 
+	website_credential_id UUID NOT NULL, 
+	purpose TEXT NOT NULL, 
+	challenge TEXT NOT NULL, 
+	rp_id TEXT, 
+	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	consumed_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(website_credential_id) REFERENCES website_credentials (id) ON DELETE CASCADE
+);
+
+CREATE TABLE website_account_lifecycle (
+	id UUID NOT NULL, 
+	website_knowledge_id UUID NOT NULL, 
+	account_type TEXT NOT NULL, 
+	username TEXT NOT NULL, 
+	email TEXT, 
+	registration_date TIMESTAMP WITH TIME ZONE, 
+	verification_status TEXT NOT NULL, 
+	mfa_status TEXT NOT NULL, 
+	recovery_method TEXT, 
+	last_login_at TIMESTAMP WITH TIME ZONE, 
+	account_status TEXT NOT NULL, 
+	suspension_reason TEXT, 
+	suspension_date TIMESTAMP WITH TIME ZONE, 
+	closure_date TIMESTAMP WITH TIME ZONE, 
+	closure_reason TEXT, 
+	is_owned_by_iam BOOLEAN NOT NULL, 
+	is_owned_by_creator BOOLEAN NOT NULL, 
+	is_authorised_access BOOLEAN NOT NULL, 
+	credentials_stored BOOLEAN NOT NULL, 
+	passkey_registered BOOLEAN NOT NULL, 
+	last_security_check_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_account_lifecycle_status CHECK (account_status IN ('active', 'suspended', 'restricted', 'closed', 'deleted')), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_website_account_lifecycle_website_knowledge_id ON website_account_lifecycle (website_knowledge_id);
+
+CREATE TABLE website_consent (
+	id UUID NOT NULL, 
+	website_knowledge_id UUID NOT NULL, 
+	cookie_categories JSON NOT NULL, 
+	consent_status TEXT NOT NULL, 
+	consent_date TIMESTAMP WITH TIME ZONE, 
+	data_retention_preference TEXT, 
+	sensitive_info_classification TEXT, 
+	gdpr_applicable BOOLEAN NOT NULL, 
+	ccpa_applicable BOOLEAN NOT NULL, 
+	last_updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_website_consent_status CHECK (consent_status IN ('pending', 'accepted', 'rejected', 'withdrawn')), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_website_consent_website_knowledge_id ON website_consent (website_knowledge_id);
+
+CREATE TABLE website_sessions (
+	id UUID NOT NULL, 
+	website_knowledge_id UUID NOT NULL, 
+	session_token TEXT NOT NULL, 
+	browser_profile TEXT, 
+	tab_id TEXT, 
+	auth_state TEXT NOT NULL, 
+	auth_method TEXT, 
+	cookie_consent_state TEXT, 
+	last_activity_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	session_expires_at TIMESTAMP WITH TIME ZONE, 
+	is_active BOOLEAN NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(website_knowledge_id) REFERENCES website_knowledge (id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX ix_website_sessions_session_token ON website_sessions (session_token);
+
+CREATE INDEX ix_website_sessions_website_knowledge_id ON website_sessions (website_knowledge_id);
+
+CREATE TABLE workspace_credentials (
+	id UUID NOT NULL, 
+	workspace_id UUID NOT NULL, 
+	purpose TEXT NOT NULL, 
+	secret_env_var TEXT NOT NULL, 
+	scopes JSON NOT NULL, 
+	issued_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	revoked_at TIMESTAMP WITH TIME ZONE, 
+	is_active BOOLEAN NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_workspace_credential_purpose CHECK (purpose IN ('git', 'package_registry', 'api', 'test_fixture')), 
+	FOREIGN KEY(workspace_id) REFERENCES workspace_environments (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_workspace_credentials_workspace_id ON workspace_credentials (workspace_id);
+
+CREATE TABLE ai_context_exchange (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	conversation_id UUID, 
+	context_type TEXT NOT NULL, 
+	content JSON NOT NULL, 
+	is_shared BOOLEAN NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE, 
+	FOREIGN KEY(conversation_id) REFERENCES ai_conversation_threads (id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_ai_context_exchange_ai_identity_id ON ai_context_exchange (ai_identity_id);
+
+CREATE TABLE ai_conversation_messages (
+	id UUID NOT NULL, 
+	conversation_id UUID NOT NULL, 
+	sender TEXT NOT NULL, 
+	content TEXT NOT NULL, 
+	message_type TEXT NOT NULL, 
+	confidence_score INTEGER, 
+	verification_status TEXT NOT NULL, 
+	token_count INTEGER, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_message_sender CHECK (sender IN ('iam', 'ai', 'human')), 
+	CONSTRAINT ck_ai_message_confidence CHECK (confidence_score IS NULL OR confidence_score BETWEEN 0 AND 100), 
+	CONSTRAINT ck_ai_message_verification CHECK (verification_status IN ('unverified', 'verified', 'disputed', 'false')), 
+	FOREIGN KEY(conversation_id) REFERENCES ai_conversation_threads (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ai_conversation_messages_conversation_id ON ai_conversation_messages (conversation_id);
 
 CREATE TABLE business_budgets (
 	id UUID NOT NULL, 
@@ -2252,6 +2893,24 @@ CREATE TABLE free_sandbox_results (
 );
 
 CREATE INDEX ix_free_sandbox_results_environment_id ON free_sandbox_results (environment_id);
+
+CREATE TABLE human_communication_bridge (
+	id UUID NOT NULL, 
+	ai_identity_id UUID NOT NULL, 
+	conversation_id UUID, 
+	iam_message TEXT NOT NULL, 
+	human_response TEXT, 
+	ai_response TEXT, 
+	status TEXT NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_human_communication_status CHECK (status IN ('pending', 'awaiting_human', 'completed', 'cancelled')), 
+	FOREIGN KEY(ai_identity_id) REFERENCES ai_identity_registry (id) ON DELETE CASCADE, 
+	FOREIGN KEY(conversation_id) REFERENCES ai_conversation_threads (id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_human_communication_bridge_ai_identity_id ON human_communication_bridge (ai_identity_id);
 
 CREATE TABLE legal_changes (
 	id UUID NOT NULL, 
@@ -2365,6 +3024,24 @@ CREATE TABLE security_engine_tasks (
 	FOREIGN KEY(parent_task_id) REFERENCES security_engine_tasks (id) ON DELETE SET NULL
 );
 
+CREATE TABLE security_work_sessions (
+	id UUID NOT NULL, 
+	kind TEXT NOT NULL, 
+	status TEXT NOT NULL, 
+	target TEXT NOT NULL, 
+	workspace_id UUID, 
+	authorization_id UUID, 
+	details JSON NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	completed_at TIMESTAMP WITH TIME ZONE, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_security_session_kind CHECK (kind IN ('simulation_lab', 'remediation_validation')), 
+	CONSTRAINT ck_security_session_status CHECK (status IN ('created', 'running', 'verified', 'failed', 'destroyed', 'expired')), 
+	FOREIGN KEY(workspace_id) REFERENCES workspace_environments (id) ON DELETE SET NULL, 
+	FOREIGN KEY(authorization_id) REFERENCES creator_authorizations (id) ON DELETE SET NULL
+);
+
 CREATE TABLE tasks (
 	id UUID NOT NULL, 
 	plan_id UUID, 
@@ -2395,6 +3072,24 @@ CREATE TABLE visitor_locations (
 	PRIMARY KEY (id), 
 	FOREIGN KEY(session_id) REFERENCES visitor_sessions (id) ON DELETE CASCADE
 );
+
+CREATE TABLE ai_response_verification (
+	id UUID NOT NULL, 
+	message_id UUID NOT NULL, 
+	original_claim TEXT NOT NULL, 
+	verified_claim TEXT, 
+	verification_method TEXT NOT NULL, 
+	confidence INTEGER NOT NULL, 
+	evidence_references JSON NOT NULL, 
+	verified_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	verified_by TEXT NOT NULL, 
+	PRIMARY KEY (id), 
+	CONSTRAINT ck_ai_response_verification_confidence CHECK (confidence BETWEEN 0 AND 100), 
+	CONSTRAINT ck_ai_response_verification_method CHECK (verification_method IN ('independent_reasoning', 'external_source', 'code_execution', 'human_review')), 
+	FOREIGN KEY(message_id) REFERENCES ai_conversation_messages (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ai_response_verification_message_id ON ai_response_verification (message_id);
 
 CREATE TABLE legal_impacts (
 	id UUID NOT NULL, 

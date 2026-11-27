@@ -26,10 +26,24 @@ claiming 442 live paths is itself stale.
 but uses a hardcoded absolute Windows path. The portable tool above replaces it
 for gate use; the old file was deliberately left untouched.
 
+## Migration numbering gate
+
+```powershell
+python tools/api/check_migrations.py
+```
+
+Flags duplicate numeric prefixes in `backend/app/db/migrations/*.sql`; wired
+into `.github/workflows/openapi-drift.yml`. Current working tree: **10 duplicate
+prefixes** (009, 010, 011, 012, 015, 016, 017, 018, 019, 030). Renaming the
+files is deliberately left to an owner because the migration scripts are
+uncommitted user work.
+
 ## Supply-chain configuration
 
 Added as new files only — `.github/workflows/ci.yml` was not modified:
 
+- `backend/requirements.lock.txt` — 111 pinned runtime packages generated from
+  a pip dry-run resolution of `backend/pyproject.toml`.
 - `.github/dependabot.yml` — weekly updates for backend/pip, SDK Python/pip,
   frontend/npm, both TS SDKs/npm, Docker and GitHub Actions.
 - `.github/workflows/supply-chain.yml` — `pip-audit` on installed backend
