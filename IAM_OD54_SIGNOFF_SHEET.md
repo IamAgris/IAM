@@ -62,7 +62,13 @@ Paste into `IAM_OWNER_DECISIONS.md` only after the signature is verified:
 | E-6 | 2026-11-27 13:49:24 | `IAM_BROWSER_E2E_URL='https://react.dev/'` + `IAM_BROWSER_E2E=1 python tests/e2e_browser_smoke.py` | JS-rendered SPA opened in real Chromium; title "React" and rendered body text extracted. Exit 0. |
 | E-7 | 2026-11-27 (this session) | Real Postgres integration against the running `aura-postgres` container (localhost:5434) | Cache store → hit (`+cache`) → TTL expiry → `None`; IICS source and one claim created. Validation rows deleted afterwards. |
 
+| E-8 | 2026-11-27 (this session) | `live_media_service.ocr()` on a generated text image via the isolated `minidocks/tesseract` container | Real OCR output `1AM LIVECCRVALIDATION 2026` with `provider: tesseract-docker`; imperfect characters reported verbatim, not corrected or invented. |
+| E-9 | 2026-11-27 (this session) | Self-hosted SearXNG (`searxng/searxng` container, JSON format enabled) via `search_service.search(provider='searxng')` | Three real results for "SABC news today" including the official SABC News site and YouTube channel. Test container removed afterwards. |
+| E-10 | 2026-11-27 (this session) | `live_media_service.transcribe()` on a generated WAV | Explicit fail-closed: `provider: none`, empty text, `No STT provider configured`. No transcript was fabricated. |
+
 **Database evidence:** `backend/tests/test_live_evidence_db.py` verifies cache store, hit, TTL expiry and IICS registration against a real aiosqlite engine; E-7 repeats the same lifecycle against deployed Postgres. Paid-search fail-closed is verified by a deterministic policy test; no paid call was made.
+
+**Pending Creator request (prepared, not approved):** `request_id=cr_880d5f1f49ae2fdcc34f312d97f3cf97`, `challenge_hash=d3915d76d72ef20cb2891184a05f8da805c3b7cd06eaed6dc125403300b620d0`, status `pending`, expires `2026-11-27T13:05:18Z`. Created via `scripts/creator_request_od54.py`. A chat message is not authority; the Creator must sign `{challenge_hash}|approved` with the hardware signer. If expired, regenerate the request.
 
 ---
 
@@ -70,10 +76,9 @@ Paste into `IAM_OWNER_DECISIONS.md` only after the signature is verified:
 
 | Item | Reason |
 |------|--------|
-| OCR of scanned images | `pytesseract` is installed but no Tesseract binary was verified on this host; no image was extracted or transcribed. |
-| Audio/video multimedia understanding | No transcription engine is installed; no media content was processed. |
-| SearXNG adapter | Implemented; the public instance tried (`searx.be`) did not return JSON, and no self-hosted endpoint is configured here. |
-| Tavily adapter | Implemented; no API key, so it returns an explicit error and is excluded from automatic chains. No live paid call was made. |
+| Successful audio/video transcription | No STT provider is configured. The adapter is wired and fails explicitly (E-10); a real transcript requires a configured Whisper-compatible provider or key. |
+| Tavily live call | No API key. Adapter returns an explicit error and is excluded from automatic chains; no paid call was made. |
+| Persistent SearXNG deployment | E-9 used a temporary local container; it was removed. A durable endpoint must be configured and monitored for production use. |
 
 ---
 
@@ -81,7 +86,7 @@ Paste into `IAM_OWNER_DECISIONS.md` only after the signature is verified:
 
 - ☐ Owner has read proposed Document 34.
 - ☐ Owner has accepted or rejected each companion decision in section A.
-- ☐ Owner has reviewed real-web evidence E-1 to E-7 and the unresolved items in section D.
+- ☐ Owner has reviewed real-web evidence E-1 to E-10 and the unresolved items in section D.
 - ☐ Creator signer is available and its public key matches `CREATOR_PUBLIC_KEY`.
 - ☐ A pending approval request is prepared with `python scripts/creator_request_od54.py` (no signature yet) for action `architecture.decision.confirm` / target `OD-54`.
 - ☐ Creator signs the one-time challenge with the external hardware signer.

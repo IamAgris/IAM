@@ -1,6 +1,8 @@
 """Security, analysis, provider management and monitoring extensions."""
 
+import io
 import unittest
+import wave
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -138,6 +140,29 @@ class PaidSearchAuthTests(unittest.IsolatedAsyncioTestCase):
                 await require_authorization(
                     SimpleNamespace(), SEARCH_ACTION, target_ref="brave"
                 )
+
+
+class MediaServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_transcription_without_provider_is_explicit(self) -> None:
+        from app.services.live_media_service import live_media_service
+
+        buffer = io.BytesIO()
+        with wave.open(buffer, "wb") as handle:
+            handle.setnchannels(1)
+            handle.setsampwidth(2)
+            handle.setframerate(8000)
+            handle.writeframes(b"\x00\x00" * 800)
+        result = await live_media_service.transcribe(buffer.getvalue(), "audio/wav")
+        self.assertEqual(result["provider"], "none")
+        self.assertEqual(result["text"], "")
+        self.assertIn("No STT provider", str(result["error"]))
+
+    async def test_ocr_rejects_invalid_language(self) -> None:
+        from app.services.live_media_service import live_media_service
+
+        result = await live_media_service.ocr(b"fake", language="bad;rm -rf")
+        self.assertEqual(result["text"], "")
+        self.assertIn("invalid OCR language", str(result["error"]))
 
 
 class MonitorTests(unittest.TestCase):

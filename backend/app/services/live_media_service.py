@@ -79,7 +79,9 @@ class LiveMediaService:
         """Use the configured IAM STT provider; never fabricate a transcript."""
         from app.services.voice_service import voice_service
 
-        result = await voice_service.speech_to_text(audio_bytes, content_type, language)
+        result: Dict[str, Any] = await voice_service.speech_to_text(
+            audio_bytes, content_type, language
+        )
         result["untrusted"] = True
         return result
 

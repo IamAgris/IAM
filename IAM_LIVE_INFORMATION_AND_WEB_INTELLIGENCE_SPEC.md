@@ -246,6 +246,7 @@ These eight cases must pass before OD-54 is recorded:
 | §8 output contract | `live_evidence_analysis.py` (claim labels, confidence, corroboration, contradictions, injection redaction) |
 | §9 security | explicit public-host SSRF guard, injection redaction, untrusted-data labelling |
 | Autonomous monitoring | migration 063, `live_research_monitor.py`, `/api/v1/live-information/monitor*` (bounded 15–10080 min, max 50 tasks) |
+| Documents / media | `BrowserDocumentService` for PDFs/text, `live_media_service.py` for isolated Tesseract OCR and explicit transcription fail-closed |
 
 User-supplied documents are parsed by `BrowserDocumentService` and non-English
 current-information triggers are classified deterministically.
@@ -253,9 +254,11 @@ current-information triggers are classified deterministically.
 Live validation recorded in the OD-54 sign-off sheet: E-1 SABC official site,
 E-2 unavailable-publisher fallback, E-3 Wikipedia rejection without a publisher,
 E-4 public PDF extraction, E-5 non-English current query, E-6 JS-rendered SPA,
-E-7 real Postgres cache/TTL/IICS lifecycle. OCR and audio/video multimedia
-understanding remain outside this addendum; `pytesseract` is installed but no
-Tesseract binary or transcription engine was verified on this host.
+E-7 real Postgres cache/TTL/IICS lifecycle, E-8 isolated Tesseract OCR,
+E-9 self-hosted SearXNG adapter, E-10 explicit transcription fail-closed.
+User-supplied images are OCR'd through an isolated Tesseract container and audio
+is delegated to IAM's existing voice service; neither produces trusted knowledge.
+A successful transcript still requires a configured STT provider.
 
 ---
 

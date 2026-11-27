@@ -501,7 +501,7 @@ async def collect_live_evidence(
     if db is not None:
         from app.services.live_evidence_cache import get_cached
 
-        cached = await get_cached(db, query)
+        cached: Optional[LiveEvidence] = await get_cached(db, query)
         if cached:
             return cached
     max_results = max_results or settings.iam_live_info_max_results
