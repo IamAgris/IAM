@@ -13,7 +13,7 @@ import os
 import sys
 
 from app.core.database import AsyncSessionLocal
-from app.services.backup_service import BackupService, BackupError
+from app.services.backup_service import BackupError, BackupService
 
 
 async def main() -> int:

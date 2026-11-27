@@ -41,7 +41,7 @@ jobs:
     needs: deterministic-gates
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql+asyncpg://aura:change-me-securely@localhost:5433/aura_db
+      DATABASE_URL: postgresql+asyncpg://aura:change-me-securely@postgres:5432/aura_db
       REDIS_URL: redis://localhost:6379/0
       LITELLM_MASTER_KEY: change-me-securely
       IAM_BOOTSTRAP_API_KEY: ci-acceptance-bootstrap-key

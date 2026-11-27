@@ -234,5 +234,25 @@ gaps.
 - Tests: full suite 918 passed (after these changes); ruff and OpenAPI gates OK.
 - Mypy ratchet subsequently drifted again from concurrent work in unrelated
   blockchain/skillruntime files; re-run before release.
+
+## Creator signer and durable serving state (27 November 2026)
+
+- `scripts/creator_signer_setup.py` generates a local Ed25519 keypair, writes the
+  private PEM with 0600 outside the repo, and prints only the public key. A dev
+  keypair was generated at `~/.config/iam/creator_ed25519.pem`; its public key and
+  a generated `CREATOR_GATEWAY_SECRET` were added to the local `.env` (secret never
+  printed). `creator_signer_example.py` now accepts
+  `IAM_CREATOR_SIGNING_KEY_FILE`.
+- `IAM_CREATOR_SIGNER_SETUP.md` documents the ceremony and the remaining human
+  step: set the verified `CREATOR_EMAIL`. Deployment preflight now shows
+  `creator_public_key`, `creator_gateway_secret`, `creator_email_transport` OK;
+  `creator_email` is still a blocker by design.
+- Registry, benchmark and serving state now share one configured store via
+  `artifacts.default_store()` — `serving_model._store()` and
+  `release_gate.default_release_store()` both delegate to it, so selecting
+  `RESEARCH_ARTIFACT_STORE=s3` makes signed promotion/rollback durable.
+- Full suite 933 passed; ruff clean after fixing an unrelated preflight script;
+  OpenAPI drift OK. Mypy ratchet still drifts from concurrent blockchain /
+  skillruntime edits, not these changes.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

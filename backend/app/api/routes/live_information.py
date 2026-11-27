@@ -7,7 +7,7 @@ this delegates to the shared policy, cache and existing search/browser services.
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,8 @@ from app.services.live_information_policy import (
     SearchTriggerClassifier,
     collect_live_evidence,
 )
+from app.services.live_research_monitor import LiveResearchMonitor
+from app.services.search_provider_registry import search_provider_registry
 
 router = APIRouter(prefix="/api/v1/live-information", tags=["live-information"])
 
@@ -61,3 +63,53 @@ async def live_research(
         "errors": evidence.errors,
         "system_message": evidence.as_system_message(),
     }
+
+
+@router.get("/providers")
+async def search_providers() -> Dict[str, Any]:
+    """Health, quota and cost metadata for the search provider chain."""
+    return {
+        "chain": search_provider_registry.chain(free_only=True),
+        "providers": search_provider_registry.status(),
+    }
+
+
+class MonitorRequest(BaseModel):
+    topic: str
+    query: str
+    interval_minutes: int = Field(default=60, ge=15, le=10080)
+
+
+@router.post("/monitor")
+async def create_monitor(
+    request: MonitorRequest, db: AsyncSession = Depends(get_db_session)
+) -> Dict[str, Any]:
+    try:
+        return await LiveResearchMonitor(db).create(
+            request.topic, request.query, request.interval_minutes
+        )
+    except (ValueError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/monitor")
+async def list_monitors(db: AsyncSession = Depends(get_db_session)) -> Dict[str, Any]:
+    return {"tasks": await LiveResearchMonitor(db).list()}
+
+
+@router.delete("/monitor/{task_id}")
+async def remove_monitor(
+    task_id: str, db: AsyncSession = Depends(get_db_session)
+) -> Dict[str, Any]:
+    removed = await LiveResearchMonitor(db).remove(task_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="task not found")
+    return {"removed": True}
+
+
+@router.post("/monitor/run-due")
+async def run_due_monitors(
+    db: AsyncSession = Depends(get_db_session),
+) -> Dict[str, Any]:
+    """Bounded execution of due monitoring tasks through the shared engine."""
+    return {"runs": await LiveResearchMonitor(db).run_due()}

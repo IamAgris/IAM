@@ -291,6 +291,16 @@
       "sequence": 58,
       "number": 61,
       "path": "061_browser_knowledge_proposals.sql"
+    },
+    {
+      "sequence": 59,
+      "number": 62,
+      "path": "062_iplci_policy_bootstrap.sql"
+    },
+    {
+      "sequence": 60,
+      "number": 63,
+      "path": "063_live_research_tasks.sql"
     }
   ]
 }

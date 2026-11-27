@@ -326,3 +326,21 @@ GitHub Actions execution is therefore **proven**; a clean full suite is **not** 
 | `quality-gates / acceptance` | CI logs require authenticated API access, so the root cause could not be read. Added a `failure()` diagnostics step that prints `docker compose ps` and 100 lines of service logs, so the next run will expose it. The same diagnostics were added to `continuous-assurance.yml`. |
 
 Local verification after remediation: **921 tests passed**, coverage **67.63%**, ruff clean, OpenAPI 775/775, migrations 58/58, `pip-audit` clean. A follow-up commit was pushed to re-run the workflows; its results are not yet confirmed in this document.
+
+#### Second remediation round (after reading authenticated CI logs)
+
+CI logs were fetched read-only using the local Git credential. Causes and fixes:
+
+| Failure | Root cause from CI log | Fix |
+|---|---|---|
+| OpenAPI / IAM CI / quality-gates coverage / backend container | `ModuleNotFoundError: cryptography` from `crypto_service.py` | Commit `395b484` removed `python-jose[cryptography]` but did not contain the explicit `cryptography` declaration; it existed only uncommitted. Added it to `backend/pyproject.toml`. |
+| repo-intel tests | `ModuleNotFoundError: watchdog` and `ModuleNotFoundError: yaml` | Added `pyyaml watchdog` to that job's install step. |
+| quality-gates types | FastAPI decorators in `routes/ops.py` reported as untyped | Added narrow `# type: ignore[untyped-decorator]` annotations. |
+| acceptance stack startup | PostgreSQL init used `#` comments (`syntax error at or near "#"`); LiteLLM used provider-less `claude-3-haiku-20240307` | Fixed SQL comments to `--`; qualified fallback models with `openai/` and `anthropic/` prefixes. |
+| secret-scan | A synthetic `ghp_...` token in a redaction unit test | Added `gitleaks:allow` marker; the redaction assertion is unchanged. |
+| app startup | Circular import: `browser_service → iics.egress → iics.permissions → internetaccess_service → browser_service` | Made the `InternetAccessService` import lazy in `iics/permissions.py`. |
+| OpenAPI drift | New web3-extended routes added concurrently | Regenerated `IAM_OPENAPI.json` with the documented `--update` workflow (now 801/801 paths). |
+
+Commit `a6a10ab` ("CI: fix missing cryptography dep, secret-scan fixture, repo-intel deps and stack startup defects") was pushed to `origin/testing`. Local verification: **935 tests passed**, coverage **67.45%**, OpenAPI 801/801, migrations 58/58, `pip-audit` clean.
+
+**Remaining red gate:** the full-repository mypy ratchet keeps drifting as concurrently added modules land (new `web3_extended.py`, `iics.py`, `blockchain/registries.py` errors). Baseline regeneration was deliberately **not** used to hide them. This remains an open finding rather than a suppressed failure.

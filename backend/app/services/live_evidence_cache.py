@@ -124,6 +124,39 @@ async def store_cached(
                 )
             )
         await db.commit()
+
+        # Register retrieved sources and claim evidence in the existing IICS
+        # registry. Signals only — never trusted knowledge or permission.
+        from app.services.iics.source_registry import SourceRegistry
+
+        registry = SourceRegistry(db)
+        iics_class = {
+            "breaking": "volatile",
+            "current": "volatile",
+            "standard": "standard",
+            "stable": "stable",
+        }[category]
+        for item in evidence.results[:10]:
+            url = str(item.get("url") or "")
+            if not url:
+                continue
+            source = await registry.register(
+                url, freshness_class=iics_class, reliability_score=0.5
+            )
+            if source.get("revoked_at"):
+                continue
+            claim_text = str(item.get("title") or url)[:500]
+            existing = await registry.claims(source["id"])
+            if any(str(entry.get("claim")) == claim_text for entry in existing):
+                continue
+            await registry.add_claim(
+                source["id"],
+                claim_text,
+                float(item.get("confidence") or 0.4),
+                locator=url,
+                publication_date=str(item.get("published") or "") or None,
+                label=str(item.get("claim_label") or "unverified"),
+            )
     except Exception:  # pragma: no cover - cache must never break research
         try:
             await db.rollback()
@@ -148,7 +181,19 @@ async def annotate_reputation(
             if row.revoked_at is None and row.domain
         }
         for item in results:
-            source = by_domain.get(str(item.get("source") or "").lower())
+            host = str(item.get("source") or "").lower()
+            source = by_domain.get(host)
+            if source is None:
+                # ``www`` vs registrable domain (and subdomains) are the same
+                # publisher for reputation purposes.
+                source = next(
+                    (
+                        row
+                        for domain, row in by_domain.items()
+                        if domain.endswith("." + host) or host.endswith("." + domain)
+                    ),
+                    None,
+                )
             item["reliability"] = (
                 round(float(source.reliability_score), 4) if source else 0.0
             )

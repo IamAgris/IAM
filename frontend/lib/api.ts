@@ -11,6 +11,41 @@ export const api = axios.create({
   },
 });
 
+/**
+ * IPLCI governance context. Set this once at the entry point (for example,
+ * after a caller selects a registered source) and every API call inherits it.
+ * Never invent a source id: an absent id means no rights assessment has run.
+ */
+export interface IPLCIGovernanceContext {
+  sourceId?: string;
+  datasetId?: string;
+  approvalId?: string;
+  agentId?: string;
+  jurisdiction?: string;
+}
+
+let governanceContext: IPLCIGovernanceContext | null = null;
+
+export function setIPLCIGovernanceContext(context: IPLCIGovernanceContext | null): void {
+  governanceContext = context?.sourceId ? context : null;
+}
+
+api.interceptors.request.use((config) => {
+  if (!governanceContext) return config;
+  const headers = config.headers as unknown as Record<string, string>;
+  const mapped: Record<string, string | undefined> = {
+    "X-IPLCI-Source-Id": governanceContext.sourceId,
+    "X-IPLCI-Dataset-Id": governanceContext.datasetId,
+    "X-IPLCI-Approval-Id": governanceContext.approvalId,
+    "X-IPLCI-Agent-Id": governanceContext.agentId,
+    "X-IPLCI-Jurisdiction": governanceContext.jurisdiction,
+  };
+  for (const [header, value] of Object.entries(mapped)) {
+    if (value) headers[header] = value;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

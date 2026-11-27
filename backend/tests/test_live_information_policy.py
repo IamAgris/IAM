@@ -195,12 +195,16 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
             query: str, max_results: int = 10, provider: Optional[str] = None
         ) -> Dict[str, Any]:
             if provider == "duckduckgo":
-                return free or {
-                    "provider": "duckduckgo", "query": query, "results": []
-                }
+                return free or {"provider": "duckduckgo", "query": query, "results": []}
+            if provider == "searxng":
+                return {"provider": "searxng", "query": query, "results": []}
             return configured
 
+        from app.services.search_provider_registry import search_provider_registry
+
+        search_provider_registry.reset()
         with (
+            patch.object(settings, "iam_search_provider_order", "wikipedia,duckduckgo"),
             patch.object(
                 search_service_module.search_service,
                 "search",

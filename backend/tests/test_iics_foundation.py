@@ -474,5 +474,43 @@ class SitePolicyTests(unittest.TestCase):
         self.assertNotEqual(policy_hash("User-agent: *", ""), policy_hash("User-agent: bot", ""))
 
 
+class WiringTests(unittest.IsolatedAsyncioTestCase):
+    async def test_browser_fetch_denied_by_egress_gate(self):
+        from app.services import browser_service as module
+
+        service = module.BrowserService()
+        denied = SimpleNamespace(allowed=False, reason="internal_or_metadata_address")
+        with patch.object(module, "enforce_egress", MagicMock(return_value=denied)):
+            result = await service.fetch_page("https://internal.example")
+        self.assertFalse(result["success"])
+        self.assertIn("egress_denied", result["error"])
+
+    async def test_permission_denial_raises_signed_creator_request(self):
+        gate = PermissionGateTests._gate(
+            {"permitted": False}, {"decision": "APPROVED", "decision_class": "LOW"}
+        )
+        notifier = MagicMock()
+        notifier.approval_request = AsyncMock(return_value={"request_id": "cr_1"})
+        result = await gate.authorize("spend_money", "https://example.com", notifier=notifier)
+        self.assertTrue(result["approval_required"])
+        notifier.approval_request.assert_awaited_once()
+        self.assertEqual(result["creator_request"]["request_id"], "cr_1")
+
+    async def test_creator_email_blocks_secret_material(self):
+        bridge, communication, _ = CreatorEmailBridgeTests._bridge()
+        result = await bridge.notify("api_key=sk-abcdefghijklmnopqrst")
+        self.assertEqual(result["status"], "blocked")
+        communication.send_status.assert_not_awaited()
+
+    def test_iics_tools_register_explicit_creator_action(self):
+        from app.services.iics import IICS_TOOLS
+
+        approval = next(
+            tool for tool in IICS_TOOLS if tool["name"] == "iics.creator.approval_request"
+        )
+        self.assertEqual(approval["permission_level"], "explicit")
+        self.assertTrue(approval["requires_human_approval"])
+
+
 if __name__ == "__main__":
     unittest.main()

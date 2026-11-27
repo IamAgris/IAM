@@ -78,6 +78,13 @@ class Settings(BaseSettings):
 
     # IAM SDK protocol (OD-29) and node contribution (OD-26)
     iam_protocol_version: str = "1"
+    # Optional hardware-backed attestation. Disabled unless a TPM is present
+    # and the operator explicitly enables it.
+    tpm_measurement_enabled: bool = False
+    # Official assistant integration endpoints — never credentials. Opt-in only.
+    alexa_skill_endpoint: Optional[str] = None
+    siri_intents_endpoint: Optional[str] = None
+    bixby_automation_endpoint: Optional[str] = None
     iam_protocol_require_header: bool = False
     # Stable P2P identity. Without an explicit secret the transport generates a
     # random one per process, so peers cannot reconnect after a restart.
@@ -138,6 +145,12 @@ class Settings(BaseSettings):
     # triggered live-information request that gets no suitable evidence (for
     # example the Wikipedia fallback) may escalate to browser retrieval.
     iam_live_info_escalate_to_browser: bool = True
+
+    # Search provider management (proposed Doc 32 §6). Free-first by default;
+    # paid providers require signed Creator authorisation before use.
+    iam_search_provider_order: str = "wikipedia,duckduckgo,searxng"
+    iam_search_searxng_url: str = ""
+    iam_search_tavily_api_key: str = ""
 
     # API sub-agents are optional specialists, never IAM itself. Delegation is
     # per-request opt-in and requires a signed Creator authorization because

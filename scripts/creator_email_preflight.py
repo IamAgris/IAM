@@ -6,10 +6,9 @@ and does not grant authority — it only confirms that the carrier is ready.
 
 import os
 import sys
-from typing import List
 
 
-def check() -> List[str]:
+def check() -> list[str]:
     """Return configuration failures; never include secret values."""
     address = os.environ.get("CREATOR_EMAIL", "").strip()
     domain = os.environ.get("CREATOR_EMAIL_DOMAIN", "").strip().lower()
@@ -19,7 +18,7 @@ def check() -> List[str]:
     password = os.environ.get("CREATOR_SMTP_PASSWORD", "").strip()
     public_key = os.environ.get("CREATOR_PUBLIC_KEY", "").strip()
     gateway = os.environ.get("CREATOR_GATEWAY_SECRET", "").strip()
-    failures: List[str] = []
+    failures: list[str] = []
     if not address or "@" not in address:
         failures.append("CREATOR_EMAIL must be a full address")
     else:
@@ -44,12 +43,11 @@ def check() -> List[str]:
 
 
 def main() -> int:
-    address = os.environ.get("CREATOR_EMAIL", "").strip()
     domain = os.environ.get("CREATOR_EMAIL_DOMAIN", "").strip().lower()
     transport = os.environ.get("CREATOR_EMAIL_TRANSPORT", "log").strip().lower()
     host = os.environ.get("CREATOR_SMTP_HOST", "").strip()
     user = os.environ.get("CREATOR_SMTP_USER", "").strip()
-    password = os.environ.get("CREATOR_SMTP_PASSWORD", "").strip()
+    os.environ.get("CREATOR_SMTP_PASSWORD", "")  # checked in check(), never printed
     public_key = os.environ.get("CREATOR_PUBLIC_KEY", "").strip()
     gateway = os.environ.get("CREATOR_GATEWAY_SECRET", "").strip()
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -218,7 +218,8 @@ class CredentialRotationPolicy:
 
     @staticmethod
     def due_from_vault(
-        records: List[Mapping[str, Any]],
+        records: Sequence[Mapping[str, Any]],
+        interval_days: int = 90,
         now: Optional[datetime] = None,
     ) -> List[str]:
         """Map vault public records to rotation references (no secret values)."""

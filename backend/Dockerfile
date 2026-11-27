@@ -41,12 +41,11 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY app ./app
 
-# Playwright browser + system libs. Best-effort and platform-aware; an apt
-# hiccup must not block the API image. Research degrades gracefully.
+# Playwright browsers are a required dependency of the Web Intelligence Engine.
+# Installation must fail the image build if the browsers are missing: a silent
+# fallback would leave conditional escalation unable to retrieve live pages.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-# playwright CLI is copied from builder; install browser best-effort (needs system libs
-# from the runtime stage). Failure is non-fatal — research degrades gracefully.
-RUN (playwright install chromium firefox webkit || true)
+RUN playwright install chromium firefox webkit
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

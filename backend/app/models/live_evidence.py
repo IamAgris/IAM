@@ -4,7 +4,7 @@ Query-level cache only. Source reputation and claim labels remain in the
 existing IICS registry; this table never stores trusted knowledge.
 """
 
-from sqlalchemy import Column, Integer, String, Text, JSON, DateTime
+from sqlalchemy import Column, Integer, String, Text, JSON, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
@@ -25,4 +25,20 @@ class LiveEvidenceCache(Base):  # type: ignore[misc]
     retrieved_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
     hit_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class LiveResearchTask(Base):  # type: ignore[misc]
+    """Bounded recurring public-web research task."""
+
+    __tablename__ = "live_research_tasks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    topic = Column(Text, nullable=False)
+    query = Column(Text, nullable=False)
+    interval_minutes = Column(Integer, nullable=False, default=60)
+    enabled = Column(Boolean, nullable=False, default=True)
+    owner = Column(Text, nullable=False, default="creator")
+    last_run_at = Column(DateTime(timezone=True), nullable=True)
+    next_run_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

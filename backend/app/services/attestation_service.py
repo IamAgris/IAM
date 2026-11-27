@@ -8,6 +8,8 @@ than claiming certainty.
 import base64
 import hashlib
 import json
+import shutil
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,6 +20,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.integrity import IntegrityManifest, NodeAttestation, SyncObject
 from app.models.sdk import RegisteredNode
 from app.models.security import AuditEvent
@@ -60,6 +63,41 @@ def _parse_time(value: str) -> datetime:
     return parsed
 
 
+def _tpm_measurement() -> Optional[Dict[str, Any]]:
+    """Read TPM PCRs when explicitly enabled and hardware/tools are present."""
+    if not settings.tpm_measurement_enabled:
+        return None
+    if shutil.which("tpm2_pcrread"):
+        try:
+            result = subprocess.run(
+                ["tpm2_pcrread", "sha256"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode == 0:
+                pcrs: Dict[str, str] = {}
+                for line in result.stdout.splitlines():
+                    parts = line.strip().split(":", 1)
+                    if len(parts) == 2 and parts[0].isdigit():
+                        pcrs[parts[0]] = parts[1].strip().lower()
+                if pcrs:
+                    return {"source": "tpm2_pcrread", "pcrs": pcrs}
+        except (OSError, subprocess.SubprocessError):
+            pass
+    sysfs = Path("/sys/class/tpm/tpm0/pcr-sha256")
+    if sysfs.exists():
+        pcrs = {
+            path.stem: path.read_text(encoding="utf-8").strip().lower()
+            for path in sorted(sysfs.iterdir())
+            if path.is_file() and path.stem.isdigit()
+        }
+        if pcrs:
+            return {"source": "sysfs", "pcrs": pcrs}
+    return None
+
+
 class AttestationService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -74,7 +112,13 @@ class AttestationService:
                 files[relative] = "missing"
                 continue
             files[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
-        return {"files": files, "root_hash": content_hash(files)}
+        platform = _tpm_measurement()
+        return {
+            "files": files,
+            "root_hash": content_hash(files),
+            "platform": platform,
+            "platform_hash": content_hash(platform) if platform else None,
+        }
 
     async def create_manifest(self, actor: str = "creator") -> Dict[str, Any]:
         """Explicitly approve the current measurement as the known-good baseline."""
@@ -121,6 +165,7 @@ class AttestationService:
             return {
                 "known_good_manifest": None,
                 "current_root_hash": current["root_hash"],
+                "platform_hash": current.get("platform_hash"),
                 "matches": None,
                 "confidence": "unmeasured",
                 "evidence": ["No known-good manifest has been approved yet."],
@@ -136,6 +181,7 @@ class AttestationService:
             "known_good_manifest": manifest.version,
             "expected_root_hash": manifest.root_hash,
             "current_root_hash": current["root_hash"],
+            "platform_hash": current.get("platform_hash"),
             "matches": not differences,
             "differences": differences,
             "confidence": "measured_directly_on_this_host",

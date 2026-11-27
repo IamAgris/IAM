@@ -55,7 +55,7 @@ from app.models.iics import (
     IICSSource, IICSClaim, IICSAction, IICSBenchmarkResult, IICSScheduledTask,
     IICSAdvisory, IICSDLPEvent, IICSSitePolicy, IICSPrivacyRecord,
 )
-from app.models.live_evidence import LiveEvidenceCache
+from app.models.live_evidence import LiveEvidenceCache, LiveResearchTask
 from app.models.modelrouter import AIProvider, DiscoveredModel, RoutingDecision, ProviderUsage
 from app.models.model_provider_key import ModelProviderKey
 from app.models.skillforge import (

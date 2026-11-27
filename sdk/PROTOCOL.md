@@ -15,6 +15,18 @@ All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this 
 - Retries: controlled exponential backoff on `429` and `5xx` only; honour `Retry-After`.
 - TLS required outside localhost.
 
+### IPLCI governance headers (OD-48)
+
+Calls that touch external material, training data, publishing or tools should send a governance context. The backend middleware converts these into an ambient context inherited by all downstream services.
+
+- `X-IPLCI-Source-Id` — registered IPLCI source identifier (required for governed operations).
+- `X-IPLCI-Dataset-Id` — dataset identifier for training requests.
+- `X-IPLCI-Approval-Id` — independent training approval identifier.
+- `X-IPLCI-Agent-Id` — calling agent/sub-agent identity.
+- `X-IPLCI-Jurisdiction` — applicable jurisdiction.
+
+Never send a fabricated source id. Missing context is **not** approval; operations that require provenance fail closed with `IPLCI_PROVENANCE_REQUIRED`. The official frontend client exposes `setIPLCIGovernanceContext()` in `frontend/lib/api.ts`; direct API callers send the headers above.
+
 ## Endpoint map
 
 | Capability | Method | Path | Status |
@@ -51,6 +63,10 @@ All official clients (`@iam/sdk`, `iam-sdk`, `iam` CLI, local agent) speak this 
 | Creator signed decision | POST | `/creator/requests/{id}/decide` | implemented — ED25519 over one-time challenge |
 | Creator messages | POST/GET | `/creator/messages/questions`, `/creator/messages` | implemented — informational only |
 | Events | GET (SSE) | `/events` | implemented — durable audit trail with `?since=` replay |
+| IPLCI rights assessment / gateway | POST | `/iplci/assessments`, `/iplci/gate/check` | implemented — tri-state rights, fail-closed |
+| IPLCI training gate / lineage | POST | `/iplci/training/gate`, `/iplci/lineage` | implemented — independent approval, affected-by-revocation |
+| IPLCI signed policies | POST/GET | `/iplci/policies`, `/iplci/policies/active` | implemented — human signer and approval reference required |
+| IPLCI disputes / legal holds / audit | POST/GET | `/iplci/disputes`, `/iplci/legal-holds`, `/iplci/audit` | implemented — evidence preserved, allegations investigated |
 
 All clients may send optional `CF-Access-Client-Id` / `CF-Access-Client-Secret` headers when the Core is behind Cloudflare Access (transport only; never authority).
 

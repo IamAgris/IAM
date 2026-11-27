@@ -16,14 +16,12 @@ until it has passed benchmark, provenance and signed-authority gates.
 from __future__ import annotations
 
 import json
-import tempfile
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from app.core.config import settings
-from app.services.ai_research.artifacts import FileSystemArtifactStore
+from app.services.ai_research.artifacts import ArtifactStore
 
 SERVING_KEY = "serving/primary.json"
 CONFIG_SOURCE = "config"
@@ -31,11 +29,11 @@ RELEASE_SOURCE = "release"
 ROLLBACK_SOURCE = "rollback"
 
 
-def _store() -> FileSystemArtifactStore:
-    root = settings.model_release_artifact_root or str(
-        Path(tempfile.gettempdir()) / "iam-model-releases"
-    )
-    return FileSystemArtifactStore(root)
+def _store() -> ArtifactStore:
+    """Use the same durable store as registry and benchmark evidence."""
+    from app.services.ai_research.artifacts import default_store
+
+    return default_store()
 
 
 @dataclass(frozen=True)

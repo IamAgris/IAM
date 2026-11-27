@@ -20,7 +20,6 @@ import subprocess
 import sys
 
 import httpx
-
 from creator_email_preflight import check as preflight
 
 ACTION_TYPE = "architecture.decision.confirm"

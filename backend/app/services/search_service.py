@@ -27,6 +27,8 @@ class SearchService:
         self.brave_api_key = settings.brave_api_key if hasattr(settings, 'brave_api_key') else None
         self.google_api_key = settings.google_api_key
         self.google_cx = settings.google_cx if hasattr(settings, 'google_cx') else None
+        self.searxng_url = settings.iam_search_searxng_url.rstrip("/")
+        self.tavily_api_key = settings.iam_search_tavily_api_key or None
 
     async def search(
         self,
@@ -48,6 +50,10 @@ class SearchService:
         elif provider == "duckduckgo":
             # Free, no-key web search via the public HTML endpoint.
             return await self._search_duckduckgo(query, max_results)
+        elif provider == "searxng":
+            return await self._search_searxng(query, max_results)
+        elif provider == "tavily" and self.tavily_api_key:
+            return await self._search_tavily(query, max_results)
         else:
             # Free fallback: Wikipedia public API (no key, no bot protection).
             # Wikipedia is background, not live evidence (proposed Doc 32).
@@ -216,6 +222,81 @@ class SearchService:
         except Exception as e:
             logger.error(f"Google search failed: {e}")
             return {"query": query, "provider": "google", "results": [], "error": str(e)}
+
+
+    async def _search_searxng(self, query: str, max_results: int) -> Dict[str, Any]:
+        """Self-hosted SearXNG JSON API — free and provider-independent."""
+        if not self.searxng_url:
+            return {
+                "query": query, "provider": "searxng", "results": [],
+                "error": "SearXNG endpoint not configured",
+                "searched_at": datetime.utcnow().isoformat(),
+            }
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(
+                    f"{self.searxng_url}/search",
+                    params={"q": query, "format": "json"},
+                    headers={"User-Agent": "IAM-Research/1.0 (public web research)"},
+                    timeout=20.0,
+                )
+            if response.status_code != 200:
+                return {
+                    "query": query, "provider": "searxng", "results": [],
+                    "error": f"HTTP {response.status_code}",
+                    "searched_at": datetime.utcnow().isoformat(),
+                }
+            results = [
+                {
+                    "title": str(item.get("title") or "")[:200],
+                    "url": str(item.get("url") or ""),
+                    "description": str(item.get("content") or "")[:300],
+                }
+                for item in (response.json().get("results") or [])[:max_results]
+                if item.get("url")
+            ]
+            return {
+                "query": query, "provider": "searxng", "results": results,
+                "searched_at": datetime.utcnow().isoformat(),
+            }
+        except Exception as exc:
+            return {
+                "query": query, "provider": "searxng", "results": [],
+                "error": str(exc)[:200], "searched_at": datetime.utcnow().isoformat(),
+            }
+
+    async def _search_tavily(self, query: str, max_results: int) -> Dict[str, Any]:
+        """Paid Tavily adapter. Never called automatically by IAM (OD-04/OD-25)."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api.tavily.com/search",
+                    json={
+                        "api_key": self.tavily_api_key,
+                        "query": query,
+                        "max_results": max_results,
+                    },
+                    timeout=30.0,
+                )
+            data = response.json()
+            results = [
+                {
+                    "title": str(item.get("title") or "")[:200],
+                    "url": str(item.get("url") or ""),
+                    "description": str(item.get("content") or "")[:300],
+                }
+                for item in (data.get("results") or [])[:max_results]
+                if item.get("url")
+            ]
+            return {
+                "query": query, "provider": "tavily", "results": results,
+                "searched_at": datetime.utcnow().isoformat(),
+            }
+        except Exception as exc:
+            return {
+                "query": query, "provider": "tavily", "results": [],
+                "error": str(exc)[:200], "searched_at": datetime.utcnow().isoformat(),
+            }
 
 
 # Singleton instance

@@ -135,6 +135,26 @@ class FileSystemArtifactStore:
         ]
 
 
+def default_store() -> ArtifactStore:
+    """Configured artifact store: durable S3/MinIO or local filesystem.
+
+    All research evidence (registry, benchmarks, serving state) must use the
+    same store so a signed promotion survives process restarts.
+    """
+    from app.core.config import settings
+
+    if settings.research_artifact_store.lower() == "s3":
+        from .s3_store import S3ArtifactStore
+
+        return S3ArtifactStore(
+            bucket=settings.s3_bucket, prefix=settings.research_artifact_prefix
+        )
+    root = settings.model_release_artifact_root or str(
+        Path(tempfile.gettempdir()) / "iam-model-releases"
+    )
+    return FileSystemArtifactStore(root)
+
+
 def persist_manifest(store: ArtifactStore, experiment_id: str, manifest: Dict) -> ResearchArtifact:
     payload = json.dumps(manifest, sort_keys=True, indent=2).encode("utf-8")
     return store.put(

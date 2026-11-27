@@ -7,9 +7,7 @@ exact model@version. Rollback requires the same signed authority.
 """
 
 import json
-import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
@@ -23,7 +21,6 @@ from app.models.development import (
     UpgradeHistory,
 )
 from app.models.security import AuditEvent
-from app.services.ai_research.artifacts import FileSystemArtifactStore
 from app.services.ai_research.base import ResearchError
 from app.services.ai_research.benchmarks import BenchmarkResult, BenchmarkRunner
 from app.services.ai_research.governance import SignedApproval
@@ -40,23 +37,10 @@ class ModelReleaseError(PermissionError):
 
 
 def default_release_store():
-    """Return the configured artifact store.
+    """Return the configured research artifact store (local or durable S3)."""
+    from .artifacts import default_store
 
-    ``s3`` keeps registry, benchmark and serving evidence durable in the
-    existing MinIO/S3 bucket. ``local`` remains the fail-closed default for
-    development so no external write happens without operator configuration.
-    """
-    if settings.research_artifact_store.lower() == "s3":
-        from .s3_store import S3ArtifactStore
-
-        return S3ArtifactStore(
-            bucket=settings.s3_bucket,
-            prefix=settings.research_artifact_prefix,
-        )
-    root = settings.model_release_artifact_root or str(
-        Path(tempfile.gettempdir()) / "iam-model-releases"
-    )
-    return FileSystemArtifactStore(root)
+    return default_store()
 
 
 class ModelReleaseService:
