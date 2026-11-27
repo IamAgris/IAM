@@ -302,6 +302,12 @@ export function IAMInterface() {
     return () => { live = false; };
   }, []);
 
+  React.useEffect(() => () => {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
+    try { recognitionRef.current?.stop(); } catch {}
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
+
   // Initialize theme
   React.useEffect(() => {
     const stored = (typeof localStorage !== "undefined" && localStorage.getItem("iam_theme")) as "dark" | "light" | null;
@@ -646,7 +652,12 @@ export function IAMInterface() {
         clusters={clusters}
         graphConnections={graphConnections}
         freshness={freshness}
-        onNodeHover={(node, x, y) => setHoveredSource(node && x !== undefined && y !== undefined ? { node, x, y } : null)}
+        onNodeHover={(node, x, y) => {
+          const id = node?.id ?? null;
+          if (id && id === lastHoverRef.current) return;
+          lastHoverRef.current = id;
+          setHoveredSource(node && x !== undefined && y !== undefined ? { node, x, y } : null);
+        }}
         onNodeSelect={(node) => {
           if (node.kind === "cluster" && node.clusterName) void loadProvenance(node.clusterName);
           else setSelectedSource(node);
@@ -908,10 +919,12 @@ export function IAMInterface() {
             style={{ background: "rgba(255,255,255,.035)" }}>
             <div className="opacity-60">{clusters.length} clusters · {graphConnections.length + connections.length} links</div>
             {clusters.slice(0, 6).map((c) => (
-              <div key={c.node_id} className="flex justify-between gap-2">
+              <button key={c.node_id} onClick={() => { void loadProvenance(c.name); setShowOptions(false); }}
+                aria-label={`Inspect ${c.name} provenance`}
+                className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
                 <span className="truncate">{c.name}</span>
                 <span className="opacity-50">{c.count}</span>
-              </div>
+              </button>
             ))}
             {graphConnections.slice(0, 4).map((link, i) => (
               <div key={link.id || i} className="truncate opacity-60">
@@ -1011,7 +1024,7 @@ export function IAMInterface() {
               <>
                 <button
                   onClick={async () => {
-                    try { await navigator.clipboard.writeText(response); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch {}
+                    try { await navigator.clipboard.writeText(response); setCopied(true); timersRef.current.push(window.setTimeout(() => setCopied(false), 1500)); } catch {}
                   }}
                   aria-label="Copy response"
                   className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"

@@ -10,6 +10,7 @@ from app.services.hbi import (
 )
 from app.services.hbi.corpus import ingest_corpus as load_corpus
 from app.services.hbi.corpus_gate import CorpusGovernance
+from app.services.hbi.permission_engine import PermissionEngine
 from app.services.hbi.chronology import resolve as resolve_chronology
 from app.services.hbi.cross_disciplinary import fuse as fuse_disciplines
 from app.services.hbi.evolution import deprecate as deprecate_record, lineage as record_lineage, revise as revise_record
@@ -34,6 +35,10 @@ from app.services.hbi.schemas import (
     CorpusRestrictionRequest,
     CorpusReviewRequest,
     DPIASignoffRequest,
+    LegalContextVerificationRequest,
+    PartnershipRequest,
+    TrainingApprovalRequest,
+    TrainingRequest,
     ForecastRequest,
     ChronologyInput,
     CrossDisciplinaryRequest,
@@ -71,6 +76,7 @@ class HBIService:
         self.sources = LiveSourceRegistry()
         self.graph = HistoricalKnowledgeGraph(db_session)
         self.corpus_governance = CorpusGovernance()
+        self.permission_engine = PermissionEngine(self.corpus_governance)
         self.dpia_signoffs: List[Dict[str, Any]] = []
         self.predictor = PredictionService()
         self.predictor.register("baseline", EvidenceForecaster())
@@ -365,10 +371,13 @@ class HBIService:
         return await load_corpus(self, payload.manifest_path, payload.root)
 
     def review_corpus_source(self, payload: CorpusReviewRequest) -> Dict[str, Any]:
-        return self.corpus_governance.review(
+        result = self.corpus_governance.review(
             payload.manifest, payload.intended_purpose,
             payload.approved_by, payload.model_training,
         )
+        if result["decision"] == "approved":
+            self.permission_engine.register_manifest(payload.manifest)
+        return result
 
     def restrict_corpus_source(self, payload: CorpusRestrictionRequest) -> Dict[str, Any]:
         result = self.corpus_governance.restrict(payload.source_id, payload.reason)
@@ -479,6 +488,34 @@ class HBIService:
 
     def corpus_readiness(self) -> Dict[str, Any]:
         return validation.corpus_readiness(self.store.all())
+
+    def request_training(self, payload: TrainingRequest) -> Dict[str, Any]:
+        return self.permission_engine.request_training(payload)
+
+    def approve_training(self, payload: TrainingApprovalRequest) -> Dict[str, Any]:
+        result = self.permission_engine.approve_training(payload)
+        self.core._audit("training_approval", payload.basis[:80], "aggregate",
+                         result["decision"], {"source_id": payload.source_id})
+        return result
+
+    def training_approved(self) -> Dict[str, Any]:
+        ids = sorted(self.permission_engine.training_approved_ids())
+        return {"sources": ids, "count": len(ids), "note": "Pipeline 3 reads only these sources."}
+
+    def add_partnership(self, payload: PartnershipRequest) -> Dict[str, Any]:
+        return self.permission_engine.add_partnership(payload)
+
+    def list_partnerships(self) -> Dict[str, Any]:
+        return self.permission_engine.list_partnerships()
+
+    def legal_context(self) -> Dict[str, Any]:
+        return self.permission_engine.legal_context()
+
+    def verify_legal_context(self, payload: LegalContextVerificationRequest) -> Dict[str, Any]:
+        return self.permission_engine.verify_legal_context(payload)
+
+    def permission_audit(self) -> Dict[str, Any]:
+        return self.permission_engine.audit_history()
 
     def status(self) -> Dict[str, Any]:
         return {

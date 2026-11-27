@@ -181,6 +181,7 @@ class CorpusLicensing(BaseModel):
     storage_allowed: bool = False
     analysis_allowed: bool = False
     model_training_allowed: bool = False
+    derivative_allowed: bool = False
     licence_expires_at: Optional[str] = None
     revocation_reference: Optional[str] = None
 
@@ -208,12 +209,18 @@ class CorpusGovernance(BaseModel):
 class CorpusSourceManifest(BaseModel):
     source_id: str = Field(min_length=1)
     path: Optional[str] = None
+    rights_holder: Optional[str] = None
+    acquisition_method: str = "open_access"
     source: CorpusSourceMeta
     licensing: CorpusLicensing
     permitted_purposes: List[str] = Field(default_factory=list)
     lawful_basis: CorpusLawfulBasis = Field(default_factory=CorpusLawfulBasis)
     privacy: CorpusPrivacy = Field(default_factory=CorpusPrivacy)
     governance: CorpusGovernance = Field(default_factory=CorpusGovernance)
+    retention_period: Optional[str] = None
+    territory: Optional[str] = None
+    expiry_date: Optional[str] = None
+    revocation_conditions: List[str] = Field(default_factory=list)
 
 
 class CorpusReviewRequest(BaseModel):
@@ -226,6 +233,34 @@ class CorpusReviewRequest(BaseModel):
 class CorpusRestrictionRequest(BaseModel):
     source_id: str
     reason: str = Field(min_length=1)
+
+
+class TrainingRequest(BaseModel):
+    source_id: str
+    intended_model: str = Field(min_length=1)
+    purpose: str = "research"
+    proposed_retention: Optional[str] = None
+
+
+class TrainingApprovalRequest(BaseModel):
+    source_id: str
+    approver: str = Field(min_length=1)
+    decision: str = Field(min_length=1)
+    basis: str = Field(min_length=1)
+
+
+class PartnershipRequest(BaseModel):
+    organisation: str = Field(min_length=1)
+    contact_reference: Optional[str] = None
+    requested_rights: List[str] = Field(default_factory=list)
+    safeguards: List[str] = Field(default_factory=list)
+    agreement_reference: Optional[str] = None
+
+
+class LegalContextVerificationRequest(BaseModel):
+    topic: str
+    verified_by: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
 
 
 class DPIASignoffRequest(BaseModel):

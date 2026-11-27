@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "purpose": "Explicit apply order for numbered SQL migrations. Duplicate numeric prefixes are sanctioned here with distinct sequence values.",
+  "files": [
+    {
+      "sequence": 1,
+      "number": 1,
+      "path": "001_initial_schema.sql"
+    },
+    {
+      "sequence": 2,
+      "number": 2,
+      "path": "002_skillforge.sql"
+    },
+    {
+      "sequence": 3,
+      "number": 3,
+      "path": "003_security_engines.sql"
+    },
+    {
+      "sequence": 4,
+      "number": 4,
+      "path": "004_creator_email_approval.sql"
+    },
+    {
+      "sequence": 5,
+      "number": 5,
+      "path": "005_retire_legacy_owner_authorizations.sql"
+    },
+    {
+      "sequence": 6,
+      "number": 6,
+      "path": "006_creator_email_outbox.sql"
+    },
+    {
+      "sequence": 7,
+      "number": 7,
+      "path": "007_api_credentials.sql"
+    },
+    {
+      "sequence": 8,
+      "number": 8,
+      "path": "008_retire_legacy_approval_requests.sql"
+    },
+    {
+      "sequence": 9,
+      "number": 9,
+      "path": "009_nodes_and_resource_reports.sql"
+    },
+    {
+      "sequence": 10,
+      "number": 9,
+      "path": "009_skill_runtime.sql"
+    },
+    {
+      "sequence": 11,
+      "number": 10,
+      "path": "010_creator_email_dead_letter.sql"
+    },
+    {
+      "sequence": 12,
+      "number": 10,
+      "path": "010_storage_and_uwaie.sql"
+    },
+    {
+      "sequence": 13,
+      "number": 11,
+      "path": "011_integration_creator_approval.sql"
+    },
+    {
+      "sequence": 14,
+      "number": 11,
+      "path": "011_skill_runtime_logs.sql"
+    },
+    {
+      "sequence": 15,
+      "number": 12,
+      "path": "012_integrity_attestation_sync.sql"
+    },
+    {
+      "sequence": 16,
+      "number": 12,
+      "path": "012_p2p_skill_candidates.sql"
+    },
+    {
+      "sequence": 17,
+      "number": 13,
+      "path": "013_doc18_ai_identity_and_interviews.sql"
+    },
+    {
+      "sequence": 18,
+      "number": 14,
+      "path": "014_doc17_tone_analysis.sql"
+    },
+    {
+      "sequence": 19,
+      "number": 15,
+      "path": "015_creator_messages.sql"
+    },
+    {
+      "sequence": 20,
+      "number": 15,
+      "path": "015_public_records.sql"
+    },
+    {
+      "sequence": 21,
+      "number": 16,
+      "path": "016_creator_channels_audit.sql"
+    },
+    {
+      "sequence": 22,
+      "number": 16,
+      "path": "016_legal_intelligence.sql"
+    },
+    {
+      "sequence": 23,
+      "number": 17,
+      "path": "017_business_projects_legal_entity.sql"
+    },
+    {
+      "sequence": 24,
+      "number": 17,
+      "path": "017_free_sandboxes.sql"
+    },
+    {
+      "sequence": 25,
+      "number": 17,
+      "path": "017_geospatial.sql"
+    },
+    {
+      "sequence": 26,
+      "number": 18,
+      "path": "018_human_presence.sql"
+    },
+    {
+      "sequence": 27,
+      "number": 18,
+      "path": "018_technology_capabilities.sql"
+    },
+    {
+      "sequence": 28,
+      "number": 18,
+      "path": "018_workspaces.sql"
+    },
+    {
+      "sequence": 29,
+      "number": 19,
+      "path": "019_assistant_interoperability.sql"
+    },
+    {
+      "sequence": 30,
+      "number": 19,
+      "path": "019_free_node_candidates.sql"
+    },
+    {
+      "sequence": 31,
+      "number": 19,
+      "path": "019_workspace_credentials.sql"
+    },
+    {
+      "sequence": 32,
+      "number": 20,
+      "path": "020_security_work_sessions.sql"
+    },
+    {
+      "sequence": 33,
+      "number": 21,
+      "path": "021_business_legal_entity.sql"
+    },
+    {
+      "sequence": 34,
+      "number": 22,
+      "path": "022_incoming_receipts.sql"
+    },
+    {
+      "sequence": 35,
+      "number": 23,
+      "path": "023_banking_trading.sql"
+    },
+    {
+      "sequence": 36,
+      "number": 24,
+      "path": "024_social_presence_accounts.sql"
+    },
+    {
+      "sequence": 37,
+      "number": 25,
+      "path": "025_digital_access.sql"
+    },
+    {
+      "sequence": 38,
+      "number": 26,
+      "path": "026_mfa.sql"
+    },
+    {
+      "sequence": 39,
+      "number": 27,
+      "path": "027_web_knowledge.sql"
+    },
+    {
+      "sequence": 40,
+      "number": 28,
+      "path": "028_ai_communication.sql"
+    },
+    {
+      "sequence": 41,
+      "number": 29,
+      "path": "029_hbi.sql"
+    },
+    {
+      "sequence": 42,
+      "number": 30,
+      "path": "030_financial_intelligence.sql"
+    },
+    {
+      "sequence": 43,
+      "number": 30,
+      "path": "030_hbi_history_graph.sql"
+    },
+    {
+      "sequence": 44,
+      "number": 31,
+      "path": "031_hbi_governance.sql"
+    }
+  ]
+}

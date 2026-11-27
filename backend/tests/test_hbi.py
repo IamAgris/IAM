@@ -1106,5 +1106,105 @@ class HBILifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["after_version"], result["before_version"])
 
 
+class HBIPermissionEngineTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.service = HBIService()
+
+    def _manifest(self, training: bool = True):
+        from app.services.hbi.schemas import CorpusSourceManifest
+        return CorpusSourceManifest(
+            source_id="SRC-PERM",
+            rights_holder="Research Institute",
+            acquisition_method="partnership",
+            source={"title": "Study", "origin": "https://example.org",
+                    "collection_date": "2026-11-27"},
+            licensing={
+                "licence_id": "CC-BY-4.0",
+                "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+                "permission_evidence": "agreement-1",
+                "ingestion_allowed": True, "storage_allowed": True,
+                "analysis_allowed": True, "derivative_allowed": True,
+                "model_training_allowed": training,
+            },
+            permitted_purposes=["research", "historical", "aggregate_analysis"],
+        )
+
+    async def test_legal_context_is_unverified_until_counsel(self):
+        result = self.service.legal_context()
+        self.assertTrue(all(item["status"] == "requires_verification"
+                            for item in result["entries"]))
+        from app.services.hbi.schemas import LegalContextVerificationRequest
+        verified = self.service.verify_legal_context(LegalContextVerificationRequest(
+            topic="popia_section_27_research", verified_by="counsel",
+            reference="written opinion 2026-11-27",
+        ))
+        self.assertEqual(verified["status"], "verified")
+
+    async def test_partnership_records_training_rights(self):
+        from app.services.hbi.schemas import PartnershipRequest
+        result = self.service.add_partnership(PartnershipRequest(
+            organisation="University", requested_rights=["read", "model_training"],
+        ))
+        self.assertTrue(result["requires_explicit_training_rights"])
+        self.assertEqual(self.service.list_partnerships()["count"], 1)
+
+    async def test_training_requires_independent_approval(self):
+        from app.services.hbi.schemas import (
+            CorpusReviewRequest, TrainingApprovalRequest, TrainingRequest,
+        )
+        review = self.service.review_corpus_source(CorpusReviewRequest(
+            manifest=self._manifest(), intended_purpose="research",
+            approved_by="ingestion-reviewer",
+        ))
+        self.assertEqual(review["decision"], "approved")
+        self.service.request_training(TrainingRequest(source_id="SRC-PERM", intended_model="m1"))
+        same = self.service.approve_training(TrainingApprovalRequest(
+            source_id="SRC-PERM", approver="ingestion-reviewer",
+            decision="approved", basis="same reviewer",
+        ))
+        self.assertEqual(same["decision"], "rejected")
+        self.assertIn("independent_approver_required", same["blockers"])
+        independent = self.service.approve_training(TrainingApprovalRequest(
+            source_id="SRC-PERM", approver="training-reviewer",
+            decision="approved", basis="training rights in agreement",
+        ))
+        self.assertEqual(independent["decision"], "approved")
+        self.assertIn("SRC-PERM", self.service.training_approved()["sources"])
+
+    async def test_training_blocked_without_training_rights(self):
+        from app.services.hbi.schemas import (
+            CorpusReviewRequest, TrainingApprovalRequest, TrainingRequest,
+        )
+        self.service.review_corpus_source(CorpusReviewRequest(
+            manifest=self._manifest(training=False), intended_purpose="research",
+            approved_by="ingestion-reviewer",
+        ))
+        self.service.request_training(TrainingRequest(source_id="SRC-PERM", intended_model="m1"))
+        result = self.service.approve_training(TrainingApprovalRequest(
+            source_id="SRC-PERM", approver="training-reviewer",
+            decision="approved", basis="research access",
+        ))
+        self.assertEqual(result["decision"], "rejected")
+        self.assertIn("model_training_not_permitted", result["blockers"])
+
+    async def test_restriction_removes_training_eligibility(self):
+        from app.services.hbi.schemas import (
+            CorpusRestrictionRequest, CorpusReviewRequest,
+            TrainingApprovalRequest, TrainingRequest,
+        )
+        self.service.review_corpus_source(CorpusReviewRequest(
+            manifest=self._manifest(), approved_by="ingestion-reviewer",
+        ))
+        self.service.request_training(TrainingRequest(source_id="SRC-PERM", intended_model="m1"))
+        self.service.approve_training(TrainingApprovalRequest(
+            source_id="SRC-PERM", approver="training-reviewer",
+            decision="approved", basis="agreement",
+        ))
+        self.service.restrict_corpus_source(CorpusRestrictionRequest(
+            source_id="SRC-PERM", reason="permission withdrawn",
+        ))
+        self.assertNotIn("SRC-PERM", self.service.training_approved()["sources"])
+
+
 if __name__ == "__main__":
     unittest.main()

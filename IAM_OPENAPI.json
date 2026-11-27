@@ -24103,6 +24103,243 @@
         }
       }
     },
+    "/api/v1/hbi/knowledge/corpus/training-request": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Training Request",
+        "description": "Pipeline 3: request training rights for an approved source.",
+        "operationId": "training_request_api_v1_hbi_knowledge_corpus_training_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/training-approve": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Training Approve",
+        "description": "Independent approval required; ingestion approval is not sufficient.",
+        "operationId": "training_approve_api_v1_hbi_knowledge_corpus_training_approve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingApprovalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/knowledge/corpus/training-approved": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Training Approved",
+        "description": "Sources whose model-training rights have been independently approved.",
+        "operationId": "training_approved_api_v1_hbi_knowledge_corpus_training_approved_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/partnerships": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "List Partnerships",
+        "operationId": "list_partnerships_api_v1_hbi_research_partnerships_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Add Partnership",
+        "description": "Record a research partnership request, including training-right negotiation.",
+        "operationId": "add_partnership_api_v1_hbi_research_partnerships_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnershipRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/legal-context": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Legal Context",
+        "description": "Owner-supplied legal context; unverified until counsel records a reference.",
+        "operationId": "legal_context_api_v1_hbi_research_legal_context_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/legal-context/verify": {
+      "post": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Verify Legal Context",
+        "description": "Record counsel verification of a legal-context entry.",
+        "operationId": "verify_legal_context_api_v1_hbi_research_legal_context_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalContextVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hbi/research/permission-audit": {
+      "get": {
+        "tags": [
+          "human-behaviour-intelligence"
+        ],
+        "summary": "Permission Audit",
+        "description": "Audit of training, partnership and legal-context decisions.",
+        "operationId": "permission_audit_api_v1_hbi_research_permission_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/hbi/models/calibrate-sources": {
       "post": {
         "tags": [
@@ -27595,6 +27832,11 @@
             "title": "Model Training Allowed",
             "default": false
           },
+          "derivative_allowed": {
+            "type": "boolean",
+            "title": "Derivative Allowed",
+            "default": false
+          },
           "licence_expires_at": {
             "anyOf": [
               {
@@ -27711,6 +27953,22 @@
             ],
             "title": "Path"
           },
+          "rights_holder": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rights Holder"
+          },
+          "acquisition_method": {
+            "type": "string",
+            "title": "Acquisition Method",
+            "default": "open_access"
+          },
           "source": {
             "$ref": "#/components/schemas/CorpusSourceMeta"
           },
@@ -27732,6 +27990,46 @@
           },
           "governance": {
             "$ref": "#/components/schemas/CorpusGovernance"
+          },
+          "retention_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Period"
+          },
+          "territory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Territory"
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          },
+          "revocation_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Revocation Conditions"
           }
         },
         "type": "object",
@@ -31303,6 +31601,31 @@
         ],
         "title": "LegalClearanceCreate"
       },
+      "LegalContextVerificationRequest": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "verified_by": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Verified By"
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "verified_by",
+          "reference"
+        ],
+        "title": "LegalContextVerificationRequest"
+      },
       "LicenceCreate": {
         "properties": {
           "licence_text": {
@@ -32274,6 +32597,56 @@
           "decision_type"
         ],
         "title": "OversightRequest"
+      },
+      "PartnershipRequest": {
+        "properties": {
+          "organisation": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Organisation"
+          },
+          "contact_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Reference"
+          },
+          "requested_rights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requested Rights"
+          },
+          "safeguards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Safeguards"
+          },
+          "agreement_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreement Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organisation"
+        ],
+        "title": "PartnershipRequest"
       },
       "PathRequest": {
         "properties": {
@@ -35977,6 +36350,72 @@
           "code"
         ],
         "title": "TotpVerify"
+      },
+      "TrainingApprovalRequest": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "approver": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Approver"
+          },
+          "decision": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Decision"
+          },
+          "basis": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Basis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "approver",
+          "decision",
+          "basis"
+        ],
+        "title": "TrainingApprovalRequest"
+      },
+      "TrainingRequest": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "intended_model": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Intended Model"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose",
+            "default": "research"
+          },
+          "proposed_retention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Retention"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "intended_model"
+        ],
+        "title": "TrainingRequest"
       },
       "TransactionCreate": {
         "properties": {

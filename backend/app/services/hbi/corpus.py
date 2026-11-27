@@ -40,6 +40,7 @@ async def ingest_corpus(service: Any, manifest_path: str, root: str = "") -> Dic
                 "reasons": review["rejected_reasons"] + review["pending_reasons"],
             })
             continue
+        service.permission_engine.register_manifest(manifest)
         if not manifest.path:
             results.append({"source_id": manifest.source_id, "status": "path_missing"})
             continue

@@ -93,7 +93,11 @@ file set, so uncommitted work is searchable too.
 4. **Trace** — follow imports and call sites (`-Mode symbols`, then content search
    on the symbol name). Check routes, models, migrations and tests.
 5. **Verify** — run the relevant acceptance test or the CI checks from
-   `.github/workflows/ci.yml` before claiming a change works.
+   `.github/workflows/ci.yml`. Additional gates live in
+   `.github/workflows/{openapi-drift,supply-chain,quality-gates,rkie-tests}.yml`;
+   locally: `python tools/api/print_openapi.py --check`,
+   `python tools/api/check_migrations.py`, `python -m ruff check backend`,
+   `python -m pytest backend/tests -q --cov=app --cov-fail-under=60`.
 6. **Record** — if the investigation produced reusable knowledge, add it to
    `tools/rkie/notes/` as a short Markdown note with the files and commit/date it
    was based on. Re-verify against current files before reusing it.

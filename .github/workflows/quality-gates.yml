@@ -1,0 +1,57 @@
+name: Quality gates
+
+# Additive quality gates. The modified ci.yml is left untouched.
+on:
+  push:
+    branches: [main, testing]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ruff
+        run: python -m pip install ruff
+      - name: Blocking lint rules
+        run: python -m ruff check backend
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend and coverage tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./backend pytest-cov
+      - name: Unit tests with coverage floor
+        working-directory: backend
+        run: python -m pytest tests -q --cov=app --cov-report=term --cov-fail-under=60
+
+  acceptance:
+    # Needs a live stack on http://localhost:8000 (the scripts hardcode BASE),
+    # so this is manual-only until compose startup is wired into the job.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install acceptance dependencies
+        run: python -m pip install httpx
+      - name: Run Level 1-5 acceptance suites
+        run: |
+          for level in 1 2 3 4 5; do
+            python tests/level${level}_acceptance.py
+          done

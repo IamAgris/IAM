@@ -170,6 +170,10 @@ data: {"code":"provider_unavailable","message":"...","fallback":"qwen3.5-9b"}
 | GET | `/technology-registry/{id}` | Technology record detail |
 | PATCH | `/technology-registry/{id}/state` | Lifecycle transition (no direct researched → integrated) |
 | POST | `/technology-registry/{id}/benchmarks` | Record benchmark evidence |
+| POST/GET | `/free-nodes/` | Doc 19 free node candidates (usefulness gate; no provisioning) |
+| POST | `/free-nodes/{id}/verify-terms` | Record live-verified free-tier evidence |
+| PATCH | `/free-nodes/{id}/status` | Lifecycle status (deploy requires verified terms) |
+| POST | `/free-nodes/{id}/migration-plan` | Expiry alarm + migration before free allowance lapses |
 | GET | `/skill-forge/policy` | Skill classification, permission and transition policy |
 | GET | `/skill-forge/gaps` | Capability discovery — suggested native skills |
 | GET/POST | `/skill-forge/skills` | List/build skill packages (POST also creates new versions) |

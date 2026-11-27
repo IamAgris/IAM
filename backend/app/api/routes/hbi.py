@@ -27,7 +27,9 @@ from app.services.hbi.schemas import (
     GraphEdgeRequest,
     GraphNodeRequest,
     KnowledgeRecordInput,
+    LegalContextVerificationRequest,
     ManipulationRequest,
+    PartnershipRequest,
     ModuleAnalysisRequest,
     MultilingualIngestRequest,
     OversightRequest,
@@ -40,6 +42,8 @@ from app.services.hbi.schemas import (
     Scope,
     SourceRegisterRequest,
     TemporalRequest,
+    TrainingApprovalRequest,
+    TrainingRequest,
     TheoryComparisonRequest,
 )
 from app.services.hbi.sources import SourceNotAuthorised
@@ -430,6 +434,55 @@ async def restrict_corpus_source(request: CorpusRestrictionRequest,
                                  service: HBIService = Depends(_service)):
     """Suspend a previously accepted source and record the reason."""
     return service.restrict_corpus_source(request)
+
+
+@router.post("/knowledge/corpus/training-request")
+async def training_request(request: TrainingRequest, service: HBIService = Depends(_service)):
+    """Pipeline 3: request training rights for an approved source."""
+    return service.request_training(request)
+
+
+@router.post("/knowledge/corpus/training-approve")
+async def training_approve(request: TrainingApprovalRequest,
+                           service: HBIService = Depends(_service)):
+    """Independent approval required; ingestion approval is not sufficient."""
+    return service.approve_training(request)
+
+
+@router.get("/knowledge/corpus/training-approved")
+async def training_approved(service: HBIService = Depends(_service)):
+    """Sources whose model-training rights have been independently approved."""
+    return service.training_approved()
+
+
+@router.post("/research/partnerships")
+async def add_partnership(request: PartnershipRequest, service: HBIService = Depends(_service)):
+    """Record a research partnership request, including training-right negotiation."""
+    return service.add_partnership(request)
+
+
+@router.get("/research/partnerships")
+async def list_partnerships(service: HBIService = Depends(_service)):
+    return service.list_partnerships()
+
+
+@router.get("/research/legal-context")
+async def legal_context(service: HBIService = Depends(_service)):
+    """Owner-supplied legal context; unverified until counsel records a reference."""
+    return service.legal_context()
+
+
+@router.post("/research/legal-context/verify")
+async def verify_legal_context(request: LegalContextVerificationRequest,
+                               service: HBIService = Depends(_service)):
+    """Record counsel verification of a legal-context entry."""
+    return service.verify_legal_context(request)
+
+
+@router.get("/research/permission-audit")
+async def permission_audit(service: HBIService = Depends(_service)):
+    """Audit of training, partnership and legal-context decisions."""
+    return service.permission_audit()
 
 
 @router.post("/models/calibrate-sources")

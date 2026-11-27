@@ -254,7 +254,7 @@ See [IAM_FREE_SANDBOXES.md](IAM_FREE_SANDBOXES.md) for using GitHub Codespaces (
 - `IAM_API_CONTRACTS.md` — endpoint contracts and SSE streaming schema
 - `IAM_SECURITY_AND_INTERNET_POLICY.md` — security and internet access policy
 - `IAM_OWNER_DECISIONS.md` — 44 owner decisions (ALL LOCKED)
-- `IAM_OPENAPI.json` — generated OpenAPI schema (505 paths, 320 schemas)
+- `IAM_OPENAPI.json` — generated OpenAPI schema (565 paths, 352 schemas)
 - `backend/app/db/migrations/versions/0001_initial.py` — generated initial migration (119 tables)
 
 **Pre-implementation phase complete. Ready for Phase 0/1 build.**
