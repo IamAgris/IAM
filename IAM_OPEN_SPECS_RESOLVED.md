@@ -182,6 +182,12 @@ No fixed capacity promised until load tests pass. Benchmark: p95 response < 5s a
 
 **Acceptance:** load test meets p95 target; session expiry works; quota failover no charge; one visitor cannot exhaust system.
 
+**Implementation note (27 November 2026):** `tests/load_test.py` now exercises 50 concurrent
+anonymous sessions with two messages each and records p50/p95/p99 and error counts to
+`tests/results/load_test.json`. First run through the optional Caddy edge (`infra/caddy/Caddyfile`,
+Compose profile `edge`): 50/50 sessions, 150 requests, 0 errors, p95 2427 ms — within the
+5000 ms target. This is a bounded local measurement, not a promise of public capacity.
+
 ---
 
 ## F. Financial & Legal Operations

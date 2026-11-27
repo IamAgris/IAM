@@ -3,12 +3,13 @@
 NVIDIA is one provider; IAM remains independent of any single provider.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
 from app.core.database import get_db_session
 from app.services.intel_router_service import IntelligenceRouter
+from app.services.model_policy import ModelPolicyDenied, PAID_ACTION, require_authorization
 
 router = APIRouter(prefix="/api/v1/models/router", tags=["model-router"])
 
@@ -57,6 +58,11 @@ async def list_models(provider: Optional[str] = None, db=Depends(get_db_session)
 @router.post("/select")
 async def select_model(request: SelectRequest, db=Depends(get_db_session)):
     """Select the best model for a task by capability, quality, cost and availability."""
+    if request.allow_paid:
+        try:
+            await require_authorization(db, PAID_ACTION)
+        except ModelPolicyDenied as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
     service = IntelligenceRouter(db)
     return await service.select_model(
         request.task_type,

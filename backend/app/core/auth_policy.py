@@ -71,6 +71,9 @@ ADMIN_PREFIXES = (
     "/api/v1/mobile",
     "/api/v1/credentials",
     "/api/v1/mfa",
+    # P2P HTTP endpoints move/store messages: credential required. The
+    # WebSocket upgrade authenticates separately with its per-peer secret.
+    "/api/v1/p2p",
 )
 
 USER_PREFIXES = (

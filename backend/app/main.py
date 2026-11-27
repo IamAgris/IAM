@@ -65,6 +65,7 @@ from app.api.routes import (
     humanpresence,
     assistantlab,
     events,
+    ops,
     workspaces,
     whitehat,
     irwm,
@@ -239,14 +240,22 @@ app.include_router(browser_infrastructure.router)
 app.include_router(hbi.router)
 app.include_router(technology_registry.router)
 
+# Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
+app.include_router(ops.router)
+
 
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    from app.core.error_response import error_response
+
     logger.error(f"Unhandled exception: {exc}")
-    return JSONResponse(
+    return error_response(
+        request=request,
         status_code=500,
-        content={"detail": "Internal server error", "error": str(exc) if settings.app_debug else None},
+        detail="Internal server error",
+        code="internal_error",
+        error=str(exc) if settings.app_debug else None,
     )
 
 

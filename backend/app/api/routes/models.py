@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, AsyncGenerator
 import json
 import httpx
@@ -14,6 +14,13 @@ from app.services import delegation as delegation_service
 from app.services import serving_model
 from app.services.iam_context import assemble_context, with_context
 from app.services.model_inference import InferenceUnavailable, inference_service
+from app.services.model_policy import (
+    PAID_ACTION,
+    SKILL_ACTION,
+    ModelPolicyDenied,
+    require_authorization,
+)
+from app.services.skillruntime.service import SkillRuntimeService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = loguru.logger
@@ -36,6 +43,11 @@ class ChatRequest(BaseModel):
     # Optional hosted specialist: explicit opt-in, signed authorization required.
     delegate: bool = False
     delegate_model: Optional[str] = None
+    # Paid inference and skill execution need a signed authorization too.
+    allow_paid: bool = False
+    skill: Optional[str] = None
+    skill_permission: str = "execute"
+    skill_arguments: Dict[str, Any] = Field(default_factory=dict)
 
 
 def _plain_messages(request: ChatRequest) -> List[Dict[str, str]]:
@@ -44,12 +56,46 @@ def _plain_messages(request: ChatRequest) -> List[Dict[str, str]]:
 
 async def _prepare_messages(
     request: ChatRequest, db: AsyncSession, status
-) -> tuple[List[Dict[str, str]], Optional[Dict[str, Any]]]:
-    """Add IAM context and, when requested, an authorized specialist's findings."""
+) -> tuple[List[Dict[str, str]], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """Add IAM context, an authorized specialist's findings and gated skill output."""
     messages = _plain_messages(request)
     query = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+    if request.allow_paid:
+        await require_authorization(db, PAID_ACTION)
+
+    action: Optional[Dict[str, Any]] = None
+    if request.skill:
+        try:
+            authority = await require_authorization(
+                db, SKILL_ACTION, target_ref=request.skill
+            )
+            outcome = await SkillRuntimeService(db).invoke(
+                request.skill,
+                permission=request.skill_permission,
+                arguments=request.skill_arguments,
+                caller="chat",
+            )
+            summary = json.dumps(outcome, default=str)[:600]
+            action = {
+                "status": "executed",
+                "skill": request.skill,
+                "authorization_id": str(authority.get("authorization_id")),
+                "summary": summary,
+            }
+            messages = with_context(
+                messages, f"IAM skill result ({request.skill}): {summary}"
+            )
+        except ModelPolicyDenied as exc:
+            action = {"status": "denied", "skill": request.skill, "reason": str(exc)}
+        except Exception as exc:  # pragma: no cover - defensive
+            action = {
+                "status": "error",
+                "skill": request.skill,
+                "reason": str(exc)[:200],
+            }
+
     if not query:
-        return messages, None
+        return messages, None, action
     bundle = await assemble_context(
         db,
         query,
@@ -58,7 +104,7 @@ async def _prepare_messages(
     )
     messages = with_context(messages, bundle.as_system_message())
     if not request.delegate:
-        return messages, None
+        return messages, None, action
 
     result = await delegation_service.run(
         db,
@@ -67,7 +113,7 @@ async def _prepare_messages(
         context=bundle.knowledge_message(),
         actor="chat",
     )
-    return with_context(messages, result.context_message()), result.as_dict()
+    return with_context(messages, result.context_message()), result.as_dict(), action
 
 
 class ModelInfo(BaseModel):

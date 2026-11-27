@@ -1,11 +1,14 @@
 """P2P transport routes — WebSocket peer connections and store-and-forward sync."""
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import json
 
+from app.core.database import get_db_session
 from app.services.p2p_transport import transport
+from app.services.skill_exchange_service import SkillExchangeError, SkillExchangeService
 from app.services.whitehat_policy import WhiteHatPolicyError
 
 router = APIRouter(prefix="/api/v1/p2p", tags=["p2p"])
@@ -20,6 +23,16 @@ class SendRequest(BaseModel):
 class BroadcastRequest(BaseModel):
     topic: str
     payload: Dict[str, Any] = {}
+
+
+class SkillReleaseRequest(BaseModel):
+    envelope: Dict[str, Any]
+    peer_secret: Optional[str] = None
+
+
+class SkillPublishRequest(BaseModel):
+    skill_id: str
+    peer_id: Optional[str] = None
 
 
 @router.post("/send")

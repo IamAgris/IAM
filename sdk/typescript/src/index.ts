@@ -245,6 +245,59 @@ export class IAM {
   };
   events: { stream: () => EventSource | null };
 
+  /** Document 26 / OD-45: versioned Human Behaviour Intelligence interface. */
+  hbi: {
+    status: () => Promise<Record<string, unknown>>;
+    research: {
+      search: (query: string, purpose: string) => Promise<Record<string, unknown>>;
+      selfDirected: (query: string, purpose: string) => Promise<Record<string, unknown>>;
+    };
+    knowledge: {
+      add: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      retrieve: (keyword?: string) => Promise<Record<string, unknown>>;
+      ingest: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    };
+    behaviour: {
+      predict: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      analyse: (moduleId: number, question: string, purpose: string) => Promise<Record<string, unknown>>;
+    };
+    prediction: {
+      evaluate: (prediction: Record<string, unknown>, outcome: unknown) => Promise<Record<string, unknown>>;
+      performance: (modelId: string, cases: Record<string, unknown>[]) => Promise<Record<string, unknown>>;
+    };
+    history: {
+      analogy: (current: Record<string, unknown>, precedent: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      chronology: (events: Record<string, unknown>[]) => Promise<Record<string, unknown>>;
+      analyse: (moduleId: number, question: string) => Promise<Record<string, unknown>>;
+    };
+    uncertainty: (query: string, purpose: string) => Promise<Record<string, unknown>>;
+    validation: {
+      cases: () => Promise<Record<string, unknown>>;
+      bias: () => Promise<Record<string, unknown>>;
+      report: (modelId?: string) => Promise<Record<string, unknown>>;
+      corpusReadiness: () => Promise<Record<string, unknown>>;
+    };
+    corpus: {
+      ingest: (manifestPath: string, root?: string) => Promise<Record<string, unknown>>;
+      review: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      state: () => Promise<Record<string, unknown>>;
+      audit: () => Promise<Record<string, unknown>>;
+      restrict: (sourceId: string, reason: string) => Promise<Record<string, unknown>>;
+    };
+    governance: {
+      dualUse: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      dpia: () => Promise<Record<string, unknown>>;
+      signoff: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      oversight: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      deploymentReadiness: (config?: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    };
+    lifecycle: {
+      drift: () => Promise<Record<string, unknown>>;
+      reEvaluation: () => Promise<Record<string, unknown>>;
+      rollbackDrill: (modelId?: string) => Promise<Record<string, unknown>>;
+    };
+  };
+
   constructor(options: IAMOptions) {
     this.transport = new Transport(options);
 
@@ -532,6 +585,81 @@ export class IAM {
           `${creator}/requests/${encodeURIComponent(id)}/decide`,
           { decision, signature, signer_id: signerId },
         ),
+    };
+    const hbi = "/api/v1/hbi";
+    const q = (pairs: Record<string, string>) =>
+      `?${new URLSearchParams(pairs).toString()}`;
+    this.hbi = {
+      status: () => this.transport.request("GET", `${hbi}/status`),
+      research: {
+        search: (query, purpose) =>
+          this.transport.request("POST", `${hbi}/research/search`, { query, purpose }),
+        selfDirected: (query, purpose) =>
+          this.transport.request("POST", `${hbi}/research/self-directed${q({ query, purpose })}`),
+      },
+      knowledge: {
+        add: (payload) => this.transport.request("POST", `${hbi}/knowledge/records`, payload),
+        retrieve: (keyword = "") =>
+          this.transport.request("GET", `${hbi}/knowledge/records${q({ keyword })}`),
+        ingest: (payload) => this.transport.request("POST", `${hbi}/knowledge/ingest`, payload),
+      },
+      behaviour: {
+        predict: (payload) => this.transport.request("POST", `${hbi}/behaviour/forecast`, payload),
+        analyse: (moduleId, question, purpose) =>
+          this.transport.request("POST", `${hbi}/modules/${moduleId}/analyse`, { question, purpose }),
+      },
+      prediction: {
+        evaluate: (prediction, outcome) =>
+          this.transport.request("POST", `${hbi}/predictions/evaluate`, { prediction, outcome }),
+        performance: (modelId, cases) =>
+          this.transport.request("POST", `${hbi}/backtest`, { model_id: modelId, cases }),
+      },
+      history: {
+        analogy: (current, precedent) =>
+          this.transport.request("POST", `${hbi}/history/analogy`, { current, precedent }),
+        chronology: (events) =>
+          this.transport.request("POST", `${hbi}/chronology/resolve`, { events }),
+        analyse: (moduleId, question) =>
+          this.transport.request("POST", `${hbi}/history/modules/${moduleId}/analyse${q({ question })}`),
+      },
+      uncertainty: (query, purpose) =>
+        this.transport.request("POST", `${hbi}/uncertainty/assess${q({ query, purpose })}`),
+      validation: {
+        cases: () => this.transport.request("GET", `${hbi}/validation/cases`),
+        bias: () => this.transport.request("GET", `${hbi}/validation/bias`),
+        report: (modelId = "ensemble") =>
+          this.transport.request("GET", `${hbi}/validation/report${q({ model_id: modelId })}`),
+        corpusReadiness: () => this.transport.request("GET", `${hbi}/validation/corpus-readiness`),
+      },
+      corpus: {
+        ingest: (manifestPath, root = "") =>
+          this.transport.request("POST", `${hbi}/knowledge/corpus/ingest`, {
+            manifest_path: manifestPath,
+            root,
+          }),
+        review: (payload) => this.transport.request("POST", `${hbi}/knowledge/corpus/review`, payload),
+        state: () => this.transport.request("GET", `${hbi}/knowledge/corpus/state`),
+        audit: () => this.transport.request("GET", `${hbi}/knowledge/corpus/audit`),
+        restrict: (sourceId, reason) =>
+          this.transport.request("POST", `${hbi}/knowledge/corpus/restrict`, {
+            source_id: sourceId,
+            reason,
+          }),
+      },
+      governance: {
+        dualUse: (payload) => this.transport.request("POST", `${hbi}/governance/dual-use/review`, payload),
+        dpia: () => this.transport.request("GET", `${hbi}/governance/dpia`),
+        signoff: (payload) => this.transport.request("POST", `${hbi}/governance/dpia/signoff`, payload),
+        oversight: (payload) => this.transport.request("POST", `${hbi}/governance/oversight/check`, payload),
+        deploymentReadiness: (config = {}) =>
+          this.transport.request("POST", `${hbi}/governance/deployment/readiness`, config),
+      },
+      lifecycle: {
+        drift: () => this.transport.request("GET", `${hbi}/lifecycle/drift`),
+        reEvaluation: () => this.transport.request("GET", `${hbi}/lifecycle/re-evaluation`),
+        rollbackDrill: (modelId = "ensemble") =>
+          this.transport.request("POST", `${hbi}/lifecycle/rollback-drill${q({ model_id: modelId })}`),
+      },
     };
     this.events = {
       stream: () => {

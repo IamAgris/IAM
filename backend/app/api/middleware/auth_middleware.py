@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.auth_policy import has_scope, required_scope
+from app.core.error_response import error_response
 from app.core.config import settings
 from app.core.database import get_session_factory
 from app.core.rate_limit import RateLimiter, RedisRateLimiter
@@ -56,23 +57,23 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if required is not None:
             supplied = request.headers.get("x-iam-protocol-version")
             if supplied is None and settings.iam_protocol_require_header:
-                return JSONResponse(
+                return error_response(
+                    request=request,
                     status_code=426,
-                    content={
-                        "detail": "X-IAM-Protocol-Version header is required",
-                        "required_version": settings.iam_protocol_version,
-                    },
+                    detail="X-IAM-Protocol-Version header is required",
+                    code="protocol_version_required",
                     headers={"Upgrade": f"IAM-Protocol-{settings.iam_protocol_version}"},
+                    required_version=settings.iam_protocol_version,
                 )
             if supplied is not None and supplied.strip() != settings.iam_protocol_version:
-                return JSONResponse(
+                return error_response(
+                    request=request,
                     status_code=426,
-                    content={
-                        "detail": "incompatible IAM protocol version",
-                        "required_version": settings.iam_protocol_version,
-                        "supplied_version": supplied.strip(),
-                    },
+                    detail="incompatible IAM protocol version",
+                    code="protocol_version_mismatch",
                     headers={"Upgrade": f"IAM-Protocol-{settings.iam_protocol_version}"},
+                    required_version=settings.iam_protocol_version,
+                    supplied_version=supplied.strip(),
                 )
 
         if not settings.auth_enabled:
@@ -83,28 +84,32 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         credential = await self._authenticate(request)
         if credential is None:
-            return JSONResponse(
+            return error_response(
+                request=request,
                 status_code=401,
-                content={"detail": "Missing or invalid API credential"},
+                detail="Missing or invalid API credential",
+                code="unauthorized",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         if not has_scope(credential["scope"], required):
-            return JSONResponse(
+            return error_response(
+                request=request,
                 status_code=403,
-                content={
-                    "detail": (
-                        f"Credential scope '{credential['scope']}' is insufficient; "
-                        f"'{required}' required"
-                    )
-                },
+                detail=(
+                    f"Credential scope '{credential['scope']}' is insufficient; "
+                    f"'{required}' required"
+                ),
+                code="insufficient_scope",
             )
 
         client = request.client.host if request.client else "unknown"
         allowed, retry_after = await self._rate_check(f"{credential['id']}:{client}")
         if not allowed:
-            return JSONResponse(
+            return error_response(
+                request=request,
                 status_code=429,
-                content={"detail": "Rate limit exceeded"},
+                detail="Rate limit exceeded",
+                code="rate_limited",
                 headers={"Retry-After": str(retry_after)},
             )
 
