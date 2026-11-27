@@ -1,4 +1,4 @@
-"""Search provider management (proposed Doc 32 §6).
+"""Search provider management (proposed Doc 34 §6).
 
 Provider-independent adapters with health, quota/cost metadata and managed
 failover. No provider is the sole gateway to the web. Paid providers are

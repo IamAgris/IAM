@@ -136,7 +136,7 @@ def _public_activity_payload(row) -> Dict[str, Any]:
 
 
 @router.get("/map")
-async def public_map_data(limit: int = 60):
+async def public_map_data(limit: int = 60) -> Any:
     """Public geospatial markers for the single-screen map layer."""
     async with get_session_factory()() as db:
         places = (
@@ -166,7 +166,7 @@ async def public_map_data(limit: int = 60):
 
 
 @router.get("/clusters")
-async def public_knowledge_clusters(limit: int = 8):
+async def public_knowledge_clusters(limit: int = 8) -> Any:
     """Public topic clusters built only from verified knowledge records."""
     async with get_session_factory()() as db:
         result = await db.execute(
@@ -196,7 +196,7 @@ async def public_knowledge_clusters(limit: int = 8):
 
 
 @router.get("/connections")
-async def public_knowledge_connections(limit: int = 20):
+async def public_knowledge_connections(limit: int = 20) -> Any:
     """Recent, privacy-filtered links between public knowledge nodes."""
     async with get_session_factory()() as db:
         rows = (
@@ -257,7 +257,7 @@ def _freshness_state(status: str, reviewed_at, created_at, accessed_at) -> tuple
 
 
 @router.get("/freshness")
-async def public_freshness_map(limit: int = 100):
+async def public_freshness_map(limit: int = 100) -> Any:
     """Privacy-safe freshness/verification state for sphere nodes."""
     nodes: Dict[str, Dict[str, Any]] = {}
 
@@ -321,7 +321,7 @@ async def public_freshness_map(limit: int = 100):
 
 
 @router.get("/provenance")
-async def public_cluster_provenance(cluster: str, limit: int = 8):
+async def public_cluster_provenance(cluster: str, limit: int = 8) -> Any:
     """Sources behind a verified public knowledge cluster.
 
     Provenance only — no private memory, conversations or unverified claims.
@@ -374,7 +374,7 @@ async def public_cluster_provenance(cluster: str, limit: int = 8):
 
 
 @router.post("/activity")
-async def public_activity_snapshot(payload: ActivityRequest):
+async def public_activity_snapshot(payload: ActivityRequest) -> Any:
     """Finite activity snapshot for polling through proxies that buffer SSE."""
     cursor = parse_since(payload.since)
     async with get_session_factory()() as db:

@@ -10600,6 +10600,332 @@
         }
       }
     },
+    "/api/v1/browser/agents/capacity": {
+      "get": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Capacity",
+        "operationId": "capacity_api_v1_browser_agents_capacity_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Capacity Api V1 Browser Agents Capacity Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/sessions": {
+      "post": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Open Session",
+        "operationId": "open_session_api_v1_browser_agents_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Open Session Api V1 Browser Agents Sessions Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/sessions/{session_token}": {
+      "delete": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Close Session",
+        "operationId": "close_session_api_v1_browser_agents_sessions__session_token__delete",
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Close Session Api V1 Browser Agents Sessions  Session Token  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/sessions/{session_token}/transfer": {
+      "post": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Transfer Session",
+        "operationId": "transfer_session_api_v1_browser_agents_sessions__session_token__transfer_post",
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Transfer Session Api V1 Browser Agents Sessions  Session Token  Transfer Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/sessions/{session_token}/takeover": {
+      "post": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Request Takeover",
+        "operationId": "request_takeover_api_v1_browser_agents_sessions__session_token__takeover_post",
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeoverRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Request Takeover Api V1 Browser Agents Sessions  Session Token  Takeover Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/sessions/{session_token}/recover": {
+      "post": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Recover Session",
+        "operationId": "recover_session_api_v1_browser_agents_sessions__session_token__recover_post",
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Recover Session Api V1 Browser Agents Sessions  Session Token  Recover Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser/agents/workflows/{workflow_id}/share": {
+      "post": {
+        "tags": [
+          "browser-agents"
+        ],
+        "summary": "Share Workflow",
+        "operationId": "share_workflow_api_v1_browser_agents_workflows__workflow_id__share_post",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workflow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Share Workflow Api V1 Browser Agents Workflows  Workflow Id  Share Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tor/status": {
       "get": {
         "tags": [
@@ -10896,6 +11222,382 @@
         }
       }
     },
+    "/api/v1/tor/onion/observe": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Observe Onion",
+        "operationId": "observe_onion_api_v1_tor_onion_observe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnionObserveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Observe Onion Api V1 Tor Onion Observe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/onion/assess": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Assess Onion",
+        "operationId": "assess_onion_api_v1_tor_onion_assess_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnionAssessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Assess Onion Api V1 Tor Onion Assess Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/files/quarantine": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Quarantine Tor File",
+        "operationId": "quarantine_tor_file_api_v1_tor_files_quarantine_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TorFileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Quarantine Tor File Api V1 Tor Files Quarantine Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/creator/policy": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Creator Policy",
+        "operationId": "creator_policy_api_v1_tor_creator_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Creator Policy Api V1 Tor Creator Policy Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/creator/onion": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Set Onion Access",
+        "operationId": "set_onion_access_api_v1_tor_creator_onion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnionAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Onion Access Api V1 Tor Creator Onion Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/creator/bandwidth": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Set Bandwidth",
+        "operationId": "set_bandwidth_api_v1_tor_creator_bandwidth_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BandwidthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Bandwidth Api V1 Tor Creator Bandwidth Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/creator/duration": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Set Duration",
+        "operationId": "set_duration_api_v1_tor_creator_duration_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DurationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Duration Api V1 Tor Creator Duration Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/creator/sessions": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Creator Sessions",
+        "operationId": "creator_sessions_api_v1_tor_creator_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Creator Sessions Api V1 Tor Creator Sessions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/emergency/stop": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Emergency Stop",
+        "operationId": "emergency_stop_api_v1_tor_emergency_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Stop Api V1 Tor Emergency Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/emergency/cleanup": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Emergency Cleanup",
+        "operationId": "emergency_cleanup_api_v1_tor_emergency_cleanup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Cleanup Api V1 Tor Emergency Cleanup Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/emergency/suspicious": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Suspicious Connections",
+        "operationId": "suspicious_connections_api_v1_tor_emergency_suspicious_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Suspicious Connections Api V1 Tor Emergency Suspicious Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/deployment/preflight": {
       "get": {
         "tags": [
@@ -11085,7 +11787,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Map Data Api V1 Interface Map Get"
+                }
               }
             }
           },
@@ -11127,7 +11831,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Knowledge Clusters Api V1 Interface Clusters Get"
+                }
               }
             }
           },
@@ -11169,7 +11875,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Knowledge Connections Api V1 Interface Connections Get"
+                }
               }
             }
           },
@@ -11211,7 +11919,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Freshness Map Api V1 Interface Freshness Get"
+                }
               }
             }
           },
@@ -11262,7 +11972,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Cluster Provenance Api V1 Interface Provenance Get"
+                }
               }
             }
           },
@@ -11302,7 +12014,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Public Activity Snapshot Api V1 Interface Activity Post"
+                }
               }
             }
           },
@@ -21340,7 +22054,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Status Api V1 Irwm Status Get"
+                }
               }
             }
           }
@@ -21369,7 +22085,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Admit Api V1 Irwm Admit Post"
+                }
               }
             }
           },
@@ -21408,7 +22126,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Release Api V1 Irwm Release Post"
+                }
               }
             }
           },
@@ -21437,7 +22157,51 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Sweep Api V1 Irwm Sweep Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/irwm/force-release": {
+      "post": {
+        "tags": [
+          "irwm"
+        ],
+        "summary": "Force Release",
+        "description": "Admin recovery: clear a leaked in-flight slot for a resident model.",
+        "operationId": "force_release_api_v1_irwm_force_release_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__irwm__ReleaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Force Release Api V1 Irwm Force Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -33704,7 +34468,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Policy Api V1 Web3 Extended Defi Policy Get"
+                }
               }
             }
           }
@@ -33733,7 +34499,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Compare Api V1 Web3 Extended Defi Swaps Compare Post"
+                }
               }
             }
           },
@@ -33772,7 +34540,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Prepare Api V1 Web3 Extended Defi Prepare Post"
+                }
               }
             }
           },
@@ -33812,7 +34582,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Impermanent Loss Api V1 Web3 Extended Defi Impermanent Loss Get"
+                }
               }
             }
           },
@@ -33851,7 +34623,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Liquidation Api V1 Web3 Extended Defi Liquidation Post"
+                }
               }
             }
           },
@@ -33890,7 +34664,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Defi Staking Api V1 Web3 Extended Defi Staking Post"
+                }
               }
             }
           },
@@ -33919,7 +34695,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response X402 Policy Api V1 Web3 Extended X402 Policy Get"
+                }
               }
             }
           }
@@ -33948,7 +34726,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response X402 Discover Api V1 Web3 Extended X402 Discover Post"
+                }
               }
             }
           },
@@ -33987,7 +34767,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response X402 Evaluate Api V1 Web3 Extended X402 Evaluate Post"
+                }
               }
             }
           },
@@ -34026,7 +34808,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response X402 Prepare Api V1 Web3 Extended X402 Prepare Post"
+                }
               }
             }
           },
@@ -34055,7 +34839,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Contracts Policy Api V1 Web3 Extended Contracts Policy Get"
+                }
               }
             }
           }
@@ -34084,7 +34870,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Contracts Analyze Api V1 Web3 Extended Contracts Analyze Post"
+                }
               }
             }
           },
@@ -34123,7 +34911,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Contracts Template Api V1 Web3 Extended Contracts Template Post"
+                }
               }
             }
           },
@@ -34162,7 +34952,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Contracts Prepare Deploy Api V1 Web3 Extended Contracts Deploy Prepare Post"
+                }
               }
             }
           },
@@ -34191,7 +34983,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Nft Policy Api V1 Web3 Extended Nft Policy Get"
+                }
               }
             }
           }
@@ -34220,7 +35014,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Nft Prepare Mint Api V1 Web3 Extended Nft Mint Prepare Post"
+                }
               }
             }
           },
@@ -34259,7 +35055,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Nft Prepare List Api V1 Web3 Extended Nft List Prepare Post"
+                }
               }
             }
           },
@@ -34298,7 +35096,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Nft Ownership Api V1 Web3 Extended Nft Ownership Post"
+                }
               }
             }
           },
@@ -34327,7 +35127,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Dao Policy Api V1 Web3 Extended Dao Policy Get"
+                }
               }
             }
           }
@@ -34356,7 +35158,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Dao Analyze Api V1 Web3 Extended Dao Analyze Post"
+                }
               }
             }
           },
@@ -34395,7 +35199,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Dao Recommendation Api V1 Web3 Extended Dao Recommendation Post"
+                }
               }
             }
           },
@@ -34434,7 +35240,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Dao Prepare Vote Api V1 Web3 Extended Dao Vote Prepare Post"
+                }
               }
             }
           },
@@ -34463,7 +35271,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Cross Chain Policy Api V1 Web3 Extended Cross Chain Policy Get"
+                }
               }
             }
           }
@@ -34492,7 +35302,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Cross Chain Compare Api V1 Web3 Extended Cross Chain Routes Compare Post"
+                }
               }
             }
           },
@@ -34531,7 +35343,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Cross Chain Prepare Api V1 Web3 Extended Cross Chain Prepare Post"
+                }
               }
             }
           },
@@ -34570,7 +35384,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Cross Chain Settlement Api V1 Web3 Extended Cross Chain Settlement Post"
+                }
               }
             }
           },
@@ -34599,7 +35415,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Threat Policy Api V1 Web3 Extended Threat Policy Get"
+                }
               }
             }
           }
@@ -34628,7 +35446,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Threat Assess Api V1 Web3 Extended Threat Assess Post"
+                }
               }
             }
           },
@@ -34657,7 +35477,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Onchain Policy Api V1 Web3 Extended Onchain Policy Get"
+                }
               }
             }
           }
@@ -34686,7 +35508,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Onchain Concentration Api V1 Web3 Extended Onchain Concentration Post"
+                }
               }
             }
           },
@@ -34725,7 +35549,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Onchain Anomalies Api V1 Web3 Extended Onchain Anomalies Post"
+                }
               }
             }
           },
@@ -34774,7 +35600,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Onchain Fee Api V1 Web3 Extended Onchain Fee Get"
+                }
               }
             }
           },
@@ -35568,7 +36396,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Business Evaluate Api V1 Web3 Extended Business Evaluate Post"
+                }
               }
             }
           },
@@ -35615,7 +36445,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Non Evm Networks Api V1 Web3 Extended Networks Non Evm Get"
+                }
               }
             }
           },
@@ -35662,7 +36494,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Fiat Candidates Api V1 Web3 Extended Fiat Candidates Get"
+                }
               }
             }
           },
@@ -35701,7 +36535,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "title": "Response Fiat Evaluate Api V1 Web3 Extended Fiat Evaluate Post"
+                }
               }
             }
           },
@@ -37071,6 +37907,19 @@
         ],
         "title": "BackupVerificationRequest"
       },
+      "BandwidthRequest": {
+        "properties": {
+          "kbps": {
+            "type": "integer",
+            "title": "Kbps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kbps"
+        ],
+        "title": "BandwidthRequest"
+      },
       "BenchmarkRequest": {
         "properties": {
           "benchmark": {
@@ -38019,6 +38868,19 @@
           "y"
         ],
         "title": "ClickRequest"
+      },
+      "CloseSessionRequest": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id"
+        ],
+        "title": "CloseSessionRequest"
       },
       "CodeChangeRequest": {
         "properties": {
@@ -40272,6 +41134,19 @@
           "purpose"
         ],
         "title": "DualUseRequest"
+      },
+      "DurationRequest": {
+        "properties": {
+          "seconds": {
+            "type": "integer",
+            "title": "Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seconds"
+        ],
+        "title": "DurationRequest"
       },
       "EmailIdentityCreate": {
         "properties": {
@@ -44831,6 +45706,122 @@
         ],
         "title": "OfficialSourceRequest"
       },
+      "OnionAccessRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "OnionAccessRequest"
+      },
+      "OnionAssessRequest": {
+        "properties": {
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "title": "OnionAssessRequest"
+      },
+      "OnionObserveRequest": {
+        "properties": {
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "claimed_operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed Operator"
+          },
+          "source_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Urls",
+            "default": []
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "title": "OnionObserveRequest"
+      },
+      "OpenSessionRequest": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "isolated"
+          },
+          "permission_scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permission Scope"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id"
+        ],
+        "title": "OpenSessionRequest"
+      },
       "OpenSourceIngestRequest": {
         "properties": {
           "adapter": {
@@ -48224,6 +49215,24 @@
         "type": "object",
         "title": "SessionCreateRequest"
       },
+      "ShareWorkflowRequest": {
+        "properties": {
+          "from_agent": {
+            "type": "string",
+            "title": "From Agent"
+          },
+          "to_agent": {
+            "type": "string",
+            "title": "To Agent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_agent",
+          "to_agent"
+        ],
+        "title": "ShareWorkflowRequest"
+      },
       "SignRequest": {
         "properties": {
           "private_key_pem": {
@@ -49132,6 +50141,19 @@
         ],
         "title": "TabAction"
       },
+      "TakeoverRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "TakeoverRequest"
+      },
       "TapRequest": {
         "properties": {
           "device": {
@@ -49932,6 +50954,46 @@
         ],
         "title": "ToolResponse"
       },
+      "TorFileRequest": {
+        "properties": {
+          "source_path": {
+            "type": "string",
+            "title": "Source Path"
+          },
+          "original_name": {
+            "type": "string",
+            "title": "Original Name",
+            "default": ""
+          },
+          "licence_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence Source Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_path"
+        ],
+        "title": "TorFileRequest"
+      },
       "TosChangeCreate": {
         "properties": {
           "change": {
@@ -50385,6 +51447,29 @@
           "amount"
         ],
         "title": "TransactionPrepare"
+      },
+      "TransferRequest": {
+        "properties": {
+          "from_agent": {
+            "type": "string",
+            "title": "From Agent"
+          },
+          "to_agent": {
+            "type": "string",
+            "title": "To Agent"
+          },
+          "authorization_id": {
+            "type": "string",
+            "title": "Authorization Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_agent",
+          "to_agent",
+          "authorization_id"
+        ],
+        "title": "TransferRequest"
       },
       "TransformationRequest": {
         "properties": {

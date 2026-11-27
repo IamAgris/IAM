@@ -108,7 +108,15 @@ async def run_parallel(
     semaphore = asyncio.Semaphore(settings.iam_delegation_max_parallel)
 
     async def one(task: DelegationTask) -> DelegationResult:
-        target = (task.model or settings.adaptive_delegate_model).strip()
+        assigned = None
+        if not task.model and db is not None:
+            from app.services.capability_evaluator import CapabilityEvaluator
+
+            try:
+                assigned = await CapabilityEvaluator(db).select_for_role(task.role)
+            except Exception:  # pragma: no cover - registry may be unavailable
+                assigned = None
+        target = (task.model or assigned or settings.adaptive_delegate_model).strip()
         estimate = _estimate_ram_mb(target, "hosted")
         async with semaphore:
             if not await budget.acquire(estimate):
@@ -124,7 +132,7 @@ async def run_parallel(
                         delegation.run(
                             session,
                             task.task,
-                            model=task.model,
+                            model=target,
                             actor=actor,
                             service=service,
                         ),

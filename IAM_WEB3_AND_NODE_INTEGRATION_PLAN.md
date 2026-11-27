@@ -304,7 +304,7 @@ capability is implemented beyond the informational status above. When implementa
 and this plan disagree, the frozen specification wins for intent and source code
 remains the truth for what runs.
 
-**Concurrent-work note:** at final verification the wider suite had grown to 855 tests
-and reported two failures in unrelated `test_phase9_conformance` (UWAIE) cases while all
-54 Web3 tests passed. Those failures were not introduced by the Web3 changes and were
-left untouched.
+**Concurrent-work note:** an intermediate full-suite run reported two transient
+`test_phase9_conformance` (UWAIE) errors while concurrent edits were landing. Both
+passed in isolation and in the complete module, and the final full run passed **893
+tests** with no failures. No UWAIE code was changed by the Web3 work.

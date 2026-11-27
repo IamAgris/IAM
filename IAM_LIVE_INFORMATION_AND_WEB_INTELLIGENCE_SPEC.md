@@ -1,9 +1,9 @@
 # IAM — Live Information & Web Intelligence Policy Specification
 
-**Document:** 32 — **PROPOSED ADDENDUM** (to Documents 11, 14, 23-A, 29 and 31)  
-**Version:** 0.1 · 27 November 2026  
-**Status:** **PROPOSED — NOT PART OF THE FROZEN BASELINE.** No owner decision has been recorded for this document. It does not amend `ARCHITECTURE_INDEX.md` or `IAM_OWNER_DECISIONS.md`.  
-**Proposed decision:** OD-52 (not yet recorded — creator approval required)  
+**Document:** 34 — **PROPOSED ADDENDUM** (to Documents 11, 14, 23-A, 29 and 31)  
+**Version:** 0.2 · 27 November 2026  
+**Status:** **PROPOSED — NOT PART OF THE FROZEN BASELINE.** No owner decision has been recorded for this document. It does not amend the authority tables in `ARCHITECTURE_INDEX.md` or `IAM_OWNER_DECISIONS.md`; a navigation-only row was added to the index. Numbered 34/OD-54 because Doc 32/OD-52 and Doc 33/OD-53 were assigned to other decisions.  
+**Proposed decision:** OD-54 (not yet recorded — creator approval required)  
 **Parent:** `IAM_FINAL_CONSOLIDATION.md`, `IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md` (Doc 29, OD-49)  
 **Related:** Doc 11 (OD-27, UWAIE), Doc 14 (OD-30, global research), Doc 23/23-A (OD-38/OD-46), Doc 29a (Phase 1 plan), Doc 31 (OD-51, multi-provider governance), `IAM_SECURITY_AND_INTERNET_POLICY.md`, `IAM_API_CONTRACTS.md`
 
@@ -218,9 +218,9 @@ All Doc 29 §5.2/§8 controls apply unchanged: prompt-injection defence, SSRF/pr
 | Repeat a recent query | Reuses valid cached research |
 | Primary persona asked "can you access real-time news?" | Does not produce the forbidden generic disclaimer |
 
-### 10.1 Mandatory pre-OD-52 retrieval validation
+### 10.1 Mandatory pre-OD-54 retrieval validation
 
-These eight cases must pass before OD-52 is recorded:
+These eight cases must pass before OD-54 is recorded:
 
 1. Ask for the latest SABC news without an API key.
 2. Verify that actual SABC articles (URL and extracted body) reach the evidence message.
@@ -235,6 +235,30 @@ These eight cases must pass before OD-52 is recorded:
 
 ---
 
-## 11. Change control
+## 11. Implementation status (reference, not an architecture decision)
 
-This document is proposed. It becomes part of the frozen baseline only after an owner records OD-52 in `IAM_OWNER_DECISIONS.md` and adds the navigation entry to `ARCHITECTURE_INDEX.md`. Until then the code reference implementation is **behavioural only** and claims no new system, no legal/IP authority and no completed Doc 29 implementation phase.
+| Clause | Reference implementation |
+|--------|--------------------------|
+| §2 standing policy | `live_information_policy.py`, injected in `models.py` |
+| §3 triggers, §4 source-first and depth | `SearchTriggerClassifier`, official-site retrieval, DEEP follow-up stage |
+| §6 provider management | `search_provider_registry.py` (health, quotas, free-first failover), DuckDuckGo HTTP adapter, SearXNG and Tavily adapters; `/api/v1/live-information/providers` |
+| §7 cache / freshness / reputation | migration 058, `live_evidence_cache.py`, IICS source/claim registration |
+| §8 output contract | `live_evidence_analysis.py` (claim labels, confidence, corroboration, contradictions, injection redaction) |
+| §9 security | explicit public-host SSRF guard, injection redaction, untrusted-data labelling |
+| Autonomous monitoring | migration 063, `live_research_monitor.py`, `/api/v1/live-information/monitor*` (bounded 15–10080 min, max 50 tasks) |
+
+User-supplied documents are parsed by `BrowserDocumentService` and non-English
+current-information triggers are classified deterministically.
+
+Live validation recorded in the OD-54 sign-off sheet: E-1 SABC official site,
+E-2 unavailable-publisher fallback, E-3 Wikipedia rejection without a publisher,
+E-4 public PDF extraction, E-5 non-English current query, E-6 JS-rendered SPA,
+E-7 real Postgres cache/TTL/IICS lifecycle. OCR and audio/video multimedia
+understanding remain outside this addendum; `pytesseract` is installed but no
+Tesseract binary or transcription engine was verified on this host.
+
+---
+
+## 12. Change control
+
+This document is proposed. It becomes part of the frozen baseline only after an owner records OD-54 in `IAM_OWNER_DECISIONS.md` and adds the navigation entry to `ARCHITECTURE_INDEX.md`. Until then the code reference implementation is **behavioural only** and claims no new system, no legal/IP authority and no completed Doc 29 implementation phase.

@@ -306,6 +306,21 @@
       "sequence": 61,
       "number": 64,
       "path": "064_iplci_validation.sql"
+    },
+    {
+      "sequence": 62,
+      "number": 65,
+      "path": "065_iplci_validation_seed.sql"
+    },
+    {
+      "sequence": 63,
+      "number": 66,
+      "path": "066_onion_reputation.sql"
+    },
+    {
+      "sequence": 64,
+      "number": 67,
+      "path": "067_browser_agent_sessions.sql"
     }
   ]
 }

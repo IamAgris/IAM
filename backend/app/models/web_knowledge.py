@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class WebsiteKnowledge(Base):
+class WebsiteKnowledge(Base):  # type: ignore[misc]
     """Per-website learned knowledge: login procedures, auth methods,
     known restrictions, browser compatibility, verification requirements
     and prior failures. No credentials or secrets are stored here."""
@@ -33,7 +33,7 @@ class WebsiteKnowledge(Base):
     is_active = Column(Boolean, nullable=False, server_default="true")
 
 
-class WebsiteSession(Base):
+class WebsiteSession(Base):  # type: ignore[misc]
     """Tracks active browser sessions per website: authentication state,
     cookie consent state, last activity, session expiry."""
 
@@ -57,7 +57,7 @@ class WebsiteSession(Base):
     is_active = Column(Boolean, nullable=False, default=True)
 
 
-class WebsiteAccountLifecycle(Base):
+class WebsiteAccountLifecycle(Base):  # type: ignore[misc]
     """Full account lifecycle: registration, verification, activation,
     security configuration, maintenance, suspension, closure."""
 
@@ -96,7 +96,7 @@ class WebsiteAccountLifecycle(Base):
     )
 
 
-class DigitalReputation(Base):
+class DigitalReputation(Base):  # type: ignore[misc]
     """Digital reputation & trust: account standing, suspensions, ToS changes,
     privacy policy changes, security scores, ownership evidence."""
 
@@ -132,7 +132,7 @@ class DigitalReputation(Base):
     )
 
 
-class WebsiteConsent(Base):
+class WebsiteConsent(Base):  # type: ignore[misc]
     """Cookie and consent management: per-website cookie categories,
     consent status, last updated, data-retention preferences."""
 
@@ -160,7 +160,7 @@ class WebsiteConsent(Base):
     )
 
 
-class DigitalSecurityIncident(Base):
+class DigitalSecurityIncident(Base):  # type: ignore[misc]
     """Security incidents: credential leaks, suspicious auth attempts,
     compromised sessions, unauthorised changes, breach monitoring."""
 
@@ -192,7 +192,7 @@ class DigitalSecurityIncident(Base):
     )
 
 
-class AutonomousWebTask(Base):
+class AutonomousWebTask(Base):  # type: ignore[misc]
     """Autonomous web tasks: multi-step planning, decomposition,
     checkpoints, retry logic, dependency management, scheduled execution,
     progress reporting, cancellation."""
@@ -234,7 +234,7 @@ class AutonomousWebTask(Base):
     )
 
 
-class BrowserInfrastructure(Base):
+class BrowserInfrastructure(Base):  # type: ignore[misc]
     """Browser infrastructure: profiles, remote workers, mobile devices,
     health monitoring, resource allocation."""
 
@@ -333,7 +333,7 @@ class BrowserAudit(Base):  # type: ignore[misc]
     )
 
 
-class BrowserKnowledgeProposal(Base):
+class BrowserKnowledgeProposal(Base):  # type: ignore[misc]
     """Doc 29 P4: governed proposal before browser research enters knowledge."""
 
     __tablename__ = "browser_knowledge_proposals"
@@ -361,4 +361,53 @@ class BrowserKnowledgeProposal(Base):
         CheckConstraint(
             "verification_state IN ('unverified','single_source','verified')",
             name="ck_browser_knowledge_proposal_verification"),
+    )
+
+
+class OnionReputation(Base):  # type: ignore[misc]
+    """Doc 29 P6: provenance and reputation records for onion services."""
+
+    __tablename__ = "onion_reputation"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    address = Column(Text, nullable=False, unique=True, index=True)
+    claimed_operator = Column(Text, nullable=True)
+    status = Column(Text, nullable=False, default="unknown")
+    source_urls = Column(JSON, nullable=False, default=list)
+    availability = Column(JSON, nullable=False, default=dict)
+    assessment = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('unknown','observed','suspicious','confirmed')",
+            name="ck_onion_reputation_status"),
+    )
+
+
+class BrowserAgentSession(Base):
+    """Doc 29 P7: one isolated browser session per authorised agent."""
+
+    __tablename__ = "browser_agent_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(Text, nullable=False, index=True)
+    session_token = Column(Text, nullable=False, unique=True, index=True)
+    task_id = Column(Text, nullable=True)
+    owner = Column(Text, nullable=False)
+    permission_scope = Column(JSON, nullable=False, default=list)
+    isolation_level = Column(Text, nullable=False, default="isolated")
+    state = Column(Text, nullable=False, default="open")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('open','recovering','closed','released')",
+            name="ck_browser_agent_session_state"),
+        CheckConstraint(
+            "isolation_level IN ('headless','visible','isolated')",
+            name="ck_browser_agent_session_isolation"),
     )

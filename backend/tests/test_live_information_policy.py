@@ -179,7 +179,7 @@ class AutoSearchTests(unittest.IsolatedAsyncioTestCase):
 
 
 class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
-    """Acceptance cases required before OD-52 can be recorded."""
+    """Acceptance cases required before OD-54 can be recorded."""
 
     async def collect(
         self,

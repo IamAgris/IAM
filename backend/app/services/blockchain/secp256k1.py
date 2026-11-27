@@ -88,6 +88,9 @@ def verify(public_key: Point, r: int, s: int, digest: bytes) -> bool:
 
 def public_key_bytes(point: Point) -> bytes:
     """Uncompressed SEC1 encoding (0x04 || x || y)."""
+    if point is None:
+        raise ValueError("invalid public key")
     if not on_curve(point):
         raise ValueError("invalid public key")
+    assert point is not None  # narrows the optional Point for the type checker
     return b"\x04" + point[0].to_bytes(32, "big") + point[1].to_bytes(32, "big")

@@ -2,7 +2,10 @@
 # =============================================================================
 # IAM Backend — multi-architecture (linux/amd64, linux/arm64)
 # =============================================================================
-FROM --platform=$BUILDPLATFORM python:3.12-slim AS builder
+# Build dependencies for the TARGET platform, not the build host. Using
+# BUILDPLATFORM here produced amd64 compiled wheels in the arm64 image and left
+# Playwright out of the copied site-packages.
+FROM --platform=$TARGETPLATFORM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -12,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml ./
 RUN pip install --no-cache-dir uv && \
-    (uv pip install --system -r pyproject.toml 2>/dev/null || pip install --no-cache-dir -e .)
+    (uv pip install --system -r pyproject.toml || pip install --no-cache-dir -r pyproject.toml)
 
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim

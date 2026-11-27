@@ -25,6 +25,6 @@ Based on the current checkout; re-verify before reuse.
 - Doc 29 Phase 1 browser envelope wired at `routes/browser.py`; ARQ browser
   worker at `workers/arq_browser_worker.py`; opt-in live smoke
   `tests/e2e_browser_smoke.py`; Dockerfile installs Chromium/Firefox/WebKit.
-- Targeted browser tests pass (13), integration check exits 0, and the full
-  unit suite now passes (637 tests). Earlier external failures were resolved
-  outside this work; re-verify before reusing.
+- Local CI equivalent is `scripts/ci_local.ps1`: 887 unit tests, integration
+  check and frontend build all passed.
+- Opt-in real Playwright E2E smoke passed against https://example.com.

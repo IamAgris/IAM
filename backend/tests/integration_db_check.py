@@ -22,7 +22,9 @@ from sqlalchemy import select
 
 ROOT = Path(__file__).resolve().parents[1]  # backend/
 MIGRATIONS = ROOT / "app" / "db" / "migrations"
-TEST_DB = "aura_integration_test"
+TEST_DB = os.environ.get("IAM_TEST_DB", "aura_integration_test")
+if not TEST_DB.replace("_", "").isalnum():
+    raise RuntimeError("IAM_TEST_DB must contain only letters, digits and underscores")
 HOST = os.environ.get("POSTGRES_HOST", "127.0.0.1")
 PORT = int(os.environ.get("POSTGRES_PORT", "5434"))
 USER = os.environ.get("POSTGRES_USER", "aura")

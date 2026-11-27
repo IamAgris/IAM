@@ -2,13 +2,13 @@
 
 **Document:** 32 (companion to Documents 23 / 23-A / 31)  
 **Version:** 1.0 · 27 November 2026  
-**Status:** **PROPOSED — repository audit and implementation task plan. Not part of the frozen baseline.**  
-**Type:** Architecture proposal and work breakdown; **not** an implementation claim  
+**Status:** **CONFIRMED — OD-52, 27 November 2026. Part of the frozen baseline as architecture scope.**  
+**Type:** Repository audit, architecture scope and implementation task plan  
 **Parent:** `ARCHITECTURE_INDEX.md`, `IAM_FINAL_CONSOLIDATION.md`  
 **Related:** `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` (Doc 23 / OD-38), `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` (Doc 23-A / OD-46), `IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md` (Doc 31 / OD-51), `IAM_API_CONTRACTS.md`  
-**Proposed decision:** **OD-52** — Universal Model Provider & Intelligence Orchestration System. **Not confirmed.**
+**Confirmed decision:** **OD-52** — Universal Model Provider & Intelligence Orchestration System. Phases A–E and the refresh worker are implemented. **Paid endpoints remain unauthorised.**
 
-> This document records what already exists in the repository, maps it to the requested architecture, and turns the four critical gaps into precise tasks. It authorises no code change and no paid model usage. The working tree was dirty and concurrently edited during the audit; all findings must be re-verified before implementation.
+> This document records the repository audit, the requested architecture and the implementation task breakdown. Confirmation authorises free-model discovery, registration, availability testing, capability-based assignment and the refresh worker. It does not authorise any paid model usage or any change to a frozen decision. The working tree was dirty and concurrently edited during the audit; re-verify findings before further implementation.
 
 ---
 
@@ -139,29 +139,31 @@ Each phase requires its own tests and must pass the repo gates: `pytest backend/
 
 ## 8. Governance gate
 
-OD-51 (Doc 31) is confirmed and covers encrypted credentials, isolation, fail-closed usage and bounded delegation. This document proposes **OD-52** for the universal provider/orchestration scope. Until the owner confirms OD-52:
+OD-51 (Doc 31) is confirmed and covers encrypted credentials, isolation, fail-closed usage and bounded delegation. **OD-52 is confirmed (27 November 2026)** and authorises the universal provider/orchestration scope. Under OD-52:
 
-- no provider-registration code is enabled in production;
-- no paid endpoint is activated;
-- no frozen decision is altered;
-- the ten static NVIDIA deployments remain the working fallback.
+- dynamic registration and availability monitoring are enabled via their config flags;
+- **no paid endpoint is activated** — free-only filtering, OD-04 zero standing budget and OD-51 fail-closed usage remain in force;
+- no frozen decision is altered, and the local primary remains IAM's brain;
+- one static NVIDIA bootstrap alias keeps the gateway usable before discovery.
 
 ---
 
 ### Implementation status
 
-Phases A, B and C are implemented. Phase C adds `services/provider_model_registrar.py`, `store_model_in_db: true` and `LITELLM_SALT_KEY` wiring, one static NVIDIA bootstrap alias (the ten static multi-key deployments were removed), and `model_catalog_registration_enabled` — **default false**. Discovery calls the registrar; registration is a no-op until OD-52 is confirmed and that flag is enabled. Registered models use `api_key: os.environ/NVIDIA_API_KEY` and are marked `iam_managed` so static config models are never deleted.
+Phases A–E and the scheduled refresh worker are implemented and, under OD-52, activated by config. Phase D adds `services/endpoint_availability.py` (gateway probes, failure classification, `endpoint_status`, `last_tested`, last-known-good). Phase E adds `services/capability_evaluator.py` and capability-based model selection inside `delegation_orchestrator.py`. The refresh worker `workers/arq_model_catalog.py` runs under the `catalog-arq` compose profile. OD-39 conflict resolved: hosted inference no longer consumes a local residency slot; a separate bounded pool of 3 protects the shared account while local models keep the one-resident rule. Paid access remains blocked.
+
+Phase C adds `services/provider_model_registrar.py`, `store_model_in_db: true` and `LITELLM_SALT_KEY` wiring, one static NVIDIA bootstrap alias (the ten static multi-key deployments were removed), and `model_catalog_registration_enabled` — **enabled under OD-52**. Discovery calls the registrar. Registered models use `api_key: os.environ/NVIDIA_API_KEY` and are marked `iam_managed` so static config models are never deleted.
 
 Phase B adds `services/providers/base.py` (`BaseProvider` / `ModelSpec`), `providers/nvidia.py` (live `/v1/models`, one key, free-only filter), `providers/models_dev.py` (specifications only), `services/model_discovery.py` (merge precedence: live catalogue for access, Models.dev for capabilities), `POST /api/v1/models/discovery/{provider}`, config for the Models.dev endpoint and tests. Discovered entries always persist with `endpoint_status='unknown'` — no availability is claimed.
 
-Phase A only was implemented first: `DiscoveredModel` registry fields and migration `060_model_catalog.sql` (registered in `MIGRATION_ORDER.json`) with conservative defaults — `endpoint_status='unknown'`, capabilities false until tested, `access_type='free'`, and a backfill that never claims legacy rows were availability-tested. Evidence tests are in `backend/tests/test_model_catalog.py`. No dynamic model registration, availability monitor, provider registration or paid access is enabled; OD-52 remains proposed.
+Phase A registry fields and migration `060_model_catalog.sql` (registered in `MIGRATION_ORDER.json`) use conservative defaults — `endpoint_status='unknown'`, capabilities false until tested, `access_type='free'`, and a backfill that never claims legacy rows were availability-tested. Evidence tests are in `backend/tests/test_model_catalog.py`. **Paid access is not enabled.**
 
-## 9. Decision request
+## 9. Decision record
 
-| Item | Decision needed |
-|------|-----------------|
-| OD-52 universal provider architecture | Approve / reject / amend |
-| Replace static multi-key deployments with one-key dynamic catalogue | Approve / reject / amend |
-| New registry fields and migration 060 | Approve / reject / amend |
-| Phase order A–H | Approve / amend |
-| Paid NVIDIA access | **Not requested — remains blocked under OD-04** |
+| Item | Decision |
+|------|----------|
+| OD-52 universal provider architecture | ✅ **CONFIRMED** (27 November 2026) |
+| Replace static multi-key deployments with one-key dynamic catalogue | ✅ **CONFIRMED** |
+| New registry fields and migration 060 | ✅ **CONFIRMED** |
+| Phases A–E and scheduled refresh | ✅ **CONFIRMED**; phases F–H remain future work |
+| Paid NVIDIA access | ❌ **NOT AUTHORISED** — blocked under OD-04; separate signed decision required |

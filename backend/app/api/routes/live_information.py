@@ -1,4 +1,4 @@
-"""Shared Web Intelligence Engine API (proposed Doc 32).
+"""Shared Web Intelligence Engine API (proposed Doc 34).
 
 Gives authorised agents, specialist intelligences and background research the
 same live-information capability the main chat uses. No separate search stack:

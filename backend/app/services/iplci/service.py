@@ -97,8 +97,11 @@ class IPLCIService:
             "personal_data_present", "privacy_lawful_basis", "attribution_required",
             "licence_flags",
         }
+        # Callers may pin a deterministic id (e.g. the legal gateway derives
+        # one from the action URI). Honour it so later gate checks can find it.
+        supplied_id = str(payload.get("id") or "").strip()
         record: Dict[str, Any] = {
-            "id": str(uuid.uuid4()),
+            "id": supplied_id or str(uuid.uuid4()),
             "uri": uri,
             "current_permission_state": "NOT_VALIDATED",
             "permission_withdrawn": False,

@@ -10,7 +10,7 @@ OD-49 (Doc 29), OD-51 (model-provider governance). Automatic retrieval is
 free-provider-only and fail-closed for paid search (OD-04/OD-25).
 
 Proposed specification: ``IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md``
-(Document 32, proposed — not part of the frozen baseline).
+(Document 34, proposed — not part of the frozen baseline).
 """
 
 from __future__ import annotations
@@ -99,6 +99,10 @@ TRIGGER_PATTERNS: Dict[str, re.Pattern[str]] = {
     "live_information": _compile(
         r"\b(live|real[- ]?time|up[- ]to[- ]date|as of (?:now|today)|currently)\b"
     ),
+    "multilingual_current": _compile(
+        r"\b(nuus|vandag|actualités|aujourd'hui|noticias|hoy|nachrichten|heute|"
+        r"notizie|oggi|actualidad|ニュース|新闻)\b"
+    ),
 }
 
 _HISTORICAL = _compile(
@@ -171,7 +175,7 @@ class SearchTriggerClassifier:
             depth = ResearchDepth.STANDARD
         else:
             # Source-first questions expand to additional sources, so they are
-            # never treated as a single-source quick lookup (Doc 32 §4).
+            # never treated as a single-source quick lookup (Doc 34 §4).
             depth = ResearchDepth.STANDARD if sources else ResearchDepth.QUICK
 
         return SearchTrigger(
@@ -322,7 +326,7 @@ def _normalize(item: Dict[str, Any]) -> Optional[Dict[str, str]]:
 
 
 # A Wikipedia fallback (or an empty result set) is not current information.
-# It must never be presented silently as live web evidence (Doc 32 §4/§6).
+# It must never be presented silently as live web evidence (Doc 34 §4/§6).
 _NON_LIVE_PROVIDERS = frozenset({"wikipedia", "wikipedia-fallback"})
 
 
@@ -405,7 +409,7 @@ _OFFICIAL_URLS = {
 async def _try_official_site(
     domain: str, max_results: int, timeout: float
 ) -> tuple[List[Dict[str, str]], Optional[str]]:
-    """Read a named publisher's own site first (Doc 32 §4).
+    """Read a named publisher's own site first (Doc 34 §4).
 
     Try the canonical news path, then a ``www`` variant: certificate and
     redirect behaviour varies by site and network.
@@ -520,6 +524,40 @@ async def collect_live_evidence(
     merged: List[Dict[str, str]] = []
     providers: List[str] = []
     preferred = trigger.preferred_sources
+
+    # User-supplied documents are parsed locally as untrusted evidence (Doc 29
+    # document handling). No document is fetched unless the user provided URL.
+    document_urls = [
+        match.group(0)
+        for match in _URL.finditer(query)
+        if urlparse(match.group(0)).path.lower().endswith(
+            (".pdf", ".docx", ".xlsx", ".csv", ".txt", ".md")
+        )
+    ]
+    if document_urls:
+        try:
+            from app.services.browser_document_service import BrowserDocumentService
+
+            parsed = await asyncio.wait_for(
+                BrowserDocumentService(db).parse_url(document_urls[0]), timeout=timeout
+            )
+            source = dict(parsed.get("source") or {})
+            final_url = str(source.get("url") or document_urls[0])
+            merged.append(
+                {
+                    "title": str(parsed.get("title") or final_url)[:200],
+                    "url": final_url,
+                    "description": str(parsed.get("text") or "")[:400],
+                    "published": "date not available",
+                    "source": _host(final_url),
+                    "document_kind": str(parsed.get("kind") or "unknown"),
+                }
+            )
+            providers.append("document-extraction")
+        except asyncio.TimeoutError:
+            errors.append("document extraction timed out")
+        except Exception as exc:  # pragma: no cover - defensive
+            errors.append(f"document extraction failed: {type(exc).__name__}")
 
     def preferred_found() -> bool:
         return any(

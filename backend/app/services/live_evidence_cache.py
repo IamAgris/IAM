@@ -1,4 +1,4 @@
-"""Query-level live evidence cache and reputation annotation (proposed Doc 32 §7).
+"""Query-level live evidence cache and reputation annotation (proposed Doc 34 §7).
 
 Freshness TTL by class. Source reputation is read from the existing IICS source
 registry — no duplicate reputation table, no vector database, no trusted-knowledge
@@ -43,6 +43,7 @@ def freshness_class(trigger: Any) -> str:
             "sports_results",
             "weather",
             "live_information",
+            "multilingual_current",
             "explicit_search",
         )
     ):
@@ -148,7 +149,7 @@ async def store_cached(
                 continue
             source_id = UUID(str(source["id"]))
             claim_text = str(item.get("title") or url)[:500]
-            existing = await registry.claims(source_id)  # type: ignore[arg-type]
+            existing = await registry.claims(cast(str, source_id))
             if any(str(entry.get("claim")) == claim_text for entry in existing):
                 continue
             confidence = float(item.get("confidence") or 0.4)
@@ -160,7 +161,7 @@ async def store_cached(
                 "unverified": "unverified",
             }.get(analysis_label, "unverified")
             await registry.add_claim(
-                source_id,  # type: ignore[arg-type]
+                cast(str, source_id),
                 claim_text,
                 confidence,
                 locator=url,

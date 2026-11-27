@@ -1,4 +1,4 @@
-"""Evidence analysis for the Web Intelligence Engine (proposed Doc 32 §8).
+"""Evidence analysis for the Web Intelligence Engine (proposed Doc 34 §8).
 
 Deterministic, model-independent analysis: prompt-injection screening,
 cross-source corroboration and contradiction heuristics, and claim labels.

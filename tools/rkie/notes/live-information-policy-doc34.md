@@ -1,4 +1,4 @@
-# Live Information & Web Intelligence (proposed Doc 32)
+# Live Information & Web Intelligence (proposed Doc 34)
 
 **Based on:** working tree 27 November 2026. Re-verify against current files before reuse.
 
@@ -24,7 +24,7 @@ Doc 14 (OD-30), Doc 11 (OD-27) and Doc 31 (OD-51) cover the rest. Runtime code:
 
 ## Files added / changed
 
-- `IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` — proposed Doc 32, OD-52 not recorded.
+- `IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` — proposed Doc 34, OD-54 not recorded.
 - `backend/app/services/live_information_policy.py` — policy text, deterministic
   `SearchTriggerClassifier`, `LiveEvidence`, `collect_live_evidence` (free providers only).
 - `backend/app/api/routes/models.py` — `_prepare_messages` injects policy always and
@@ -32,7 +32,7 @@ Doc 14 (OD-30), Doc 11 (OD-27) and Doc 31 (OD-51) cover the rest. Runtime code:
 - `backend/app/core/config.py` — `iam_live_info_*` settings. Browser stays off by
   default; `iam_live_info_escalate_to_browser=true` enables conditional escalation.
 - `backend/tests/test_live_information_policy.py` — 18 tests + 5 subtests, including
-  the eight mandatory pre-OD-52 retrieval validation cases.
+  the eight mandatory pre-OD-54 retrieval validation cases.
 
 ## Conditional escalation (owner adjustment, 27 Nov 2026)
 
@@ -54,16 +54,27 @@ Gigazine. No fabricated citations. Opt-in smoke only — not a guarantee of futu
 site availability.
 
 Also implemented: query-level cache (`live_evidence_cache`, migration 058) with
-class TTLs 15/60/360/43200 min; reputation read from existing `iics_sources`;
-shared engine API `/api/v1/live-information/{policy,research}` registered in
-`main.py`; `.env.example` flags. OD-52 signoff sheet: `IAM_OD52_SIGNOFF_SHEET.md`.
+class TTLs 15/60/360/43200 min; reputation and claim records written to existing
+`iics_sources`/`iics_claims`; shared engine API `/api/v1/live-information/*`;
+provider registry with health/quota/free-first failover plus SearXNG and Tavily
+adapters; claim labels, confidence, cross-domain corroboration, conservative
+contradiction detection and prompt-injection redaction (`live_evidence_analysis.py`);
+explicit public-host SSRF guard; behavioural DEEP follow-up stage; bounded
+autonomous monitoring (`live_research_tasks`, migration 063, max 50 tasks,
+15-10080 min); Docker build now fails if Playwright browsers cannot install.
+`.env.example` flags added. OD-54 signoff sheet: `IAM_OD54_SIGNOFF_SHEET.md`
+with E-1/E-2/E-3 real-web evidence.
+
+Verification: 967 tests passed, 67.43% coverage; ruff/mypy clean on changed
+files; migration and OpenAPI checks OK. mypy ratchet drift is entirely in
+concurrent Web3/blockchain/skillruntime work, not these files.
 
 ## Decisions / constraints
 
 - OD-46 shared primary is **Qwen2.5-Coder 3B**; "Qwen2.5:3B" in proposals is informal.
 - Paid search stays fail-closed (OD-04/OD-25, `SEARCH_ACTION`).
 - `ARCHITECTURE_INDEX.md` and `IAM_OWNER_DECISIONS.md` intentionally untouched —
-  owner must record OD-52 before Doc 32 enters the frozen baseline.
+  owner must record OD-54 before Doc 34 enters the frozen baseline.
 
 ## Verification
 

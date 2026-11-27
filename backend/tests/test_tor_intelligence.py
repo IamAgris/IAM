@@ -74,6 +74,8 @@ class ManagerTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(OfficialTorBrowser, "executable", return_value=executable):
             launcher = FakeLauncher()
             manager = TorManager(object(), launcher=launcher)
+            manager.evidence = MagicMock()
+            manager.evidence.append_audit = AsyncMock(return_value="audit-1")
             session = await manager.open_session(
                 "s3", actor="iam", task_id="tor-task-1"
             )
@@ -125,7 +127,7 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
         fake = MagicMock()
         fake.privacy.engage = MagicMock(return_value={"kill_switch": True})
         with patch.object(tor_routes, "_manager", fake):
-            result = await tor_routes.engage_killswitch()
+            result = await tor_routes.engage_killswitch(manager=fake)
         self.assertTrue(result["kill_switch"])
 
 

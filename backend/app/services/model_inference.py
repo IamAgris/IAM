@@ -545,6 +545,7 @@ class InferenceService:
                 "data": {"code": "resource_refused", "message": str(exc)[:300]},
             }
             return
+        admitted = True  # lease is held from here; release must always happen
         payload: Dict[str, Any] = {
             "model": selected,
             "messages": messages,
@@ -562,19 +563,22 @@ class InferenceService:
             url = f"{settings.ollama_base_url.rstrip('/')}/v1/chat/completions"
             headers = {}
 
-        yield {
-            "event": "start",
-            "data": {
-                "model": selected,
-                "mode": mode,
-                "primary": status.primary,
-                "provider": call.provider,
-                "key_fingerprint": call.key_fingerprint,
-                "usage_decision": call.decision.as_dict() if call.decision else None,
-                "irwm": admission,
-            },
-        }
         try:
+            # Start event is inside the protected region: if the SSE consumer
+            # disconnects here, generator close still runs the finally and
+            # releases the IRWM lease instead of leaking it.
+            yield {
+                "event": "start",
+                "data": {
+                    "model": selected,
+                    "mode": mode,
+                    "primary": status.primary,
+                    "provider": call.provider,
+                    "key_fingerprint": call.key_fingerprint,
+                    "usage_decision": call.decision.as_dict() if call.decision else None,
+                    "irwm": admission,
+                },
+            }
             async with httpx.AsyncClient(
                 timeout=settings.inference_stream_timeout_seconds
             ) as client:

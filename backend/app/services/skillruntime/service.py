@@ -208,17 +208,18 @@ class SkillRuntimeService:
             directory = self.layout.current_dir(skill_id)
             if not isinstance(directory, Path):
                 raise SkillRuntimeError("skill layout returned no package directory")
+            package_dir = Path(directory)
             if script:
                 path = Path(script)
                 if path.is_absolute() or path.parts[0] != "scripts" or any(
                     p in {".", ".."} for p in path.parts
                 ):
                     raise SkillRuntimeError("script must be a relative path under scripts/")
-                resolved = (directory / path).resolve()
-                if directory not in resolved.parents or not resolved.is_file():
+                resolved_script = (package_dir / path).resolve()
+                if package_dir not in resolved_script.parents or not resolved_script.is_file():
                     raise SkillRuntimeError("script does not exist inside the skill package")
                 findings = self.forge.engine.security.scan_text(
-                    resolved.read_text(encoding="utf-8", errors="replace"), script
+                    resolved_script.read_text(encoding="utf-8", errors="replace"), script
                 )
                 if self.forge.engine.security.has_blocking_findings(findings):
                     raise SkillRuntimeError("script failed security inspection")

@@ -95,16 +95,16 @@
       "area": "multi-model-provider-credentials"
     },
     {
-      "pattern": "^backend/app/(services/(model_discovery|provider_model_registrar|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py)$",
+      "pattern": "^backend/app/(services/(model_discovery|provider_model_registrar|endpoint_availability|capability_evaluator|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py|workers/arq_model_catalog\\.py)$",
       "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md",
       "decisions": ["OD-52"],
-      "area": "universal-model-discovery-proposed"
+      "area": "universal-model-discovery"
     },
     {
       "pattern": "^IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC\\.md$",
       "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
       "decisions": ["OD-52"],
-      "area": "universal-model-provider-proposed"
+      "area": "universal-model-provider"
     },
     {
       "pattern": "^IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC\\.md$",

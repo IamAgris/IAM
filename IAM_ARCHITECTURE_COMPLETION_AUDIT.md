@@ -343,4 +343,15 @@ CI logs were fetched read-only using the local Git credential. Causes and fixes:
 
 Commit `a6a10ab` ("CI: fix missing cryptography dep, secret-scan fixture, repo-intel deps and stack startup defects") was pushed to `origin/testing`. Local verification: **935 tests passed**, coverage **67.45%**, OpenAPI 801/801, migrations 58/58, `pip-audit` clean.
 
-**Remaining red gate:** the full-repository mypy ratchet keeps drifting as concurrently added modules land (new `web3_extended.py`, `iics.py`, `blockchain/registries.py` errors). Baseline regeneration was deliberately **not** used to hide them. This remains an open finding rather than a suppressed failure.
+**Final CI state after all remediation pushes (head `5a05350`):**
+
+| Workflow | Result |
+|---|---|
+| Supply chain checks | ✅ success |
+| OpenAPI contract drift | ✅ success |
+| RKIE toolkit tests | ✅ success |
+| CodeQL | ✅ success |
+| IAM CI | ❌ failure — concurrently added `test_live_evidence_db.py` IICS claim test passes locally but fails on Python 3.12 CI runner (2 errors, swallowed exception in `live_evidence_cache.store_cached`) |
+| Quality gates | ❌ failure — only `types` and `coverage` jobs remain red (mypy ratchet drift from newly added modules plus the same IICS test); lint, sdk-contracts, repo-intel, acceptance and workflow-validation are green |
+
+Baseline regeneration was deliberately **not** used to hide the mypy drift, and no failing test was weakened. These two remaining failures are in concurrently added code, not in the P0 hardening work documented here; they are recorded as open findings.

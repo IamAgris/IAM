@@ -328,7 +328,7 @@ The gap analysis is now fully resolved on documentation. The remaining pre-imple
 
 | Artifact | Status | Detail |
 |----------|--------|--------|
-| OpenAPI schema | GENERATED | `IAM_OPENAPI.json` — 775 paths, 461 schemas |
+| OpenAPI schema | GENERATED | `IAM_OPENAPI.json` — 829 paths, 473 schemas |
 | Initial Alembic migration | GENERATED | `backend/app/db/migrations/versions/0001_initial.py` — 119 tables |
 | Migration generator | TOOL | `backend/generate_migration.py` — regenerates migration offline from ORM |
 

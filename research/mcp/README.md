@@ -43,3 +43,25 @@ The bridge is tested against a stub caller only. In the agent session, the calle
 Run `get_subscription` + `list_runtime_specs`, pick a free T4 runtime, then execute the notebook cells from `research/colab/IAM_vLLM_Qwen_Coder_3B.ipynb` through `create_session` / `execute_code`. Results feed `ServingReport` → `BenchmarkRunner` / `CapabilityRegistry` → `ModelRegistry`.
 
 This is authored infrastructure, **not yet executed** — no runtime has been created.
+
+## Backend bridge contract (post sign-in)
+
+The backend cannot call MCP tools directly. `backend/app/services/ai_research/mcp_bridge.py`
+provides `HttpMCPToolCaller`: it POSTs `{"tool": "...", "arguments": {...}}` to
+`COLAB_MCP_BRIDGE_URL` with a bearer token from `COLAB_MCP_BRIDGE_TOKEN`, and expects
+`{"result": {...}}` (or `{...}`) back. Errors are fail-closed. **No HTTP bridge process
+is shipped** — one must be provided by the agent-side runtime that has MCP tools.
+
+After you complete `/mcps` sign-in:
+
+1. Confirm the server is connected: `opencode mcp list` (do not run the interactive
+   auth command through a shell tool).
+2. Start an agent-side bridge implementing the contract above, scoped to
+   `tools.colab.*` and free-tier calls only.
+3. Set `COLAB_MCP_ENABLED=true` and `COLAB_MCP_BRIDGE_URL=<bridge-url>` (plus the
+   token env var) for the backend, then recreate it.
+4. `continuous_improvement.default_adapters()` will then inject `ColabMCPDriver`;
+   without the bridge it injects no driver and research jobs refuse to provision.
+
+Never enable paid Colab tiers, and never send private repository content or private
+memories to a remote runtime.

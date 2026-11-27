@@ -2,6 +2,10 @@
 
 ## CI
 
+Run the exact local equivalent with `./scripts/ci_local.ps1` (needs the Compose
+Postgres + Redis services). It compiles the backend, runs all unit tests, runs
+the Postgres/Redis integration check, then builds the frontend.
+
 `.github/workflows/ci.yml` runs three jobs on push and pull request:
 
 1. **backend-unit** — installs `backend[dev]`, compiles `backend/app`, runs all
@@ -39,6 +43,16 @@ dead letter and immediately re-queues delivery. `POST /api/v1/creator/outbox/ret
 retries all non-dead-lettered entries.
 
 ## Docker adapter lab check
+
+The opt-in real browser smoke also passed:
+
+```bash
+cd backend
+IAM_BROWSER_E2E=1 python tests/e2e_browser_smoke.py
+```
+
+It navigated to `https://example.com` with real Playwright and returned the
+expected title and page excerpt.
 
 `backend/tests/docker_adapter_lab_check.py` is a manual script:
 

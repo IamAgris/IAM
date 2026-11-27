@@ -52,7 +52,16 @@ class SearchService:
             return await self._search_duckduckgo(query, max_results)
         elif provider == "searxng":
             return await self._search_searxng(query, max_results)
-        elif provider == "tavily" and self.tavily_api_key:
+        elif provider == "tavily":
+            if not self.tavily_api_key:
+                # Never silently substitute another provider for a paid one.
+                return {
+                    "query": query,
+                    "provider": "tavily",
+                    "results": [],
+                    "error": "Tavily API key not configured; paid search requires signed authorisation",
+                    "searched_at": datetime.utcnow().isoformat(),
+                }
             return await self._search_tavily(query, max_results)
         else:
             # Free fallback: Wikipedia public API (no key, no bot protection).

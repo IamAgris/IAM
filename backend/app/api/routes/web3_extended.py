@@ -67,12 +67,12 @@ def _denied(exc: ProviderDenied) -> HTTPException:
 # --- DeFi ---------------------------------------------------------------------
 
 @router.get("/defi/policy")
-async def defi_policy():
+async def defi_policy() -> Any:
     return DeFiIntelligenceService().policy()
 
 
 @router.post("/defi/swaps/compare")
-async def defi_compare(payload: Quotes):
+async def defi_compare(payload: Quotes) -> Any:
     try:
         return DeFiIntelligenceService().compare_swaps(payload.quotes)
     except ProviderDenied as exc:
@@ -80,7 +80,7 @@ async def defi_compare(payload: Quotes):
 
 
 @router.post("/defi/prepare")
-async def defi_prepare(payload: Payload):
+async def defi_prepare(payload: Payload) -> Any:
     try:
         return DeFiIntelligenceService().prepare_action(
             str(payload.data.get("action", "")), payload.data
@@ -90,7 +90,7 @@ async def defi_prepare(payload: Payload):
 
 
 @router.get("/defi/impermanent-loss")
-async def defi_impermanent_loss(ratio: float):
+async def defi_impermanent_loss(ratio: float) -> Any:
     try:
         return DeFiIntelligenceService.impermanent_loss(ratio)
     except ProviderDenied as exc:
@@ -98,7 +98,7 @@ async def defi_impermanent_loss(ratio: float):
 
 
 @router.post("/defi/liquidation")
-async def defi_liquidation(payload: Payload):
+async def defi_liquidation(payload: Payload) -> Any:
     try:
         return DeFiIntelligenceService.liquidation_risk(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -106,7 +106,7 @@ async def defi_liquidation(payload: Payload):
 
 
 @router.post("/defi/staking")
-async def defi_staking(payload: Payload):
+async def defi_staking(payload: Payload) -> Any:
     try:
         return DeFiIntelligenceService.staking_estimate(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -116,12 +116,12 @@ async def defi_staking(payload: Payload):
 # --- x402 ---------------------------------------------------------------------
 
 @router.get("/x402/policy")
-async def x402_policy():
+async def x402_policy() -> Any:
     return X402Service().policy()
 
 
 @router.post("/x402/discover")
-async def x402_discover(payload: Payload):
+async def x402_discover(payload: Payload) -> Any:
     try:
         return await X402Service().discover(str(payload.data.get("service_url", "")))
     except ProviderDenied as exc:
@@ -129,7 +129,7 @@ async def x402_discover(payload: Payload):
 
 
 @router.post("/x402/evaluate")
-async def x402_evaluate(payload: Payload):
+async def x402_evaluate(payload: Payload) -> Any:
     try:
         return X402Service().evaluate(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -137,7 +137,7 @@ async def x402_evaluate(payload: Payload):
 
 
 @router.post("/x402/prepare")
-async def x402_prepare(payload: Payload):
+async def x402_prepare(payload: Payload) -> Any:
     try:
         return X402Service().prepare_purchase(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -147,12 +147,12 @@ async def x402_prepare(payload: Payload):
 # --- Contracts ----------------------------------------------------------------
 
 @router.get("/contracts/policy")
-async def contracts_policy():
+async def contracts_policy() -> Any:
     return ContractIntelligenceService().policy()
 
 
 @router.post("/contracts/analyze")
-async def contracts_analyze(payload: Payload):
+async def contracts_analyze(payload: Payload) -> Any:
     try:
         return ContractIntelligenceService().analyze(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -160,7 +160,7 @@ async def contracts_analyze(payload: Payload):
 
 
 @router.post("/contracts/template")
-async def contracts_template(payload: TemplateRequest):
+async def contracts_template(payload: TemplateRequest) -> Any:
     try:
         return {"source": ContractIntelligenceService.template(payload.standard)}
     except ProviderDenied as exc:
@@ -168,7 +168,7 @@ async def contracts_template(payload: TemplateRequest):
 
 
 @router.post("/contracts/deploy/prepare")
-async def contracts_prepare_deploy(payload: Payload):
+async def contracts_prepare_deploy(payload: Payload) -> Any:
     try:
         return ContractIntelligenceService().prepare_deployment(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -178,12 +178,12 @@ async def contracts_prepare_deploy(payload: Payload):
 # --- NFTs ---------------------------------------------------------------------
 
 @router.get("/nft/policy")
-async def nft_policy():
+async def nft_policy() -> Any:
     return DigitalAssetService().policy()
 
 
 @router.post("/nft/mint/prepare")
-async def nft_prepare_mint(payload: Payload):
+async def nft_prepare_mint(payload: Payload) -> Any:
     try:
         return DigitalAssetService().prepare_mint(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -191,7 +191,7 @@ async def nft_prepare_mint(payload: Payload):
 
 
 @router.post("/nft/list/prepare")
-async def nft_prepare_list(payload: Payload):
+async def nft_prepare_list(payload: Payload) -> Any:
     try:
         return DigitalAssetService().prepare_listing(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -199,7 +199,7 @@ async def nft_prepare_list(payload: Payload):
 
 
 @router.post("/nft/ownership")
-async def nft_ownership(payload: Payload):
+async def nft_ownership(payload: Payload) -> Any:
     try:
         return DigitalAssetService().verify_ownership(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -209,12 +209,12 @@ async def nft_ownership(payload: Payload):
 # --- DAO ----------------------------------------------------------------------
 
 @router.get("/dao/policy")
-async def dao_policy():
+async def dao_policy() -> Any:
     return DaoGovernanceService().policy()
 
 
 @router.post("/dao/analyze")
-async def dao_analyze(payload: Payload):
+async def dao_analyze(payload: Payload) -> Any:
     try:
         return DaoGovernanceService().analyze_proposal(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -222,7 +222,7 @@ async def dao_analyze(payload: Payload):
 
 
 @router.post("/dao/recommendation")
-async def dao_recommendation(payload: Payload):
+async def dao_recommendation(payload: Payload) -> Any:
     try:
         return DaoGovernanceService().recommendation(payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -230,7 +230,7 @@ async def dao_recommendation(payload: Payload):
 
 
 @router.post("/dao/vote/prepare")
-async def dao_prepare_vote(payload: Payload):
+async def dao_prepare_vote(payload: Payload) -> Any:
     try:
         return DaoGovernanceService().prepare_vote(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -240,12 +240,12 @@ async def dao_prepare_vote(payload: Payload):
 # --- Cross-chain --------------------------------------------------------------
 
 @router.get("/cross-chain/policy")
-async def cross_chain_policy():
+async def cross_chain_policy() -> Any:
     return CrossChainService().policy()
 
 
 @router.post("/cross-chain/routes/compare")
-async def cross_chain_compare(payload: Quotes):
+async def cross_chain_compare(payload: Quotes) -> Any:
     try:
         return CrossChainService().compare_routes(payload.quotes)
     except ProviderDenied as exc:
@@ -253,7 +253,7 @@ async def cross_chain_compare(payload: Quotes):
 
 
 @router.post("/cross-chain/prepare")
-async def cross_chain_prepare(payload: Payload):
+async def cross_chain_prepare(payload: Payload) -> Any:
     try:
         return CrossChainService().prepare_bridge(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -261,7 +261,7 @@ async def cross_chain_prepare(payload: Payload):
 
 
 @router.post("/cross-chain/settlement")
-async def cross_chain_settlement(payload: Payload):
+async def cross_chain_settlement(payload: Payload) -> Any:
     try:
         return CrossChainService().settlement_check(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -271,12 +271,12 @@ async def cross_chain_settlement(payload: Payload):
 # --- Threat and on-chain analysis ---------------------------------------------
 
 @router.get("/threat/policy")
-async def threat_policy():
+async def threat_policy() -> Any:
     return ThreatIntelService().policy()
 
 
 @router.post("/threat/assess")
-async def threat_assess(payload: Signals):
+async def threat_assess(payload: Signals) -> Any:
     try:
         return ThreatIntelService().assess(target=payload.target, signals=payload.signals)
     except ProviderDenied as exc:
@@ -284,12 +284,12 @@ async def threat_assess(payload: Signals):
 
 
 @router.get("/onchain/policy")
-async def onchain_policy():
+async def onchain_policy() -> Any:
     return OnChainAnalysisService().policy()
 
 
 @router.post("/onchain/concentration")
-async def onchain_concentration(payload: Payload):
+async def onchain_concentration(payload: Payload) -> Any:
     try:
         return OnChainAnalysisService().holder_concentration(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -297,7 +297,7 @@ async def onchain_concentration(payload: Payload):
 
 
 @router.post("/onchain/anomalies")
-async def onchain_anomalies(payload: Payload):
+async def onchain_anomalies(payload: Payload) -> Any:
     try:
         return OnChainAnalysisService().anomaly_scores(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -305,7 +305,7 @@ async def onchain_anomalies(payload: Payload):
 
 
 @router.get("/onchain/fee")
-async def onchain_fee(base_fee: float, priority_fee: float):
+async def onchain_fee(base_fee: float, priority_fee: float) -> Any:
     try:
         return OnChainAnalysisService.eip1559_fee(base_fee, priority_fee)
     except ProviderDenied as exc:
@@ -484,7 +484,7 @@ async def learning_benchmark(payload: Payload):
 
 
 @router.post("/business/evaluate")
-async def business_evaluate(payload: Payload):
+async def business_evaluate(payload: Payload) -> Any:
     try:
         return Web3BusinessService().evaluate(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -492,7 +492,7 @@ async def business_evaluate(payload: Payload):
 
 
 @router.get("/networks/non-evm")
-async def non_evm_networks(family: str | None = None):
+async def non_evm_networks(family: str | None = None) -> Any:
     try:
         return {"networks": NonEvmRegistry().list(family)}
     except ProviderDenied as exc:
@@ -500,7 +500,7 @@ async def non_evm_networks(family: str | None = None):
 
 
 @router.get("/fiat/candidates")
-async def fiat_candidates(route: str | None = None):
+async def fiat_candidates(route: str | None = None) -> Any:
     try:
         return {"candidates": FiatRampResearch().candidates(route)}
     except ProviderDenied as exc:
@@ -508,7 +508,7 @@ async def fiat_candidates(route: str | None = None):
 
 
 @router.post("/fiat/evaluate")
-async def fiat_evaluate(payload: Payload):
+async def fiat_evaluate(payload: Payload) -> Any:
     try:
         return FiatRampResearch().evaluate(**payload.data)
     except (ProviderDenied, TypeError) as exc:

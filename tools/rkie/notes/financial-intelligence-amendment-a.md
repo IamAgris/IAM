@@ -26,7 +26,7 @@ Code (research-only; no wagering, wallet funding or real orders):
   `/provider-registry` (27 paths).
 - `frontend/app/financial-intelligence/page.tsx` and sidebar entry.
 - Migrations: `030_financial_intelligence.sql`, `versions/0002_financial_intelligence.py`.
-- Generated `IAM_OPENAPI.json`: 775 paths / 461 schemas after the 2026-11-27
+- Generated `IAM_OPENAPI.json`: 829 paths / 473 schemas after the 2026-11-27
   drift fixes (the financial-intelligence routes themselves were added at 505/320).
 
 ## Verification (2026-11-27)

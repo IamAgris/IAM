@@ -119,8 +119,8 @@ class ProviderHealthRegistry:
             (row for row in rows if row.provider == provider and row.network == network), None
         )
         if entry:
-            entry.available = available
-            entry.latency_ms = latency_ms
+            entry.available = available  # type: ignore[assignment]
+            entry.latency_ms = latency_ms  # type: ignore[assignment]
         else:
             entry = Web3ProviderHealth(
                 provider=provider, network=network, available=available, latency_ms=latency_ms

@@ -100,7 +100,7 @@ class TorCircuitManager:
     """Tor control-port circuit inspection and New Identity handling via stem."""
 
     @staticmethod
-    def _controller():
+    def _controller() -> Any:
         from stem import Signal
         from stem.control import Controller
 

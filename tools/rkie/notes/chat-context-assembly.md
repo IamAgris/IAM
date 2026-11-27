@@ -272,5 +272,17 @@ gaps.
 - Verification: full suite 949 passed; ruff clean; OpenAPI snapshot regenerated
   to include concurrent route additions (810 paths). Mypy ratchet still reports
   new errors in concurrent blockchain/suggestions/tor_intelligence files.
+
+## Operator decisions (27 November 2026)
+
+- `CREATOR_EMAIL` intentionally left unset by owner decision: signed-approval
+  carrier remains a documented blocker, not a silent placeholder.
+- Skill Runtime intentionally kept `stub` + disabled: no real skill execution is
+  claimed; `docker` is the reviewed real adapter.
+- Colab MCP server is configured in `~/.config/opencode/opencode.jsonc`; owner will
+  complete `/mcps` Google sign-in. Added the backend HTTP bridge contract and
+  post-sign-in steps to `research/mcp/README.md`. No HTTP bridge process ships
+  with the repo, and none is claimed: `HttpMCPToolCaller` stays disabled until
+  an operator provides `COLAB_MCP_BRIDGE_URL`.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

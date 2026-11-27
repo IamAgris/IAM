@@ -277,4 +277,10 @@ The addendum remains a **proposal**, not frozen authority. The following foundat
 | Wiring | Egress enforced in `browser_service` navigation/fetch and both HBI HTTP fetchers; combined legal gate enforced in `InternetAccessService.check_permission`; DLP enforced on browser type/upload and Creator email; IICS tools registered at startup in `ToolRegistry`; IICS ARQ worker added to `docker-compose.yml`; permission denials and QA regressions notify the Creator automatically; threat-feed and site-policy poll jobs registered as ARQ cron jobs | `backend/app/services/iics/tool_registry.py`, `app/workers/arq_iics_worker.py`, `app/main.py`, `docker-compose.yml` |
 | Tests | 54 unit tests in `backend/tests/test_iics_foundation.py`; full backend suite 939 passed | — |
 
-Not yet implemented: the graphical Creator control-centre UI. The email path above provides Creator visibility without a new frontend route or a new system; free lawful research remains autonomous and does not email the Creator. The migration `057_iics_foundation.sql` still needs to be applied to the deployment database (dev `create_all` covers local runs). No further backlog item requires a system-count change.
+Operational closure:
+- Migration `057_iics_foundation.sql` has an idempotent applier (`backend/scripts/apply_iics_migration.py`), a one-shot Compose service (`iics-migrate`) and is included in `backend/tests/integration_db_check.py`. Local runs use `create_all`; a deployment must run `docker compose --profile iics run --rm iics-migrate` once.
+- Threat-intel feed is configured by default to the public NVD 2.0 API (`IICS_THREAT_FEEDS`, documented in `.env.example`); polling is via the IICS ARQ cron.
+- Graphical Creator control centre exists at `/_iics` (`frontend/components/iam/panels/iics-control-panel.tsx`) with egress/permission checks, QA, scheduled jobs, advisories and Creator email actions.
+- An opt-in live smoke test is available: `IAM_IICS_SMOKE=1 IAM_API_KEY=<key> python tests/iics_live_smoke.py` (prints `IAM_IICS_OK` only when every check passes).
+
+Free lawful research remains autonomous and does not email the Creator; email notifications are informational, and consequential actions require a signed Creator decision. No further backlog item requires a system-count change.

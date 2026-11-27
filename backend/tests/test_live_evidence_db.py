@@ -2,6 +2,7 @@
 
 import unittest
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -35,21 +36,20 @@ class RealDbCacheTests(unittest.IsolatedAsyncioTestCase):
         await self.engine.dispose()
 
     def evidence(self) -> LiveEvidence:
+        item: Dict[str, Any] = {
+            "title": "SABC reports new development",
+            "url": "https://www.sabcnews.com/sabcnews/new-development/",
+            "description": "Article text.",
+            "published": "27 November 2026",
+            "source": "sabcnews.com",
+            "claim_label": "single_source",
+            "confidence": 0.45,
+        }
         return LiveEvidence(
             query=QUERY,
             retrieved_at=datetime.now(timezone.utc).isoformat(),
             provider="official-site",
-            results=[
-                {
-                    "title": "SABC reports new development",
-                    "url": "https://www.sabcnews.com/sabcnews/new-development/",
-                    "description": "Article text.",
-                    "published": "27 November 2026",
-                    "source": "sabcnews.com",
-                    "claim_label": "single_source",
-                    "confidence": 0.45,
-                }
-            ],
+            results=[item],
             errors=[],
             analysis={},
         )

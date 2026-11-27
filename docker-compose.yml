@@ -362,6 +362,35 @@ services:
     networks:
       - aura-network
 
+  # OD-52: scheduled free-model catalogue discovery and availability refresh.
+  #   docker compose --profile catalog-arq up -d
+  model-catalog-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-model-catalog-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_model_catalog.WorkerSettings
+    profiles: ["catalog-arq", "arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      MODELS_DEV_API_URL: ${MODELS_DEV_API_URL:-https://models.dev/api.json?type=all}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+    networks:
+      - aura-network
+
   # One-shot: apply IICS foundation tables before starting the worker.
   #   docker compose --profile iics run --rm iics-migrate
   iics-migrate:

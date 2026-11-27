@@ -1,4 +1,4 @@
-"""Bounded autonomous live-research monitoring (proposed Doc 32 extension).
+"""Bounded autonomous live-research monitoring (proposed Doc 34 extension).
 
 Recurring public-web research only. No authority to spend, disclose private
 data, enter agreements or crawl without limits. Uses the shared engine and the
@@ -8,7 +8,7 @@ existing ARQ runtime for execution; this module owns scheduling state only.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,6 +58,7 @@ class LiveResearchMonitor:
         task = await self.db.get(LiveResearchTask, task_id)
         if not task:
             return False
+        task = cast(Any, task)
         task.enabled = bool(enabled)
         await self.db.commit()
         return True
@@ -84,6 +85,7 @@ class LiveResearchMonitor:
         tasks = result.scalars().all()
         summaries: List[Dict[str, Any]] = []
         for task in tasks:
+            task = cast(Any, task)
             trigger = SearchTriggerClassifier().classify(task.query)
             evidence = await collect_live_evidence(
                 task.query, trigger=trigger, db=self.db

@@ -472,6 +472,28 @@ and network access remain blocked.
 
 ---
 
+## 12a. Implementation status (informational, 27 November 2026)
+
+This section records what exists in the working tree; it does not change any decision
+or activate any capability. All flags default-off, no live keys or endpoints are present,
+migration 054 has not been applied to a live database, and no production claim is made.
+
+| Scope | Status | Evidence |
+|---|---|---|
+| Schemas and registries | Implemented | `models/web3.py`, migration `054_web3_and_nodes.sql`, `blockchain/registries.py` |
+| Read-only adapters | Implemented | `providers/thirdweb_adapter.py`, `bitcoin_core_adapter.py`, `lnd_adapter.py`, `cln_adapter.py` |
+| Approval lifecycle | Implemented | `governance.py`, `transaction_manager.py`; all writes re-verify signed authority |
+| Wallet/address, SIWE, session/multisig | Implemented | `wallet_registry.py`, `wallet_ecosystem.py`, `keccak.py`, `secp256k1.py` |
+| Extended research modules | Implemented (prepare only) | `defi.py`, `x402.py`, `contracts.py`, `nft.py`, `dao.py`, `cross_chain.py`, `threat_intel.py`, `onchain_analysis.py`, `transaction_ops.py`, `accounting.py`, `web3_learning.py`, `business.py`, `non_evm.py`, `fiat.py` |
+| Audit, reconciliation, alerting, activation gate | Implemented | `audit.py`, `reconciliation.py`, `monitoring.py`, `activation.py` |
+| Real execution rails / paid tiers / mainnet value movement | Not implemented or gated | requires signed OD-53, operator executor and a separate production gate |
+| Live node connectivity | Not verified | requires Umbrel inspection results and restricted credentials |
+
+Verification: 54 Web3 tests pass; 893 full-suite tests passed at final verification;
+`ruff`, `compileall`, migration order, OpenAPI drift and HBI gates pass.
+
+---
+
 ## 13. Relationship to other documents
 
 - Extends Doc 09 §3 (blockchain framework, ten engines) without replacing it.

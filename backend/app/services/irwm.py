@@ -24,6 +24,7 @@ class Residency:
     loaded_at: float
     last_used: float
     in_flight: int = 0
+    in_flight_since: Optional[float] = None  # set when in_flight goes 0 -> 1
 
 
 class IRWM:
@@ -52,9 +53,29 @@ class IRWM:
             return False
 
     def sweep_idle(self) -> Optional[str]:
-        """Release an idle resident after its keep-alive window."""
-        if not self.resident or self.resident.in_flight:
+        """Release an idle resident, and expire stuck in-flight leases.
+
+        A lease can leak if a request is interrupted without a release, or if a
+        caller admits directly through the admin route. Stuck slots are expired
+        after ``irwm_in_flight_timeout_seconds`` so the gateway cannot be
+        permanently blocked by one stale request.
+        """
+        if not self.resident:
             return None
+        if self.resident.in_flight:
+            since = self.resident.in_flight_since or self.resident.last_used
+            timeout = getattr(settings, "irwm_in_flight_timeout_seconds", 120)
+            if time.monotonic() - since > timeout:
+                model = self.resident.model
+                self.history.append({
+                    "decision": "expired_in_flight", "model": model,
+                    "reason": "lease exceeded timeout without release",
+                })
+                self.resident.in_flight = 0
+                self.resident.in_flight_since = None
+                self.resident.last_used = time.monotonic()
+            else:
+                return None
         idle = time.monotonic() - self.resident.last_used
         if idle < settings.irwm_keep_alive_seconds:
             return None
@@ -130,6 +151,8 @@ class IRWM:
                 self.history.append(decision)
                 return decision
 
+            if self.resident.in_flight == 0:
+                self.resident.in_flight_since = time.monotonic()
             self.resident.in_flight += 1
             self.resident.last_used = time.monotonic()
             decision = {
@@ -146,6 +169,8 @@ class IRWM:
             if not self.resident or self.resident.model != model:
                 return {"released": False, "reason": "model is not resident"}
             self.resident.in_flight = max(0, self.resident.in_flight - 1)
+            if self.resident.in_flight == 0:
+                self.resident.in_flight_since = None
             self.resident.last_used = time.monotonic()
             promoted = None
             if not self.resident.in_flight and self.queue:

@@ -390,3 +390,59 @@ Owner direction: finish code phases before the two external completion items. P3
 **Gates:** 8 new tests pass; ruff clean; migration check **OK** (58 files, no duplicates). Full suite **879 passed, 4 failed** — failures are in concurrent HBI synthetic-study and provider-model-registrar work, not Doc 29 files.
 
 **Next code phases:** P5/TIPS foundation, P6/TIPS onion + privacy, P7 (multi-agent scale), P8 (hardening/lifecycle).
+
+---
+
+## 13. Phase 5 — TIPS foundation (owner: finish coding first)
+
+| Capability | File |
+|------------|------|
+| Official Tor Browser discovery and launch config (socks5 proxy, remote DNS, WebRTC disabled); no Chromium/SOCKS fallback | `backend/app/services/tor_intelligence.py` |
+| Circuit status and New Identity via `stem` control port; network health monitoring with explicit `anonymity_guaranteed: false` | same file |
+| Kill switch and egress enforcement; session isolation, TTL reaping, terminate-all, audit | same file |
+| `/api/v1/tor/{status,sessions,circuits,identity/new,killswitch,egress/check,terminate-all}` — admin-scoped | `backend/app/api/routes/tor.py`, `backend/app/main.py`, `backend/app/core/auth_policy.py` |
+| Config flags and `stem>=1.8.2` dependency | `backend/app/core/config.py`, `backend/pyproject.toml`, `backend/requirements.lock.txt`, `docker-compose.yml` |
+| Fail-closed and leak-guard tests | `backend/tests/test_tor_intelligence.py` |
+
+**Gates:** 8 new tests pass; ruff clean; migration check OK (61 files); OpenAPI check **OK**. Full suite **967 passed, 16 subtests passed**.
+
+**Not claimed:** no real Tor Browser binary is installed on this host, so no live Tor session, leak test or kill-switch test against a real Tor process has been run. All code paths fail closed when Tor is disabled or the binary is absent. P5 exit ("leak tests pass; no session fallback") still requires a live Tor environment.
+
+**Next code phases:** P6 (TIPS onion + privacy), P7 (multi-agent scale), P8 (hardening/lifecycle).
+
+---
+
+## 14. Phase 6 — TIPS onion and privacy (owner: finish coding first)
+
+| Capability | File |
+|------------|------|
+| V3 onion validation, observation/reputation records, availability probe through SOCKS, impersonation heuristics; reachability never becomes operator trust (`confirmed` is not assigned by code) | `backend/app/services/tor_privacy.py` |
+| `OnionReputation` model + migration `066_onion_reputation.sql` | `backend/app/models/web_knowledge.py`, `backend/app/db/migrations/066_onion_reputation.sql`, `MIGRATION_ORDER.json` (sequence 63; 062–065 were taken concurrently) |
+| Safe file pipeline: quarantine → hash → IPLCI legal gate → explicit signed approval; never executes | same file |
+| Creator controls (onion access, bandwidth, session duration, session view) and emergency stop/cleanup/suspicious-connection detection | same file |
+| `/api/v1/tor/onion/*`, `/files/quarantine`, `/creator/*`, `/emergency/*` | `backend/app/api/routes/tor.py` |
+| `socksio>=1.0.0` dependency and P6 config flags | `backend/pyproject.toml`, `backend/requirements.lock.txt`, `backend/app/core/config.py` |
+| Tests | `backend/tests/test_tor_privacy.py` |
+
+**Gates:** 9 new tests pass; ruff clean; migration check OK (63 files); OpenAPI check OK; full suite **982 passed, 16 subtests passed**.
+
+**Not claimed:** no live Tor Browser/onion service was available, so no real onion availability probe or live emergency drill was run. P6 is code-complete with fail-closed behaviour; its live exit criteria remain open with P5's.
+
+**Next code phases:** P7 (multi-agent scale), P8 (hardening/lifecycle).
+
+---
+
+## 15. Phase 7 — multi-agent scale (owner: finish coding first)
+
+| Capability | File |
+|------------|------|
+| One isolated browser session per agent; capacity bounded by `browser_max_concurrent_sessions` and IRWM status (OD-39 budgets kept separate) | `backend/app/services/browser_multi_agent.py` |
+| Session transfer only with signed Creator authorization; HAIS level-4 human takeover; recovery that reopens the isolated context without fallback | same file |
+| Approved, credential-free workflow sharing between agents | same file |
+| `BrowserAgentSession` model + migration `067_browser_agent_sessions.sql` | `backend/app/models/web_knowledge.py`, `backend/app/db/migrations/067_browser_agent_sessions.sql`, `MIGRATION_ORDER.json` (sequence 64) |
+| `/api/v1/browser/agents/{capacity,sessions,transfer,takeover,recover,workflows/share}` | `backend/app/api/routes/browser_agents.py`, `backend/app/main.py` |
+| Tests | `backend/tests/test_browser_multi_agent.py` |
+
+**Gates:** 8 new tests pass; ruff clean; migration check OK (64 files); OpenAPI check OK; full suite **992 passed, 19 subtests passed**.
+
+**Next code phase:** P8 (hardening/lifecycle) — the last code phase.

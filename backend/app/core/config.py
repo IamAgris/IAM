@@ -178,10 +178,13 @@ class Settings(BaseSettings):
     # capabilities; it is not a source of endpoint availability.
     models_dev_api_url: str = "https://models.dev/api.json?type=all"
     models_dev_timeout_seconds: float = 20.0
-    # OD-52 Phase C: runtime registration is off until the owner confirms OD-52.
-    # When enabled, discovered free models are added to LiteLLM via /model/new.
-    model_catalog_registration_enabled: bool = False
+    # OD-52 confirmed 27 Nov 2026: runtime registration and availability
+    # monitoring are enabled for free models only. Paid endpoints stay blocked.
+    model_catalog_registration_enabled: bool = True
     litellm_model_management_timeout_seconds: float = 15.0
+    endpoint_availability_enabled: bool = True
+    availability_probe_timeout_seconds: float = 10.0
+    availability_probe_concurrency: int = 2
     # OD-04: free endpoints only by default. Paid models are refused even with
     # a signed authorization until an operator explicitly disables this switch.
     free_models_only: bool = True
@@ -210,6 +213,7 @@ class Settings(BaseSettings):
     irwm_hard_ceiling_mb: int = 6000
     irwm_target_loaded_ram_mb: int = 5500
     irwm_keep_alive_seconds: int = 120
+    irwm_in_flight_timeout_seconds: int = 120  # expire stuck leases after 2 min
     irwm_max_concurrent: int = 1
     irwm_context_tokens: int = 4096
 
@@ -272,6 +276,9 @@ class Settings(BaseSettings):
     tor_session_ttl_seconds: int = 900
     tor_max_concurrent_sessions: int = 1
     tor_data_root: str = ""  # empty => OS temp/iam-tor-profiles
+    tor_onion_access_enabled: bool = False  # Creator-controlled; fail closed
+    tor_bandwidth_limit_kbps: int = 0  # 0 => no explicit cap
+    tor_bridge_configured: bool = False
 
     # IICS overlay: allowlisted threat-intel feeds (empty means no polling).
     iics_threat_feeds: str = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=20"

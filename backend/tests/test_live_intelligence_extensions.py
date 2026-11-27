@@ -12,7 +12,10 @@ from app.services.model_policy import (
 )
 from app.services import search_service as search_service_module
 from app.services.live_evidence_analysis import analyse, injection_detected
-from app.services.live_information_policy import _is_public_host
+from app.services.live_information_policy import (
+    SearchTriggerClassifier,
+    _is_public_host,
+)
 from app.services.live_research_monitor import validate_task
 from app.services.search_provider_registry import SearchProviderRegistry
 
@@ -85,6 +88,15 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(conflict_summary["contradictions"])
 
 
+class MultilingualTriggerTests(unittest.TestCase):
+    def test_non_english_current_content_triggers_search(self) -> None:
+        for query in ("SABC nuus vandag", "actualités SABC", "SABC ニュース"):
+            with self.subTest(query=query):
+                trigger = SearchTriggerClassifier().classify(query)
+                self.assertTrue(trigger.needs_search)
+                self.assertIn("multilingual_current", trigger.categories)
+
+
 class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
     async def test_chain_is_free_only_and_respects_health(self) -> None:
         registry = SearchProviderRegistry()
@@ -94,6 +106,15 @@ class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
                 registry.record("duckduckgo", ok=False, error="blocked")
             self.assertEqual(registry.chain(free_only=True), ["wikipedia"])
         self.assertTrue(registry.status()["duckduckgo"]["healthy"] is False)
+
+    async def test_paid_provider_without_key_returns_explicit_error(self) -> None:
+        from app.services.search_service import search_service
+
+        with patch.object(search_service, "tavily_api_key", None):
+            result = await search_service.search("latest news", provider="tavily")
+        self.assertEqual(result["provider"], "tavily")
+        self.assertEqual(result["results"], [])
+        self.assertIn("signed authorisation", str(result["error"]))
 
     async def test_provider_call_uses_existing_adapter_and_records_health(self) -> None:
         registry = SearchProviderRegistry()
@@ -115,7 +136,7 @@ class PaidSearchAuthTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(settings, "free_models_only", True):
             with self.assertRaises(ModelPolicyDenied):
                 await require_authorization(
-                    SimpleNamespace(), SEARCH_ACTION, target_ref="brave"  # type: ignore[arg-type]
+                    SimpleNamespace(), SEARCH_ACTION, target_ref="brave"
                 )
 
 
