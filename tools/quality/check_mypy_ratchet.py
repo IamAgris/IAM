@@ -22,8 +22,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 CONFIG = BACKEND / "mypy-full.ini"
-BASELINE = BACKEND / "mypy-baseline.json"
+LEGACY_BASELINE = BACKEND / "mypy-baseline.json"
 ERROR = re.compile(r"^(.+?):(\d+): error: (.*)$")
+
+
+def baseline_path() -> Path:
+    """Select the baseline recorded for this Python version.
+
+    mypy's error set differs between interpreter versions, so CI (3.12) and a
+    developer host (e.g. 3.15) each keep their own baseline.
+    """
+    versioned = BACKEND / "mypy-baseline-{}.{}.json".format(
+        sys.version_info.major, sys.version_info.minor)
+    return versioned if versioned.is_file() else LEGACY_BASELINE
+
+
+BASELINE = baseline_path()
 
 
 def normalized_errors(output: str) -> Counter[str]:

@@ -42,7 +42,10 @@ python tools/quality/check_workflows.py --json
 
 `mypy_debt.py` reads the ratchet baseline, ranks the worst files and error
 codes, and records a history in `index/mypy-debt.json` (optionally with
-`--target N`). Manual annotation of small files has already reduced the
+`--target N`). Baselines are versioned by interpreter
+(`backend/mypy-baseline-3.12.json` for CI, `...-3.15.json` for this host) because
+mypy reports a different error set per Python version; the tools select the
+matching file automatically. Manual annotation of small files has already reduced the
 baseline from 2,054 to 1,954 errors. `annotate_signatures.py` is a libcst
 codemod for mechanical `Any` annotations; it is unavailable on hosts where
 Windows App Control blocks libcst's native extension, but it was executed

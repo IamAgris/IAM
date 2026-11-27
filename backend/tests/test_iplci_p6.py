@@ -385,7 +385,9 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
         source = await self._source(rights_status="COPYRIGHT_PROTECTED")
         ctx = {"source_id": source["id"], "agent_id": "sub-agent"}
         with self.assertRaises(GovernanceRefusal):
-            await MemoryService(None).store_memory("secret", governance_context=ctx)
+            await MemoryService(None).store_memory(
+                "secret", source="test-source", governance_context=ctx
+            )
         with self.assertRaises(GovernanceRefusal):
             await ResearchService().research_topic("topic", governance_context=ctx)
         from app.services.internetaccess_service import InternetAccessService

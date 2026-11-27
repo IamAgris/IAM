@@ -5,11 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE = ROOT / "backend" / "mypy-baseline.json"
+_VERSION = "mypy-baseline-{}.{}.json".format(sys.version_info.major, sys.version_info.minor)
+BASELINE = ROOT / "backend" / _VERSION
+if not BASELINE.is_file():
+    BASELINE = ROOT / "backend" / "mypy-baseline.json"
 HISTORY = ROOT / "tools" / "quality" / "index" / "mypy-debt.json"
 FILE_RE = re.compile(r"^(.+?): error:")
 
