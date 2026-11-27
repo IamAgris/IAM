@@ -26,4 +26,13 @@ Wait for Docker Desktop to recover, re-run `scripts/build-multiarch.ps1`, then v
 docker image inspect project-aura-backend:arm64 --format '{{.Architecture}}'
 ```
 
-No ARM64 image has been produced yet — do not report criterion 4 as complete.
+**Resolved:** after restoring Docker Desktop (`docker desktop restart`), a
+`docker-container` buildx builder (`iam-multiarch`) completed the arm64 build.
+`backend/Dockerfile` was fixed to build dependencies on `TARGETPLATFORM` instead of the
+x86_64 `BUILDPLATFORM` — the original mistake produced amd64 wheels and left Playwright
+out of the copied site-packages, causing `playwright: not found` at the final step.
+
+**Verified:** `docker image inspect project-aura-backend:arm64 --format '{{.Architecture}}'`
+returns `arm64`. Image ~1.03 GB. Arm64 Chromium, Firefox and WebKit installed.
+
+Frontend arm64 image not yet built.

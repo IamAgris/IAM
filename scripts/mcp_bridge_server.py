@@ -19,8 +19,9 @@ from __future__ import annotations
 import importlib
 import json
 import os
+from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 TOOLS = frozenset(
     {
@@ -38,7 +39,7 @@ TOOLS = frozenset(
 )
 
 
-def load_dispatcher() -> Optional[Callable[[str, Dict[str, Any]], Dict[str, Any]]]:
+def load_dispatcher() -> Callable[[str, dict[str, Any]], dict[str, Any]] | None:
     spec = os.environ.get("COLAB_MCP_DISPATCHER", "").strip()
     if not spec:
         return None
@@ -47,14 +48,14 @@ def load_dispatcher() -> Optional[Callable[[str, Dict[str, Any]], Dict[str, Any]
         raise ValueError("COLAB_MCP_DISPATCHER must be module:callable")
     function = getattr(importlib.import_module(module_name), function_name)
     if not callable(function):
-        raise ValueError("COLAB_MCP_DISPATCHER target is not callable")
+        raise TypeError("COLAB_MCP_DISPATCHER target is not callable")
     return function
 
 
 class BridgeHandler(BaseHTTPRequestHandler):
-    dispatcher: Optional[Callable[[str, Dict[str, Any]], Dict[str, Any]]] = None
+    dispatcher: Callable[[str, dict[str, Any]], dict[str, Any]] | None = None
 
-    def _reply(self, status: int, payload: Dict[str, Any]) -> None:
+    def _reply(self, status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -62,7 +63,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_POST(self) -> None:  # noqa: N802 - stdlib interface
+    def do_POST(self) -> None:
         if self.path.rstrip("/") != "/mcp":
             self._reply(404, {"error": "not_found"})
             return
@@ -86,7 +87,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
             return
         try:
             result = self.dispatcher(tool, args)
-        except Exception as exc:  # pragma: no cover - dispatcher supplied by operator
+        except Exception as exc:  # noqa: BLE001 - operator dispatcher is arbitrary code
             self._reply(502, {"error": f"dispatcher_failed: {type(exc).__name__}"})
             return
         if not isinstance(result, dict):

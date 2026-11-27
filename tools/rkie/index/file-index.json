@@ -1,14 +1,14 @@
 {
     "version":  1,
-    "generatedAt":  "2026-11-27T12:15:53Z",
-    "baseCommit":  "41b8d8f0a76ef97132f0b3bf1aaa17f8f8d82a4e",
+    "generatedAt":  "2026-11-27T12:29:23Z",
+    "baseCommit":  "a33a7ec61223e52180352dbff4fb3999cb2342a8",
     "configVersion":  1,
     "stats":  {
-                  "files":  978,
-                  "added":  0,
-                  "changed":  2,
+                  "files":  981,
+                  "added":  3,
+                  "changed":  12,
                   "removed":  0,
-                  "unchanged":  976
+                  "unchanged":  966
               },
     "files":  [
                   {
@@ -6206,8 +6206,8 @@
                   },
                   {
                       "path":  "backend/app/services/iplci/gateway.py",
-                      "sha256":  "e9ef09a4f35228299e528a29178c82b43c8201cfecc2c73c16e4572064b37f87",
-                      "bytes":  7127,
+                      "sha256":  "7dc7c1ef390d12f4ec164a4ac0399b4ee88e8acec39a3ef303ba9b202587db03",
+                      "bytes":  8366,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -6297,8 +6297,8 @@
                   },
                   {
                       "path":  "backend/app/services/iplci/service.py",
-                      "sha256":  "cdb30ae3495ef97b956142c083d0cfa80865e348d2a50730ce0bce5d956b7067",
-                      "bytes":  71442,
+                      "sha256":  "c41ae04accf7840d792bdd260a5e63323ba1a1d421578d5645edda6abb6a55f4",
+                      "bytes":  71566,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -6427,8 +6427,21 @@
                   },
                   {
                       "path":  "backend/app/services/live_information_policy.py",
-                      "sha256":  "8906b49b22032f1c8e700a8e77887fd5a72bd6d2c6a28e8ca661f3b530b09eea",
-                      "bytes":  30060,
+                      "sha256":  "98e5cc97db2452494e6f83480929e08da2772f948a892528f6808e483c7b7a00",
+                      "bytes":  32319,
+                      "status":  "tracked",
+                      "category":  "service",
+                      "area":  "backend-core",
+                      "spec":  "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/app/services/live_media_service.py",
+                      "sha256":  "a348f5e7c28fd474c8f41f979522db146eea72d3078c4ebdef367cc352ff3b6e",
+                      "bytes":  3275,
                       "status":  "tracked",
                       "category":  "service",
                       "area":  "backend-core",
@@ -7470,8 +7483,8 @@
                   },
                   {
                       "path":  "backend/mypy.ini",
-                      "sha256":  "cffa8136cdef7805f189342cf020400ce9170be7ccbd10b3c5dd862709b42278",
-                      "bytes":  393,
+                      "sha256":  "3128a0ec7779653a3ddd7e3cffbdfc8bf61692134360e4e38d1cac99cc4cd580",
+                      "bytes":  459,
                       "status":  "tracked",
                       "category":  "other",
                       "area":  "general",
@@ -8432,8 +8445,8 @@
                   },
                   {
                       "path":  "backend/tests/test_iplci_p6.py",
-                      "sha256":  "830374d4f741396ea4bb18b03250455b07c7cd650d13106bccf75a24e1856da6",
-                      "bytes":  17931,
+                      "sha256":  "ae4a8df6d176ac58169880310d2a5f2087f4ad3019e128dc2449bfebf2a755d6",
+                      "bytes":  19649,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -8564,6 +8577,19 @@
                       "path":  "backend/tests/test_mcp_bridge.py",
                       "sha256":  "b6e7428d649c3274cd7de6572551f0b08842a04f1bbd39a4a7626a4d787ea9b2",
                       "bytes":  1915,
+                      "status":  "tracked",
+                      "category":  "test",
+                      "area":  "acceptance-tests",
+                      "spec":  "IAM_FINAL_CONSOLIDATION.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "backend/tests/test_mcp_bridge_server.py",
+                      "sha256":  "e14c45f30bdac21fb76334e5555047085137a9a049b190cd1db6c0ff47e7a88b",
+                      "bytes":  1243,
                       "status":  "tracked",
                       "category":  "test",
                       "area":  "acceptance-tests",
@@ -10174,8 +10200,8 @@
                   },
                   {
                       "path":  "IAM_HARDWARE_ADAPTATION.md",
-                      "sha256":  "5e4228f8caa2718fd09d4cc295496bc75a35515d13bf34f5096d9ee434dcd2ec",
-                      "bytes":  4402,
+                      "sha256":  "000e395c13c7ab522c18ad7f4c44685124f02fcb0f545244f70d54eda7b2af87",
+                      "bytes":  4763,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10304,8 +10330,8 @@
                   },
                   {
                       "path":  "IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md",
-                      "sha256":  "6cf7a383276c666b1d116d63a9eb733faa12a463c5c0e59de0f7e67e5582621a",
-                      "bytes":  53476,
+                      "sha256":  "ddfd675ed21d732b78cbb35338e5291bc326195287bd8ce76505d360fec2e26c",
+                      "bytes":  53825,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10317,8 +10343,8 @@
                   },
                   {
                       "path":  "IAM_IPLCI_LEGAL_VALIDATION_RUNBOOK.md",
-                      "sha256":  "8575d8cb146754ee0204f3c07d9fa71e6cd9454daf924bef12059274a55bd31b",
-                      "bytes":  4634,
+                      "sha256":  "935023e9784971f3cc18ea8cfe41dab121bd928d9b1c5b48acf7a41cc3b5bb07",
+                      "bytes":  4860,
                       "status":  "tracked",
                       "category":  "document-authoritative",
                       "area":  "architecture-documents",
@@ -10839,8 +10865,8 @@
                   },
                   {
                       "path":  "research/mcp/README.md",
-                      "sha256":  "40e5b901e8d05b641958f388b6c3a5d26c0fd571e188c4f98f5a39f0d097e460",
-                      "bytes":  4632,
+                      "sha256":  "25c1dfaecace17fc6163500c9fbe1a8e7c8eba499cb78ddd418fc93a535b1e06",
+                      "bytes":  5018,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "general",
@@ -10997,6 +11023,19 @@
                       "path":  "scripts/iplci_activate_policy.py",
                       "sha256":  "0f96ef77914d0a08e2247e8ec34c4e918db1132587eeaa3b8c2960eaca48109c",
                       "bytes":  2922,
+                      "status":  "tracked",
+                      "category":  "tooling",
+                      "area":  "tooling",
+                      "spec":  "ARCHITECTURE_INDEX.md",
+                      "decisions":  [
+
+                                    ],
+                      "superseded":  false
+                  },
+                  {
+                      "path":  "scripts/mcp_bridge_server.py",
+                      "sha256":  "f06ec1151ee106849e8162900db3edadb58319c43673a37ad65eab5fd6c0a465",
+                      "bytes":  4095,
                       "status":  "tracked",
                       "category":  "tooling",
                       "area":  "tooling",
@@ -12334,8 +12373,8 @@
                   },
                   {
                       "path":  "tools/rkie/notes/chat-context-assembly.md",
-                      "sha256":  "0a667d019a68d4e2b99ed2ebf99d45c02afcc010f2d0204405ed2d0bad10fb47",
-                      "bytes":  17649,
+                      "sha256":  "9ab01dcc4bfa7bfe4464a6b523b5f569e9a6524cc63f599057c29e67c0aa6da0",
+                      "bytes":  17856,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",
@@ -12438,8 +12477,8 @@
                   },
                   {
                       "path":  "tools/rkie/notes/multiarch_build.md",
-                      "sha256":  "ce97d08e2d69a6f8fca89f52299e30b0aa93a363f5b3b2ae474dfb9645a34c61",
-                      "bytes":  1213,
+                      "sha256":  "f8af0a89797462c3a40147a04208dba9253fac0112d2c8b2f5fce611a86deb25",
+                      "bytes":  1759,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",
@@ -12594,8 +12633,8 @@
                   },
                   {
                       "path":  "tools/rkie/RKIE_CAPABILITY_AUDIT.md",
-                      "sha256":  "04763b04161482b01bdf02dee9ccada23b80dd2ccf20e4bb5d2ef7d1f6633bd1",
-                      "bytes":  33431,
+                      "sha256":  "dfaef36417213e18b32e2656928dc8cb08919d8b62e7f3644a73699935c4b7ea",
+                      "bytes":  34173,
                       "status":  "tracked",
                       "category":  "document",
                       "area":  "tooling",

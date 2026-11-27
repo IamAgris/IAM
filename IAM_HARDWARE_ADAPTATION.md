@@ -96,7 +96,14 @@ Not every node needs every capability. IAM distributes workloads according to av
 `artifacts/multiarch/`. It creates a `docker-container` builder when none exists and
 requires QEMU emulation for cross-architecture builds on this AMD64 host.
 
-**Status: script written; image build not yet verified.** The first local attempt failed
-with a buildx RPC error and a subsequent Docker daemon 500, so no ARM64 image has been
-produced yet. Do not claim criterion 4 complete until an ARM64 image is built and its
-architecture verified with `docker image inspect --format '{{.Architecture}}'`.
+**Verified 27 November 2026:** `project-aura-backend:arm64` built and loaded locally;
+`docker image inspect --format '{{.Architecture}}'` returns **arm64** (image size ~1.03 GB,
+id `sha256:3e27adbef5d719ed8825af83152124f38a0799d65ba0e72211d9951772f95fcc`).
+Arm64 Chromium, Firefox and WebKit were downloaded into `/ms-playwright` during the build.
+
+The earlier failure was caused by the builder stage using `BUILDPLATFORM`, which produced
+amd64 wheels and omitted Playwright from the copied site-packages. `backend/Dockerfile`
+now builds on `TARGETPLATFORM` with a non-silent dependency install.
+
+A frontend arm64 image has not been built yet; the build script can produce it with
+`-Services frontend`.

@@ -63,6 +63,7 @@ Additionally:
 
 - AT-01…AT-12 pass in CI.
 - No high-risk operation relies on a `requires_verification` legal-context entry.
+- The gateway already refuses `commercialise`, publish/`distribute`, `disclose` and training with `IPLCI_LEGAL_VALIDATION_INCOMPLETE` until the criteria above are met. Study, reading and analysis are intentionally unaffected.
 - Professional opinions required for FTO, major licensing, litigation and ownership disputes have been obtained outside IAM and referenced as evidence.
 
 ---

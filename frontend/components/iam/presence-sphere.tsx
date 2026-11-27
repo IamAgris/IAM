@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { WORLD_LAND } from "@/lib/world-outline";
 
 export type IAMState = "idle" | "listening" | "thinking" | "speaking" | "working";
 
@@ -244,6 +245,27 @@ export function PresenceSphere({
         }
         ctx.strokeStyle = `hsla(${hue},70%,${L}%,0.4)`;
         ctx.strokeRect(left, top, mw, mh);
+
+        // Land outlines (offline vector basemap) — makes this a real map, not just a grid.
+        const project = (lon: number, lat: number): [number, number] => [
+          left + ((lon + 180) / 360) * mw,
+          top + ((90 - lat) / 180) * mh,
+        ];
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `hsla(${hue + 20},55%,${D ? 78 : 38}%,0.55)`;
+        ctx.fillStyle = `hsla(${hue + 20},40%,${D ? 70 : 45}%,0.12)`;
+        for (const ring of WORLD_LAND) {
+          if (ring.length < 3) continue;
+          ctx.beginPath();
+          ring.forEach(([lon, lat], i) => {
+            const [x, y] = project(lon, lat);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
         hitRef.current = [];
         mapPlacesRef.current.forEach((p, i) => {
           const x = left + ((p.longitude + 180) / 360) * mw;
