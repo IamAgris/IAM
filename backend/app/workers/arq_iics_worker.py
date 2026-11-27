@@ -6,6 +6,7 @@ bounded retries are explicit, and failures are reported as failures.
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict
 
 from arq import cron
@@ -13,8 +14,12 @@ from arq.connections import RedisSettings
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
+from app.services.iics.egress import default_gateway, enforce
 from app.services.iics.ledger import ActionLedger
 from app.services.iics.scheduler import ScheduledResearchService
+from app.services.iics.site_policy import SitePolicyStore
+from app.services.iics.source_registry import SourceRegistry
+from app.services.iics.threat_intel import AdvisoryIngestor
 from app.services.research_service import ResearchService
 
 
@@ -40,7 +45,7 @@ async def run_scheduled_research(
             permission_source="legal_gateway",
         )
         try:
-            result = await ResearchService(db).research_topic(
+            result = await ResearchService().research_topic(
                 task["query"],
                 store_as_memory=True,
                 store_as_knowledge=False,
@@ -70,9 +75,64 @@ async def enqueue_due_research(ctx: Dict[str, Any]) -> int:
     return len(tasks)
 
 
+async def poll_threat_feeds(ctx: Dict[str, Any]) -> int:
+    """Poll allowlisted advisory feeds through the egress gateway."""
+    ingested = 0
+    async with AsyncSessionLocal() as db:
+        ingestor = AdvisoryIngestor(db)
+        for url in settings.iics_threat_feeds:
+            if not enforce(url).allowed:
+                continue
+            result = await default_gateway().fetch(url)
+            if not result.get("ok"):
+                continue
+            try:
+                payload = json.loads(result.get("body") or "{}")
+            except ValueError:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            source = "nvd" if "nvd" in url.lower() else "osv"
+            outcome = await ingestor.ingest(payload, source)
+            ingested += int(outcome.get("inserted") or 0)
+    return ingested
+
+
+async def refresh_site_policies(ctx: Dict[str, Any]) -> int:
+    """Refresh robots/TOS snapshots for registered web sources."""
+    refreshed = 0
+    async with AsyncSessionLocal() as db:
+        store = SitePolicyStore(db)
+        for source in await SourceRegistry(db).list(active_only=True):
+            url = str(source.get("url") or "")
+            if not url or not url.lower().startswith(("http://", "https://")):
+                continue
+            from urllib.parse import urljoin
+
+            robots_url = urljoin(url, "/robots.txt")
+            if not enforce(robots_url).allowed:
+                continue
+            result = await default_gateway().fetch(robots_url)
+            if not result.get("ok"):
+                continue
+            await store.record(
+                str(source.get("domain") or ""),
+                robots_text=str(result.get("body") or "")[:100_000],
+                ttl_hours=settings.iics_site_policy_refresh_minutes // 60 or 1,
+                source_url=robots_url,
+                notes="robots.txt is a crawling signal, never permission",
+            )
+            refreshed += 1
+    return refreshed
+
+
 class WorkerSettings:
     functions = [run_scheduled_research, enqueue_due_research]
-    cron_jobs = [cron(enqueue_due_research, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55})]
+    cron_jobs = [
+        cron(enqueue_due_research, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}),
+        cron(poll_threat_feeds, minute={0, 15, 30, 45}),
+        cron(refresh_site_policies, minute={0, 30}),
+    ]
     redis_settings = RedisSettings.from_dsn(settings.redis_url)
     job_timeout = 900
     max_jobs = 2

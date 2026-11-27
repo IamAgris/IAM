@@ -162,7 +162,8 @@ def test_service_policy_reports_no_paid_fallback():
 
 
 def test_redaction_removes_secret_like_values():
-    cleaned = redact({"token": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"})
+    # Synthetic token used only to exercise redaction; not a credential.
+    cleaned = redact({"token": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"})  # gitleaks:allow
     assert "ghp_" not in str(cleaned)
 
 

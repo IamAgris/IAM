@@ -6,9 +6,11 @@ and does not grant authority — it only confirms that the carrier is ready.
 
 import os
 import sys
+from typing import List
 
 
-def main() -> int:
+def check() -> List[str]:
+    """Return configuration failures; never include secret values."""
     address = os.environ.get("CREATOR_EMAIL", "").strip()
     domain = os.environ.get("CREATOR_EMAIL_DOMAIN", "").strip().lower()
     transport = os.environ.get("CREATOR_EMAIL_TRANSPORT", "log").strip().lower()
@@ -17,15 +19,14 @@ def main() -> int:
     password = os.environ.get("CREATOR_SMTP_PASSWORD", "").strip()
     public_key = os.environ.get("CREATOR_PUBLIC_KEY", "").strip()
     gateway = os.environ.get("CREATOR_GATEWAY_SECRET", "").strip()
-
-    failures = []
+    failures: List[str] = []
     if not address or "@" not in address:
         failures.append("CREATOR_EMAIL must be a full address")
     else:
-        actual_domain = address.rsplit("@", 1)[1].lower()
-        if domain and actual_domain != domain and not actual_domain.endswith("." + domain):
+        actual = address.rsplit("@", 1)[1].lower()
+        if domain and actual != domain and not actual.endswith("." + domain):
             failures.append("CREATOR_EMAIL is outside CREATOR_EMAIL_DOMAIN")
-        if actual_domain in {"gmail.com", "outlook.com", "hotmail.com", "yahoo.com"}:
+        if actual in {"gmail.com", "outlook.com", "hotmail.com", "yahoo.com"}:
             failures.append("use the private domain, not a public mailbox")
     if transport != "smtp":
         failures.append("CREATOR_EMAIL_TRANSPORT must be 'smtp'")
@@ -39,6 +40,20 @@ def main() -> int:
         failures.append("CREATOR_PUBLIC_KEY is required for signature verification")
     if not gateway:
         failures.append("CREATOR_GATEWAY_SECRET is required to receive signed decisions")
+    return failures
+
+
+def main() -> int:
+    address = os.environ.get("CREATOR_EMAIL", "").strip()
+    domain = os.environ.get("CREATOR_EMAIL_DOMAIN", "").strip().lower()
+    transport = os.environ.get("CREATOR_EMAIL_TRANSPORT", "log").strip().lower()
+    host = os.environ.get("CREATOR_SMTP_HOST", "").strip()
+    user = os.environ.get("CREATOR_SMTP_USER", "").strip()
+    password = os.environ.get("CREATOR_SMTP_PASSWORD", "").strip()
+    public_key = os.environ.get("CREATOR_PUBLIC_KEY", "").strip()
+    gateway = os.environ.get("CREATOR_GATEWAY_SECRET", "").strip()
+
+    failures = check()
 
     print(f"creator_email_domain: {domain or '<unset>'}")
     print(f"transport: {transport}")

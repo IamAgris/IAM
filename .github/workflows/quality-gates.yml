@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install test tooling
-        run: python -m pip install pytest
+        run: python -m pip install pytest pyyaml watchdog
       - name: Repository intelligence tests
         run: python -m pytest tools/rkie/tests -q
       - name: Search quality benchmark

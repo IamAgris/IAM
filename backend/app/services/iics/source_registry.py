@@ -192,6 +192,24 @@ class SourceRegistry:
         await self.db.refresh(row)
         return self._claim_dict(row)
 
+    async def add_media_pages(self, source_id: str, pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Retain extracted page text as unverified claim evidence."""
+        created: List[Dict[str, Any]] = []
+        for page in pages[:100]:
+            text = str(page.get("text") or "").strip()
+            if not text:
+                continue
+            created.append(
+                await self.add_claim(
+                    source_id,
+                    text[:10_000],
+                    0.2,
+                    locator=str(page.get("page") or ""),
+                    label="unverified",
+                )
+            )
+        return created
+
     async def claims(self, source_id: str) -> List[Dict[str, Any]]:
         result = await self.db.execute(
             select(IICSClaim).where(IICSClaim.source_id == source_id)

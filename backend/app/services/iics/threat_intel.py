@@ -215,3 +215,19 @@ class CredentialRotationPolicy:
             if rotated + timedelta(days=interval_days) <= moment:
                 due.append(credential.reference)
         return due
+
+    @staticmethod
+    def due_from_vault(
+        records: List[Mapping[str, Any]],
+        now: Optional[datetime] = None,
+    ) -> List[str]:
+        """Map vault public records to rotation references (no secret values)."""
+        refs = [
+            CredentialRef(
+                str(record.get("key_id") or record.get("id") or "unknown"),
+                str(record.get("rotated_at") or record.get("updated_at") or ""),
+                str(record.get("provider") or "iam"),
+            )
+            for record in records
+        ]
+        return CredentialRotationPolicy.due(refs, interval_days, now)

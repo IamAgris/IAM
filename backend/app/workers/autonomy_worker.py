@@ -136,7 +136,7 @@ class AutonomyWorker:
 
             # 3. Reason and evaluate via the LiteLLM model gateway
             self.state = "working"
-            decision = await self._reason(recent_messages[-1], relevant_memories)
+            decision = await self._reason(recent_messages[-1], relevant_memories, db)
 
             # 4. Record decision
             decision_record = DecisionRecord(
@@ -179,7 +179,10 @@ class AutonomyWorker:
         ]
 
     async def _reason(
-        self, message: Dict[str, Any], memories: List[Dict[str, Any]]
+        self,
+        message: Dict[str, Any],
+        memories: List[Dict[str, Any]],
+        db: Any,
     ) -> Dict[str, Any]:
         """Reason about the next action through the LiteLLM model gateway."""
         memory_context = "\n".join(
@@ -209,6 +212,7 @@ class AutonomyWorker:
                 temperature=0.2,
                 max_tokens=256,
                 timeout=60.0,
+                db=db,
             )
             content = result["choices"][0]["message"]["content"]
             content = content.strip()

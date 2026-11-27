@@ -491,6 +491,11 @@ export function PresenceSphere({
     };
   }, []);
 
+  // With reduced motion there is no animation loop — redraw only when data changes.
+  React.useEffect(() => {
+    if (reducedMotion) drawRef.current?.();
+  }, [reducedMotion, state, mode, nodes, activity, sourceNodes, connections, clusters, graphConnections, freshness]);
+
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const hit = hitRef.current.find(
       (n) => Math.hypot(n.x - e.clientX, n.y - e.clientY) < 18,

@@ -141,7 +141,7 @@ class PermissionGateTests(unittest.IsolatedAsyncioTestCase):
     @staticmethod
     def _gate(internet_decision, legal_decision):
         internet = MagicMock()
-        internet.check_permission = AsyncMock(return_value=internet_decision)
+        internet.check_internet_permission_only = AsyncMock(return_value=internet_decision)
         legal = MagicMock()
         legal.store = MagicMock()
         legal.store.get_source = AsyncMock(return_value={"id": "src-1"})

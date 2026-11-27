@@ -314,3 +314,15 @@ Diagnosis of the two red workflows:
 - **Quality gates** — four jobs failed: `types` (full-repo mypy ratchet drifted from 1995 to 1997 baseline errors; two of the new errors were fixed locally, but more appeared in concurrently added `hbi/synthetic.py` and `live_evidence_cache.py`), `sdk-contracts` (Python SDK tests pass locally after `pip install -e`, so this needs CI log review), `repo-intel` (all individual commands pass locally with correct argument quoting; needs CI log review), and `acceptance` (failed at "Start minimum IAM stack" on the GitHub runner).
 
 GitHub Actions execution is therefore **proven**; a clean full suite is **not** yet achieved. The remaining failures are in concurrently added code and dependency advisories, and were not silently suppressed.
+
+#### Remediation applied after the red run
+
+| Failure | Fix |
+|---|---|
+| Supply chain: `ecdsa`/`python-jose` advisories with no upstream fixes | Both packages were declared in `backend/pyproject.toml` but **never imported anywhere in the codebase**. Removed from `pyproject.toml` and `backend/requirements.lock.txt`; local `pip-audit` now reports **no known vulnerabilities** (exit 0). |
+| `quality-gates / sdk-contracts` | The job ran `python -m pytest` without installing it. Added `pytest` to the install step. Tests pass locally (13/13). |
+| `quality-gates / repo-intel` | Same missing `pytest` dependency in the job. Added an explicit install step; all individual repo-intel commands pass locally with correct argument quoting. |
+| `quality-gates / types` | Mypy ratchet was drifting from concurrently added modules. Those errors were subsequently resolved in the tree; `check_mypy_ratchet.py` now reports `RESULT: OK`. |
+| `quality-gates / acceptance` | CI logs require authenticated API access, so the root cause could not be read. Added a `failure()` diagnostics step that prints `docker compose ps` and 100 lines of service logs, so the next run will expose it. The same diagnostics were added to `continuous-assurance.yml`. |
+
+Local verification after remediation: **921 tests passed**, coverage **67.63%**, ruff clean, OpenAPI 775/775, migrations 58/58, `pip-audit` clean. A follow-up commit was pushed to re-run the workflows; its results are not yet confirmed in this document.

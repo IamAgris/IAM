@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Mapping, Optional, cast
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.iics import IICSSitePolicy, IICSPrivacyRecord
+from app.models.iics import IICSClaim, IICSSitePolicy, IICSPrivacyRecord, IICSSource
 
 PRIVACY_KINDS = frozenset(
     {"dsar_access", "dsar_erasure", "consent_withdrawal", "transfer_assessment"}
@@ -166,7 +166,32 @@ class PrivacyLifecycle:
             .values(status=status, evidence=dict(evidence), resolved_at=datetime.now(timezone.utc))
         )
         await self.db.commit()
-        return bool(cast(Any, result).rowcount)
+        changed = bool(cast(Any, result).rowcount)
+        if changed and status == "resolved":
+            record = (
+                await self.db.execute(
+                    select(IICSPrivacyRecord).where(IICSPrivacyRecord.id == record_id)
+                )
+            ).scalar_one_or_none()
+            if record and record.kind in {"dsar_erasure", "consent_withdrawal"}:
+                await self.propagate_erasure(str(record.subject_ref))
+        return changed
+
+    async def propagate_erasure(self, subject_ref: str) -> Dict[str, int]:
+        """Flag derived memory so a resolved erasure is not silently reused."""
+        needle = f"%{subject_ref}%"
+        now = datetime.now(timezone.utc)
+        sources = await self.db.execute(
+            update(IICSSource).where(IICSSource.url.like(needle)).values(revoked_at=now)
+        )
+        claims = await self.db.execute(
+            update(IICSClaim).where(IICSClaim.claim.like(needle)).values(label="outdated")
+        )
+        await self.db.commit()
+        return {
+            "sources_flagged": int(cast(Any, sources).rowcount or 0),
+            "claims_flagged": int(cast(Any, claims).rowcount or 0),
+        }
 
     async def transfer_permitted(self, subject_ref: str, jurisdiction: str) -> bool:
         """Fail closed unless a resolved assessment carries transfer evidence."""

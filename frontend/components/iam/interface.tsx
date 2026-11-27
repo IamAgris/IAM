@@ -1084,6 +1084,13 @@ export function IAMInterface() {
                 <span className="opacity-50">{c.count}</span>
               </button>
             ))}
+            {sources.slice(0, 6).map((source) => (
+              <button key={source.id} onClick={() => { setSelectedSource(source); setShowOptions(false); }}
+                aria-label={`Inspect source ${source.domain || source.title}`}
+                className="w-full truncate text-left opacity-60 hover:opacity-100">
+                · {source.domain || source.title}
+              </button>
+            ))}
             {graphConnections.slice(0, 4).map((link, i) => (
               <div key={link.id || i} className="truncate opacity-60">
                 {link.from_cluster || link.from} → {link.to_cluster || link.to}

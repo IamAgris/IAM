@@ -42,17 +42,19 @@ async def authorize_tool_call(
     if not tool_name:
         raise ToolAuthorizationError("tool_name_required", "tool_name_required")
 
-    if governance_context and governance_context.get("source_id"):
-        from app.services.iplci.gateway import GovernanceRefusal
-        from app.services.iplci.integration import enforce_agent_request
+    from app.services.iplci.context import resolve_governance_context
+    from app.services.iplci.gateway import GovernanceRefusal
+    from app.services.iplci.integration import enforce_agent_request
 
+    resolved = resolve_governance_context(governance_context)
+    if resolved:
         try:
             await enforce_agent_request(
                 db,
                 action=TOOL_ACTION,
-                source_id=governance_context["source_id"],
-                agent_id=str(governance_context.get("agent_id") or "main"),
-                jurisdiction=governance_context.get("jurisdiction"),
+                source_id=resolved["source_id"],
+                agent_id=str(resolved.get("agent_id") or "main"),
+                jurisdiction=resolved.get("jurisdiction"),
             )
         except GovernanceRefusal as exc:
             raise ToolAuthorizationError(str(exc), exc.code)

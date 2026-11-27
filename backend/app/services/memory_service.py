@@ -46,12 +46,14 @@ class MemoryService:
         governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Store a new memory item with provenance tracking and embedding."""
-        if governance_context and governance_context.get("source_id"):
-            from app.services.iplci.gateway import get_gateway
+        from app.services.iplci.context import resolve_governance_context
+        from app.services.iplci.gateway import get_gateway
 
+        resolved = resolve_governance_context(governance_context)
+        if resolved:
             await get_gateway().enforce_collection(
-                source_id=governance_context["source_id"],
-                agent_id=governance_context.get("agent_id", "main"),
+                source_id=resolved["source_id"],
+                agent_id=str(resolved.get("agent_id") or "main"),
             )
         memory = MemoryItem(
             content=content,
@@ -214,27 +216,28 @@ class MemoryService:
         return True
 
     async def _generate_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate embedding via LiteLLM gateway."""
+        """Generate an embedding locally; never call a paid embedding provider.
+
+        OD-04/free-models-only: semantic recall is optional. When Ollama or the
+        local embedding tag is unavailable, callers fall back to deterministic
+        keyword recall and record that similarity was not measured.
+        """
+        if settings.memory_embedding_provider != "local" or not settings.ollama_enabled:
+            return None
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    f"{settings.litellm_base_url}/embeddings",
-                    headers={
-                        "Authorization": f"Bearer {settings.litellm_master_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": "text-embedding-3-small",
-                        "input": text,
-                    },
-                    timeout=30.0,
+                    f"{settings.ollama_base_url.rstrip('/')}/api/embed",
+                    json={"model": settings.memory_embedding_model, "input": text},
                 )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data["data"][0]["embedding"]
-                else:
-                    logger.warning(f"Embedding API returned {response.status_code}")
-                    return None
-        except Exception as e:
-            logger.error(f"Embedding generation failed: {e}")
+            if response.status_code != 200:
+                logger.warning(f"Local embedding provider returned {response.status_code}")
+                return None
+            data = response.json()
+            vectors = data.get("embeddings") or (
+                [data["embedding"]] if data.get("embedding") else []
+            )
+            return [float(value) for value in vectors[0]] if vectors else None
+        except Exception as exc:
+            logger.debug(f"Local embedding unavailable: {exc}")
             return None

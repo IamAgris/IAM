@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.creator_communication import CreatorCommunicationService
 from app.services.creatorapproval_service import CreatorApprovalService
+from app.services.iics.threat_intel import DLPEngine
 
 
 class CreatorEmailBridge:
@@ -43,6 +44,9 @@ class CreatorEmailBridge:
 
     async def notify(self, update: str, context: Optional[str] = None) -> Dict[str, Any]:
         """Send an informational status update. No authority is created."""
+        outcome = DLPEngine.check(update, "creator_email")
+        if not outcome["allowed"]:
+            return {"status": "blocked", "reason": "dlp", "matched_labels": outcome["matched_labels"]}
         return dict(await self.communication.send_status(update, context=context))
 
     async def qa_alert(
@@ -97,6 +101,14 @@ class CreatorEmailBridge:
         recorded by CreatorApprovalService.decide(). This bridge never grants
         authority itself.
         """
+        dlp = DLPEngine.check(f"{summary}\n{reason or ''}", "creator_email")
+        if not dlp["allowed"]:
+            return {
+                "authority_bearing": False,
+                "status": "blocked",
+                "reason": "dlp",
+                "matched_labels": dlp["matched_labels"],
+            }
         request = await self.approvals.create_request(
             action_type=action_type,
             summary=summary,

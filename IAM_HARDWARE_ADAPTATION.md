@@ -86,3 +86,17 @@ Not every node needs every capability. IAM distributes workloads according to av
 8. Adds no hard dependency on a single hardware vendor.
 9. ARM64 and x86-64 peers synchronise compatible knowledge.
 10. Degrades gracefully on low-resource devices.
+
+---
+
+## Implementation note — multi-arch build (27 November 2026)
+
+`scripts/build-multiarch.ps1` builds backend and frontend images for `linux/amd64` and
+`linux/arm64` with buildx, exporting one loadable Docker archive per platform under
+`artifacts/multiarch/`. It creates a `docker-container` builder when none exists and
+requires QEMU emulation for cross-architecture builds on this AMD64 host.
+
+**Status: script written; image build not yet verified.** The first local attempt failed
+with a buildx RPC error and a subsequent Docker daemon 500, so no ARM64 image has been
+produced yet. Do not claim criterion 4 complete until an ARM64 image is built and its
+architecture verified with `docker image inspect --format '{{.Architecture}}'`.

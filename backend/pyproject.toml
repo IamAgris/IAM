@@ -19,6 +19,8 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "python-dotenv>=1.0.1",
     "python-multipart>=0.0.9",
+    # Ed25519 signing/verification and AES-GCM: used by Creator authority and crypto service.
+    "cryptography>=42.0.0",
     "loguru>=0.7.0",
     "litellm>=1.40.0",
     "langgraph>=0.2.0",

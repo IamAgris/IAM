@@ -16,6 +16,7 @@ from app.services.iics import (
     BenchmarkSuite,
     BudgetLimit,
     ConfidenceCalibrator,
+    CredentialRotationPolicy,
     CreatorEmailBridge,
     DLPEngine,
     EgressGateway,
@@ -29,8 +30,10 @@ from app.services.iics import (
     SourceRegistry,
     StrategySelector,
     label_for_confidence,
+    register_iics_tools,
 )
 from app.models.iics import IICSBenchmarkResult
+from app.services.model_credential_vault import ModelCredentialVault
 
 router = APIRouter(prefix="/api/v1/iics", tags=["iics-foundation"])
 
@@ -92,6 +95,7 @@ async def authorize(payload: AuthorizeRequest, db: AsyncSession = Depends(get_db
         payload.url,
         purpose=payload.purpose,
         jurisdiction=payload.jurisdiction,
+        notifier=CreatorEmailBridge(db),
     )
 
 
@@ -254,6 +258,7 @@ class MediaExtractRequest(BaseModel):
     content_type: str = ""
     filename: str = ""
     allow_ocr: bool = False
+    source_url: Optional[str] = None
 
 
 class AdvisoryIngestRequest(BaseModel):
@@ -288,14 +293,16 @@ class PrivacyResolveRequest(BaseModel):
 
 
 @router.post("/media/extract")
-async def extract_media(payload: MediaExtractRequest) -> Dict[str, Any]:
+async def extract_media(
+    payload: MediaExtractRequest, db: AsyncSession = Depends(get_db_session)
+) -> Dict[str, Any]:
     """Extract text/metadata locally. Content remains untrusted data."""
     try:
         raw = base64.b64decode(payload.content_b64, validate=True)
     except Exception as exc:
         raise HTTPException(status_code=400, detail="invalid_base64") from exc
     try:
-        return MediaDocumentService().prepare(
+        result = MediaDocumentService().prepare(
             raw,
             content_type=payload.content_type,
             filename=payload.filename,
@@ -303,6 +310,14 @@ async def extract_media(payload: MediaExtractRequest) -> Dict[str, Any]:
         )
     except MediaError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if payload.source_url:
+        registry = SourceRegistry(db)
+        source = await registry.register(payload.source_url, source_type="document")
+        claims = await registry.add_media_pages(str(source["id"]), result.get("pages") or [])
+        result["source_id"] = source["id"]
+        result["claims_added"] = len(claims)
+        result["quarantine"] = "pending_scan"
+    return result
 
 
 @router.post("/security/advisories/ingest")
@@ -310,6 +325,18 @@ async def ingest_advisories(
     payload: AdvisoryIngestRequest, db: AsyncSession = Depends(get_db_session)
 ) -> Dict[str, Any]:
     return await AdvisoryIngestor(db).ingest(payload.payload, payload.source)
+
+
+@router.get("/security/credentials/rotation-due")
+async def rotation_due(
+    interval_days: int = 90, db: AsyncSession = Depends(get_db_session)
+) -> Dict[str, Any]:
+    """Report vault key references due for rotation. Never returns secret values."""
+    records = await ModelCredentialVault(db).list_public()
+    return {
+        "due": CredentialRotationPolicy.due_from_vault(records, interval_days),
+        "checked": len(records),
+    }
 
 
 @router.get("/security/advisories")
@@ -386,6 +413,12 @@ async def transfer_permitted(
 ) -> Dict[str, Any]:
     allowed = await PrivacyLifecycle(db).transfer_permitted(subject_ref, jurisdiction)
     return {"permitted": allowed, "subject_ref": subject_ref, "jurisdiction": jurisdiction}
+
+
+@router.post("/tools/register")
+async def register_tools(db: AsyncSession = Depends(get_db_session)) -> List[Dict[str, Any]]:
+    """Idempotently expose IICS capabilities to the local primary model."""
+    return await register_iics_tools(db)
 
 
 class CreatorNotifyRequest(BaseModel):
@@ -511,11 +544,18 @@ async def run_qa(db: AsyncSession = Depends(get_db_session)) -> Dict[str, Any]:
             )
         )
     await db.commit()
+    notification = {"status": "skipped", "reason": "no_regressions"}
+    if regressions:
+        try:
+            notification = await CreatorEmailBridge(db).qa_alert(regressions, results)
+        except Exception as exc:  # QA evidence must survive a transport failure
+            notification = {"status": "failed", "error": type(exc).__name__}
     return {
         "results": results,
         "gate_allowed": allowed,
         "regressions": regressions,
         "previous_baseline": baseline,
+        "creator_notification": notification,
     }
 
 

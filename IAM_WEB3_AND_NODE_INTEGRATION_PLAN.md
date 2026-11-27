@@ -287,8 +287,9 @@ Operator procedure for the remaining external inputs: `IAM_WEB3_ACTIVATION_RUNBO
 | P7 accounting/monitoring | Implemented (no auto-correction) | read-only `reconciliation.py`, `/web3/reconcile`; `monitoring.py` writes `web3_alert` + high-severity `SecurityIncident`; automated correction deferred |
 | P8 production gates | Partial | `activation.py` + `/web3/activation` + existing `/api/v1/deployment/preflight` now gate on signed OD-53 assertion, testnet evidence, executor URL and credentials; owner signature still pending |
 | Extended Doc 33 modules | Implemented (research/prepare only) | `defi.py`, `x402.py`, `contracts.py`, `nft.py`, `dao.py`, `cross_chain.py`, `threat_intel.py`, `onchain_analysis.py` + `/api/v1/web3-extended`; no execution path |
+| Wallet ecosystem, ops, governance records | Implemented | real SIWE verification (`keccak.py` + `secp256k1.py`), session keys, multisig, backups; `transaction_ops.py` (nonce/gas/queue/simulation/recovery); `registries.py`, `emergency.py`, `accounting.py`, `web3_learning.py`, `business.py`, `non_evm.py`, `fiat.py` |
 
-Verification run: 43 Web3 tests pass (25 core + 18 extended); full backend suite 830 tests pass; `ruff`,
+Verification run: 54 Web3 tests pass (25 core + 18 extended + 11 ops/SIWE); `ruff`,
 `compileall`, migration-order check, OpenAPI drift check and the 10 HBI acceptance gates
 all pass. The append-only database trigger is defined in migration 054 and has **not**
 been applied to a live database in this environment.
@@ -303,7 +304,7 @@ capability is implemented beyond the informational status above. When implementa
 and this plan disagree, the frozen specification wins for intent and source code
 remains the truth for what runs.
 
-**Concurrent-work note:** at final verification the wider suite had grown to 736 tests
-and reported three failures in unrelated modules (`test_iics_foundation` (2) and
-`test_p2p_and_aegis` (1)) while the Web3 subset passed in full. Those failures were not
-introduced by the Web3 changes and were left untouched.
+**Concurrent-work note:** at final verification the wider suite had grown to 855 tests
+and reported two failures in unrelated `test_phase9_conformance` (UWAIE) cases while all
+54 Web3 tests passed. Those failures were not introduced by the Web3 changes and were
+left untouched.

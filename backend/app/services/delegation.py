@@ -130,7 +130,10 @@ async def run(
 
     try:
         specialist = await service.chat(
-            specialist_messages, model=delegate_model, temperature=0.2
+            specialist_messages,
+            model=delegate_model,
+            temperature=0.2,
+            db=db,
         )
         specialist_text = str(
             specialist.get("choices", [{}])[0].get("message", {}).get("content", "")
@@ -151,7 +154,20 @@ async def run(
                 + specialist_text[:8000],
             },
         ]
-        reviewed = await service.chat(review_messages, temperature=0.0)
+        status = await service.resolve()
+        if status.mode != "ollama":
+            return DelegationResult(
+                "rejected",
+                delegate_model,
+                reason="IAM local primary unavailable; independent verification refused",
+                authorization_id=str(authority.get("authorization_id")),
+            )
+        reviewed = await service.chat(
+            review_messages,
+            model=settings.iam_primary_model,
+            temperature=0.0,
+            db=db,
+        )
         review_text = str(
             reviewed.get("choices", [{}])[0].get("message", {}).get("content", "")
         )

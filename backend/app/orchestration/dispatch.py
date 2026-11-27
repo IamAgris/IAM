@@ -39,8 +39,11 @@ async def dispatch(db: Any, action: str, payload: Mapping[str, Any]) -> Dict[str
     if action not in AVAILABLE:
         return {"status": "failure", "action": action, "error": "unknown_action"}
 
+    from app.services.iplci.context import resolve_governance_context
+
     governance = payload.get("governance_context") or {}
-    if governance.get("source_id"):
+    resolved_governance = resolve_governance_context(governance)
+    if resolved_governance:
         from app.services.iplci.gateway import GovernanceRefusal
         from app.services.iplci.integration import enforce_agent_request
 
@@ -48,9 +51,9 @@ async def dispatch(db: Any, action: str, payload: Mapping[str, Any]) -> Dict[str
             await enforce_agent_request(
                 db,
                 action=action,
-                source_id=governance["source_id"],
-                agent_id=str(governance.get("agent_id") or "main"),
-                jurisdiction=governance.get("jurisdiction"),
+                source_id=resolved_governance["source_id"],
+                agent_id=str(resolved_governance.get("agent_id") or "main"),
+                jurisdiction=resolved_governance.get("jurisdiction"),
             )
         except GovernanceRefusal as exc:
             return {

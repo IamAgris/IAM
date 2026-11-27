@@ -15,13 +15,18 @@ afterwards.
 import base64
 import os
 import sys
+from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 
 def load_key() -> Ed25519PrivateKey:
-    raw = os.environ.get("IAM_CREATOR_SIGNING_KEY", "").strip()
+    key_file = os.environ.get("IAM_CREATOR_SIGNING_KEY_FILE", "").strip()
+    if key_file:
+        raw = Path(key_file).expanduser().read_text(encoding="utf-8").strip()
+    else:
+        raw = os.environ.get("IAM_CREATOR_SIGNING_KEY", "").strip()
     if not raw:
         raise SystemExit("IAM_CREATOR_SIGNING_KEY is not set")
     if "-----BEGIN" in raw:

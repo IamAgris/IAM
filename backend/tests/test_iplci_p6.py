@@ -260,6 +260,37 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
                     governance_context={"source_id": "s1"},
                 )
 
+    async def test_ambient_context_reaches_legacy_call_sites(self):
+        from unittest.mock import AsyncMock, patch
+
+        from app.services.iplci.context import governance_context
+        from app.services.tool_authorization import ToolAuthorizationError, authorize_tool_call
+
+        refusal = GovernanceRefusal("IPLCI_DENIED", "BLOCKED", "CRITICAL", "blocked")
+        with patch(
+            "app.services.iplci.integration.enforce_agent_request",
+            new=AsyncMock(side_effect=refusal),
+        ) as enforced:
+            async with governance_context({"source_id": "ambient-1", "agent_id": "sub-9"}):
+                # No explicit governance_context argument: inherited from boundary.
+                with self.assertRaises(ToolAuthorizationError):
+                    await authorize_tool_call(None, "tool-x")
+            enforced.assert_awaited_once()
+            self.assertEqual(enforced.call_args.kwargs["source_id"], "ambient-1")
+            self.assertEqual(enforced.call_args.kwargs["agent_id"], "sub-9")
+
+        # Outside the scope the ambient context is gone.
+        from app.services.iplci.context import get_governance_context
+
+        self.assertIsNone(get_governance_context())
+
+    async def test_enforcement_requires_a_source(self):
+        from app.services.iplci.integration import enforce_collection_request
+
+        with self.assertRaises(GovernanceRefusal) as ctx:
+            await enforce_collection_request(None)
+        self.assertEqual(ctx.exception.code, "IPLCI_PROVENANCE_REQUIRED")
+
     async def test_api_training_route_requires_governance_context(self):
         from fastapi import HTTPException, Request
 

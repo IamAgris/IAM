@@ -1,54 +1,43 @@
-# IAM Multi-Architecture Build Script
-# Builds backend and frontend images for linux/amd64 + linux/arm64.
-# Usage: .\scripts\build-multiarch.ps1 [-Push] [-Tag "v1.0"]
+# Build IAM images for AMD64 and ARM64 without assuming a registry is available.
+# Requires Docker Desktop / buildx with QEMU emulation for cross-architecture builds.
+# Each platform is exported as a loadable Docker archive under artifacts/.
 
 param(
-    [switch]$Push,
-    [string]$Tag = "latest",
-    [string]$Registry = "local"
+    [string[]] $Services = @("backend", "frontend"),
+    [string[]] $Platforms = @("linux/amd64", "linux/arm64"),
+    [string] $OutputDir = "artifacts/multiarch"
 )
 
 $ErrorActionPreference = "Stop"
-$platforms = "linux/amd64,linux/arm64"
-$images = @{
-    backend = "iam-backend"
-    frontend = "iam-frontend"
-}
+New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
-Write-Host "=== IAM Multi-Architecture Build ==="
-Write-Host "Platforms: $platforms"
-Write-Host "Tag: $Tag"
-Write-Host ""
-
-# Ensure a multi-platform builder exists
-$builder = docker buildx ls | Select-String "iam-multiarch"
-if (-not $builder) {
-    Write-Host "Creating buildx builder 'iam-multiarch'..."
-    docker buildx create --name iam-multiarch --driver docker-container --use
+$builder = "iam-multiarch"
+$existing = docker buildx ls | Select-String -Pattern "^$builder\s"
+if (-not $existing) {
+    docker buildx create --name $builder --driver docker-container --use --bootstrap
 } else {
-    docker buildx use iam-multiarch
+    docker buildx use $builder
 }
 docker buildx inspect --bootstrap | Out-Null
 
-foreach ($name in $images.Keys) {
-    $imageName = $images[$name]
-    $fullTag = "$Registry/$imageName`:$Tag"
-    Write-Host "--- Building $fullTag ($name) ---"
-    $context = Join-Path (Get-Location) $name
-
-    if ($Push -and $Registry -ne "local") {
-        docker buildx build --platform $platforms -t $fullTag --push $context
-    } else {
-        docker buildx build --platform $platforms -t $fullTag --load $context 2>&1 |
-            Where-Object { $_ -notmatch "^#\d+\s" }
-        Write-Host "Loaded locally: $fullTag (current platform only with --load)"
+foreach ($service in $Services) {
+    $contextPath = if ($service -eq "backend") { "backend" } else { "frontend" }
+    foreach ($platform in $Platforms) {
+        $arch = $platform.Split("/")[1]
+        $tag = "project-aura-${service}:${arch}"
+        $dest = Join-Path $OutputDir "${service}-${arch}.tar"
+        Write-Host "Building $service for $platform -> $dest"
+        docker buildx build --platform $platform -t $tag --output "type=docker,dest=$dest" $contextPath
+        if ($LASTEXITCODE -ne 0) { throw "build failed for $service / $platform" }
+        Write-Host "Wrote $dest"
     }
 }
 
-Write-Host ""
-Write-Host "=== Build complete ==="
-Write-Host "Manifest inspection:"
-foreach ($name in $images.Keys) {
-    $imageName = $images[$name]
-    docker buildx imagetools inspect "$Registry/$imageName`:$Tag" 2>$null | Select-String "Platform|Architecture" | Select-Object -First 4
-}
+Write-Host @'
+Loading on a target machine:
+  docker load -i artifacts/multiarch/backend-arm64.tar
+  docker image inspect project-aura-backend:arm64 --format '{{.Architecture}}'
+
+To publish to a registry instead, replace --output with --push and use a tag your
+registry accepts, e.g. registry.example.com/iam/backend:arm64.
+'@

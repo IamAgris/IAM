@@ -216,5 +216,23 @@ gaps.
   OK (717 paths), migrations OK, full backend suite 855 passed.
 - Note: several files in this tree are being edited concurrently; re-run all
   gates before relying on any single result.
+
+## OD-46 alignment and policy gaps (27 November 2026)
+
+- Owner chose to follow the frozen 27 Nov OD‑46 reopening: `local-qwen-3b` /
+  `qwen2.5:3b` is primary, coder is optional secondary. Code config and LiteLLM
+  were already aligned; `.env.example` was corrected; docs already record it.
+- `delegation.run` now passes `db` to both specialist and verifier calls, names
+  the local primary explicitly for verification, and refuses verification when
+  `resolve().mode != "ollama"` (fail closed).
+- `autonomy_graph.reason` and `autonomy_worker._reason` now pass the DB session
+  into `inference_service.chat`, so preflight/vault/usage accounting run on the
+  autonomy path too.
+- `memory_service._generate_embedding` no longer calls the paid OpenAI embedding
+  endpoint. It uses Ollama `/api/embed` with `MEMORY_EMBEDDING_MODEL` (default
+  `nomic-embed-text`) and degrades to deterministic keyword recall when absent.
+- Tests: full suite 918 passed (after these changes); ruff and OpenAPI gates OK.
+- Mypy ratchet subsequently drifted again from concurrent work in unrelated
+  blockchain/skillruntime files; re-run before release.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

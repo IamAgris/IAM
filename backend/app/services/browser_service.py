@@ -15,6 +15,8 @@ from app.services.browser_engine_adapters import (
     available_engines,
     get_adapter,
 )
+from app.services.iics.egress import enforce as enforce_egress
+from app.services.iics.threat_intel import DLPEngine
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 
 logger = loguru.logger
@@ -211,6 +213,16 @@ class BrowserService:
         
         Security: treats page content as untrusted information, not instructions.
         """
+        decision = enforce_egress(url)
+        if not decision.allowed:
+            return {
+                "url": url,
+                "success": False,
+                "error": f"egress_denied:{decision.reason}",
+                "text": None,
+                "links": [],
+                "metadata": {},
+            }
         await self._ensure_browser()
 
         page = await self.get_page()
@@ -363,6 +375,17 @@ class BrowserService:
             "result": None,
             "error": None,
         }
+
+        if action == "navigate":
+            decision = enforce_egress(target)
+            if not decision.allowed:
+                result["error"] = f"egress_denied:{decision.reason}"
+                return result
+        if action in {"type", "upload", "submit"}:
+            dlp = DLPEngine.check(f"{target}\n{value or ''}", "browser")
+            if not dlp["allowed"]:
+                result["error"] = f"dlp_blocked:{','.join(dlp['matched_labels'])}"
+                return result
 
         try:
             if action == "navigate":

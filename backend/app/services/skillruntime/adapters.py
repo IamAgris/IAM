@@ -96,7 +96,7 @@ class DockerAdapter(SkillRuntimeAdapter):
             raise SkillRuntimeAdapterError("script must be a relative path under scripts/")
         return "/skill/" + path.as_posix()
 
-    def _command(self, plan: ExecutionPlan) -> list:
+    def _command(self, plan: ExecutionPlan) -> list[str]:
         if plan.network and not settings.skill_runtime_network_enabled:
             raise SkillRuntimeAdapterError(
                 "network-enabled skill execution is not enabled in this deployment"
@@ -166,7 +166,7 @@ class DockerAdapter(SkillRuntimeAdapter):
         }
 
 
-def adapter_for(name: str):
+def adapter_for(name: str) -> "SkillRuntimeAdapter":
     if name == "stub":
         return StubAdapter()
     if name == "docker":

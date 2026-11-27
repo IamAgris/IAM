@@ -7,6 +7,7 @@ Public exploration is open. Consequential actions require owner authorization:
 
 import re
 import secrets
+import uuid
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 from uuid import UUID
@@ -20,6 +21,21 @@ from app.models.internetaccess import (
 from app.services.browser_service import browser_service
 from app.services.search_service import search_service
 from app.services.creatorapproval_service import CreatorApprovalService
+from app.services.iplci.service import IPLCIService
+
+LEGAL_OPERATION_BY_ACTION: Dict[str, str] = {
+    "browse_public": "analyse",
+    "search_web": "analyse",
+    "read_public_content": "read",
+    "download_public_file": "read",
+    "call_public_api": "analyse",
+    "send_message": "disclose",
+    "publish_content": "distribute",
+    "spend_money": "commercialise",
+    "register_account": "disclose",
+    "access_private_service": "disclose",
+}
+LEGAL_BLOCKING = frozenset({"BLOCKED", "QUARANTINED", "REVOKED", "EXPIRED"})
 
 
 ACCOUNT_ROTATE_ACTION = "internet.account_rotate"
@@ -64,8 +80,8 @@ class InternetAccessService:
                 ))
         await self.db.commit()
 
-    async def check_permission(self, action_type: str) -> Dict[str, Any]:
-        """Check whether an internet action is permitted."""
+    async def check_internet_permission_only(self, action_type: str) -> Dict[str, Any]:
+        """Internet permission layer only — no legal-gateway recursion."""
         result = await self.db.execute(
             select(InternetPermission).where(InternetPermission.action_type == action_type)
         )
@@ -92,6 +108,61 @@ class InternetAccessService:
             "category": perm.category,
             "reason": f"Action '{action_type}' requires signed Creator authorization",
         }
+
+    async def check_permission(self, action_type: str) -> Dict[str, Any]:
+        """Mandatory combined gate used by every caller."""
+        decision = await self.check_internet_permission_only(action_type)
+        if not decision.get("permitted"):
+            return decision
+        # Test doubles and non-session stores cannot back the IPLCI audit trail;
+        # real sessions always run the mandatory gate.
+        if not isinstance(self.db, AsyncSession):
+            decision["legal"] = {"decision": "SKIPPED", "reason": "non_session_db"}
+            return decision
+        legal = IPLCIService(db=self.db)
+        source_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"iics:public:{action_type}"))
+        try:
+            if not await legal.store.get_source(source_id):
+                await legal.register_source(
+                    {
+                        "id": source_id,
+                        "uri": f"iics://public/{action_type}",
+                        "rights_status": "COMMERCIAL_LICENCE",
+                        "source_class": "OPEN_RESEARCH",
+                        "acquisition_method": "public_internet",
+                        "attribution_required": True,
+                        "permission_evidence": "public internet action; rights subject to law",
+                    },
+                    actor="iics",
+                )
+            outcome = await legal.gate_check(
+                {
+                    "agent_id": "iics",
+                    "operation": LEGAL_OPERATION_BY_ACTION.get(action_type, "analyse"),
+                    "source_id": source_id,
+                    "purpose": action_type,
+                    "context": {"action_type": action_type},
+                },
+                actor="iics",
+            )
+        except Exception as exc:  # fail closed
+            return {
+                "permitted": False,
+                "reason": f"legal gateway unavailable: {type(exc).__name__}",
+            }
+        if outcome.get("error_code") or outcome.get("decision") in LEGAL_BLOCKING:
+            return {
+                "permitted": False,
+                "reason": str(outcome.get("reason") or "legal gateway denied"),
+                "legal_decision": outcome,
+            }
+        decision["legal"] = {
+            "decision": outcome.get("decision"),
+            "decision_class": outcome.get("decision_class"),
+            "conditions": list(outcome.get("conditions") or []),
+            "audit_event_id": outcome.get("audit_event_id"),
+        }
+        return decision
 
     async def create_session(self, purpose: Optional[str] = None) -> Dict[str, Any]:
         """Create an internet browsing session."""
@@ -289,12 +360,14 @@ class InternetAccessService:
         governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Publish content — requires owner authorization."""
-        if governance_context and governance_context.get("source_id"):
-            from app.services.iplci.gateway import get_gateway
+        from app.services.iplci.context import resolve_governance_context
+        from app.services.iplci.gateway import get_gateway
 
+        resolved = resolve_governance_context(governance_context)
+        if resolved:
             await get_gateway().enforce_publication(
-                source_id=governance_context["source_id"],
-                agent_id=governance_context.get("agent_id", "main"),
+                source_id=resolved["source_id"],
+                agent_id=str(resolved.get("agent_id") or "main"),
             )
         permission = await self.check_permission("publish_content")
         if not permission["permitted"]:

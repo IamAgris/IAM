@@ -12,7 +12,7 @@ import loguru
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.deps import get_db_session
-from app.api.middleware import AuthMiddleware
+from app.api.middleware import AuthMiddleware, IPLCIContextMiddleware
 from app.api.middleware.request_context import RequestContextMiddleware
 from app.api.routes import (
     identity,
@@ -138,7 +138,10 @@ async def lifespan(app: FastAPI) -> Any:
     from app.services.bootstrap_service import BootstrapService
     async with AsyncSessionLocal() as session:
         await BootstrapService(session).initialize_all()
-    logger.info("IAM identity and policies initialized.")
+        from app.services.iics import register_iics_tools
+
+        await register_iics_tools(session)
+    logger.info("IAM identity, policies and IICS tools initialized.")
 
     # Start autonomy worker
     await autonomy_worker.start()
@@ -167,6 +170,9 @@ app = FastAPI(
 
 # Correlation id first so CORS and auth responses carry X-Request-ID.
 app.add_middleware(RequestContextMiddleware)
+
+# IPLCI governance context propagates from request headers to all downstream calls.
+app.add_middleware(IPLCIContextMiddleware)
 
 # CORS middleware
 app.add_middleware(

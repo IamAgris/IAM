@@ -123,6 +123,11 @@ class Settings(BaseSettings):
     iam_context_include_private_memory: bool = False
     iam_context_share_with_hosted: bool = False
 
+    # Local-only semantic memory embeddings. No paid embedding provider is used;
+    # when the local tag is absent, recall degrades to deterministic keyword search.
+    memory_embedding_provider: str = "local"  # local | none
+    memory_embedding_model: str = "nomic-embed-text"
+
     # Always-on live-information policy (proposed Doc 32). Automatic retrieval
     # uses free providers only; paid search stays fail-closed under OD-04/OD-25.
     iam_live_info_enabled: bool = True
@@ -244,6 +249,11 @@ class Settings(BaseSettings):
     browser_evidence_dir: str = ""  # empty => temp dir
     browser_task_worker_backend: str = "loop"  # loop | arq
     browser_ocr_enabled: bool = False  # opt-in: local Tesseract OCR on screenshots
+
+    # IICS overlay: allowlisted threat-intel feeds (empty means no polling).
+    iics_threat_feeds: list[str] = []
+    iics_threat_feed_interval_minutes: int = 360
+    iics_site_policy_refresh_minutes: int = 720
     uwai_upload_root: str = ""  # empty => OS temp/iam-web-uploads
     uwai_computer_use_enabled: bool = False
     mobile_agent_enabled: bool = False

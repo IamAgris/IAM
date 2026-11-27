@@ -205,6 +205,8 @@ services:
       # Opt-in local inference via Ollama
       OLLAMA_ENABLED: ${OLLAMA_ENABLED:-false}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      MEMORY_EMBEDDING_PROVIDER: ${MEMORY_EMBEDDING_PROVIDER:-local}
+      MEMORY_EMBEDDING_MODEL: ${MEMORY_EMBEDDING_MODEL:-nomic-embed-text}
       # UWAIE browser runtime lives outside /app so container rebuilds can
       # reinstall it explicitly (see README).
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
@@ -321,6 +323,30 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       BROWSER_TASK_WORKER_BACKEND: arq
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # IICS overlay: scheduled research, threat-intel feed polling and site-policy
+  # refresh on the existing OD-08 ARQ runtime. No new queue or system.
+  iics-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-iics-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_iics_worker.WorkerSettings
+    profiles: ["iics", "arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      CREATOR_EMAIL: ${CREATOR_EMAIL:-}
       APP_ENV: ${APP_ENV:-development}
     depends_on:
       postgres:

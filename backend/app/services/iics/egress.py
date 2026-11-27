@@ -156,6 +156,28 @@ class EgressGateway:
         return {"ok": False, "decision": self.assess(current).as_dict(), "error": "too_many_redirects"}
 
 
+_default_gateway: EgressGateway | None = None
+
+
+def default_gateway() -> EgressGateway:
+    """Process-wide gateway used by every outbound path."""
+    global _default_gateway
+    if _default_gateway is None:
+        _default_gateway = EgressGateway()
+    return _default_gateway
+
+
+def set_default_gateway(gateway: EgressGateway) -> None:
+    """Replace the gateway (used by tests and controlled deployments)."""
+    global _default_gateway
+    _default_gateway = gateway
+
+
+def enforce(url: str) -> EgressDecision:
+    """Mandatory assessment before any outbound request."""
+    return default_gateway().assess(url)
+
+
 def decision_from_mapping(payload: Mapping[str, object]) -> EgressDecision:
     """Rebuild a decision from a stored audit record."""
     return EgressDecision(

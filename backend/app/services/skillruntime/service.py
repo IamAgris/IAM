@@ -66,12 +66,12 @@ async def check_invocation_limit(skill_id: str, caller: str) -> bool:
             ),
         )
         allowed, _ = await limiter.check(key)
-        return allowed
+        return bool(allowed)
     limiter = _skill_limiters.setdefault(
         caller, RateLimiter(settings.skill_runtime_per_skill_limit_per_minute)
     )
     allowed, _ = limiter.check(key)
-    return allowed
+    return bool(allowed)
 
 
 class SkillRuntimeService:
@@ -137,7 +137,7 @@ class SkillRuntimeService:
     async def capabilities(self, skill_id: str) -> Dict[str, Any]:
         """The authoritative runtime view of a skill's authority."""
         package = await self._package(skill_id)
-        return await self.forge.effective_permissions(skill_id) | {
+        return dict(await self.forge.effective_permissions(skill_id)) | {
             "status": package.status,
         }
 
@@ -151,17 +151,19 @@ class SkillRuntimeService:
         caller: str = "iam",
         governance_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        if governance_context and governance_context.get("source_id"):
-            from app.services.iplci.gateway import GovernanceRefusal
-            from app.services.iplci.integration import enforce_agent_request
+        from app.services.iplci.context import resolve_governance_context
+        from app.services.iplci.gateway import GovernanceRefusal
+        from app.services.iplci.integration import enforce_agent_request
 
+        resolved = resolve_governance_context(governance_context)
+        if resolved:
             try:
                 await enforce_agent_request(
                     self.db,
                     action="skill.invoke",
-                    source_id=governance_context["source_id"],
-                    agent_id=str(governance_context.get("agent_id") or caller),
-                    jurisdiction=governance_context.get("jurisdiction"),
+                    source_id=resolved["source_id"],
+                    agent_id=str(resolved.get("agent_id") or caller),
+                    jurisdiction=resolved.get("jurisdiction"),
                 )
             except GovernanceRefusal as exc:
                 raise SkillRuntimeError(f"IPLCI governance refused skill invocation: {exc}")
@@ -204,6 +206,8 @@ class SkillRuntimeService:
                 raise SkillRuntimeError("Skill package checksum mismatch — refusing execution")
 
             directory = self.layout.current_dir(skill_id)
+            if not isinstance(directory, Path):
+                raise SkillRuntimeError("skill layout returned no package directory")
             if script:
                 path = Path(script)
                 if path.is_absolute() or path.parts[0] != "scripts" or any(

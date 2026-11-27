@@ -3,6 +3,7 @@
 import json
 import unittest
 import uuid
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from app.core.config import settings
@@ -19,6 +20,9 @@ class FakeInference:
     async def chat(self, messages, *, model=None, temperature=0.7, **_kwargs):
         self.calls.append({"messages": messages, "model": model, "temperature": temperature})
         return {"choices": [{"message": {"content": self.responses.pop(0)}}]}
+
+    async def resolve(self):
+        return SimpleNamespace(mode="ollama", model=settings.iam_primary_model)
 
 
 class FakeDB:
@@ -98,6 +102,19 @@ class DelegationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(any(isinstance(item, AuditEvent) for item in db.added))
         self.assertEqual(db.commits, 1)
         self.assertIn("Finding one", result.context_message())
+
+    async def test_verification_refused_without_local_primary(self):
+        service = FakeInference(["specialist answer", ACCEPT])
+        service.resolve = AsyncMock(return_value=SimpleNamespace(mode="hosted"))
+        with patch.object(
+            delegation.CreatorApprovalService,
+            "check_authorization",
+            new=AsyncMock(return_value=authorized()),
+        ):
+            result = await delegation.run(FakeDB(), "analyse this", service=service)
+        self.assertEqual(result.status, "rejected")
+        self.assertIn("local primary unavailable", result.reason)
+        self.assertEqual(len(service.calls), 1)  # no verifier call
 
     async def test_rejected_verification_stores_nothing(self):
         db = FakeDB()

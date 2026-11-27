@@ -65,7 +65,7 @@ class AutonomyState(TypedDict):
     steps: Annotated[List[str], operator.add]
 
 
-def _session():
+def _session() -> Any:
     """Return a fresh database session context without importing at module load."""
     from app.core.database import get_session_factory
 
@@ -162,15 +162,17 @@ async def reason(state: AutonomyState) -> dict:
         status = await inference_service.resolve()
         if not status.available:
             raise InferenceUnavailable(status.reason)
-        result = await inference_service.chat(
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.2,
-            max_tokens=256,
-            timeout=60.0,
-        )
+        async with _session() as db:
+            result = await inference_service.chat(
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.2,
+                max_tokens=256,
+                timeout=60.0,
+                db=db,
+            )
         content = str(result["choices"][0]["message"]["content"]).strip()
         if content.startswith("```"):
             content = content.strip("`")
@@ -372,9 +374,12 @@ async def execute(state: AutonomyState) -> dict:
                     "steps": ["execute:blocked"],
                 }
 
+        from app.services.iplci.context import resolve_governance_context
+
         governance_context = state.get("governance_context") or {}
+        resolved_governance = resolve_governance_context(governance_context)
         governance_step = "iplci:no_context"
-        if governance_context.get("source_id"):
+        if resolved_governance:
             from app.services.iplci.gateway import GovernanceRefusal
             from app.services.iplci.integration import enforce_agent_request
 
@@ -382,9 +387,9 @@ async def execute(state: AutonomyState) -> dict:
                 await enforce_agent_request(
                     db,
                     action=action,
-                    source_id=governance_context["source_id"],
-                    agent_id=str(governance_context.get("agent_id") or "main"),
-                    jurisdiction=governance_context.get("jurisdiction"),
+                    source_id=resolved_governance["source_id"],
+                    agent_id=str(resolved_governance.get("agent_id") or "main"),
+                    jurisdiction=resolved_governance.get("jurisdiction"),
                 )
             except GovernanceRefusal as exc:
                 return {

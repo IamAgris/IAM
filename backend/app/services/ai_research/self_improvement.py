@@ -68,14 +68,16 @@ async def prepare_candidate(
     governance_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Prepare a benchmarked candidate version. Never promotes it."""
-    if governance_context and governance_context.get("source_id"):
-        from app.services.iplci.gateway import get_gateway
+    from app.services.iplci.context import resolve_governance_context
+    from app.services.iplci.gateway import get_gateway
 
+    resolved = resolve_governance_context(governance_context)
+    if resolved:
         await get_gateway().enforce_training(
-            source_id=governance_context["source_id"],
-            dataset_id=governance_context.get("dataset_id"),
-            approval_id=governance_context.get("approval_id"),
-            agent_id=governance_context.get("agent_id", actor),
+            source_id=resolved["source_id"],
+            dataset_id=resolved.get("dataset_id"),
+            approval_id=resolved.get("approval_id"),
+            agent_id=str(resolved.get("agent_id") or actor),
         )
     store = store or default_release_store()
     adapters = list(adapters)

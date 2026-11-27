@@ -31123,6 +31123,52 @@
         }
       }
     },
+    "/api/v1/iics/security/credentials/rotation-due": {
+      "get": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Rotation Due",
+        "description": "Report vault key references due for rotation. Never returns secret values.",
+        "operationId": "rotation_due_api_v1_iics_security_credentials_rotation_due_get",
+        "parameters": [
+          {
+            "name": "interval_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 90,
+              "title": "Interval Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Rotation Due Api V1 Iics Security Credentials Rotation Due Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/iics/security/advisories": {
       "get": {
         "tags": [
@@ -31448,6 +31494,33 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iics/tools/register": {
+      "post": {
+        "tags": [
+          "iics-foundation"
+        ],
+        "summary": "Register Tools",
+        "description": "Idempotently expose IICS capabilities to the local primary model.",
+        "operationId": "register_tools_api_v1_iics_tools_register_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Register Tools Api V1 Iics Tools Register Post"
                 }
               }
             }
@@ -34046,6 +34119,894 @@
         ],
         "summary": "Onchain Whales",
         "operationId": "onchain_whales_api_v1_web3_extended_onchain_whales_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/wallets/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Wallets Policy",
+        "operationId": "wallets_policy_api_v1_web3_extended_wallets_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/wallets/siwe/verify": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Wallets Siwe Verify",
+        "operationId": "wallets_siwe_verify_api_v1_web3_extended_wallets_siwe_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/wallets/session-keys/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Wallets Session Key",
+        "operationId": "wallets_session_key_api_v1_web3_extended_wallets_session_keys_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/wallets/multisig/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Wallets Multisig",
+        "operationId": "wallets_multisig_api_v1_web3_extended_wallets_multisig_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/wallets/transfers/prepare": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Wallets Transfer",
+        "operationId": "wallets_transfer_api_v1_web3_extended_wallets_transfers_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/transactions/nonce": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Transactions Nonce",
+        "operationId": "transactions_nonce_api_v1_web3_extended_transactions_nonce_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/transactions/gas": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Transactions Gas",
+        "operationId": "transactions_gas_api_v1_web3_extended_transactions_gas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/transactions/simulate": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Transactions Simulate",
+        "operationId": "transactions_simulate_api_v1_web3_extended_transactions_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/transactions/stuck": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Transactions Stuck",
+        "operationId": "transactions_stuck_api_v1_web3_extended_transactions_stuck_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/contracts/registry": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Contracts Registry",
+        "operationId": "contracts_registry_api_v1_web3_extended_contracts_registry_get",
+        "parameters": [
+          {
+            "name": "chain_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Chain Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/tokens/registry": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Tokens Registry",
+        "operationId": "tokens_registry_api_v1_web3_extended_tokens_registry_get",
+        "parameters": [
+          {
+            "name": "chain_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Chain Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/providers/health": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Provider Health",
+        "operationId": "provider_health_api_v1_web3_extended_providers_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/emergency/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Emergency Policy",
+        "operationId": "emergency_policy_api_v1_web3_extended_emergency_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/emergency/suspend": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Emergency Suspend",
+        "operationId": "emergency_suspend_api_v1_web3_extended_emergency_suspend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/accounting/fifo": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Accounting Fifo",
+        "operationId": "accounting_fifo_api_v1_web3_extended_accounting_fifo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/accounting/unrealised": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Accounting Unrealised",
+        "operationId": "accounting_unrealised_api_v1_web3_extended_accounting_unrealised_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/accounting/exposure": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Accounting Exposure",
+        "operationId": "accounting_exposure_api_v1_web3_extended_accounting_exposure_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/learning/policy": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Learning Policy",
+        "operationId": "learning_policy_api_v1_web3_extended_learning_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/learning/research": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Learning Research",
+        "operationId": "learning_research_api_v1_web3_extended_learning_research_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/learning/benchmark": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Learning Benchmark",
+        "operationId": "learning_benchmark_api_v1_web3_extended_learning_benchmark_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/business/evaluate": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Business Evaluate",
+        "operationId": "business_evaluate_api_v1_web3_extended_business_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/networks/non-evm": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Non Evm Networks",
+        "operationId": "non_evm_networks_api_v1_web3_extended_networks_non_evm_get",
+        "parameters": [
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/fiat/candidates": {
+      "get": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Fiat Candidates",
+        "operationId": "fiat_candidates_api_v1_web3_extended_fiat_candidates_get",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/web3-extended/fiat/evaluate": {
+      "post": {
+        "tags": [
+          "web3-extended"
+        ],
+        "summary": "Fiat Evaluate",
+        "operationId": "fiat_evaluate_api_v1_web3_extended_fiat_evaluate_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -42520,6 +43481,17 @@
             "type": "boolean",
             "title": "Allow Ocr",
             "default": false
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
           }
         },
         "type": "object",
