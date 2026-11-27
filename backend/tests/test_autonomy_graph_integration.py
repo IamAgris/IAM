@@ -46,6 +46,9 @@ class FakeSession:
     def add(self, obj):
         self.added.append(obj)
 
+    async def flush(self):
+        return None
+
     async def commit(self):
         self.commits += 1
 
@@ -157,6 +160,26 @@ class CognitiveLifecycleTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(result["plan"]["action"], "memory_recall")
         self.assertIn("dispatch:memory_recall", result["plan"]["steps"])
+
+    async def test_plan_persists_goal_plan_and_ordered_tasks(self):
+        goal_id = uuid.uuid4()
+        goal = SimpleNamespace(id=goal_id, title="Improve local tooling")
+        session = FakeSession([FakeResult(value=goal)])
+        with patch_db(session):
+            result = await autonomy_graph.plan(
+                base_state(
+                    objectives=[
+                        {"type": "goal", "id": str(goal_id), "title": goal.title}
+                    ],
+                    decision={"action": "model_probe", "confidence": 0.7},
+                )
+            )
+        self.assertIn("plan_id", result["plan"])
+        self.assertEqual(len(result["plan"]["task_ids"]), 4)
+        self.assertTrue(any(type(item).__name__ == "Plan" for item in session.added))
+        self.assertEqual(
+            sum(1 for item in session.added if type(item).__name__ == "Task"), 4
+        )
 
     async def test_execute_dispatches_and_persists_execution_evidence(self):
         task_id = uuid.uuid4()

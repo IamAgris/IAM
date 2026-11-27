@@ -22,6 +22,7 @@ from app.services.event_stream import fetch_audit_events, format_sse, parse_sinc
 from app.services.source_identity import node_id_for_url
 from app.models.memory import KnowledgeItem, KnowledgeSource
 from app.models.publicrecords import PublicRecord
+from app.models.geo import GeoPlace, LiveGeoFeed
 from app.models.globalaccess import VisitorSession, VisitorLocation
 
 router = APIRouter(prefix="/api/v1/interface", tags=["interface"])
@@ -131,6 +132,36 @@ def _public_activity_payload(row) -> Dict[str, Any]:
         "event_type": row.event_type,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "details": {k: details[k] for k in ACTIVITY_DETAIL_KEYS if k in details},
+    }
+
+
+@router.get("/map")
+async def public_map_data(limit: int = 60):
+    """Public geospatial markers for the single-screen map layer."""
+    async with get_session_factory()() as db:
+        places = (
+            await db.execute(
+                select(GeoPlace)
+                .order_by(GeoPlace.created_at.desc())
+                .limit(limit)
+            )
+        ).scalars().all()
+        feeds = (await db.execute(select(LiveGeoFeed))).scalars().all()
+    return {
+        "places": [
+            {
+                "name": p.name,
+                "latitude": p.latitude,
+                "longitude": p.longitude,
+                "country_code": p.country_code,
+                "place_type": p.place_type,
+                "source": p.source,
+                "confidence": p.confidence,
+            }
+            for p in places
+        ],
+        "live_feeds": len(feeds),
+        "claim": "public_geospatial_context_only",
     }
 
 

@@ -1162,3 +1162,78 @@ async def policy_relaxation_check(
     payload: PolicyRequest, request: Request, db: AsyncSession = Depends(get_db_session)
 ) -> Any:
     return await _service(db).check_policy_relaxation(payload.model_dump(exclude_none=True), _actor(request))
+
+
+# --- Legal validation workflow (counsel completion track) ---
+
+class ValidationTaskRequest(BaseModel):
+    domain: str
+    subject: str
+    question: str
+    jurisdiction: Optional[str] = None
+    official_source_url: Optional[str] = None
+    provision_ref: Optional[str] = None
+    assigned_counsel: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ValidationEvidenceRequest(BaseModel):
+    evidence_ref: str
+    assigned_counsel: Optional[str] = None
+
+
+class ValidationVerifyRequest(BaseModel):
+    reviewer_reference: str
+    valid_until: Optional[str] = None
+    official_source_url: Optional[str] = None
+    provision_ref: Optional[str] = None
+
+
+@router.post("/validation/tasks")
+async def open_validation_task(
+    payload: ValidationTaskRequest, request: Request, db: AsyncSession = Depends(get_db_session)
+) -> Any:
+    try:
+        return await _service(db).open_validation_task(payload.model_dump(exclude_none=True), _actor(request))
+    except IPLCIError as exc:
+        raise _handle(exc)
+
+
+@router.get("/validation/tasks")
+async def list_validation_tasks(db: AsyncSession = Depends(get_db_session)) -> Any:
+    return await _service(db).validation_tasks()
+
+
+@router.post("/validation/tasks/{task_id}/evidence")
+async def record_validation_evidence(
+    task_id: str,
+    payload: ValidationEvidenceRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+) -> Any:
+    try:
+        return await _service(db).record_validation_evidence(
+            task_id, payload.model_dump(exclude_none=True), _actor(request)
+        )
+    except IPLCIError as exc:
+        raise _handle(exc)
+
+
+@router.post("/validation/tasks/{task_id}/verify")
+async def verify_validation_task(
+    task_id: str,
+    payload: ValidationVerifyRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+) -> Any:
+    try:
+        return await _service(db).verify_validation_task(
+            task_id, payload.model_dump(exclude_none=True), _actor(request)
+        )
+    except IPLCIError as exc:
+        raise _handle(exc)
+
+
+@router.get("/validation/readiness")
+async def validation_readiness(db: AsyncSession = Depends(get_db_session)) -> Any:
+    return await _service(db).readiness_report()

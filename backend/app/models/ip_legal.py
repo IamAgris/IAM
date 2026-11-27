@@ -826,3 +826,33 @@ class IPLegalPolicy(Base):  # type: ignore[misc]
         ),
     )
 
+
+class IPLegalValidationTask(Base):  # type: ignore[misc]
+    """Qualified-counsel verification task for a legal claim or source."""
+
+    __tablename__ = "ip_legal_validation_tasks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain = Column(Text, nullable=False)
+    subject = Column(Text, nullable=False)
+    jurisdiction = Column(Text, nullable=True)
+    question = Column(Text, nullable=False)
+    official_source_url = Column(Text, nullable=True)
+    provision_ref = Column(Text, nullable=True)
+    assigned_counsel = Column(Text, nullable=True)
+    status = Column(Text, nullable=False, default="pending")
+    evidence_ref = Column(Text, nullable=True)
+    reviewer_reference = Column(Text, nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    valid_until = Column(DateTime(timezone=True), nullable=True)
+    notes = Column(Text, nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','in_review','verified','rejected','superseded')",
+            name="ck_ip_legal_validation_status",
+        ),
+    )
+

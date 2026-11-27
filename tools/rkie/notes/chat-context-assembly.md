@@ -254,5 +254,23 @@ gaps.
 - Full suite 933 passed; ruff clean after fixing an unrelated preflight script;
   OpenAPI drift OK. Mypy ratchet still drifts from concurrent blockchain /
   skillruntime edits, not these changes.
+
+## Remaining wiring (27 November 2026)
+
+- `autonomy_graph.plan` now persists a `Plan` plus ordered `Task` rows for goal
+  objectives, with an in-memory `plan_id`/`task_ids` passed to later nodes.
+- `reflection.update_principle` now requires a signed Creator authorization via
+  `constitutional_policy.assert_allowed("constitution_change")`, so the
+  constitutional gate is enforced on a real protected route.
+- Added `mcp_bridge.HttpMCPToolCaller` and config (`COLAB_MCP_ENABLED`,
+  `COLAB_MCP_BRIDGE_URL`, token env). `continuous_improvement.default_adapters`
+  injects `ColabMCPDriver(caller)` only when an operator configures the bridge;
+  otherwise drivers remain absent and jobs fail closed. Human Colab sign-in is
+  still required for live execution.
+- Skill Runtime remains default-off with `stub` = simulation only; `.env.example`
+  now states that `docker` is the real restricted adapter.
+- Verification: full suite 949 passed; ruff clean; OpenAPI snapshot regenerated
+  to include concurrent route additions (810 paths). Mypy ratchet still reports
+  new errors in concurrent blockchain/suggestions/tor_intelligence files.
 - Verification: 699 backend tests pass; ruff, OpenAPI (653 paths), migrations and
   mypy ratchet (new 0, fixed 97) all OK.

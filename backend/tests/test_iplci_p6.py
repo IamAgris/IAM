@@ -291,6 +291,47 @@ class IPLCIPhase6Tests(unittest.IsolatedAsyncioTestCase):
             await enforce_collection_request(None)
         self.assertEqual(ctx.exception.code, "IPLCI_PROVENANCE_REQUIRED")
 
+    async def test_counsel_validation_workflow_completes_readiness(self):
+        from app.services.iplci import IPLCIError
+
+        readiness = await self.service.readiness_report()
+        self.assertFalse(readiness["complete"])
+        self.assertIn("no active signed compliance policy", readiness["blockers"])
+        await self.service.record_policy({
+            "version": "production-1",
+            "rules": {rule: True for rule in policy.PROTECTED_RULES},
+            "signed_by": "creator",
+            "human_approval_reference": "OD-48",
+        })
+        task = await self.service.open_validation_task({
+            "domain": "privacy",
+            "subject": "POPIA section 27 research basis",
+            "question": "Do the documented conditions apply to this corpus?",
+            "jurisdiction": "ZA",
+        })
+        self.assertEqual(task["status"], "pending")
+        with self.assertRaises(IPLCIError) as ctx:
+            await self.service.verify_validation_task(task["id"], {
+                "reviewer_reference": "iam",
+            })
+        self.assertEqual(ctx.exception.code, "IPLCI_COUNSEL_REQUIRED")
+        with self.assertRaises(IPLCIError) as ctx:
+            await self.service.verify_validation_task(task["id"], {
+                "reviewer_reference": "qualified-counsel@example.org",
+            })
+        self.assertEqual(ctx.exception.code, "IPLCI_EVIDENCE_REQUIRED")
+        await self.service.record_validation_evidence(task["id"], {
+            "evidence_ref": "official-gazette-2026-11",
+        })
+        verified = await self.service.verify_validation_task(task["id"], {
+            "reviewer_reference": "qualified-counsel@example.org",
+            "provision_ref": "section 27",
+        })
+        self.assertEqual(verified["status"], "verified")
+        final = await self.service.readiness_report()
+        self.assertTrue(final["complete"])
+        self.assertEqual(final["verified_tasks"], 1)
+
     async def test_api_training_route_requires_governance_context(self):
         from fastapi import HTTPException, Request
 

@@ -301,6 +301,11 @@
       "sequence": 60,
       "number": 63,
       "path": "063_live_research_tasks.sql"
+    },
+    {
+      "sequence": 61,
+      "number": 64,
+      "path": "064_iplci_validation.sql"
     }
   ]
 }

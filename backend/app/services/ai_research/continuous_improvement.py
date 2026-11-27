@@ -73,8 +73,13 @@ def default_store() -> FileSystemArtifactStore:
 
 
 def default_adapters() -> Any:
+    from .colab_mcp_driver import ColabMCPDriver
+    from .mcp_bridge import default_tool_caller
+
+    caller = default_tool_caller()
+    colab_driver = ColabMCPDriver(caller) if caller is not None else None
     return [
-        ColabResearchAdapter(),
+        ColabResearchAdapter(driver=colab_driver),
         KaggleResearchAdapter(),
         LightningAIResearchAdapter(),
         HuggingFaceResearchAdapter(),

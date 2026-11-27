@@ -52,17 +52,21 @@ Paste into `IAM_OWNER_DECISIONS.md` only after the signature is verified:
 
 **E-2 retrieved sources (verbatim from the live run):** "Breaking News, Latest News and Videos | CNN" (`https://www.cnn.com/`); "Latest News | 1 UN News" (`https://news.un.org/en/news`); "example.com, famous for being 'almost completely empty,' has undergone ..." (`https://gigazine.net/gsc_news/en/20261007-example-com`). E-2 used the same real provider and real browser; only the query and the two operating flags differed.
 
+| E-3 | 2026-11-27 11:04:08 | `IAM_LIVE_E2E_QUERY='What is the latest AI model release?'` + `IAM_LIVE_E2E=1 python tests/e2e_live_information_smoke.py` | Real no-key Wikipedia fallback rejected on a query with **no named publisher**; real HTTP adapter returned three current AI-release sources. Every result carries a claim label, confidence and corroboration count. Exit 0. |
+
+**E-3 retrieved sources (verbatim):** "AI Release Tracker — AI Model Release Timeline" (`https://aireleasetracker.com/`); "AI Updates Today (November 2026) - Latest AI Model Releases" (`https://llm-stats.com/llm-updates`); "New AI model releases" (`https://artificialwatch.com/releases`).
+
+**Database evidence (not a live-web run):** `backend/tests/test_live_evidence_db.py` verifies cache store, hit, TTL expiry and IICS source/claim registration against a real `aiosqlite` engine — no patched database responses. Paid-search authorisation fail-closed is verified by a deterministic policy test in `test_live_intelligence_extensions.py`; no paid call was made.
+
 ---
 
 ## D. Not live-validated — must not be claimed as validated
 
 | Item | Reason |
 |------|--------|
-| Wikipedia fallback rejection with no named publisher present | E-1 and E-2 both include a named publisher; the rejection mechanism is shared but was not exercised on a publisher-free query. |
-| Cache hit / TTL expiry against a real database | Unit coverage exists; no live Postgres migration-and-expiry run was performed. |
 | JS-heavy sites, PDF/documents, multilingual research, OCR, multimedia | Doc 29 implementation phases; outside Doc 32 and not claimed here. |
-| Cache reuse, freshness TTL, source reputation | Proposed in Doc 32 §7; not implemented. |
-| Paid search authorisation flow | Fail-closed by design; no paid call was made and no live paid-provider test exists. |
+| Postgres-specific cache behaviour | Verified against a real aiosqlite engine (store/hit/TTL/IICS registration), not against a deployed Postgres instance. |
+| SearXNG and Tavily adapters | Implemented but not live-tested — no endpoint/API key is configured on this host. |
 
 ---
 
@@ -70,7 +74,7 @@ Paste into `IAM_OWNER_DECISIONS.md` only after the signature is verified:
 
 - ☐ Owner has read proposed Document 32.
 - ☐ Owner has accepted or rejected each companion decision in section A.
-- ☐ Owner has reviewed real-web evidence E-1 and E-2 and the unresolved items in section D.
+- ☐ Owner has reviewed real-web evidence E-1, E-2 and E-3 and the unresolved items in section D.
 - ☐ Creator signer is available and its public key matches `CREATOR_PUBLIC_KEY`.
 - ☐ A pending approval request is prepared (no signature yet) for action `owner.decision` / target `OD-52`.
 - ☐ Creator signs the one-time challenge with the external hardware signer.

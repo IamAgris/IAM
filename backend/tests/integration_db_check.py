@@ -95,6 +95,7 @@ async def apply_migrations() -> None:
         "044_hbi_history_graph.sql",
         "031_hbi_governance.sql",
         "049_browser_substrate.sql",
+        "057_iics_foundation.sql",
     ):
         sql = (MIGRATIONS / name).read_text(encoding="utf-8")
         await conn.execute(sql)

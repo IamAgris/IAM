@@ -42,6 +42,7 @@ ADMIN_PREFIXES = (
     "/api/v1/governance",
     "/api/v1/internet",
     "/api/v1/browser",  # Doc 29: browser operations are admin-gated
+    "/api/v1/tor",  # Doc 29 P5: Tor operations are admin-gated
     "/api/v1/network",
     "/api/v1/external-presence",
     "/api/v1/resilience",

@@ -1282,6 +1282,113 @@ class IPLCIService:
             await self.store.commit()
         return result
 
+    # --- Legal validation workflow (human/counsel completion track) ---
+
+    async def open_validation_task(self, payload: Mapping[str, Any], actor: str = "sdk") -> Dict[str, Any]:
+        required = ("domain", "subject", "question")
+        if any(not str(payload.get(field) or "").strip() for field in required):
+            raise core.IPLCIError("IPLCI_INVALID_INPUT", "domain, subject and question are required")
+        record = {
+            "id": str(uuid.uuid4()),
+            "domain": payload["domain"],
+            "subject": payload["subject"],
+            "question": payload["question"],
+            "jurisdiction": payload.get("jurisdiction"),
+            "official_source_url": payload.get("official_source_url"),
+            "provision_ref": payload.get("provision_ref"),
+            "assigned_counsel": payload.get("assigned_counsel"),
+            "status": "pending",
+            "notes": payload.get("notes"),
+            "payload": dict(payload.get("payload") or {}),
+            "created_at": _now_iso(),
+        }
+        await self.store.put_validation_task(record)
+        await self._audit("validation_task_opened", actor, record["id"], "QUARANTINED", {
+            "domain": record["domain"], "subject": record["subject"],
+        })
+        await self.store.commit()
+        return record
+
+    async def record_validation_evidence(
+        self, task_id: str, payload: Mapping[str, Any], actor: str = "sdk"
+    ) -> Dict[str, Any]:
+        record = await self.store.get_validation_task(task_id)
+        if not record:
+            raise core.IPLCIError("IPLCI_NOT_FOUND", "validation task not found")
+        evidence = str(payload.get("evidence_ref") or "").strip()
+        if not evidence:
+            raise core.IPLCIError("IPLCI_INVALID_INPUT", "evidence_ref is required")
+        record["evidence_ref"] = evidence
+        record["assigned_counsel"] = payload.get("assigned_counsel") or record["assigned_counsel"]
+        record["status"] = "in_review"
+        await self.store.put_validation_task(record)
+        await self._audit("validation_evidence_recorded", actor, task_id, "CONDITIONAL", {
+            "evidence_ref": evidence,
+        })
+        await self.store.commit()
+        return record
+
+    async def verify_validation_task(
+        self, task_id: str, payload: Mapping[str, Any], actor: str = "sdk"
+    ) -> Dict[str, Any]:
+        record = await self.store.get_validation_task(task_id)
+        if not record:
+            raise core.IPLCIError("IPLCI_NOT_FOUND", "validation task not found")
+        reviewer = str(payload.get("reviewer_reference") or "").strip()
+        agent_like = ("iam", "main", "sdk", "system", "agent", "model")
+        if (
+            not reviewer
+            or reviewer.lower() in agent_like
+            or reviewer.lower().startswith(("sub-agent", "plugin:", "external_model:"))
+        ):
+            raise core.IPLCIError(
+                "IPLCI_COUNSEL_REQUIRED", "a qualified human reviewer reference is required"
+            )
+        if not record.get("evidence_ref"):
+            raise core.IPLCIError("IPLCI_EVIDENCE_REQUIRED", "official-source evidence is required")
+        record["status"] = "verified"
+        record["reviewer_reference"] = reviewer
+        record["reviewed_at"] = _now_iso()
+        record["valid_until"] = payload.get("valid_until")
+        if payload.get("official_source_url"):
+            record["official_source_url"] = payload["official_source_url"]
+        if payload.get("provision_ref"):
+            record["provision_ref"] = payload["provision_ref"]
+        await self.store.put_validation_task(record)
+        await self._audit("validation_task_verified", actor, task_id, "APPROVED", {
+            "reviewer_reference": reviewer, "valid_until": record["valid_until"],
+        })
+        await self.store.commit()
+        return record
+
+    async def validation_tasks(self) -> List[Dict[str, Any]]:
+        return await self.store.list_validation_tasks()
+
+    async def readiness_report(self) -> Dict[str, Any]:
+        policy_status = await self.verify_active_policy()
+        tasks = await self.store.list_validation_tasks()
+        sources = await self.store.list_official_sources()
+        blockers: List[str] = []
+        if not policy_status["valid"]:
+            blockers.append("no active signed compliance policy")
+        unresolved = [task for task in tasks if task.get("status") != "verified"]
+        if unresolved:
+            blockers.append(f"{len(unresolved)} legal validation task(s) unresolved")
+        unverified_sources = [source for source in sources if not source.get("verified_by")]
+        if unverified_sources:
+            blockers.append(f"{len(unverified_sources)} official source(s) unverified")
+        return {
+            "domain": "legal_readiness",
+            "complete": not blockers,
+            "blockers": blockers,
+            "policy_valid": bool(policy_status["valid"]),
+            "validation_tasks": len(tasks),
+            "verified_tasks": len(tasks) - len(unresolved),
+            "official_sources": len(sources),
+            "adversarial_suite": "AT-01…AT-12 are CI-enforced; code is not a compliance claim",
+            "legal_context_status": "requires_verification",
+        }
+
     async def register_asset(self, payload: Mapping[str, Any], actor: str = "sdk") -> Dict[str, Any]:
         title = str(payload.get("title") or "").strip()
         legal_owner = str(payload.get("legal_owner") or "").strip()

@@ -42,6 +42,16 @@ export interface KnowledgeCluster {
   node_id: string;
 }
 
+export interface MapPlace {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country_code: string | null;
+  place_type: string;
+  source: string;
+  confidence: number;
+}
+
 export interface FreshnessInfo {
   state: "current" | "needs_review" | "stale" | "historical" | "unverified" | "contradicted";
   label: string;
@@ -69,6 +79,8 @@ interface Props {
   clusters?: KnowledgeCluster[];
   graphConnections?: KnowledgeConnection[];
   freshness?: Record<string, FreshnessInfo>;
+  mapMode?: boolean;
+  mapPlaces?: MapPlace[];
   onNodeHover?: (node: SourceNode | null, x?: number, y?: number) => void;
   onNodeSelect?: (node: SourceNode) => void;
 }
@@ -93,6 +105,8 @@ export function PresenceSphere({
   clusters = [],
   graphConnections = [],
   freshness = {},
+  mapMode = false,
+  mapPlaces = [],
   onNodeHover,
   onNodeSelect,
 }: Props) {
@@ -106,10 +120,13 @@ export function PresenceSphere({
   const clustersRef = React.useRef(clusters);
   const graphRef = React.useRef(graphConnections);
   const freshnessRef = React.useRef(freshness);
+  const mapRef = React.useRef(mapMode);
+  const mapPlacesRef = React.useRef(mapPlaces);
   const hoverRef = React.useRef(onNodeHover);
   const selectRef = React.useRef(onNodeSelect);
   const hitRef = React.useRef<Array<SourceNode & { x: number; y: number }>>([]);
   const drawRef = React.useRef<(() => void) | null>(null);
+  const focusedIndexRef = React.useRef(-1);
   const reducedMotion = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -122,6 +139,8 @@ export function PresenceSphere({
   React.useEffect(() => { clustersRef.current = clusters; }, [clusters]);
   React.useEffect(() => { graphRef.current = graphConnections; }, [graphConnections]);
   React.useEffect(() => { freshnessRef.current = freshness; }, [freshness]);
+  React.useEffect(() => { mapRef.current = mapMode; }, [mapMode]);
+  React.useEffect(() => { mapPlacesRef.current = mapPlaces; }, [mapPlaces]);
   React.useEffect(() => { hoverRef.current = onNodeHover; }, [onNodeHover]);
   React.useEffect(() => { selectRef.current = onNodeSelect; }, [onNodeSelect]);
 
@@ -207,6 +226,61 @@ export function PresenceSphere({
       const tilt = 0.35 + my * 0.4, ct = Math.cos(tilt), st2 = Math.sin(tilt);
 
       ctx.clearRect(0, 0, W, H);
+
+      if (mapRef.current) {
+        const mw = Math.min(W * 0.86, 1040);
+        const mh = mw / 2;
+        const left = (W - mw) / 2;
+        const top = Math.max(90, H * 0.2);
+        ctx.strokeStyle = `hsla(${hue},60%,${L}%,0.16)`;
+        ctx.lineWidth = 1;
+        for (let lon = -180; lon <= 180; lon += 30) {
+          const x = left + ((lon + 180) / 360) * mw;
+          ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + mh); ctx.stroke();
+        }
+        for (let lat = -90; lat <= 90; lat += 30) {
+          const y = top + ((90 - lat) / 180) * mh;
+          ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + mw, y); ctx.stroke();
+        }
+        ctx.strokeStyle = `hsla(${hue},70%,${L}%,0.4)`;
+        ctx.strokeRect(left, top, mw, mh);
+        hitRef.current = [];
+        mapPlacesRef.current.forEach((p, i) => {
+          const x = left + ((p.longitude + 180) / 360) * mw;
+          const y = top + ((90 - p.latitude) / 180) * mh;
+          ctx.fillStyle = `hsla(${hue + 30},90%,${D ? 70 : 45}%,0.85)`;
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, 6.2832); ctx.fill();
+          if (i < 12) {
+            ctx.fillStyle = D ? "rgba(225,230,255,.75)" : "rgba(20,26,58,.75)";
+            ctx.font = `300 ${W < 600 ? 9 : 11}px 'Space Grotesk', sans-serif`;
+            ctx.fillText(p.name.slice(0, 24), x + 8, y + 3);
+          }
+          hitRef.current.push({
+            id: `place-${i}-${p.name}`,
+            title: p.name,
+            domain: p.country_code || p.place_type,
+            url: "",
+            state: "stored",
+            kind: "source",
+            x,
+            y,
+          });
+        });
+        ctx.fillStyle = D ? "rgba(225,230,255,.55)" : "rgba(20,26,58,.55)";
+        ctx.font = `300 ${W < 600 ? 10 : 12}px 'Space Grotesk', sans-serif`;
+        ctx.fillText(`GEOSPATIAL VIEW · ${mapPlacesRef.current.length} places`, left, top - 12);
+        const focusedPlace = hitRef.current[focusedIndexRef.current];
+        if (focusedPlace) {
+          ctx.strokeStyle = `hsla(${hue},95%,${D ? 80 : 45}%,0.9)`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(focusedPlace.x, focusedPlace.y, 10, 0, 6.2832);
+          ctx.stroke();
+        }
+        raf = reducedMotion ? 0 : requestAnimationFrame(frame);
+        return;
+      }
+
       const ox = cx + mx * 30, oy = cy + my * 20;
 
       // Core glow
@@ -478,6 +552,14 @@ export function PresenceSphere({
         }
       }
 
+      const focused = hitRef.current[focusedIndexRef.current];
+      if (focused) {
+        ctx.strokeStyle = `hsla(${hue},95%,${D ? 80 : 45}%,0.9)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(focused.x, focused.y, 11, 0, 6.2832);
+        ctx.stroke();
+      }
       raf = reducedMotion ? 0 : requestAnimationFrame(frame);
     };
     drawRef.current = () => frame(performance.now());
@@ -511,10 +593,38 @@ export function PresenceSphere({
     if (hit) selectRef.current?.(hit);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const items = hitRef.current;
+    if (!items.length) return;
+    if (e.key === "Escape") {
+      focusedIndexRef.current = -1;
+      hoverRef.current?.(null);
+      e.preventDefault();
+      return;
+    }
+    let index = focusedIndexRef.current;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") index = (index + 1) % items.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") index = (index <= 0 ? items.length : index) - 1;
+    else if (e.key === "Enter" || e.key === " ") {
+      const chosen = items[index < 0 ? 0 : index];
+      if (chosen) selectRef.current?.(chosen);
+      e.preventDefault();
+      return;
+    } else return;
+    focusedIndexRef.current = index;
+    const node = items[index];
+    hoverRef.current?.(node, node.x, node.y);
+    if (reducedMotion) drawRef.current?.();
+    e.preventDefault();
+  };
+
   return (
     <canvas
       ref={canvasRef}
-      aria-hidden="true"
+      tabIndex={0}
+      role="img"
+      aria-label="IAM intelligence sphere. Use arrow keys to inspect source and cluster nodes, Enter to open, Escape to clear."
+      onKeyDown={handleKeyDown}
       onPointerMove={handlePointerMove}
       onPointerLeave={() => hoverRef.current?.(null)}
       onClick={handleClick}

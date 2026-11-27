@@ -33,8 +33,30 @@ def _estimate_ram_mb(model: str, mode: str) -> int:
     return settings.irwm_target_loaded_ram_mb
 
 
+# Hosted inference occupies no local residency slot. A separate bounded pool
+# protects the shared provider account while keeping the OD-39 local one-resident
+# rule intact — parallel sub-agents must not be refused by local RAM admission.
+_hosted_slots: Any = None
+
+
+def _hosted_pool() -> Any:
+    global _hosted_slots
+    if _hosted_slots is None:
+        import asyncio
+
+        _hosted_slots = asyncio.Semaphore(max(1, settings.iam_delegation_max_parallel))
+    return _hosted_slots
+
+
 async def _admit_inference(model: str, mode: str) -> Optional[Dict[str, Any]]:
-    """Admit one inference request through IRWM or fail closed."""
+    """Admit one inference request; hosted calls use the remote pool, not IRWM."""
+    if mode == "hosted":
+        await _hosted_pool().acquire()
+        return {
+            "decision": "admit",
+            "mode": "hosted",
+            "reason": "remote inference; no local residency slot consumed",
+        }
     if not settings.irwm_enabled:
         return None
     from app.services.irwm import irwm
@@ -52,7 +74,10 @@ async def _admit_inference(model: str, mode: str) -> Optional[Dict[str, Any]]:
     return decision
 
 
-async def _release_inference(model: str) -> None:
+async def _release_inference(model: str, mode: Optional[str] = None) -> None:
+    if mode == "hosted":
+        _hosted_pool().release()
+        return
     if not settings.irwm_enabled:
         return
     from app.services.irwm import irwm
@@ -412,7 +437,7 @@ class InferenceService:
                 )
             return result
         finally:
-            await _release_inference(selected)
+            await _release_inference(selected, mode)
 
     async def _chat_completion(
         self,
@@ -609,7 +634,7 @@ class InferenceService:
                 },
             }
         finally:
-            await _release_inference(selected)
+            await _release_inference(selected, mode)
 
 
 inference_service = InferenceService()

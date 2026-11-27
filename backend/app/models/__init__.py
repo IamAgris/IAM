@@ -108,7 +108,7 @@ from app.models.ip_legal import (
     IPLegalObligation, IPLegalBusinessReview, IPLegalEthicsReview,
     IPLegalDisputeCase, IPLegalIncidentCase, IPLegalLegalHold,
     IPLegalRightsContact, IPLegalComplianceDeadline, IPLegalEvidenceRecord,
-    IPLegalContinuityRecord, IPLegalPolicy,
+    IPLegalContinuityRecord, IPLegalPolicy, IPLegalValidationTask,
 )
 from app.models.geo import (
     GeoProvider, GeoPlace, GeoDataFile, LiveGeoFeed, MapTileCache, LocationPermission,

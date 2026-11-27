@@ -60,6 +60,15 @@ async def update_principle(
     db: AsyncSession = Depends(get_db_session),
 ):
     """Update an operating principle (immutable ones cannot be changed by IAM)."""
+    from app.services.constitutional_policy import (
+        ConstitutionalPolicyDenied,
+        assert_allowed,
+    )
+
+    try:
+        await assert_allowed(db, "constitution_change")
+    except ConstitutionalPolicyDenied as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     service = ReflectionService(db)
     try:
         return await service.update_operating_principle(principle_id, request.principle_statement)

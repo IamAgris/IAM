@@ -263,8 +263,18 @@ class Settings(BaseSettings):
     browser_task_worker_backend: str = "loop"  # loop | arq
     browser_ocr_enabled: bool = False  # opt-in: local Tesseract OCR on screenshots
 
+    # TIPS (Doc 29 P5) — official Tor Browser only, fail closed without binary.
+    tor_enabled: bool = False
+    tor_browser_executable: str = ""  # path to official Tor Browser binary/launcher
+    tor_control_host: str = "127.0.0.1"
+    tor_control_port: int = 9051
+    tor_socks_port: int = 9050
+    tor_session_ttl_seconds: int = 900
+    tor_max_concurrent_sessions: int = 1
+    tor_data_root: str = ""  # empty => OS temp/iam-tor-profiles
+
     # IICS overlay: allowlisted threat-intel feeds (empty means no polling).
-    iics_threat_feeds: list[str] = []
+    iics_threat_feeds: str = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=20"
     iics_threat_feed_interval_minutes: int = 360
     iics_site_policy_refresh_minutes: int = 720
     uwai_upload_root: str = ""  # empty => OS temp/iam-web-uploads
@@ -327,6 +337,12 @@ class Settings(BaseSettings):
     # Durable research artifacts: "local" (temp/filesystem) or "s3" (MinIO/S3).
     research_artifact_store: str = "local"
     research_artifact_prefix: str = "research"
+
+    # Optional agent-side MCP bridge for real Colab platform drivers. Disabled by
+    # default: no runtime is created and no external account is used implicitly.
+    colab_mcp_enabled: bool = False
+    colab_mcp_bridge_url: str = ""
+    colab_mcp_bridge_token_env: str = "COLAB_MCP_BRIDGE_TOKEN"
 
     # Trusted local evaluator for benchmark evidence. Empty path fails closed.
     lm_eval_dataset_path: str = "app/services/ai_research/eval_sets/basic.jsonl"

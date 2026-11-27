@@ -237,20 +237,52 @@ def _infer_action(objective: dict, decision: Optional[dict]) -> str:
 
 
 async def plan(state: AutonomyState) -> dict:
-    """Convert the selected objective into an actionable, allowlisted plan."""
+    """Convert the selected objective into a persisted, allowlisted plan."""
     obj = (state.get("objectives") or [None])[0]
     if not obj:
         return {"plan": None, "steps": ["plan:skip"]}
     action = _infer_action(obj, state.get("decision"))
-    return {
-        "plan": {
-            "objective": obj,
-            "action": action,
-            "steps": ["authorize", f"dispatch:{action}", "verify", "consolidate"],
-            "expected_evidence": f"decision_outcome:{obj.get('id')}",
-        },
-        "steps": ["plan"],
+    steps = ["authorize", f"dispatch:{action}", "verify", "consolidate"]
+    plan_state = {
+        "objective": obj,
+        "action": action,
+        "steps": steps,
+        "expected_evidence": f"decision_outcome:{obj.get('id')}",
     }
+
+    if obj.get("type") == "goal" and obj.get("id"):
+        try:
+            from app.models.autonomy import Goal, Plan, Task
+
+            async with _session() as db:
+                goal_id = uuid.UUID(str(obj["id"]))
+                goal = (
+                    await db.execute(select(Goal).where(Goal.id == goal_id))
+                ).scalar_one_or_none()
+                if goal is not None:
+                    record = Plan(
+                        goal_id=goal_id,
+                        title=str(obj.get("title") or "autonomy plan"),
+                        steps=steps,
+                        status="in_progress",
+                    )
+                    db.add(record)
+                    await db.flush()
+                    task_ids = []
+                    for step in steps:
+                        task = Task(plan_id=record.id, title=step, status="pending")
+                        db.add(task)
+                        await db.flush()
+                        task_ids.append(str(task.id))
+                    await db.commit()
+                    plan_state["plan_id"] = str(record.id)
+                    plan_state["task_ids"] = task_ids
+        except (ValueError, TypeError) as exc:
+            logger.warning(f"Plan persistence skipped: {exc}")
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning(f"Plan persistence unavailable: {exc}")
+
+    return {"plan": plan_state, "steps": ["plan"]}
 
 
 async def check_authority(state: AutonomyState) -> dict:

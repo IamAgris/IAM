@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.assistantlab import (
     AssistantAdapter,
     AssistantResearchNote,
@@ -285,6 +286,12 @@ class AssistantLabService:
             "experiments": len(experiments.scalars().all()),
             "levels": ["study", "integration", "independent_learning"],
             "internal_capability": True,
+            "official_integrations": {
+                "alexa": bool(settings.alexa_skill_endpoint),
+                "siri": bool(settings.siri_intents_endpoint),
+                "bixby": bool(settings.bixby_automation_endpoint),
+            },
+            "credentials_stored": False,
             "claim": "no_vendor_dependency",
         }
 

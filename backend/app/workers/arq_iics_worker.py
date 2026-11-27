@@ -80,7 +80,8 @@ async def poll_threat_feeds(ctx: Dict[str, Any]) -> int:
     ingested = 0
     async with AsyncSessionLocal() as db:
         ingestor = AdvisoryIngestor(db)
-        for url in settings.iics_threat_feeds:
+        feeds = [item.strip() for item in settings.iics_threat_feeds.split(",") if item.strip()]
+        for url in feeds:
             if not enforce(url).allowed:
                 continue
             result = await default_gateway().fetch(url)

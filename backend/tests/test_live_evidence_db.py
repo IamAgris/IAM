@@ -87,7 +87,7 @@ class RealDbCacheTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("sabcnews.com", sources[0].domain)
         self.assertEqual(sources[0].freshness_class, "volatile")
         self.assertEqual(len(claims), 1)
-        self.assertEqual(claims[0].label, "single_source")
+        self.assertEqual(claims[0].label, "provisional")
 
     async def test_reputation_is_read_from_registered_source(self) -> None:
         trigger = SearchTrigger(True, ("latest_news",), ("sabcnews.com",), ResearchDepth.STANDARD)

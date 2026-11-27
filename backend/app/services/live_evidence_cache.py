@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, cast
+from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -145,17 +146,26 @@ async def store_cached(
             )
             if source.get("revoked_at"):
                 continue
+            source_id = UUID(str(source["id"]))
             claim_text = str(item.get("title") or url)[:500]
-            existing = await registry.claims(source["id"])
+            existing = await registry.claims(source_id)  # type: ignore[arg-type]
             if any(str(entry.get("claim")) == claim_text for entry in existing):
                 continue
+            confidence = float(item.get("confidence") or 0.4)
+            analysis_label = str(item.get("claim_label") or "unverified")
+            iics_label = {
+                "corroborated": "verified" if confidence >= 0.70 else "provisional",
+                "single_source": "provisional",
+                "conflicting": "contradicted",
+                "unverified": "unverified",
+            }.get(analysis_label, "unverified")
             await registry.add_claim(
-                source["id"],
+                source_id,  # type: ignore[arg-type]
                 claim_text,
-                float(item.get("confidence") or 0.4),
+                confidence,
                 locator=url,
                 publication_date=str(item.get("published") or "") or None,
-                label=str(item.get("claim_label") or "unverified"),
+                label=iics_label,
             )
     except Exception:  # pragma: no cover - cache must never break research
         try:

@@ -2218,6 +2218,162 @@
         }
       }
     },
+    "/api/v1/live-information/providers": {
+      "get": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Search Providers",
+        "description": "Health, quota and cost metadata for the search provider chain.",
+        "operationId": "search_providers_api_v1_live_information_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Search Providers Api V1 Live Information Providers Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/live-information/monitor": {
+      "get": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "List Monitors",
+        "operationId": "list_monitors_api_v1_live_information_monitor_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Monitors Api V1 Live Information Monitor Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Create Monitor",
+        "operationId": "create_monitor_api_v1_live_information_monitor_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__live_information__MonitorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Monitor Api V1 Live Information Monitor Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/live-information/monitor/{task_id}": {
+      "delete": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Remove Monitor",
+        "operationId": "remove_monitor_api_v1_live_information_monitor__task_id__delete",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Remove Monitor Api V1 Live Information Monitor  Task Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/live-information/monitor/run-due": {
+      "post": {
+        "tags": [
+          "live-information"
+        ],
+        "summary": "Run Due Monitors",
+        "description": "Bounded execution of due monitoring tasks through the shared engine.",
+        "operationId": "run_due_monitors_api_v1_live_information_monitor_run_due_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Due Monitors Api V1 Live Information Monitor Run Due Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/voice/speech-to-text": {
       "post": {
         "tags": [
@@ -6412,7 +6568,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MonitorRequest"
+                "$ref": "#/components/schemas/app__api__routes__internetaccess__MonitorRequest"
               }
             }
           },
@@ -10444,6 +10600,302 @@
         }
       }
     },
+    "/api/v1/tor/status": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Status",
+        "operationId": "status_api_v1_tor_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Status Api V1 Tor Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/sessions/{session_id}": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Open Session",
+        "operationId": "open_session_api_v1_tor_sessions__session_id__post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__tor__SessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Open Session Api V1 Tor Sessions  Session Id  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Close Session",
+        "operationId": "close_session_api_v1_tor_sessions__session_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Close Session Api V1 Tor Sessions  Session Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/circuits": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Circuits",
+        "operationId": "circuits_api_v1_tor_circuits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Circuits Api V1 Tor Circuits Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/identity/new": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "New Identity",
+        "operationId": "new_identity_api_v1_tor_identity_new_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response New Identity Api V1 Tor Identity New Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/killswitch": {
+      "get": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Killswitch Status",
+        "operationId": "killswitch_status_api_v1_tor_killswitch_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Killswitch Status Api V1 Tor Killswitch Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Engage Killswitch",
+        "operationId": "engage_killswitch_api_v1_tor_killswitch_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Engage Killswitch Api V1 Tor Killswitch Post"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Release Killswitch",
+        "operationId": "release_killswitch_api_v1_tor_killswitch_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Release Killswitch Api V1 Tor Killswitch Delete"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/egress/check": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Check Egress",
+        "operationId": "check_egress_api_v1_tor_egress_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__tor__EgressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Check Egress Api V1 Tor Egress Check Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tor/terminate-all": {
+      "post": {
+        "tags": [
+          "tor-privacy"
+        ],
+        "summary": "Terminate All",
+        "operationId": "terminate_all_api_v1_tor_terminate_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Terminate All Api V1 Tor Terminate All Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/deployment/preflight": {
       "get": {
         "tags": [
@@ -10582,6 +11034,48 @@
             "schema": {
               "type": "integer",
               "default": 6,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interface/map": {
+      "get": {
+        "tags": [
+          "interface"
+        ],
+        "summary": "Public Map Data",
+        "description": "Public geospatial markers for the single-screen map layer.",
+        "operationId": "public_map_data_api_v1_interface_map_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 60,
               "title": "Limit"
             }
           }
@@ -17358,6 +17852,191 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iplci/validation/tasks": {
+      "get": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "List Validation Tasks",
+        "operationId": "list_validation_tasks_api_v1_iplci_validation_tasks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response List Validation Tasks Api V1 Iplci Validation Tasks Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "Open Validation Task",
+        "operationId": "open_validation_task_api_v1_iplci_validation_tasks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Open Validation Task Api V1 Iplci Validation Tasks Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iplci/validation/tasks/{task_id}/evidence": {
+      "post": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "Record Validation Evidence",
+        "operationId": "record_validation_evidence_api_v1_iplci_validation_tasks__task_id__evidence_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationEvidenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Record Validation Evidence Api V1 Iplci Validation Tasks  Task Id  Evidence Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iplci/validation/tasks/{task_id}/verify": {
+      "post": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "Verify Validation Task",
+        "operationId": "verify_validation_task_api_v1_iplci_validation_tasks__task_id__verify_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Verify Validation Task Api V1 Iplci Validation Tasks  Task Id  Verify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/iplci/validation/readiness": {
+      "get": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "Validation Readiness",
+        "operationId": "validation_readiness_api_v1_iplci_validation_readiness_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Validation Readiness Api V1 Iplci Validation Readiness Get"
                 }
               }
             }
@@ -43931,29 +44610,6 @@
         ],
         "title": "ModuleAnalysisRequest"
       },
-      "MonitorRequest": {
-        "properties": {
-          "target_url": {
-            "type": "string",
-            "title": "Target Url"
-          },
-          "target_type": {
-            "type": "string",
-            "title": "Target Type",
-            "default": "website"
-          },
-          "check_interval_minutes": {
-            "type": "integer",
-            "title": "Check Interval Minutes",
-            "default": 60
-          }
-        },
-        "type": "object",
-        "required": [
-          "target_url"
-        ],
-        "title": "MonitorRequest"
-      },
       "MonitoringDigestRequest": {
         "properties": {
           "items": {
@@ -50022,6 +50678,154 @@
         ],
         "title": "ValidationError"
       },
+      "ValidationEvidenceRequest": {
+        "properties": {
+          "evidence_ref": {
+            "type": "string",
+            "title": "Evidence Ref"
+          },
+          "assigned_counsel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Counsel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_ref"
+        ],
+        "title": "ValidationEvidenceRequest"
+      },
+      "ValidationTaskRequest": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "official_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Official Source Url"
+          },
+          "provision_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provision Ref"
+          },
+          "assigned_counsel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Counsel"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain",
+          "subject",
+          "question"
+        ],
+        "title": "ValidationTaskRequest"
+      },
+      "ValidationVerifyRequest": {
+        "properties": {
+          "reviewer_reference": {
+            "type": "string",
+            "title": "Reviewer Reference"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "official_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Official Source Url"
+          },
+          "provision_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provision Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reviewer_reference"
+        ],
+        "title": "ValidationVerifyRequest"
+      },
       "VerificationCreate": {
         "properties": {
           "message_id": {
@@ -51999,6 +52803,29 @@
         ],
         "title": "BrowseRequest"
       },
+      "app__api__routes__internetaccess__MonitorRequest": {
+        "properties": {
+          "target_url": {
+            "type": "string",
+            "title": "Target Url"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type",
+            "default": "website"
+          },
+          "check_interval_minutes": {
+            "type": "integer",
+            "title": "Check Interval Minutes",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_url"
+        ],
+        "title": "MonitorRequest"
+      },
       "app__api__routes__internetaccess__SearchRequest": {
         "properties": {
           "query": {
@@ -52868,6 +53695,31 @@
         ],
         "title": "UnderstandRequest"
       },
+      "app__api__routes__live_information__MonitorRequest": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "maximum": 10080.0,
+            "minimum": 15.0,
+            "title": "Interval Minutes",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "query"
+        ],
+        "title": "MonitorRequest"
+      },
       "app__api__routes__mobile__TypeRequest": {
         "properties": {
           "device": {
@@ -53436,6 +54288,52 @@
           "content_summary"
         ],
         "title": "RecordRequest"
+      },
+      "app__api__routes__tor__EgressRequest": {
+        "properties": {
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "EgressRequest"
+      },
+      "app__api__routes__tor__SessionRequest": {
+        "properties": {
+          "actor_type": {
+            "type": "string",
+            "title": "Actor Type",
+            "default": "agent"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "title": "SessionRequest"
       },
       "app__api__routes__uwaie__ExecuteRequest": {
         "properties": {

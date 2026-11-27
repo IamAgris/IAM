@@ -231,7 +231,7 @@ These eight cases must pass before OD-52 is recorded:
 7. Verify historical questions do not trigger browsing.
 8. Verify browser failures never produce fabricated citations.
 
-**Reference implementation:** `backend/tests/test_live_information_policy.py` (`LiveRetrievalAcceptanceTests`), `backend/tests/test_live_evidence_cache.py`, and the opt-in real-web check `backend/tests/e2e_live_information_smoke.py` (`IAM_LIVE_E2E=1`). Live runs of 27 November 2026: (1) three real SABC articles with URLs and dates retrieved from the official site while the Wikipedia fallback was rejected; (2) an unavailable named publisher (`example.org`) fell back through the real free HTTP adapter to CNN and UN News. These are evidence of those runs only, not guarantees of future site availability.
+**Reference implementation:** `backend/tests/test_live_information_policy.py` (`LiveRetrievalAcceptanceTests`), `backend/tests/test_live_evidence_cache.py`, and the opt-in real-web check `backend/tests/e2e_live_information_smoke.py` (`IAM_LIVE_E2E=1`). Live runs of 27 November 2026: (1) three real SABC articles with URLs and dates retrieved from the official site while the Wikipedia fallback was rejected; (2) an unavailable named publisher (`example.org`) fell back through the real free HTTP adapter to CNN and UN News; (3) a current-technology query with no named publisher rejected the Wikipedia fallback and retrieved real release-trackers. These are evidence of those runs only, not guarantees of future site availability.
 
 ---
 

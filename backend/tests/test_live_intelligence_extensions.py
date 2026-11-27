@@ -1,9 +1,15 @@
 """Security, analysis, provider management and monitoring extensions."""
 
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from app.core.config import settings
+from app.services.model_policy import (
+    SEARCH_ACTION,
+    ModelPolicyDenied,
+    require_authorization,
+)
 from app.services import search_service as search_service_module
 from app.services.live_evidence_analysis import analyse, injection_detected
 from app.services.live_information_policy import _is_public_host
@@ -63,14 +69,14 @@ class AnalysisTests(unittest.TestCase):
         conflicting, conflict_summary = analyse(
             [
                 {
-                    "title": "Minister resigns after report",
+                    "title": "Minister resigns after corruption report published today",
                     "url": "https://a.example.org/3",
-                    "description": "Minister resigns after report published",
+                    "description": "Minister resigns after corruption report published today",
                 },
                 {
-                    "title": "Minister denies resignation report",
+                    "title": "Minister denies corruption report published today and resigns",
                     "url": "https://b.example.org/4",
-                    "description": "Minister denies resignation report claims",
+                    "description": "Minister denies corruption report published today and resigns",
                 },
             ]
         )
@@ -102,6 +108,15 @@ class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(error)
         self.assertTrue(result["results"])
         self.assertEqual(registry.status()["duckduckgo"]["calls"], 1)
+
+
+class PaidSearchAuthTests(unittest.IsolatedAsyncioTestCase):
+    async def test_paid_search_is_fail_closed_without_signature(self) -> None:
+        with patch.object(settings, "free_models_only", True):
+            with self.assertRaises(ModelPolicyDenied):
+                await require_authorization(
+                    SimpleNamespace(), SEARCH_ACTION, target_ref="brave"  # type: ignore[arg-type]
+                )
 
 
 class MonitorTests(unittest.TestCase):

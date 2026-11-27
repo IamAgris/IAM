@@ -189,6 +189,9 @@ services:
       # Durable research artifacts and trusted local evaluation.
       RESEARCH_ARTIFACT_STORE: ${RESEARCH_ARTIFACT_STORE:-local}
       RESEARCH_ARTIFACT_PREFIX: ${RESEARCH_ARTIFACT_PREFIX:-research}
+      COLAB_MCP_ENABLED: ${COLAB_MCP_ENABLED:-false}
+      COLAB_MCP_BRIDGE_URL: ${COLAB_MCP_BRIDGE_URL:-}
+      COLAB_MCP_BRIDGE_TOKEN: ${COLAB_MCP_BRIDGE_TOKEN:-}
       LM_EVAL_DATASET_PATH: ${LM_EVAL_DATASET_PATH:-app/services/ai_research/eval_sets/basic.jsonl}
       POST_DEPLOY_MONITOR_ENABLED: ${POST_DEPLOY_MONITOR_ENABLED:-false}
       POST_DEPLOY_AUTO_ROLLBACK_ENABLED: ${POST_DEPLOY_AUTO_ROLLBACK_ENABLED:-false}
@@ -212,6 +215,9 @@ services:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       # P2: local Tesseract OCR is available in the image; opt in explicitly.
       BROWSER_OCR_ENABLED: ${BROWSER_OCR_ENABLED:-false}
+      # TIPS: official Tor Browser path must be supplied by the operator.
+      TOR_ENABLED: ${TOR_ENABLED:-false}
+      TOR_BROWSER_EXECUTABLE: ${TOR_BROWSER_EXECUTABLE:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -352,6 +358,23 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # One-shot: apply IICS foundation tables before starting the worker.
+  #   docker compose --profile iics run --rm iics-migrate
+  iics-migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-iics-migrate
+    command: python scripts/apply_iics_migration.py
+    profiles: ["iics"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
         condition: service_healthy
     networks:
       - aura-network

@@ -49,6 +49,7 @@ from app.models.ip_legal import (
     IPLegalSource,
     IPLegalTrainingApproval,
     IPLegalTrademark,
+    IPLegalValidationTask,
 )
 
 
@@ -122,6 +123,9 @@ class Store(Protocol):
     async def put_policy(self, data: Dict[str, Any]) -> Dict[str, Any]: ...
     async def get_policy(self, record_id: str) -> Optional[Dict[str, Any]]: ...
     async def active_policy(self) -> Optional[Dict[str, Any]]: ...
+    async def put_validation_task(self, data: Dict[str, Any]) -> Dict[str, Any]: ...
+    async def get_validation_task(self, record_id: str) -> Optional[Dict[str, Any]]: ...
+    async def list_validation_tasks(self) -> List[Dict[str, Any]]: ...
 
 
 class MemoryStore:
@@ -158,6 +162,7 @@ class MemoryStore:
         self._evidence: Dict[str, Dict[str, Any]] = {}
         self._continuity: Dict[str, Dict[str, Any]] = {}
         self._policies: Dict[str, Dict[str, Any]] = {}
+        self._validation_tasks: Dict[str, Dict[str, Any]] = {}
 
     async def _put_generic(self, bucket: Dict[str, Dict[str, Any]], data: Dict[str, Any]) -> Dict[str, Any]:
         record = copy.deepcopy(data)
@@ -344,6 +349,13 @@ class MemoryStore:
             if str(item.get("status")) == "active"
         ]
         return copy.deepcopy(active[-1]) if active else None
+
+    async def put_validation_task(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._put_generic(self._validation_tasks, data)
+    async def get_validation_task(self, record_id: str) -> Optional[Dict[str, Any]]:
+        return copy.deepcopy(self._validation_tasks.get(record_id))
+    async def list_validation_tasks(self) -> List[Dict[str, Any]]:
+        return copy.deepcopy(list(self._validation_tasks.values()))
 
     async def last_sequence(self) -> int:
         return len(self._audit)
@@ -615,6 +627,13 @@ class SQLStore:
             )
         ).scalars().all()
         return _to_dict(rows[-1]) if rows else None
+
+    async def put_validation_task(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._put(IPLegalValidationTask, data)
+    async def get_validation_task(self, record_id: str) -> Optional[Dict[str, Any]]:
+        return await self._get(IPLegalValidationTask, record_id)
+    async def list_validation_tasks(self) -> List[Dict[str, Any]]:
+        return await self._list(IPLegalValidationTask)
 
     async def last_sequence(self) -> int:
         row = (

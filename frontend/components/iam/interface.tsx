@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip, Copy, Wand2, Settings2, Trash2, Activity, Minus, ChevronDown } from "lucide-react";
-import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo } from "./presence-sphere";
+import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo, MapPlace } from "./presence-sphere";
 import { api } from "@/lib/api";
 
 type Mode = "focus" | "recall" | "create";
@@ -159,6 +159,8 @@ export function IAMInterface() {
   const [clusters, setClusters] = React.useState<KnowledgeCluster[]>([]);
   const [graphConnections, setGraphConnections] = React.useState<KnowledgeConnection[]>([]);
   const [freshness, setFreshness] = React.useState<Record<string, FreshnessInfo>>({});
+  const [mapMode, setMapMode] = React.useState(false);
+  const [mapPlaces, setMapPlaces] = React.useState<MapPlace[]>([]);
   const [hoveredSource, setHoveredSource] = React.useState<{ node: SourceNode; x: number; y: number } | null>(null);
   const [selectedSource, setSelectedSource] = React.useState<SourceNode | null>(null);
   const [provenance, setProvenance] = React.useState<ProvenanceResponse | null>(null);
@@ -329,16 +331,18 @@ export function IAMInterface() {
     let live = true;
     const load = async () => {
       try {
-        const [c, g, f] = await Promise.all([
+        const [c, g, f, m] = await Promise.all([
           api.get("/api/v1/interface/clusters"),
           api.get("/api/v1/interface/connections"),
           api.get("/api/v1/interface/freshness"),
+          api.get("/api/v1/interface/map"),
         ]);
         if (!live) return;
         const savedLinks: KnowledgeConnection[] = g.data?.connections || [];
         setClusters(c.data?.clusters || []);
         setGraphConnections(savedLinks);
         setFreshness(f.data?.nodes || {});
+        setMapPlaces(m.data?.places || []);
 
         // Rebuild source dots from persisted links so the graph survives
         // activity events ageing out of the recent-event window.
@@ -752,6 +756,8 @@ export function IAMInterface() {
         clusters={clusters}
         graphConnections={graphConnections}
         freshness={freshness}
+        mapMode={mapMode}
+        mapPlaces={mapPlaces}
         onNodeHover={(node, x, y) => {
           const id = node?.id ?? null;
           if (id && id === lastHoverRef.current) return;
@@ -1097,6 +1103,11 @@ export function IAMInterface() {
               </div>
             ))}
           </div>
+
+          <button onClick={() => { setMapMode(!mapMode); setShowOptions(false); }}
+            className="w-full mb-3 rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:border-[var(--accent)] transition-colors">
+            {mapMode ? "Return to intelligence sphere" : "Open geospatial view"}
+          </button>
 
           {clusters[0] ? (
             <button onClick={() => { void loadProvenance(clusters[0].name); setShowOptions(false); }}
