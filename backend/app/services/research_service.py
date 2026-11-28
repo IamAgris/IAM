@@ -1,12 +1,15 @@
 """Research service - orchestrates search, browse, extract, and memory storage"""
 
+import asyncio
 import re
+import time
 import uuid
 
 import loguru
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.services.memory_service import MemoryService
 from app.services.browser_service import browser_service
@@ -95,8 +98,23 @@ class ResearchService:
                 query=query,
             )
 
-            # Step 1: Search
-            search_results = await search_service.search(query, max_results=max_results)
+            # Step 1: Search, bounded so one slow free provider cannot stall
+            # the whole workflow beyond the acceptance/API client deadline.
+            deadline_at = time.monotonic() + settings.research_workflow_timeout_seconds
+            try:
+                async with asyncio.timeout(settings.research_workflow_timeout_seconds):
+                    search_results = await search_service.search(query, max_results=max_results)
+            except Exception as exc:  # noqa: BLE001 - external provider failure
+                logger.warning(f"research search bounded: {type(exc).__name__}")
+                search_results = {}
+                await _emit(
+                    db,
+                    "research.limitation",
+                    query,
+                    activity_id=activity_id,
+                    reason="search_unavailable",
+                    label="Search unavailable",
+                )
             raw_results = search_results.get("results", [])
 
             # If using DuckDuckGo via browser, do browser search
@@ -127,6 +145,16 @@ class ResearchService:
             previous_node: Optional[str] = None
             previous_domain: Optional[str] = None
             for idx, result in enumerate(raw_results[: self.max_sources_per_query]):
+                if time.monotonic() >= deadline_at:
+                    await _emit(
+                        db,
+                        "research.limitation",
+                        query,
+                        activity_id=activity_id,
+                        reason="workflow_deadline",
+                        label="Research deadline reached",
+                    )
+                    break
                 url = result.get("url", "")
                 if not url:
                     continue
@@ -196,7 +224,7 @@ class ResearchService:
                             content=content,
                             memory_type="fact",
                             source=url,
-                            confidence_level=credibility,
+                            confidence=credibility,
                             topic=query,
                             metadata_={
                                 "title": source_record["title"],

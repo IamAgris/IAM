@@ -389,6 +389,9 @@ class Settings(BaseSettings):
     independent_eval_artifact_root: str = ""
     independent_eval_signing_key: str = ""
     # Durable research artifacts: "local" (temp/filesystem) or "s3" (MinIO/S3).
+    # Bounded research workflow so a slow free provider cannot hold a request
+    # open indefinitely; partial results plus a limitation event are returned.
+    research_workflow_timeout_seconds: float = 20.0
     research_artifact_store: str = "local"
     research_artifact_prefix: str = "research"
 
