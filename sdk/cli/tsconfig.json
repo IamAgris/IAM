@@ -7,7 +7,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
-    "paths": { "@iam/sdk": ["../typescript/dist/index.d.ts"] },
+    "paths": { "@iamagris/sdk": ["../typescript/dist/index.d.ts"] },
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"]

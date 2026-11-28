@@ -9,7 +9,7 @@
   "type": "module",
   "bin": { "iam": "dist/index.js" },
   "scripts": { "build": "tsc -p tsconfig.json" },
-  "dependencies": { "@iam/sdk": "file:../typescript" },
+  "dependencies": { "@iamagris/sdk": "file:../typescript" },
   "devDependencies": { "typescript": "^5.4.0", "@types/node": "^20.0.0" },
   "license": "UNLICENSED"
 }

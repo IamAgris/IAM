@@ -1,15 +1,30 @@
 #!/usr/bin/env node
 /** IAM CLI - thin wrapper over @iam/sdk. No separate protocol or auth path. */
 
-import { IAM, type NodeRegistration } from "@iam/sdk";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { IAM, type NodeRegistration } from "@iamagris/sdk";
+
+const CREDENTIAL_PATH = join(homedir(), ".config", "iam", "token");
+
+async function storedToken(): Promise<string | undefined> {
+  if (process.env.IAM_TOKEN) return process.env.IAM_TOKEN;
+  try {
+    const token = await readFile(CREDENTIAL_PATH, "utf8");
+    return token.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const args = process.argv.slice(2);
 const [group, action, ...rest] = args;
 
-function client(): IAM {
+async function client(): Promise<IAM> {
   return new IAM({
     endpoint: process.env.IAM_CORE_URL ?? "http://localhost:8000",
-    token: process.env.IAM_TOKEN,
+    token: await storedToken(),
   });
 }
 
@@ -42,7 +57,16 @@ async function main(): Promise<void> {
     return;
   }
 
-  const iam = client();
+  if (group === "login") {
+    const token = action ?? process.env.IAM_TOKEN;
+    if (!token) fail("login requires a scoped token argument or IAM_TOKEN");
+    await mkdir(join(homedir(), ".config", "iam"), { recursive: true, mode: 0o700 });
+    await writeFile(CREDENTIAL_PATH, `${token.trim()}\n`, { mode: 0o600 });
+    console.log(`Stored scoped token in ${CREDENTIAL_PATH}`);
+    return;
+  }
+
+  const iam = await client();
 
   switch (`${group} ${action ?? ""}`.trim()) {
     case "core status":
@@ -68,9 +92,22 @@ async function main(): Promise<void> {
       if (!rest[0]) fail("node status requires a node id");
       console.log(await iam.nodes.status(rest[0]));
       break;
-    case "dev init":
-      console.log("Created .env.example and iam.config.json (scaffold).");
+    case "dev init": {
+      await mkdir(".", { recursive: true });
+      for (const [name, body] of [
+        [".env.example", "IAM_CORE_URL=http://localhost:8000\n# IAM_TOKEN=scoped-token\n"],
+        ["iam.config.json", '{"endpoint":"http://localhost:8000"}\n'],
+      ] as const) {
+        try {
+          await writeFile(name, body, { flag: "wx" });
+          console.log(`created ${name}`);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+          console.log(`${name} already exists (unchanged)`);
+        }
+      }
       break;
+    }
     case "dev test":
       console.log(await iam.diagnostics.status());
       break;
@@ -111,9 +148,6 @@ async function main(): Promise<void> {
       console.log(await iam.freeSandbox.provision(JSON.parse(rest[0])));
       break;
     }
-    case "login":
-      fail("login must write a scoped token to the OS credential store (not implemented in scaffold)");
-      break;
     default:
       fail(`unknown command: ${group}${action ? ` ${action}` : ""}`);
   }

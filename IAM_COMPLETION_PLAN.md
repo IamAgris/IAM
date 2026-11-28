@@ -74,9 +74,39 @@ Gates after implementation: ruff clean, mypy ratchet 0 new / 62 fixed, OpenAPI 8
 | P1-5 Observability | **Implemented** | `app/core/observability.py` (OTel API spans with no-op fallback; request/error/in-flight/latency counters), `ObservabilityMiddleware`, `/metrics` now exposes `iam_http_*`; request IDs were already on every response via `RequestContextMiddleware`. 3 tests; CI green at `363cc1c`. |
 | P1-11 Infra drift | **Implemented** | `tools/quality/check_infra_drift.py` verifies required services, health checks, required infra paths and every host bind mount exists; wired into `quality-gates/workflow-validation`. Run: OK, 4 bind mounts, 13 services. |
 
-### Not yet done
+### P1 completion record (28 November 2026)
 
-Remaining P1: P1-2, P1-4, P1-6…P1-10, P1-12…P1-16, plus P2/human items.
+| Item | Status | Evidence |
+|------|--------|----------|
+| P1-2 Post-deploy monitoring | **Implemented** | `run_post_deploy_checks` hourly ARQ cron (opt-in), awaitable evaluator support, async-safe evaluation via `asyncio.to_thread`, `test_post_deploy_monitor.py`. Auto-rollback still needs the signed release gate. |
+| P1-4 Posture matrix | **Implemented** | `IAM_CAPABILITY_POSTURE.md` lists default-on controls, every default-off flag, verification status and the rule that flipping a flag is not evidence. |
+| P1-6 Memory lifecycle | **Implemented** | `expire_memories`, `find_duplicate_memories`, `consolidate_memories` existed; added daily cron and `test_memory_lifecycle.py` proving conflicts are linked, never silently merged. |
+| P1-7 Perception | **Implemented** | `vision_service` requests structured JSON and parses `objects`/`text_ocr` with an honest fallback; 3 tests. OCR via Docker remains available in `live_media_service` for explicit callers. |
+| P1-8 Module registry | **Implemented** | `module_registry.py` declares action/service/authority/side-effect; dispatch allowlist and graph keyword mapping derive from it; `GET /api/v1/capabilities/modules` exposes discovery; 4 tests. |
+| P1-9 P2P durability | **Partly implemented** | Atomic JSON persistence for outbox/seq/seen/outgoing_seq, load on startup, explicit HMAC-not-Ed25519 documentation, 3 tests. Live two-node run and SDK/Compose P2P remain external. |
+| P1-10 Financial surface | **Implemented** | Unrouted page already removed; read-only finance methods added to Python and TypeScript SDKs; 14 SDK tests pass. |
+| P1-12 SOPS secrets | **Implemented (scaffold + gate)** | `.sops.yaml` with fail-closed age placeholder; `check_secrets_posture.py` wired into CI. OD-58 Infisical dual-read remains concurrent owner work. |
+| P1-13 Real platform drivers | **Blocked (external)** | Needs Colab/Kaggle credentials and human `/mcps` sign-in; no runtime should be created speculatively. |
+| P1-14 lm-evaluation-harness | **Blocked (operator decision)** | `lm_eval` not installed; trusted local evaluator + 5-domain suite already gate releases. Installing the harness is a dependency decision. |
+| P1-15 Durable artifact store | **Code-complete** | `RESEARCH_ARTIFACT_STORE=s3` selects `S3ArtifactStore`; hydration and store selection already tested. Rolling it out in production is an operator action. |
+| P1-16 Frontend arm64 image | **Build verified** | `docker buildx build --builder iam-multiarch --platform linux/arm64` → `iam-frontend:arm64`, `arm64/linux`, 9 layers. Not run on ARM hardware. |
+
+All CI green at `be2b171`: CodeQL, IAM CI, OpenAPI drift, Quality gates, RKIE toolkit, Supply chain.
+
+### P2 and human/external items
+
+| Item | Status | Evidence / blocker |
+|------|--------|--------------------|
+| P2-1 Skill store empty | Open (operator content) | `iam/skills/` has only README; real signed packages must be authored by the owner/Forge. |
+| P2-2 SDK CLI stubs | **Implemented** | `login` writes a scoped token to `~/.config/iam/token` (0600), `dev init` creates files without overwriting, package name aligned to `@iamagris/sdk`; built and smoke-run. |
+| P2-3 Frontend dead surface | **Already resolved** | `_financial-intelligence/` is empty and no orphan panel files remain. |
+| P2-4 Documentation conflicts (C01–C35) | Blocked on owner confirmation | Authority/decision docs cannot be rewritten unilaterally; `IAM_DOCUMENTATION_INVENTORY_AND_CONFLICT_REPORT.md` holds the list. |
+| P2-5 RKIE debt | Blocked on host tooling | libcst native extension blocked by Windows App Control; neural embeddings fall back to TF-IDF where Ollama is absent. |
+| P2-6 Inference parity harness | Blocked on assets | Real Qwen2.5-3B weights, full layer stack and GPU are required; synthetic shapes only today. |
+| P2-7 Benchmark comparability | **Done** | Warm/cold baselines recorded in `tests/model_competition/RESULTS.md` under the 2 vCPU / 4 GB Compose default. |
+| Human/external | Blocked | IPLCI counsel validation, OD-54/55/57 signed decisions, `CREATOR_EMAIL`, HBI real corpora/studies, open specs A–G, Colab/Kaggle credentials, live two-node P2P, ARM hardware run. No speculative code or credential creation. |
+
+**All engineering items in P0 and P1 are now closed or explicitly blocked on an external action.**
 
 > **Caveat:** all test counts, path counts and gate results in the source documents are **dated snapshots**.
 > Re-run the gates before relying on any number. Notes in `tools/rkie/notes/` are untrusted historical
