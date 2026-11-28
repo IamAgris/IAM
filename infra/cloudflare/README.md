@@ -131,3 +131,7 @@ It contains no secrets.
    curl -sS http://localhost:8000/health
    curl -I https://core.iamagris.co.za/health    # expect an Access login redirect
    ```
+
+Alternatively, `deploy-cloudflare-connector.yml` runs the same installer from a
+GitHub-hosted runner over SSH — no self-hosted runner. See `GITHUB_DEPLOY.md` for the
+repository variables/secrets it requires.

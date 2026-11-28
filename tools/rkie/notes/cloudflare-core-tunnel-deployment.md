@@ -26,6 +26,12 @@ Status after creation: tunnel `inactive` — no connector is running yet. The co
 same host as the Core (Contabo VPS); the run token was written to a local file outside the repository
 and must never be committed. The saved file contains the **raw token string**, not JSON.
 
+`.github/workflows/deploy-cloudflare-connector.yml` + `infra/cloudflare/actions-deploy.sh` deploy the
+same installer from a GitHub-hosted runner over SSH. The owner rejected a self-hosted runner. The
+workflow is manual-only and expects repository variables `DEPLOY_HOST`, `DEPLOY_USER` (optional
+`DEPLOY_PORT`) and secrets `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_TUNNEL_TOKEN`.
+Host key checking is strict. Requirements are in `infra/cloudflare/GITHUB_DEPLOY.md`.
+
 `infra/cloudflare/setup-connector.sh` is the prepared copy-paste installer for the VPS. It installs
 `cloudflared`, writes the token to `/etc/cloudflared/token` (mode 600), registers
 `cloudflared-iam-core.service`, and starts it. It uses `cloudflared tunnel run --token-file` so the
@@ -49,20 +55,6 @@ token never appears in process arguments; no secret is stored in the repo. Bash 
   Creator if enabled before that preparation. The email OTP policy stays unchanged.
 - The README's example uses a locally managed tunnel with a credentials file. This deployment uses a
   remotely managed tunnel with a run token instead; ingress is configured in Zero Trust / via `cf`.
-
-## Verification evidence (28 November 2026)
-
-- `curl -I https://core.iamagris.co.za/health` returned **HTTP 302** to
-  `intellectualmainbrain.cloudflareaccess.com/.../access/login/...` with the correct
-  AUD (`654c0da9…`). The edge Access gate is working.
-- This does **not** prove the Core is reachable: the tunnel was still `inactive`, so
-  the redirect happens before any origin request. `curl http://localhost:8000/health`
-  must be run on the VPS after the connector starts.
-- SSH to the candidate VPS (`169.58.234.90`) was attempted read-only and refused:
-  the stored ED25519 host key is `SHA256:zx1iZ+Vza94ETxSVODc2nHXJwFOA+PIH+WxIgLuCp7o`
-  but the host presented `SHA256:3DS6ax/dGhKCTcDr1XPOByFWspVhcEpPCw0cbsGwTSA`.
-  Strict host-key checking was **not** bypassed; verify out-of-band (provider console)
-  before updating `known_hosts` or connecting again.
 
 ## Useful commands
 
