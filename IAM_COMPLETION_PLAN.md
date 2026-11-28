@@ -50,6 +50,8 @@ First CI run on the pushed tree exposed three real defects that local Python 3.1
 
 All local gates green after the fixes: ruff clean, mypy ratchet 0 new / 62 fixed, 1075 tests passed at 66.37% coverage, migrations 67/67, OpenAPI 849/482 OK, RKIE smoke 20/20.
 
+**Final CI state at remote head `d8457b4` — all workflows success:** CodeQL, IAM CI, OpenAPI contract drift, Quality gates (incl. `types` and L1–L5 `acceptance`), RKIE toolkit tests, Supply chain checks. P0-4 is fully closed with a green GitHub run.
+
 ### Not yet done
 
 P0-2 (general emergency shutdown) and all P1/P2/human items below.
