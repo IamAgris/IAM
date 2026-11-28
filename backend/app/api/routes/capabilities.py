@@ -11,6 +11,15 @@ from app.services.capability_service import CapabilityService
 router = APIRouter(prefix="/api/v1/capabilities", tags=["capabilities"])
 
 
+@router.get("/modules")
+async def list_dispatchable_modules() -> Dict[str, Any]:
+    """Discover the modules the autonomy loop may dispatch, with their contract."""
+    from app.services.module_registry import discover
+
+    modules = discover()
+    return {"modules": modules, "count": len(modules)}
+
+
 class CapabilityRequest(BaseModel):
     name: str
     category: str

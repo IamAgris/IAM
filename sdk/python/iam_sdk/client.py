@@ -916,6 +916,18 @@ class _FreeNodes:
         return await self._t.request("POST", f"{self.BASE}/{candidate_id}/migration-plan")
 
 
+class _Finance:
+    """Read-only finance surface; mutations stay behind signed Creator authority."""
+
+    def __init__(self, transport: _Transport) -> None:
+        self.policy = _Simple(transport, "GET", "/api/v1/finance/policy")
+        self.ledger = _Simple(transport, "GET", "/api/v1/finance/ledger")
+        self.transactions = _Simple(transport, "GET", "/api/v1/finance/transactions")
+        self.budgets = _Simple(transport, "GET", "/api/v1/finance/budgets")
+        self.reconciliation = _Simple(transport, "GET", "/api/v1/finance/reconciliation")
+        self.profit_and_loss = _Simple(transport, "GET", "/api/v1/finance/profit-and-loss")
+
+
 class IAM:
     """Connect local applications and nodes to the IAM Core."""
 
@@ -926,6 +938,7 @@ class IAM:
         self.connected = False
 
         self.core = _Core(self._transport)
+        self.finance = _Finance(self._transport)
         self.tasks = _Tasks(self._transport, self)
         self.nodes = _Nodes(self._transport)
         self.resources = _Resources(self._transport)

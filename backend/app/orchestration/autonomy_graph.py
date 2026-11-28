@@ -464,16 +464,10 @@ def _infer_action(objective: dict, decision: Optional[Dict[str, Any]]) -> str:
     tool_name = str(objective.get("tool_name") or "")
     if tool_name in action_dispatch.AVAILABLE:
         return tool_name
-    title = str(objective.get("title") or "").lower()
-    if "research" in title:
-        return "research"
-    if "memory" in title:
-        return "memory_recall"
-    if "capab" in title:
-        return "capability_inspect"
-    if "permission" in title or "authority" in title:
-        return "governance_check"
-    return "model_probe"
+    from app.services.module_registry import action_for_objective
+
+    title = str(objective.get("title") or "")
+    return action_for_objective(title) or "model_probe"
 
 
 async def plan(state: AutonomyState) -> Dict[str, Any]:

@@ -201,3 +201,9 @@ class ModelRegistry:
             for key, version in self._versions.items()
             if key.startswith(f"{model}@")
         ]
+
+    def deployed_versions(self) -> List[ModelVersion]:
+        """All versions currently marked deployed, for post-deploy monitoring."""
+        return [
+            version for version in self._versions.values() if version.status == "deployed"
+        ]

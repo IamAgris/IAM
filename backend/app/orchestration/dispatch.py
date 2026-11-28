@@ -11,13 +11,19 @@ from __future__ import annotations
 
 from typing import Any, Dict, Mapping
 
-AVAILABLE: tuple[str, ...] = (
-    "memory_recall",
-    "capability_inspect",
-    "governance_check",
-    "model_probe",
-    "research",
-)
+from app.services.module_registry import available_actions
+
+# The allowlist is derived from the central module contract registry so a new
+# action must be declared once, with its authority, before it can be dispatched.
+AVAILABLE: tuple[str, ...] = available_actions()
+
+TOOL_ACTIONS: Mapping[str, str] = {
+    "tone_analyze": "tone.analyze",
+    "network_inspect": "network.inspect",
+    "sandbox_status": "sandbox.status",
+    "finance_research_read": "finance.research.read",
+    "iics_egress_check": "iics.egress.check",
+}
 
 
 def _failure(action: str, exc: BaseException) -> Dict[str, Any]:
@@ -125,6 +131,27 @@ async def dispatch(db: Any, action: str, payload: Mapping[str, Any]) -> Dict[str
                     "mode": status.mode,
                     "model": status.model,
                 },
+            }
+
+        if action in TOOL_ACTIONS:
+            from app.services.iam_tool_executor import execute_registered_tool
+
+            tool_args: Dict[str, Any] = {}
+            if action == "tone_analyze":
+                tool_args = {"text": str(payload.get("text") or "")[:4000]}
+            elif action == "iics_egress_check":
+                tool_args = {"url": str(payload.get("url") or "")[:500]}
+            elif action == "finance_research_read":
+                tool_args = {"limit": payload.get("limit") or 5}
+            else:
+                tool_args = {}
+            outcome = await execute_registered_tool(db, TOOL_ACTIONS[action], tool_args)
+            return {
+                "status": "failure" if outcome.get("error") else "success",
+                "action": action,
+                "service": "IAMToolExecutor",
+                "tool": TOOL_ACTIONS[action],
+                "evidence": outcome,
             }
 
         # action == "research" — the full existing search/browse/extract pipeline.

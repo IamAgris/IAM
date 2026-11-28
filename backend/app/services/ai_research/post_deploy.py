@@ -7,8 +7,9 @@ enabled it *and* the signed release gate authorizes the rollback target.
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,7 +50,7 @@ async def check_regression(
     model: str,
     version: str,
     *,
-    evaluate: Callable[[str], float],
+    evaluate: Union[Callable[[str], float], Callable[[str], Awaitable[float]]],
     store=None,
     actor: str = "iam",
 ) -> RegressionCheck:
@@ -65,7 +66,8 @@ async def check_regression(
 
     baseline = float(entry.benchmark_score or 0.0)
     try:
-        current = float(evaluate(model))
+        measured = evaluate(model)
+        current = float(await measured) if inspect.isawaitable(measured) else float(measured)
     except Exception as exc:  # pragma: no cover - defensive
         raise ModelReleaseError(f"post-deploy evaluation failed: {exc}") from exc
 

@@ -22,6 +22,7 @@ from typing import Dict, Any, List, Optional
 from collections import defaultdict
 import asyncio
 import loguru
+from pathlib import Path
 
 logger = loguru.logger
 
@@ -80,16 +81,72 @@ class P2PTransport:
         self.outbox: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         self.local_secret: str = secrets.token_hex(32)
         self.node_id: str = "local-iam"
+        self.state_path: Optional[Path] = None
 
-    def configure(self, node_id: str, secret: Optional[str] = None) -> Any:
+    def configure(
+        self,
+        node_id: str,
+        secret: Optional[str] = None,
+        state_path: Optional[str] = None,
+    ) -> Any:
         self.node_id = node_id
         if secret:
             self.local_secret = secret
+        if state_path:
+            self.state_path = Path(state_path)
+            self.load()
+
+    def load(self) -> None:
+        """Restore outbox and replay state from an operator-managed file."""
+        if not self.state_path or not self.state_path.exists():
+            return
+        try:
+            data = json.loads(self.state_path.read_text(encoding="utf-8"))
+            self.outbox.update(
+                {str(k): list(v) for k, v in (data.get("outbox") or {}).items()}
+            )
+            self.seq.update({str(k): int(v) for k, v in (data.get("seq") or {}).items()})
+            self.seen.update({str(k): float(v) for k, v in (data.get("seen") or {}).items()})
+            self.outgoing_seq.update(
+                {str(k): int(v) for k, v in (data.get("outgoing_seq") or {}).items()}
+            )
+            logger.info("P2P transport state restored")
+        except Exception as exc:  # pragma: no cover - corrupt/partial file
+            logger.warning(f"P2P state load failed: {type(exc).__name__}")
+
+    def _persist(self) -> None:
+        """Atomically persist durable state; best-effort, never blocks messaging."""
+        if not self.state_path:
+            return
+        try:
+            # Bound replay cache growth before writing.
+            if len(self.seen) > 2000:
+                oldest = sorted(self.seen.items(), key=lambda item: item[1])[: len(self.seen) - 2000]
+                for key, _ in oldest:
+                    self.seen.pop(key, None)
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.state_path.with_suffix(".tmp")
+            tmp.write_text(
+                json.dumps(
+                    {
+                        "outbox": self.outbox,
+                        "seq": dict(self.seq),
+                        "outgoing_seq": dict(self.outgoing_seq),
+                        "seen": self.seen,
+                    },
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+            tmp.replace(self.state_path)
+        except Exception as exc:  # pragma: no cover - filesystem failure
+            logger.warning(f"P2P state persist failed: {type(exc).__name__}")
 
     def next_seq(self) -> int:
         # Outbound counters must not be confused with inbound replay tracking:
         # a locally published envelope would otherwise look like a replay.
         self.outgoing_seq[self.node_id] += 1
+        self._persist()
         return self.outgoing_seq[self.node_id]
 
     def accept(self, env: Dict[str, Any], peer_secret: Optional[str] = None) -> Dict[str, Any]:
@@ -109,15 +166,18 @@ class P2PTransport:
             return {"accepted": False, "reason": "replay"}
         self.seq[env["sender"]] = env["seq"]
         self.seen[eid] = time.time()
+        self._persist()
         return {"accepted": True, "envelope": env}
 
     def queue_for(self, peer_id: str, env: Dict[str, Any]) -> Any:
         """Store-and-forward for an offline peer."""
         self.outbox[peer_id].append(env)
+        self._persist()
 
     def drain(self, peer_id: str) -> List[Dict[str, Any]]:
         """Return queued envelopes for a peer that reconnects."""
         items = self.outbox.pop(peer_id, [])
+        self._persist()
         return items
 
     def register_ws(self, peer_id: str, ws: Any) -> Any:

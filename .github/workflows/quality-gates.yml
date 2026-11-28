@@ -83,6 +83,8 @@ jobs:
         run: python tools/quality/check_workflows.py --json
       - name: Infra drift check
         run: python tools/quality/check_infra_drift.py --json
+      - name: Secrets posture check
+        run: python tools/quality/check_secrets_posture.py --json
       - name: MyPy debt report
         run: python tools/quality/mypy_debt.py --top 10
 

@@ -131,7 +131,11 @@ async def lifespan(app: FastAPI) -> Any:
     from app.services.p2p_transport import transport
 
     enforce_secret_policy()
-    transport.configure(settings.iam_node_id, settings.iam_p2p_secret)
+    transport.configure(
+        settings.iam_node_id,
+        settings.iam_p2p_secret,
+        state_path=settings.p2p_state_path or None,
+    )
     logger.info(f"P2P node identity configured: {settings.iam_node_id}")
 
     # Development convenience only: production schema comes from Alembic.

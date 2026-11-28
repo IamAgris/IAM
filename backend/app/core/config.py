@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     # random one per process, so peers cannot reconnect after a restart.
     iam_node_id: str = "local-iam"
     iam_p2p_secret: Optional[str] = None
+    # Optional durable path for P2P outbox/replay state. Empty keeps the
+    # in-memory behaviour used by single-node tests and default deployments.
+    p2p_state_path: str = ""
     # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
     # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     iam_sdk_default_model: str = "nvidia-nemotron-3.5-lightning"

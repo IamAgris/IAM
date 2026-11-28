@@ -86,6 +86,15 @@ export class IAM {
   private connected = false;
 
   core: { status: () => Promise<Record<string, unknown>> };
+  /** Read-only finance surface; mutations require signed Creator authority. */
+  finance: {
+    policy: () => Promise<Record<string, unknown>>;
+    ledger: () => Promise<Record<string, unknown>>;
+    transactions: () => Promise<Record<string, unknown>>;
+    budgets: () => Promise<Record<string, unknown>>;
+    reconciliation: () => Promise<Record<string, unknown>>;
+    profitAndLoss: () => Promise<Record<string, unknown>>;
+  };
   tasks: {
     submit: (task: TaskSubmit) => Promise<Task>;
     get: (id: string) => Promise<Task>;
@@ -332,6 +341,14 @@ export class IAM {
 
     this.core = {
       status: () => this.transport.request("GET", "/health"),
+    };
+    this.finance = {
+      policy: () => this.transport.request("GET", "/api/v1/finance/policy"),
+      ledger: () => this.transport.request("GET", "/api/v1/finance/ledger"),
+      transactions: () => this.transport.request("GET", "/api/v1/finance/transactions"),
+      budgets: () => this.transport.request("GET", "/api/v1/finance/budgets"),
+      reconciliation: () => this.transport.request("GET", "/api/v1/finance/reconciliation"),
+      profitAndLoss: () => this.transport.request("GET", "/api/v1/finance/profit-and-loss"),
     };
     this.tasks = {
       submit: async (task) => {
