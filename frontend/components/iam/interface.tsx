@@ -4,6 +4,7 @@ import React from "react";
 import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip, Copy, Wand2, Settings2, Trash2, Activity, Minus, ChevronDown } from "lucide-react";
 import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo, MapPlace } from "./presence-sphere";
 import { api } from "@/lib/api";
+import { detectLocale, t, type Locale } from "@/lib/i18n";
 import { listConversations, createConversation, getConversationMessages, createConversationMessage, Conversation, ConversationMessage } from "@/lib/api";
 
 type Mode = "focus" | "recall" | "create";
@@ -137,6 +138,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
   const [theme, setTheme] = React.useState<"dark" | "light">("light");
   const [listening, setListening] = React.useState(false);
   const [voiceEnabled, setVoiceEnabled] = React.useState(false);
+  const [locale, setLocale] = React.useState<Locale>("en");
   const [attachment, setAttachment] = React.useState<File | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [connected, setConnected] = React.useState<boolean | null>(null);
@@ -193,6 +195,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
   }, [connections, graphConnections]);
   const recognitionRef = React.useRef<any>(null);
   const sessionRef = React.useRef<SessionData | null>(null);
+  React.useEffect(() => { setLocale(detectLocale()); }, []);
   React.useEffect(() => { sessionRef.current = session; }, [session]);
   const abortRef = React.useRef<AbortController | null>(null);
   const timersRef = React.useRef<number[]>([]);
@@ -504,15 +507,28 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       setSelectedConversationId(created.id);
       setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
       setMessages([]);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
     } catch {
       // Fall back to local-only conversation
     }
+  }, []);
+
+  // Deep-links stay on the single page: /?conversation=<id>. No extra routes.
+  const setConversationInUrl = React.useCallback((conversationId?: string) => {
+    if (typeof window === "undefined") return;
+    const url = conversationId
+      ? `${window.location.pathname}?conversation=${encodeURIComponent(conversationId)}`
+      : window.location.pathname;
+    window.history.replaceState(null, "", url);
   }, []);
 
   // Load messages for a specific conversation
   const loadConversationMessages = React.useCallback(async (conversationId: string) => {
     try {
       setSelectedConversationId(conversationId);
+      setConversationInUrl(conversationId);
       const items = await getConversationMessages(conversationId);
       setMessages(
         items
@@ -522,13 +538,36 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
     } catch {
       setMessages([]);
     }
-  }, []);
+  }, [setConversationInUrl]);
+
+  const selectConversation = React.useCallback((conversationId: string) => {
+    void loadConversationMessages(conversationId);
+  }, [loadConversationMessages]);
+
+  const deleteConversation = React.useCallback(async (conversationId: string) => {
+    try {
+      await api.delete(`/api/v1/conversations/${conversationId}`);
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (selectedConversationId === conversationId) {
+        setSelectedConversationId(null);
+        setConversationInUrl();
+        setMessages([]);
+      }
+    } catch {
+      // Keep the conversation visible if deletion fails; the backend is authoritative.
+    }
+  }, [selectedConversationId, setConversationInUrl]);
 
   React.useEffect(() => {
     if (initialConversationId) {
       void loadConversationMessages(initialConversationId);
     }
   }, [initialConversationId, loadConversationMessages]);
+
+  // Refresh the in-page list whenever the history drawer is opened.
+  React.useEffect(() => {
+    if (showHistory) void loadConversations();
+  }, [showHistory, loadConversations]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -550,8 +589,19 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
     loadSuggestions(m, session?.session_token);
   };
 
-  const speak = (text: string) => {
-    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  const speak = async (text: string) => {
+    if (!voiceEnabled || typeof window === "undefined") return;
+    // Prefer IAM's own voice service; browser synthesis is the offline fallback.
+    try {
+      const r = await api.post("/api/v1/voice/text-to-speech", { text, format: "mp3" });
+      const b64 = r.data?.audio_base64;
+      if (b64 && !r.data?.error) {
+        const audio = new Audio(`data:audio/${r.data.format || "mp3"};base64,${b64}`);
+        await audio.play();
+        return;
+      }
+    } catch {}
+    if (!("speechSynthesis" in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -777,7 +827,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
     timersRef.current.push(doneTimer);
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     const on = !listening;
     setListening(on);
     setState(on ? "listening" : "idle");
@@ -810,7 +860,38 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
         rec.onend = () => setListening(false);
         recognitionRef.current = rec;
         rec.start();
+        return;
       } catch {}
+    }
+
+    // Browser STT unavailable: record audio and use IAM's own voice service.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        try {
+          const form = new FormData();
+          form.append("audio", new Blob(chunks, { type: chunks[0]?.type || "audio/webm" }), "speech.webm");
+          const r = await api.post("/api/v1/voice/speech-to-text", form, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const text = String(r.data?.text || "");
+          if (text && !r.data?.error) {
+            setInput(text);
+            ask(text);
+          }
+        } catch {}
+        setListening(false);
+        setState("idle");
+      };
+      recognitionRef.current = { stop: () => recorder.stop() };
+      recorder.start();
+    } catch {
+      setListening(false);
+      setState("idle");
     }
   };
 
@@ -843,7 +924,8 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       />
 
       {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-2 p-3 sm:gap-3 sm:p-5 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-2 p-3 sm:gap-3 sm:p-5 pointer-events-none"
+        style={{ paddingTop: "max(0.75rem, var(--safe-top))", paddingLeft: "max(0.75rem, var(--safe-left))", paddingRight: "max(0.75rem, var(--safe-right))" }}>
         <div className="pointer-events-auto">
           <h1 className="font-medium tracking-widest text-base sm:text-lg" style={{ letterSpacing: "0.08em" }}>IAM</h1>
           <p className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[13px] opacity-60">
@@ -872,7 +954,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
             {suggestionsOpen && (
               <div
                 role="menu"
-                aria-label="Suggestions"
+                aria-label={t("Suggestions", locale)}
                 className="absolute right-0 top-full mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-[var(--line)] p-2 backdrop-blur-xl space-y-1"
                 style={{ background: "var(--glass)", color: "var(--mute)" }}
               >
@@ -890,7 +972,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
               </div>
             )}
           </div>
-          <div className="flex gap-0.5 p-0.5 sm:gap-1.5 sm:p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label="Mode">
+          <div className="flex gap-0.5 p-0.5 sm:gap-1.5 sm:p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label={t("Mode", locale)}>
             {(Object.keys(MODE_CONFIG) as Mode[]).map((m) => (
               <button
                 key={m}
@@ -971,8 +1053,9 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* Provenance path — sources behind a clicked cluster */}
       {provenance && (
-        <div className="fixed left-4 right-4 top-28 z-30 w-auto max-h-[55vh] overflow-y-auto rounded-2xl border border-[var(--line)] p-4 backdrop-blur-2xl pointer-events-auto md:left-24 md:right-auto md:w-[330px]"
-          style={{ background: "var(--glass)" }}>
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[80dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] p-4 backdrop-blur-2xl pointer-events-auto md:inset-x-auto md:bottom-auto md:left-24 md:top-28 md:max-h-[55vh] md:rounded-2xl md:border md:w-[330px]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
           <div className="flex items-start justify-between gap-2 mb-3">
             <div>
               <h2 className="text-sm font-medium">Provenance</h2>
@@ -1031,37 +1114,38 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       )}
 
       {/* Theme + history controls */}
-      <div className="fixed right-5 bottom-28 z-10 flex flex-col gap-2 pointer-events-auto">
+      <div className="fixed right-3 sm:right-5 bottom-32 sm:bottom-28 z-10 flex flex-col gap-2 pointer-events-auto"
+        style={{ right: "max(0.75rem, var(--safe-right))" }}>
         <button
           onClick={() => setShowHistory(!showHistory)}
-          aria-label="Conversation history"
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          aria-label={t("Conversation history", locale)}
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: "var(--glass)" }}
         >
           {showHistory ? <X size={16} /> : <History size={16} />}
         </button>
         <button
           onClick={() => setShowOptions(!showOptions)}
-          aria-label="IAM options"
+          aria-label={t("IAM options", locale)}
           aria-pressed={showOptions}
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: showOptions ? "var(--accent)" : "var(--glass)", color: showOptions ? "var(--bg2)" : undefined }}
         >
           {showOptions ? <X size={16} /> : <Settings2 size={16} />}
         </button>
         <button
           onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          aria-label={t("Toggle theme", locale)}
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: "var(--glass)" }}
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          aria-label={voiceEnabled ? "Disable voice" : "Enable voice"}
+          aria-label={t(voiceEnabled ? "Disable voice" : "Enable voice", locale)}
           aria-pressed={voiceEnabled}
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: voiceEnabled ? "var(--accent)" : "var(--glass)", color: voiceEnabled ? "var(--bg2)" : undefined }}
         >
           {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -1070,9 +1154,46 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* Conversation history — expandable, unobtrusive */}
       {showHistory && (
-        <div className="fixed inset-x-3 top-20 bottom-40 z-20 w-auto rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 overflow-y-auto pointer-events-auto md:inset-x-auto md:right-20 md:top-24 md:bottom-28 md:w-[min(380px,calc(100vw-120px))]"
-          style={{ background: "var(--glass)" }}>
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[78dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:bottom-auto md:right-20 md:top-24 md:max-h-none md:rounded-2xl md:border md:w-[min(380px,calc(100vw-120px))]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
           <h2 className="text-sm font-medium mb-3 text-[var(--mute)]">Conversation</h2>
+          <div className="mb-3 rounded-xl border border-[var(--line)] p-2" style={{ background: "rgba(255,255,255,.035)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider opacity-50 text-[var(--mute)]">Past conversations</span>
+              <button onClick={() => void createNewConversation()} className="text-[11px] text-[var(--accent)] hover:underline">+ New</button>
+            </div>
+            {isLoadingConversations ? (
+              <p className="text-xs opacity-60">Loading…</p>
+            ) : conversations.length === 0 ? (
+              <p className="text-xs opacity-60">No saved conversations yet.</p>
+            ) : (
+              <ul className="max-h-40 space-y-1 overflow-y-auto">
+                {conversations.map((c) => (
+                  <li key={c.id} className="flex items-center gap-1">
+                    <button
+                      onClick={() => selectConversation(c.id)}
+                      title={c.title || "Untitled conversation"}
+                      className={`flex-1 truncate rounded-lg px-2 py-1.5 text-left text-xs ${selectedConversationId === c.id ? "bg-[rgba(143,166,255,.16)]" : "hover:bg-white/5"}`}
+                    >
+                      <span className="block truncate">{c.title || "Untitled conversation"}</span>
+                      <span className="block text-[10px] opacity-50">
+                        {c.started_at ? new Date(c.started_at).toLocaleDateString() : ""}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => void deleteConversation(c.id)}
+                      aria-label={`Delete ${c.title || "conversation"}`}
+                      className="rounded-lg p-1.5 opacity-50 hover:opacity-100 hover:text-red-400"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <h3 className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Current conversation</h3>
           {messages.length === 0 ? (
             <p className="text-xs text-[var(--mute)] opacity-70">No conversation yet. Ask IAM anything.</p>
           ) : (
@@ -1091,11 +1212,12 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* In-screen options — no extra pages, no navigation */}
       {showOptions && (
-        <div className="fixed inset-x-3 top-20 z-20 w-auto max-h-[68vh] overflow-y-auto rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:right-20 md:top-24 md:max-h-none md:w-[min(340px,calc(100vw-120px))]"
-          style={{ background: "var(--glass)" }}>
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[82dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:bottom-auto md:right-20 md:top-24 md:max-h-none md:rounded-2xl md:border md:w-[min(340px,calc(100vw-120px))]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-medium text-[var(--mute)]">IAM options</h2>
-            <button onClick={() => setShowOptions(false)} aria-label="Close options" className="opacity-60 hover:opacity-100">
+            <button onClick={() => setShowOptions(false)} aria-label={t("Close options", locale)} className="opacity-60 hover:opacity-100">
               <X size={15} />
             </button>
           </div>
@@ -1144,7 +1266,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
               <input
                 value={catalogSearch}
                 onChange={(event) => setCatalogSearch(event.target.value)}
-                placeholder="Search catalogue"
+                placeholder={t("Search catalogue", locale)}
                 aria-label="Search free model catalogue"
                 className="w-full mb-1 rounded border border-[var(--line)] bg-transparent px-2 py-1 text-[10px]"
               />
@@ -1282,7 +1404,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
                 </button>
                 <button
                   onClick={() => ask(lastQuery)}
-                  aria-label="Retry"
+                  aria-label={t("Retry", locale)}
                   className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
                   style={{ background: "var(--glass)", color: "var(--mute)" }}
                 >
@@ -1314,7 +1436,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
                 setStatus(e.target.value ? "Listening…" : MODE_CONFIG[mode].status);
               }
             }}
-            placeholder={MODE_CONFIG[mode].placeholder}
+            placeholder={t(MODE_CONFIG[mode].placeholder, locale)}
             aria-label="Message to IAM"
             autoComplete="off"
             className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2 text-[15px] tracking-wide caret-[var(--accent)] placeholder:opacity-40"

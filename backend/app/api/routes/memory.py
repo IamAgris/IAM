@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1/memory", tags=["memory"])
 class MemoryItemCreate(BaseModel):
     content: str
     memory_type: str = "fact"  # fact, opinion, hypothesis, preference, creative, experience
+    tier: str = "episodic"  # working, episodic, semantic, procedural, relationship, self, strategic
     source: Optional[str] = None
     confidence_level: float = 0.5
     topic: Optional[str] = None
@@ -32,6 +33,7 @@ class MemoryItemResponse(BaseModel):
     id: str
     content: str
     memory_type: str
+    tier: str = "episodic"
     source: Optional[str]
     confidence_level: float
     topic: Optional[str]
@@ -61,6 +63,7 @@ async def list_memories(
             id=str(m.id),
             content=m.content,
             memory_type=m.memory_type,
+            tier=str(m.tier),
             source=m.source,
             confidence_level=float(m.confidence_level) if m.confidence_level else 0.5,
             topic=m.topic,
@@ -84,6 +87,7 @@ async def create_memory(
     result = await service.store_memory(
         content=item.content,
         memory_type=item.memory_type,
+        tier=item.tier,
         source=source,
         confidence=item.confidence_level,
         topic=item.topic,

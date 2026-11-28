@@ -15,6 +15,10 @@ from urllib.parse import urlparse
 
 logger = loguru.logger
 
+MEMORY_TIERS = frozenset(
+    {"working", "episodic", "semantic", "procedural", "relationship", "self", "strategic"}
+)
+
 
 async def _emit_recall(db, **details: Any) -> None:
     """Emit a privacy-filtered recall signal to the durable activity stream."""
@@ -39,6 +43,7 @@ class MemoryService:
         self,
         content: str,
         memory_type: str = "fact",
+        tier: str = "episodic",
         source: Optional[str] = None,
         confidence: Optional[float] = None,
         topic: Optional[str] = None,
@@ -56,6 +61,8 @@ class MemoryService:
             raise ValueError("memory content must not be empty")
         if not source:
             raise ValueError("memory source is required for provenance")
+        if tier not in MEMORY_TIERS:
+            raise ValueError(f"invalid memory tier: {tier}")
 
         from app.services.iplci.context import resolve_governance_context
         from app.services.iplci.gateway import get_gateway
@@ -73,6 +80,7 @@ class MemoryService:
         memory = MemoryItem(
             content=content.strip(),
             memory_type=memory_type,
+            tier=tier,
             source=source,
             confidence_level=confidence_level,
             topic=topic,
@@ -100,6 +108,7 @@ class MemoryService:
             "id": str(memory.id),
             "content": memory.content,
             "memory_type": memory.memory_type,
+            "tier": memory.tier,
             "source": memory.source,
             "confidence_level": float(memory.confidence_level) if memory.confidence_level else 0.5,
             "topic": memory.topic,

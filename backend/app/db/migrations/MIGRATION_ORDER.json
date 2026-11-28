@@ -341,6 +341,11 @@
       "sequence": 68,
       "number": 71,
       "path": "071_emergency_shutdown.sql"
+    },
+    {
+      "sequence": 69,
+      "number": 73,
+      "path": "073_memory_tiers.sql"
     }
   ]
 }

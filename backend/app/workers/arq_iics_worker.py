@@ -127,11 +127,17 @@ async def refresh_site_policies(ctx: Dict[str, Any]) -> int:
     return refreshed
 
 
+def _threat_feed_minutes() -> set[int]:
+    """Translate the configured interval into cron minutes (bounded 1–60)."""
+    step = max(1, min(60, int(settings.iics_threat_feed_interval_minutes)))
+    return set(range(0, 60, step))
+
+
 class WorkerSettings:
     functions = [run_scheduled_research, enqueue_due_research]
     cron_jobs = [
         cron(enqueue_due_research, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}),
-        cron(poll_threat_feeds, minute={0, 15, 30, 45}),
+        cron(poll_threat_feeds, minute=_threat_feed_minutes()),
         cron(refresh_site_policies, minute={0, 30}),
     ]
     redis_settings = RedisSettings.from_dsn(settings.redis_url)

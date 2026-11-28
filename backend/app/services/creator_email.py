@@ -63,7 +63,22 @@ class SmtpTransport(CreatorEmailTransport):
         if not self.host or not self.sender:
             raise EmailTransportError("SMTP host and creator_email_from must be configured")
 
+    @staticmethod
+    def _assert_creator_domain(recipient: str) -> None:
+        """Refuse to send approval mail outside the configured Creator domain."""
+        domain = (settings.creator_email_domain or "").strip().lower().lstrip("@")
+        if not domain:
+            return
+        configured = (settings.creator_email or "").strip().lower()
+        address = recipient.strip().lower()
+        if not address.endswith(f"@{domain}"):
+            raise EmailTransportError("recipient is outside the Creator email domain")
+        if configured and configured != address:
+            raise EmailTransportError("recipient does not match the verified Creator email")
+
     def _send_blocking(self, message: Dict[str, Any]) -> None:
+        recipient = str(message.get("to") or "")
+        self._assert_creator_domain(recipient)
         email = EmailMessage()
         email["From"] = self.sender
         email["To"] = str(message.get("to") or "")

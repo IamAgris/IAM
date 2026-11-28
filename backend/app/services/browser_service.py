@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import hashlib
 import tempfile
 import uuid
 import loguru
@@ -123,6 +124,7 @@ class BrowserService:
         """Keep uploads/downloads inside the configured transfer root."""
         if not name or not isinstance(name, str):
             raise ValueError("file name is required")
+        # codeql[py/path-injection] name is reduced to a basename and the result is containment-checked below.
         candidate = (self.transfer_root / Path(name).name).resolve()
         if self.transfer_root not in candidate.parents:
             raise ValueError("file path escapes the transfer root")
@@ -141,6 +143,11 @@ class BrowserService:
             age = (now - meta["created_at"]).total_seconds()
             if age > settings.browser_session_ttl_seconds:
                 await self.close_session(token)
+
+    def _profile_path(self, session_token: str) -> Path:
+        """Per-session storage-state file under the configured profile root."""
+        digest = hashlib.sha256(session_token.encode("utf-8")).hexdigest()[:16]
+        return Path(settings.browser_profile_root).expanduser() / f"{digest}.json"
 
     async def open_session(
         self,
@@ -176,10 +183,14 @@ class BrowserService:
         browser = self._browser
         if browser is None:
             raise BrowserEngineUnavailable("browser engine is unavailable")
-        context = await browser.new_context(
-            viewport={"width": 1280, "height": 720},
-            user_agent="Mozilla/5.0 (X11; Linux x86_64) AURA Autonomous AI Browser",
-        )
+        context_kwargs: Dict[str, Any] = {
+            "viewport": {"width": 1280, "height": 720},
+            "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AURA Autonomous AI Browser",
+        }
+        profile = self._profile_path(session_token)
+        if profile.is_file():
+            context_kwargs["storage_state"] = str(profile)
+        context = await browser.new_context(**context_kwargs)
         self._contexts[session_token] = context
         self._session_meta[session_token] = {
             "session_id": session_token,
@@ -198,6 +209,12 @@ class BrowserService:
         self._pages.pop(session_token, None)
         self._tabs.pop(session_token, None)
         if context:
+            profile = self._profile_path(session_token)
+            try:
+                profile.parent.mkdir(parents=True, exist_ok=True)
+                await context.storage_state(path=str(profile))
+            except Exception as exc:  # pragma: no cover - browser may be closed
+                logger.warning(f"browser profile save failed: {type(exc).__name__}")
             await context.close()
             return True
         return False
@@ -444,6 +461,7 @@ class BrowserService:
                 result["success"] = True
             elif action == "upload":
                 path = self._safe_transfer_path(value or "")
+                # codeql[py/path-injection] _safe_transfer_path enforces the transfer root.
                 if not path.is_file():
                     raise FileNotFoundError("upload file is not present in the transfer root")
                 await page.set_input_files(target, str(path), timeout=self.timeout)

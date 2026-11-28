@@ -16,6 +16,7 @@ class MemoryItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     content = Column(Text, nullable=False)
     memory_type = Column(Text, nullable=False)
+    tier = Column(Text, nullable=False, default="episodic")
     source = Column(Text, nullable=True)
     confidence_level = Column(Numeric(3, 2), nullable=False, default=0.5)
     topic = Column(Text, nullable=True)
@@ -29,6 +30,7 @@ class MemoryItem(Base):
         CheckConstraint("memory_type IN ('fact', 'opinion', 'hypothesis', 'preference', 'creative', 'experience')", name="ck_memory_type"),
         CheckConstraint("confidence_level BETWEEN 0 AND 1", name="ck_memory_confidence_level"),
         CheckConstraint("verification_status IN ('unverified', 'verified', 'disputed', 'retracted', 'expired')", name="ck_memory_verification_status"),
+        CheckConstraint("tier IN ('working', 'episodic', 'semantic', 'procedural', 'relationship', 'self', 'strategic')", name="ck_memory_tier"),
     )
 
     embeddings = relationship("MemoryEmbedding", back_populates="memory_item", cascade="all, delete-orphan")
