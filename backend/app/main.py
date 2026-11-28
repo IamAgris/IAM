@@ -18,6 +18,7 @@ from app.api.middleware import (
     IPLCIContextMiddleware,
 )
 from app.api.middleware.request_context import RequestContextMiddleware
+from app.api.middleware.observability import ObservabilityMiddleware
 from app.api.routes import (
     identity,
     conversations,
@@ -184,6 +185,9 @@ app = FastAPI(
 
 # Correlation id first so CORS and auth responses carry X-Request-ID.
 app.add_middleware(RequestContextMiddleware)
+
+# Spans and request/error counters exported through /metrics.
+app.add_middleware(ObservabilityMiddleware)
 
 # Server-issued owner token scopes public conversations without client changes.
 app.add_middleware(ConversationOwnerMiddleware)

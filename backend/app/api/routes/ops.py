@@ -86,4 +86,9 @@ async def metrics() -> PlainTextResponse:
         "# TYPE iam_python_gc_objects gauge",
         f"iam_python_gc_objects {len(gc.get_objects())}",
     ]
-    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
+    from app.core.observability import prometheus_text
+
+    return PlainTextResponse(
+        "\n".join(lines) + "\n" + prometheus_text(),
+        media_type="text/plain; version=0.0.4",
+    )
