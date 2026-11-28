@@ -50,6 +50,20 @@ token never appears in process arguments; no secret is stored in the repo. Bash 
 - The README's example uses a locally managed tunnel with a credentials file. This deployment uses a
   remotely managed tunnel with a run token instead; ingress is configured in Zero Trust / via `cf`.
 
+## Verification evidence (28 November 2026)
+
+- `curl -I https://core.iamagris.co.za/health` returned **HTTP 302** to
+  `intellectualmainbrain.cloudflareaccess.com/.../access/login/...` with the correct
+  AUD (`654c0da9…`). The edge Access gate is working.
+- This does **not** prove the Core is reachable: the tunnel was still `inactive`, so
+  the redirect happens before any origin request. `curl http://localhost:8000/health`
+  must be run on the VPS after the connector starts.
+- SSH to the candidate VPS (`169.58.234.90`) was attempted read-only and refused:
+  the stored ED25519 host key is `SHA256:zx1iZ+Vza94ETxSVODc2nHXJwFOA+PIH+WxIgLuCp7o`
+  but the host presented `SHA256:3DS6ax/dGhKCTcDr1XPOByFWspVhcEpPCw0cbsGwTSA`.
+  Strict host-key checking was **not** bypassed; verify out-of-band (provider console)
+  before updating `known_hosts` or connecting again.
+
 ## Useful commands
 
 ```powershell
