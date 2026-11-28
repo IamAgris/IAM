@@ -63,7 +63,7 @@ All local gates green after the fixes: ruff clean, mypy ratchet 0 new / 62 fixed
 | Tests | `backend/tests/test_emergency_shutdown.py` — 8 tests: signed-authority rejection (DB check and supplied proof), engage/resume state transitions, all-subsystem flags, audit events, reason required, inference block, SSE event, browser/trading guards. 8/8 pass; full suite **1083 passed** at 66.41% coverage. |
 | Live verification | `GET /api/v1/ops/emergency-status` → 200 with all subsystems false; `POST /api/v1/ops/emergency-stop` without signed authority → **403** with the expected message. A full signed engage/resume cycle was not completed because the Docker backend container became unresponsive during the attempt; unit tests cover the transitions. |
 
-Gates after implementation: ruff clean, mypy ratchet 0 new / 62 fixed, OpenAPI 852 paths / 483 schemas OK, migrations 68/68, RKIE smoke 20/20.
+Gates after implementation: ruff clean, mypy ratchet 0 new / 62 fixed, OpenAPI 852 paths / 483 schemas OK, migrations 68/68, RKIE smoke 20/20. GitHub CI at head `e75cdc2`: CodeQL, IAM CI, OpenAPI drift, Quality gates, RKIE toolkit and Supply chain all **success**.
 
 ### Not yet done
 
