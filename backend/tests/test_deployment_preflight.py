@@ -4,6 +4,7 @@ import base64
 import os
 import tempfile
 import unittest
+from contextlib import ExitStack
 from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -31,14 +32,24 @@ class PreflightTests(unittest.TestCase):
             Ed25519PrivateKey.generate().public_key().public_bytes_raw()
         ).decode()
         secret = "super-secret-gateway-value"
-        with (
-            patch.object(settings, "creator_email", "creator@iam.example"),
-            patch.object(settings, "creator_public_key", key),
-            patch.object(settings, "creator_gateway_secret", secret),
-            patch.object(settings, "creator_email_transport", "log"),
-            patch.object(settings, "artex_enabled", False),
-            patch.dict(os.environ, {"IAM_BOOTSTRAP_API_KEY": "bootstrap-secret"}),
-        ):
+        web3_flags = (
+            "web3_registry_enabled", "web3_audit_enabled",
+            "web3_transaction_preparation_enabled", "thirdweb_read_enabled",
+            "bitcoin_core_read_enabled", "lnd_read_enabled", "cln_read_enabled",
+            "web3_execution_enabled", "web3_monitoring_enabled",
+            "web3_onchain_analysis_enabled",
+        )
+        with ExitStack() as stack:
+            for name in web3_flags:
+                stack.enter_context(patch.object(settings, name, False))
+            stack.enter_context(patch.object(settings, "creator_email", "creator@iam.example"))
+            stack.enter_context(patch.object(settings, "creator_public_key", key))
+            stack.enter_context(patch.object(settings, "creator_gateway_secret", secret))
+            stack.enter_context(patch.object(settings, "creator_email_transport", "log"))
+            stack.enter_context(patch.object(settings, "artex_enabled", False))
+            stack.enter_context(
+                patch.dict(os.environ, {"IAM_BOOTSTRAP_API_KEY": "bootstrap-secret"})
+            )
             report = check_deployment()
         self.assertTrue(report["ready"], report)
         serialised = repr(report)

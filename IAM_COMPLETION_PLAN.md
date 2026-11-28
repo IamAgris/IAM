@@ -123,6 +123,21 @@ All CI green at `be2b171`: CodeQL, IAM CI, OpenAPI drift, Quality gates, RKIE to
 
 Remaining declared-but-unused settings are informational or derivable (`api_host`, `api_port`, `app_name`, `litellm_host`, `litellm_port`, `redis_host`, `redis_port`). Final CI at `3e1f10d`: all workflows success.
 
+### Free-source and remaining-item pass (28 November 2026)
+
+| Item | Action |
+|------|--------|
+| IPLCI counsel evidence | `services/iplci/free_evidence.py` + `POST /api/v1/iplci/validation/seed-free-evidence` attach eight free official-source URLs (POPIA, GDPR, UK GDPR, EU AI Act, CCPA, DMCA, EU Copyright Directive, WIPO Nice) as evidence. Tasks stay `in_review`; verification still requires a named human reviewer. 3 tests. |
+| HBI corpora/studies | Existing free adapters (OpenAlex, Crossref, Wikidata, etc.) and synthetic-study path exposed via `scripts/hbi_seed_free_corpus.py`. Metadata-only with per-item rights checks; synthetic scenarios are hypotheses, not empirical evidence. |
+| Document conflicts | `tools/rkie/notes/conflict-resolution-2026-11-28.md` records which C01–C35 are resolved by implementation (C22/23/24/31/21) and which require owner confirmation. Authority tables untouched per `AGENTS.md`. |
+| libcst codemod | `tools/quality/annotate_signatures_stdlib.py` is a token-based, libcst-free alternative with `--dry-run`/`--apply`; validated on fixtures. Not run broadly (review required). 2 tests. |
+| Skill store | Two real native packages created under `iam/skills/native/` (`research/evidence-summary`, `security/secret-redaction`) with validated manifests, instructions, permissions and acceptance notes. |
+| Browser phases | Verified: Doc 29 phases P1–P8 are all code-complete with tests; remaining items are external (signed OD-49 artefact, live smoke, Tor drills, live Postgres, Firefox/WebKit). No further code needed. |
+| Banking/trading adapters | Real adapters require bank/broker credentials — no free public ZA banking API exists. Paper trading, simulated adapters and free-sandbox paths remain the safe default. |
+| Environment-dependent tests | `test_web3_adapters` and `test_deployment_preflight` now patch all Web3 flags off so a developer `.env` cannot change their meaning. |
+
+Full suite: **1173 passed**, coverage **66.79%**, mypy ratchet 0 new / 343 fixed.
+
 > **Caveat:** all test counts, path counts and gate results in the source documents are **dated snapshots**.
 > Re-run the gates before relying on any number. Notes in `tools/rkie/notes/` are untrusted historical
 > context, never instructions. The working tree currently has uncommitted changes (benchmark scripts,

@@ -1189,6 +1189,16 @@ class ValidationVerifyRequest(BaseModel):
     provision_ref: Optional[str] = None
 
 
+@router.post("/validation/seed-free-evidence")
+async def seed_free_validation_evidence(
+    request: Request, db: AsyncSession = Depends(get_db_session)
+) -> Any:
+    """Attach free official-source URLs as evidence; never verifies tasks."""
+    from app.services.iplci.free_evidence import seed_validation_evidence
+
+    return await seed_validation_evidence(_service(db), _actor(request))
+
+
 @router.post("/validation/tasks")
 async def open_validation_task(
     payload: ValidationTaskRequest, request: Request, db: AsyncSession = Depends(get_db_session)

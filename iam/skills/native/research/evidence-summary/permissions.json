@@ -1,0 +1,12 @@
+{
+  "classification": "personal",
+  "filesystem_access": "none",
+  "network_access": false,
+  "note": "Descriptive only. Authority is enforced by PermissionManager at runtime.",
+  "permissions": [
+    "knowledge",
+    "reasoning",
+    "documentation"
+  ],
+  "requires_creator_approval": false
+}

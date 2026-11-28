@@ -5,6 +5,7 @@ No test in this module performs a network call, signs, broadcasts or pays.
 
 import unittest
 import uuid
+from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
@@ -311,9 +312,29 @@ class ApprovalTests(unittest.IsolatedAsyncioTestCase):
                     await manager.broadcast(prepared["id"], 5)
 
 
+WEB3_FLAGS = (
+    "web3_registry_enabled", "web3_audit_enabled",
+    "web3_transaction_preparation_enabled", "thirdweb_read_enabled",
+    "bitcoin_core_read_enabled", "lnd_read_enabled", "cln_read_enabled",
+    "web3_execution_enabled", "web3_monitoring_enabled", "web3_defi_enabled",
+    "web3_x402_enabled", "web3_nft_enabled", "web3_dao_enabled",
+    "web3_cross_chain_enabled", "web3_threat_intel_enabled",
+    "web3_onchain_analysis_enabled",
+)
+
+
+def all_web3_flags_off():
+    """Patch the full flag set so a developer .env cannot change test meaning."""
+    stack = ExitStack()
+    for name in WEB3_FLAGS:
+        stack.enter_context(patch.object(settings, name, False))
+    return stack
+
+
 class ActivationTests(unittest.TestCase):
     def test_all_flags_off_is_ready(self):
-        result = check_web3_activation()
+        with all_web3_flags_off():
+            result = check_web3_activation()
         self.assertEqual(result["status"], "inactive")
         self.assertTrue(result["ready"])
         self.assertEqual(result["blockers"], [])
