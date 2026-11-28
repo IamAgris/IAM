@@ -52,9 +52,22 @@ All local gates green after the fixes: ruff clean, mypy ratchet 0 new / 62 fixed
 
 **Final CI state at remote head `d8457b4` — all workflows success:** CodeQL, IAM CI, OpenAPI contract drift, Quality gates (incl. `types` and L1–L5 `acceptance`), RKIE toolkit tests, Supply chain checks. P0-4 is fully closed with a green GitHub run.
 
+### P0-2 — General emergency shutdown (implemented)
+
+| Piece | Implementation |
+|-------|----------------|
+| Durable state | `emergency_shutdown_state` table (model `app/models/emergency.py`, migration `071_emergency_shutdown.sql`) with one `global` row. Loaded at startup; a load failure fails closed (treated as halted). |
+| Authority | `emergency.stop` and `emergency.resume` require a signed Creator authorization at level 4 via `CreatorApprovalService.check_authorization`. An admin API key is only the transport gate; IAM cannot lift its own stop (`iam_can_lift: false`). Both transitions write `AuditEvent` rows. |
+| Endpoints | `GET /api/v1/ops/emergency-status`, `POST /api/v1/ops/emergency-stop`, `POST /api/v1/ops/emergency-resume` (admin scope + signed authority). |
+| Enforcement | Inference (`chat` raises before routing; `stream` emits `emergency_halted`), autonomy worker (skips every tick while halted), browser (`fetch_page`/`interact` fail closed), trading (`place_order` raises `TradingDenied`). |
+| Tests | `backend/tests/test_emergency_shutdown.py` — 8 tests: signed-authority rejection (DB check and supplied proof), engage/resume state transitions, all-subsystem flags, audit events, reason required, inference block, SSE event, browser/trading guards. 8/8 pass; full suite **1083 passed** at 66.41% coverage. |
+| Live verification | `GET /api/v1/ops/emergency-status` → 200 with all subsystems false; `POST /api/v1/ops/emergency-stop` without signed authority → **403** with the expected message. A full signed engage/resume cycle was not completed because the Docker backend container became unresponsive during the attempt; unit tests cover the transitions. |
+
+Gates after implementation: ruff clean, mypy ratchet 0 new / 62 fixed, OpenAPI 852 paths / 483 schemas OK, migrations 68/68, RKIE smoke 20/20.
+
 ### Not yet done
 
-P0-2 (general emergency shutdown) and all P1/P2/human items below.
+All P1/P2/human items below.
 
 > **Caveat:** all test counts, path counts and gate results in the source documents are **dated snapshots**.
 > Re-run the gates before relying on any number. Notes in `tools/rkie/notes/` are untrusted historical

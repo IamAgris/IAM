@@ -58,6 +58,13 @@ class AutonomyWorker:
         """Main autonomy loop — uses the durable LangGraph workflow when available."""
         while self.running:
             try:
+                from app.services.emergency_shutdown import emergency
+
+                if emergency.is_halted("autonomy"):
+                    self.state = "halted"
+                    await asyncio.sleep(self.tick_interval)
+                    continue
+
                 # Self-heal any leaked IRWM lease (e.g. from a cancelled
                 # request). sweep_idle() expires leases past their timeout.
                 try:

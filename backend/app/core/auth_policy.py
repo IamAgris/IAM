@@ -57,6 +57,7 @@ ADMIN_PREFIXES = (
     "/api/v1/workspaces",
     "/api/v1/aegis",
     "/api/v1/irwm",
+    "/api/v1/ops",  # emergency stop / resume — admin transport + signed Creator authority
     "/api/v1/model-independence",
     "/api/v1/blockchain",
     "/api/v1/web3",       # proposed Doc 35: registries, prepare-only transactions

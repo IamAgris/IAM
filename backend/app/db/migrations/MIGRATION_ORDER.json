@@ -336,6 +336,11 @@
       "sequence": 67,
       "number": 70,
       "path": "070_memory_embedding_dim.sql"
+    },
+    {
+      "sequence": 68,
+      "number": 71,
+      "path": "071_emergency_shutdown.sql"
     }
   ]
 }

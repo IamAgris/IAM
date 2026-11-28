@@ -300,6 +300,14 @@ class InferenceUnavailable(RuntimeError):
     """Raised when no provider is configured or reachable."""
 
 
+def _assert_inference_allowed() -> None:
+    """Fail closed before any provider call while an emergency stop is active."""
+    from app.services.emergency_shutdown import emergency
+
+    if emergency.is_halted("inference"):
+        raise InferenceBlocked("emergency stop active: inference is halted")
+
+
 class InferenceBlocked(InferenceUnavailable):
     """Raised when Aegis refuses untrusted input before any provider call."""
 
@@ -522,6 +530,7 @@ class InferenceService:
         purpose: str = "internal",
     ) -> Dict[str, Any]:
         """Run one real chat completion against the resolved provider."""
+        _assert_inference_allowed()
         from app.services.iplci.context import resolve_governance_context
         from app.services.iplci.gateway import GovernanceRefusal
         from app.services.iplci.integration import enforce_agent_request
@@ -791,6 +800,17 @@ class InferenceService:
         allow_tools: bool = False,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """Yield SSE-shaped dicts: start / delta / done / error (no raw bytes)."""
+        from app.services.emergency_shutdown import emergency
+
+        if emergency.is_halted("inference"):
+            yield {
+                "event": "error",
+                "data": {
+                    "code": "emergency_halted",
+                    "message": "emergency stop active: inference is halted",
+                },
+            }
+            return
         inspection = _inspect_input(messages)
         if inspection:
             yield {

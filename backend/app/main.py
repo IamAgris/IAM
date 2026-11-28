@@ -84,6 +84,7 @@ from app.api.routes import (
     assistantlab,
     events,
     ops,
+    emergency,
     workspaces,
     whitehat,
     irwm,
@@ -150,9 +151,15 @@ async def lifespan(app: FastAPI) -> Any:
         await register_iics_tools(session)
     logger.info("IAM identity, policies and IICS tools initialized.")
 
-    # Start autonomy worker
-    await autonomy_worker.start()
-    logger.info("Autonomy worker started.")
+    # Restore durable emergency state before starting any autonomous work.
+    from app.services.emergency_shutdown import emergency
+
+    await emergency.load()
+    if emergency.is_halted():
+        logger.warning("Emergency stop active at startup — autonomous work stays halted")
+    else:
+        await autonomy_worker.start()
+        logger.info("Autonomy worker started.")
 
     await creator_email_worker.start()
 
@@ -298,6 +305,7 @@ app.include_router(web3_extended.router)
 
 # Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
 app.include_router(ops.router)
+app.include_router(emergency.router)
 
 
 # Global exception handler

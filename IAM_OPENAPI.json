@@ -37228,6 +37228,118 @@
         }
       }
     },
+    "/api/v1/ops/emergency-status": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Emergency Status",
+        "description": "Read the current halt state. No mutation; admin scope required.",
+        "operationId": "emergency_status_api_v1_ops_emergency_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Status Api V1 Ops Emergency Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/emergency-stop": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Emergency Stop",
+        "description": "Halt inference, autonomy, browser and trading. Requires signed Creator authority.",
+        "operationId": "emergency_stop_api_v1_ops_emergency_stop_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergencyAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Stop Api V1 Ops Emergency Stop Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/emergency-resume": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Emergency Resume",
+        "description": "Lift a halt. IAM cannot resume itself; signed Creator authority is required.",
+        "operationId": "emergency_resume_api_v1_ops_emergency_resume_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergencyAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Resume Api V1 Ops Emergency Resume Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -41930,6 +42042,31 @@
           "created_at"
         ],
         "title": "EmailIdentityResponse"
+      },
+      "EmergencyAction": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "signed_authorization": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Authorization"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "EmergencyAction"
       },
       "EngineRegisterRequest": {
         "properties": {

@@ -103,6 +103,10 @@ class PaperTradingService:
     ) -> Dict[str, Any]:
         if not settings.trading_simulation_enabled:
             raise TradingDenied("paper trading is disabled")
+        from app.services.emergency_shutdown import emergency
+
+        if emergency.is_halted("trading"):
+            raise TradingDenied("emergency stop active: trading is halted")
         portfolio = await self._portfolio(portfolio_id)
         if portfolio.emergency_stop:
             raise TradingDenied("emergency stop is engaged")

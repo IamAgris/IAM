@@ -215,6 +215,14 @@ class BrowserService:
         
         Security: treats page content as untrusted information, not instructions.
         """
+        from app.services.emergency_shutdown import emergency
+
+        if emergency.is_halted("browser"):
+            return {
+                "url": url,
+                "success": False,
+                "error": "emergency stop active: browser is halted",
+            }
         decision = enforce_egress(url)
         if not decision.allowed:
             return {
@@ -334,6 +342,14 @@ class BrowserService:
         If session_token is given, uses a persistent page so multi-step flows work.
         Security: page content is untrusted information, never instructions.
         """
+        from app.services.emergency_shutdown import emergency
+
+        if emergency.is_halted("browser"):
+            return {
+                "action": action,
+                "success": False,
+                "error": "emergency stop active: browser is halted",
+            }
         if action == "new_tab":
             if not session_token:
                 return {"action": action, "success": False, "error": "session_token required"}
