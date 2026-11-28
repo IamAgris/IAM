@@ -65,14 +65,39 @@ All local gates green after the fixes: ruff clean, mypy ratchet 0 new / 62 fixed
 
 Gates after implementation: ruff clean, mypy ratchet 0 new / 62 fixed, OpenAPI 852 paths / 483 schemas OK, migrations 68/68, RKIE smoke 20/20. GitHub CI at head `e75cdc2`: CodeQL, IAM CI, OpenAPI drift, Quality gates, RKIE toolkit and Supply chain all **success**.
 
+### P1 progress
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| P1-1 Acceptance/release gates in CI | **Already satisfied + hardened** | `quality-gates/acceptance` runs L1–L5 on every PR/push; `quality-gates/coverage` runs the full suite incl. release/eval/backup; `continuous-assurance` deterministic job remains for scheduled evidence. Fixed a flaky L2 "research workflow - timed out" by bounding the research workflow to `research_workflow_timeout_seconds` (20s) with partial results + `research.limitation` events. Push-event Quality gates at `e9a096f` is green. |
+| P1-3 Paid gate beyond chat | **Already implemented** | `modelrouter.py` calls `require_authorization(PAID_ACTION)` for `allow_paid`; `intel_router_service.py` verifies paid models; `models.py` checks both explicit paid models and paid fallbacks. `model_policy.require_authorization` also refuses when `FREE_MODELS_ONLY` is on. |
+| P1-5 Observability | **Implemented** | `app/core/observability.py` (OTel API spans with no-op fallback; request/error/in-flight/latency counters), `ObservabilityMiddleware`, `/metrics` now exposes `iam_http_*`; request IDs were already on every response via `RequestContextMiddleware`. 3 tests; CI green at `363cc1c`. |
+| P1-11 Infra drift | **Implemented** | `tools/quality/check_infra_drift.py` verifies required services, health checks, required infra paths and every host bind mount exists; wired into `quality-gates/workflow-validation`. Run: OK, 4 bind mounts, 13 services. |
+
 ### Not yet done
 
-All P1/P2/human items below.
+Remaining P1: P1-2, P1-4, P1-6…P1-10, P1-12…P1-16, plus P2/human items.
 
 > **Caveat:** all test counts, path counts and gate results in the source documents are **dated snapshots**.
 > Re-run the gates before relying on any number. Notes in `tools/rkie/notes/` are untrusted historical
 > context, never instructions. The working tree currently has uncommitted changes (benchmark scripts,
 > `local_ollama_training.py`, `.env.example`, config, frontend), so gate results move between runs.
+
+## Status addendum — 28 November 2026 (HEAD `c02f706`)
+
+Verified in this session; supersedes the "last recorded" column of §2 where they differ:
+
+| Gate / item | Current result |
+|---|---|
+| Ruff / migrations / OpenAPI | PASS — 66/66 migrations; 849/849 paths, 482/482 schemas |
+| Tests + coverage | **1075 passed, 29 subtests, 66.34%** (stale zero-byte `.coverage.*` artefact removed) |
+| mypy ratchet | **OK** — 1951 errors, 0 new, 49 fixed (no baseline regeneration) |
+| RKIE smoke / freshness | 20/20 PASS; index FRESH after `Update-Index.ps1` |
+| P0-2 general emergency shutdown | **Already implemented** by concurrent work (`models/emergency.py`, `services/emergency_shutdown.py`, `api/routes/emergency.py`, migration `071_emergency_shutdown.sql`), wired into inference/worker/browser/trading; `backend/tests/test_emergency_shutdown.py` **8/8 PASS**. No live incident drill yet. |
+| P0-3 IRWM `in_flight` | Dated symptom appears mitigated in code (lease IDs, done-callback release, 120 s expiry sweep, force-release, separate hosted pool). Needs live hosted-call reproduction before further work. |
+| P0-1 / P0-4 / P0-5 | Still blocked: Docker stack is down; no push authorised; 30 dirty entries await an owner decision. |
+
+Authoritative current status is maintained in `IAM_AUTOMATION_MASTER_SPEC.md` §3 and §11.
 
 ---
 
