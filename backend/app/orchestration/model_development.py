@@ -101,7 +101,7 @@ class FoundationModelDeveloper:
         )
         self.adapters = list(adapters or [])
         self.evaluate = evaluate
-        self.store = store or default_release_store()
+        self.store = store or default_release_store()  # type: ignore[no-untyped-call]
         self.checkpoint_ref = checkpoint_ref
         self.candidate_model = candidate_model
         self.licence = licence
@@ -209,6 +209,40 @@ class FoundationModelDeveloper:
             reasons.append("no licence for the training dataset")
         return reasons
 
+    async def _run_local_training(
+        self, weakness: CapabilityAssessment
+    ) -> tuple[str, str, str]:
+        """Create and materialise a candidate in the local Ollama runtime."""
+        from types import SimpleNamespace
+
+        from app.services.ai_research.local_ollama_training import (
+            local_training_adapters,
+        )
+
+        candidate_model = (
+            self.candidate_model
+            or settings.model_development_ollama_candidate
+            or f"{self.base_model}-candidate"
+        )
+        adapters = local_training_adapters(
+            base_model=self.base_model,
+            candidate_model=candidate_model,
+            weakness=weakness.evidence,
+            store=self.store,
+        )
+        # The local driver is the only credentialed platform in this path.
+        self.adapters = list(adapters)
+        driver = adapters[0].driver
+        if driver is None:
+            raise RuntimeError("local training adapter has no driver")
+        external_id = await driver.provision(
+            SimpleNamespace(task_id=f"dev_{uuid.uuid4().hex}")  # type: ignore[arg-type]
+        )
+        await driver.start(external_id)
+        result = await driver.collect(external_id)
+        logger.info(f"local Ollama candidate created: {candidate_model}")
+        return str(result["checkpoint_ref"]), candidate_model, "ollama_create"
+
     async def prepare_candidate(
         self,
         weakness: CapabilityAssessment,
@@ -221,8 +255,26 @@ class FoundationModelDeveloper:
         ``self_improvement.prepare_candidate``. Missing inputs fail closed with
         an explicit reason.
         """
-        missing = self._missing_inputs()
         baseline = weakness.score if baseline_score is None else baseline_score
+        local_method = ""
+        if (
+            not self.checkpoint_ref
+            and settings.model_development_local_training
+        ):
+            try:
+                (
+                    self.checkpoint_ref,
+                    self.candidate_model,
+                    local_method,
+                ) = await self._run_local_training(weakness)
+            except Exception as exc:
+                return {
+                    "status": "failed",
+                    "capability": weakness.capability,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
+        missing = self._missing_inputs()
         if baseline <= 0:
             missing.append("no measured positive baseline score")
         if missing:
@@ -253,12 +305,13 @@ class FoundationModelDeveloper:
             baseline_score=float(baseline),
             task_type=weakness.capability,
             benchmark_spec=benchmark_spec,
+            consent_types=frozenset(settings.training_consent_types),
             diagnosis=(
                 f"held-out weakness: {weakness.capability} scored {weakness.score}"
             ),
         )
         try:
-            return await self_improvement.prepare_candidate(
+            result = await self_improvement.prepare_candidate(
                 self.db,
                 request,
                 store=self.store,
@@ -267,6 +320,10 @@ class FoundationModelDeveloper:
                 actor=self.actor,
                 governance_context=self.governance_context,
             )
+            if local_method:
+                result["training_method"] = local_method
+                result["weight_fine_tuning"] = False
+            return result
         except Exception as exc:  # research errors must not abort the cycle
             logger.warning(f"candidate preparation failed: {exc}")
             return {

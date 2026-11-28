@@ -52,12 +52,12 @@ print('PASS')
 
 def master_key() -> str:
     text = ENV.read_text(encoding="utf-8") if ENV.exists() else ""
-    match = re.search(r"^LITELLM_MASTER_KEY=(.*)$", text, re.M)
+    match = re.search(r"^LITELLM_MASTER_KEY=(.*)$", text, re.MULTILINE)
     return match.group(1).strip().strip('"') if match else ""
 
 
 def extract_code(reply: str) -> str:
-    match = re.search(r"```(?:python)?\s*(.*?)```", reply, re.S)
+    match = re.search(r"```(?:python)?\s*(.*?)```", reply, re.DOTALL)
     return match.group(1).strip() if match else reply.strip()
 
 
@@ -92,6 +92,7 @@ def run_candidate(code: str):
         try:
             proc = subprocess.run(
                 [sys.executable, str(runner), str(candidate)],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=20,
@@ -108,7 +109,7 @@ def main() -> int:
     model = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_MODEL
     try:
         body, latency_ms = call_model(model)
-    except Exception as exc:  # network / gateway failure
+    except (OSError, ValueError) as exc:  # network / gateway failure
         result = {"model": model, "passed": False, "error": str(exc)}
         print(json.dumps(result))
         RESULTS.parent.mkdir(parents=True, exist_ok=True)

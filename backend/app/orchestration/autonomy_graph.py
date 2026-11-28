@@ -58,7 +58,7 @@ MAX_RETRIES = 1
 # Evaluation must stay local to remain an independent judge, but it is too
 # expensive to run on every 30s tick on a CPU-only core. A shared cadence gate
 # keeps both evaluation nodes off the single residency slot between runs.
-_last_evaluation_at: dict = {}
+_last_evaluation_at: Dict[str, float] = {}
 
 
 def _evaluation_due(key: str) -> bool:
@@ -80,20 +80,20 @@ class AutonomyState(TypedDict):
 
     session_id: str
     trigger: str
-    observations: List[dict]
-    memories: List[dict]
+    observations: List[Dict[str, Any]]
+    memories: List[Dict[str, Any]]
     memory_error: Optional[str]
     reasoning: Optional[str]
-    decision: Optional[dict]
+    decision: Optional[Dict[str, Any]]
     model_used: bool
     inference_mode: Optional[str]
-    objectives: List[dict]
-    plan: Optional[dict]
-    authority_check: Optional[dict]
+    objectives: List[Dict[str, Any]]
+    plan: Optional[Dict[str, Any]]
+    authority_check: Optional[Dict[str, Any]]
     governance_context: Optional[Dict[str, Any]]
-    action_result: Optional[dict]
+    action_result: Optional[Dict[str, Any]]
     verification: Optional[str]
-    verification_evidence: Optional[dict]
+    verification_evidence: Optional[Dict[str, Any]]
     reflection: Optional[str]
     decision_id: Optional[str]
     memory_id: Optional[str]
@@ -101,24 +101,24 @@ class AutonomyState(TypedDict):
     error: Optional[str]
     steps: Annotated[List[str], operator.add]
     # P0.3 cognitive fields
-    reasoning_trace: Optional[dict]
+    reasoning_trace: Optional[Dict[str, Any]]
     reasoning_modes_used: List[str]
-    metacognitive_critique: Optional[dict]
-    belief_revisions: List[dict]
-    discovery_summary: Optional[dict]
-    reverify_summary: Optional[dict]
-    learning_summary: Optional[dict]
-    cross_domain_summary: Optional[dict]
-    evaluation_summary: Optional[dict]
-    curiosity_summary: Optional[dict]
-    attention_summary: Optional[dict]
-    grounded_summary: Optional[dict]
-    agency_summary: Optional[dict]
-    intellectual_history_summary: Optional[dict]
-    collaborative_summary: Optional[dict]
-    intellectual_honesty_summary: Optional[dict]
-    independent_evaluation_summary: Optional[dict]
-    model_development_summary: Optional[dict]
+    metacognitive_critique: Optional[Dict[str, Any]]
+    belief_revisions: List[Dict[str, Any]]
+    discovery_summary: Optional[Dict[str, Any]]
+    reverify_summary: Optional[Dict[str, Any]]
+    learning_summary: Optional[Dict[str, Any]]
+    cross_domain_summary: Optional[Dict[str, Any]]
+    evaluation_summary: Optional[Dict[str, Any]]
+    curiosity_summary: Optional[Dict[str, Any]]
+    attention_summary: Optional[Dict[str, Any]]
+    grounded_summary: Optional[Dict[str, Any]]
+    agency_summary: Optional[Dict[str, Any]]
+    intellectual_history_summary: Optional[Dict[str, Any]]
+    collaborative_summary: Optional[Dict[str, Any]]
+    intellectual_honesty_summary: Optional[Dict[str, Any]]
+    independent_evaluation_summary: Optional[Dict[str, Any]]
+    model_development_summary: Optional[Dict[str, Any]]
 
 
 def _session() -> Any:
@@ -128,14 +128,14 @@ def _session() -> Any:
     return get_session_factory()()
 
 
-def _query_from(observations: List[dict], limit: int = 3) -> str:
+def _query_from(observations: List[Dict[str, Any]], limit: int = 3) -> str:
     return " ".join(
         str(item.get("title") or item.get("content") or "")
         for item in (observations or [])[:limit]
     ).strip()
 
 
-async def observe(state: AutonomyState) -> dict:
+async def observe(state: AutonomyState) -> Dict[str, Any]:
     """Gather environment signals: pending tasks, goals, recent messages."""
     from app.models.autonomy import Goal, Task
 
@@ -151,7 +151,7 @@ async def observe(state: AutonomyState) -> dict:
     return {"observations": obs, "steps": ["observe"]}
 
 
-async def retrieve_memory(state: AutonomyState) -> dict:
+async def retrieve_memory(state: AutonomyState) -> Dict[str, Any]:
     """Retrieve relevant memories through the real MemoryService."""
     from app.services.memory_service import MemoryService
 
@@ -184,7 +184,7 @@ async def retrieve_memory(state: AutonomyState) -> dict:
         }
 
 
-async def attend(state: AutonomyState) -> dict:
+async def attend(state: AutonomyState) -> Dict[str, Any]:
     """Allocate cognitive budget to the most valuable targets.
 
     Scores beliefs, contradictions, transfers, and gaps using measured
@@ -205,7 +205,21 @@ async def attend(state: AutonomyState) -> dict:
 
             # Get transfer opportunities from P5
             cross_domain = CrossDomainEngine()
-            transfers = await cross_domain.find_transfer_opportunities(db, limit=10)
+            transfer_results = await cross_domain.find_transfer_opportunities(db, limit=10)
+            transfers = [
+                {
+                    "id": t.id,
+                    "source_topic": t.source_topic,
+                    "target_topic": t.target_topic,
+                    "insight": t.insight,
+                    "source_confidence": t.source_confidence,
+                    "transfer_confidence": t.transfer_confidence,
+                    "transfer_basis": t.transfer_basis,
+                    "evidence_ids": list(t.evidence_ids),
+                    "status": t.status,
+                }
+                for t in transfer_results
+            ]
 
             # Get curiosity gaps from P7-a
             curiosity = CuriosityEngine()
@@ -267,7 +281,7 @@ async def attend(state: AutonomyState) -> dict:
         }
 
 
-async def reason(state: AutonomyState) -> dict:
+async def reason(state: AutonomyState) -> Dict[str, Any]:
     """Reason using explicit modes via the reasoning engine.
 
     Selects a reasoning mode appropriate to the observed work, runs it
@@ -289,7 +303,7 @@ async def reason(state: AutonomyState) -> dict:
         }
 
     question = _query_from(obs, 5)[:500]
-    task_hint = state.get("decision", {}).get("action") if state.get("decision") else None
+    task_hint = (state.get("decision") or {}).get("action")
 
     try:
         mode = await select_reasoning_mode(None, question, task_hint)
@@ -329,7 +343,7 @@ async def reason(state: AutonomyState) -> dict:
         }
 
 
-async def critique(state: AutonomyState) -> dict:
+async def critique(state: AutonomyState) -> Dict[str, Any]:
     """Adversarial self-critique of the reasoning trace.
 
     Challenges the conclusion produced by the reasoning engine. Returns
@@ -383,7 +397,7 @@ async def critique(state: AutonomyState) -> dict:
         }
 
 
-async def synthesise(state: AutonomyState) -> dict:
+async def synthesise(state: AutonomyState) -> Dict[str, Any]:
     """Combine reasoning trace and critique into a final conclusion.
 
     Weighs the reasoning trace against the adversarial critique and
@@ -436,14 +450,14 @@ async def synthesise(state: AutonomyState) -> dict:
         }
 
 
-async def identify_objectives(state: AutonomyState) -> dict:
+async def identify_objectives(state: AutonomyState) -> Dict[str, Any]:
     """Select objectives — pending tasks first, then goals."""
     tasks = [o for o in state.get("observations", []) if o.get("type") == "task"]
     objectives = tasks[:3] or state.get("observations", [])[:3]
     return {"objectives": objectives, "steps": ["identify_objectives"]}
 
 
-def _infer_action(objective: dict, decision: Optional[dict]) -> str:
+def _infer_action(objective: dict, decision: Optional[Dict[str, Any]]) -> str:
     preferred = (decision or {}).get("action")
     if preferred in action_dispatch.AVAILABLE:
         return str(preferred)
@@ -462,9 +476,10 @@ def _infer_action(objective: dict, decision: Optional[dict]) -> str:
     return "model_probe"
 
 
-async def plan(state: AutonomyState) -> dict:
+async def plan(state: AutonomyState) -> Dict[str, Any]:
     """Convert the selected objective into a persisted, allowlisted plan."""
-    obj = (state.get("objectives") or [None])[0]
+    objectives = state.get("objectives") or []
+    obj = objectives[0] if objectives else None
     if not obj:
         return {"plan": None, "steps": ["plan:skip"]}
     action = _infer_action(obj, state.get("decision"))
@@ -511,7 +526,7 @@ async def plan(state: AutonomyState) -> dict:
     return {"plan": plan_state, "steps": ["plan"]}
 
 
-async def check_authority(state: AutonomyState) -> dict:
+async def check_authority(state: AutonomyState) -> Dict[str, Any]:
     """Verify authority for the *selected* action before it is dispatched."""
     from app.services.governance_service import GovernanceService
 
@@ -567,7 +582,7 @@ async def check_authority(state: AutonomyState) -> dict:
     }
 
 
-async def execute(state: AutonomyState) -> dict:
+async def execute(state: AutonomyState) -> Dict[str, Any]:
     """Dispatch the allowlisted action through a real service and persist evidence."""
     from app.models.autonomy import DecisionRecord, Task, TaskExecution
     from app.services.tool_authorization import ToolAuthorizationError, authorize_tool_call
@@ -730,7 +745,7 @@ async def execute(state: AutonomyState) -> dict:
     }
 
 
-async def recover(state: AutonomyState) -> dict:
+async def recover(state: AutonomyState) -> Dict[str, Any]:
     """Bounded recovery: record the failure and allow one retry."""
     return {
         "retry_count": int(state.get("retry_count", 0)) + 1,
@@ -738,7 +753,7 @@ async def recover(state: AutonomyState) -> dict:
     }
 
 
-async def verify(state: AutonomyState) -> dict:
+async def verify(state: AutonomyState) -> Dict[str, Any]:
     """Verify the outcome by cross-checking against independently stored evidence and beliefs.
 
     Never accepts self-reported status as proof. Performs three independent checks:
@@ -892,7 +907,7 @@ async def verify(state: AutonomyState) -> dict:
     }
 
 
-async def reflect(state: AutonomyState) -> dict:
+async def reflect(state: AutonomyState) -> Dict[str, Any]:
     """Reflect on the verified outcome and revise the shared epistemic state.
 
     Instead of merely appending LLM text, this node creates or revises
@@ -923,7 +938,7 @@ async def reflect(state: AutonomyState) -> dict:
         )
 
         # Revise shared beliefs based on the verified outcome.
-        belief_revisions: List[dict] = []
+        belief_revisions: List[Dict[str, Any]] = []
         verification = state.get("verification") or ""
         trace = state.get("reasoning_trace") or {}
         conclusion = trace.get("conclusion", "") if trace else state.get("reasoning", "")
@@ -950,7 +965,7 @@ async def reflect(state: AutonomyState) -> dict:
                     evidence=[
                         {
                             "type": "execution_result",
-                            "service": state.get("action_result", {}).get("service"),
+                            "service": (state.get("action_result") or {}).get("service"),
                             "verification": verification,
                             "evidence": state.get("verification_evidence"),
                         }
@@ -975,7 +990,7 @@ async def reflect(state: AutonomyState) -> dict:
     }
 
 
-async def ground(state: AutonomyState) -> dict:
+async def ground(state: AutonomyState) -> Dict[str, Any]:
     """Ground beliefs through real-world verification.
 
     Takes beliefs formed or revised in this cycle and tests them against
@@ -995,7 +1010,7 @@ async def ground(state: AutonomyState) -> dict:
             beliefs = await iam_context.get_belief_state(db, limit=20)
 
             engine = GroundedIntelligence()
-            grounded_results: List[dict] = []
+            grounded_results: List[Dict[str, Any]] = []
 
             for b in beliefs:
                 # Only ground beliefs that were recently created or revised
@@ -1060,7 +1075,7 @@ async def ground(state: AutonomyState) -> dict:
         }
 
 
-async def discover(state: AutonomyState) -> dict:
+async def discover(state: AutonomyState) -> Dict[str, Any]:
     """Discover contradictions and convert them into verified hypotheses.
 
     Runs one discovery cycle: detect contradictions in the shared epistemic
@@ -1090,7 +1105,7 @@ async def discover(state: AutonomyState) -> dict:
         }
 
 
-async def reverify(state: AutonomyState) -> dict:
+async def reverify(state: AutonomyState) -> Dict[str, Any]:
     """Re-verify beliefs whose verification has aged past the interval.
 
     Checks the evidence service for beliefs due for re-verification and
@@ -1123,7 +1138,7 @@ async def reverify(state: AutonomyState) -> dict:
         }
 
 
-async def learn(state: AutonomyState) -> dict:
+async def learn(state: AutonomyState) -> Dict[str, Any]:
     """Compute longitudinal learning metrics from belief revision history.
 
     Analyzes how IAM's beliefs have actually changed over time — which
@@ -1201,7 +1216,7 @@ async def learn(state: AutonomyState) -> dict:
         }
 
 
-async def transfer(state: AutonomyState) -> dict:
+async def transfer(state: AutonomyState) -> Dict[str, Any]:
     """Transfer insights across domains using measured reliability data.
 
     Finds confirmed insights in one domain that could apply to another,
@@ -1295,7 +1310,7 @@ async def transfer(state: AutonomyState) -> dict:
         }
 
 
-async def evaluate(state: AutonomyState) -> dict:
+async def evaluate(state: AutonomyState) -> Dict[str, Any]:
     """Run independent longitudinal evaluation against held-out test data.
 
     Evaluates IAM's actual capability across reasoning, knowledge retention,
@@ -1349,7 +1364,7 @@ async def evaluate(state: AutonomyState) -> dict:
         }
 
 
-async def independent_evaluate(state: AutonomyState) -> dict:
+async def independent_evaluate(state: AutonomyState) -> Dict[str, Any]:
     """Run independent evaluation of IAM through the public HTTP API.
 
     IAM cannot see the questions before they arrive, cannot influence the
@@ -1369,7 +1384,7 @@ async def independent_evaluate(state: AutonomyState) -> dict:
     try:
         async with _session() as db:
             suite = IndependentEvaluationSuite(db)
-            report = await suite.run_full_evaluation()
+            report = await suite.run_evaluation()
         return {
             "independent_evaluation_summary": {
                 "run_id": report.run_id,
@@ -1404,7 +1419,7 @@ async def independent_evaluate(state: AutonomyState) -> dict:
         }
 
 
-async def explore(state: AutonomyState) -> dict:
+async def explore(state: AutonomyState) -> Dict[str, Any]:
     """Self-directed curiosity cycle.
 
     Scans IAM's own shared epistemic state for knowledge gaps — unverified,
@@ -1438,7 +1453,7 @@ async def explore(state: AutonomyState) -> dict:
         }
 
 
-async def collaborate(state: AutonomyState) -> dict:
+async def collaborate(state: AutonomyState) -> Dict[str, Any]:
     """Collaborative intelligence cycle.
 
     Identifies questions from curiosity gaps and collaborates with external
@@ -1469,13 +1484,13 @@ async def collaborate(state: AutonomyState) -> dict:
 
             collaboration_results = []
             for gap in gaps_result[:3]:  # top 3 gaps
-                question = gap.get("title", "") + ": " + gap.get("content", "")
+                question = f"{gap.title}: {gap.content}"
                 result = await engine.collaborative_development_cycle(
                     db,
-                    query=question,
+                    question,
                     iam_conclusion="unresolved",
-                    iam_confidence=gap.get("current_confidence", 0.5),
-                    iam_reasoning=f"Curiosity gap: {gap.get('reason', '')}",
+                    iam_confidence=gap.current_confidence,
+                    iam_reasoning=f"Curiosity gap: {gap.reason}",
                     external_models=external_models,
                 )
                 collaboration_results.append(result)
@@ -1508,7 +1523,7 @@ async def collaborate(state: AutonomyState) -> dict:
         }
 
 
-async def agent(state: AutonomyState) -> dict:
+async def agent(state: AutonomyState) -> Dict[str, Any]:
     """Independent problem-solving cycle.
 
     Takes curiosity gaps, contradictions, and transfer opportunities and
@@ -1545,7 +1560,21 @@ async def agent(state: AutonomyState) -> dict:
             contradictions = await iam_context.detect_contradictions(db, limit=10)
 
             cross_domain = CrossDomainEngine()
-            transfers = await cross_domain.find_transfer_opportunities(db, limit=10)
+            transfer_results = await cross_domain.find_transfer_opportunities(db, limit=10)
+            transfers = [
+                {
+                    "id": t.id,
+                    "source_topic": t.source_topic,
+                    "target_topic": t.target_topic,
+                    "insight": t.insight,
+                    "source_confidence": t.source_confidence,
+                    "transfer_confidence": t.transfer_confidence,
+                    "transfer_basis": t.transfer_basis,
+                    "evidence_ids": list(t.evidence_ids),
+                    "status": t.status,
+                }
+                for t in transfer_results
+            ]
 
             summary = await engine.run_agency_cycle(
                 db, gaps, contradictions, transfers
@@ -1569,7 +1598,7 @@ async def agent(state: AutonomyState) -> dict:
         }
 
 
-async def intellectual_history(state: AutonomyState) -> dict:
+async def intellectual_history(state: AutonomyState) -> Dict[str, Any]:
     """Aggregate IAM's intellectual development history.
 
     Reads all belief revision history from the shared epistemic state and
@@ -1612,7 +1641,7 @@ async def intellectual_history(state: AutonomyState) -> dict:
         }
 
 
-async def honesty(state: AutonomyState) -> dict:
+async def honesty(state: AutonomyState) -> Dict[str, Any]:
     """Intellectual honesty / uncertainty management cycle.
 
     Flags uncertain beliefs (low confidence, insufficient evidence,
@@ -1655,7 +1684,7 @@ async def honesty(state: AutonomyState) -> dict:
         }
 
 
-async def model_development(state: AutonomyState) -> dict:
+async def model_development(state: AutonomyState) -> Dict[str, Any]:
     """Foundation-model capability development cycle.
 
     IAM assesses its own primary model against one held-out evaluation run,
@@ -1728,7 +1757,7 @@ async def model_development(state: AutonomyState) -> dict:
         }
 
 
-async def update_memory(state: AutonomyState) -> dict:
+async def update_memory(state: AutonomyState) -> Dict[str, Any]:
     """Consolidate only verified experience into long-term memory."""
     if not str(state.get("verification") or "").startswith("verified"):
         return {"steps": ["update_memory:skip_unverified"]}
@@ -1755,7 +1784,7 @@ async def update_memory(state: AutonomyState) -> dict:
         }
 
 
-async def end_cycle(state: AutonomyState) -> dict:
+async def end_cycle(state: AutonomyState) -> Dict[str, Any]:
     return {"steps": ["end"]}
 
 

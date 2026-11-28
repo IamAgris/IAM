@@ -189,10 +189,14 @@ def main() -> None:
                 "Dev-host emulation only; final decision requires the Contabo VPS 4 run with --target.",
                 "Hosted contenders were unavailable (no API keys), so no cross-provider comparison exists.",
                 "Reasoning quality, ARM64 compatibility and tool calling were not measured.",
-                "qwen3.5:4b requires think=false to produce code within the unchanged "
-                "512-token budget; its default thinking mode failed completely.",
-                "Multiple resident models push swap to ~150 MB and host RAM available "
-                "down to 0.69 GB; run one model at a time on the 8 GB VPS.",
+                (
+                    "qwen3.5:4b requires think=false to produce code within the unchanged "
+                    "512-token budget; its default thinking mode failed completely."
+                ),
+                (
+                    "Multiple resident models push swap to ~150 MB and host RAM available "
+                    "down to 0.69 GB; run one model at a time on the 8 GB VPS."
+                ),
             ],
         },
     }

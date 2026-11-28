@@ -122,7 +122,7 @@ class LongitudinalEvaluator:
                     )
                 )
             records[suite["name"]] = suite_records
-            records[suite["name"]][0].__dict__["_sha256"] = sha256  # type: ignore[attr-defined]
+            records[suite["name"]][0].__dict__["_sha256"] = sha256
         self._eval_records = records
         return records
 

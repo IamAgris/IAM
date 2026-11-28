@@ -14,7 +14,7 @@ import json
 import platform
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -23,8 +23,8 @@ RESULTS = Path(__file__).resolve().parent / "results"
 
 def run(cmd: list, timeout: int = 30):
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    except Exception as exc:
+        return subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
         return subprocess.CompletedProcess(cmd, 1, "", str(exc))
 
 
@@ -54,7 +54,7 @@ def host_memory() -> dict:
             "available_gb": round(values.get("MemAvailable", 0) / 2**20, 2),
             "source": "/proc/meminfo",
         }
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         return {"error": str(exc)}
 
 
@@ -149,9 +149,9 @@ def main() -> None:
     parser.add_argument("--target", action="store_true")
     args = parser.parse_args()
 
-    total, used, free = shutil.disk_usage(str(REPO))
+    total, _used, free = shutil.disk_usage(str(REPO))
     record = {
-        "captured_utc": datetime.now(timezone.utc).isoformat(),
+        "captured_utc": datetime.now(UTC).isoformat(),
         "evidence_class": "TARGET" if args.target else "DEV (not representative)",
         "hostname": platform.node(),
         "system": platform.system(),

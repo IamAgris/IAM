@@ -8,6 +8,7 @@ Usage: python tests/model_competition/run_constrained.py <model_alias>
 """
 
 import json
+import logging
 import subprocess
 import sys
 import threading
@@ -15,6 +16,7 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+logger = logging.getLogger(__name__)
 OUT = HERE / "results" / "constrained_results.jsonl"
 CONTAINER = "aura-ollama"
 
@@ -44,6 +46,7 @@ def sampler(stop: threading.Event, samples: list) -> None:
                     "{{.CPUPerc}}|{{.MemUsage}}",
                     CONTAINER,
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -56,8 +59,8 @@ def sampler(stop: threading.Event, samples: list) -> None:
                         "mem_mb": round(parse_mem(mem), 1),
                     }
                 )
-        except Exception:
-            pass
+        except (OSError, ValueError, subprocess.SubprocessError):
+            logger.debug("docker stats sample skipped", exc_info=True)
         stop.wait(0.5)
 
 
@@ -75,6 +78,7 @@ def main() -> int:
     started = time.perf_counter()
     proc = subprocess.run(
         [sys.executable, str(HERE / "smoke_coding.py"), model],
+        check=False,
         capture_output=True,
         text=True,
         timeout=900,
@@ -85,7 +89,7 @@ def main() -> int:
 
     try:
         result = json.loads(proc.stdout[proc.stdout.index("{") :])
-    except Exception:
+    except (ValueError, IndexError, TypeError):
         result = {"passed": False, "error": (proc.stderr or proc.stdout)[:500]}
 
     cpus = [s["cpu_pct"] for s in samples]

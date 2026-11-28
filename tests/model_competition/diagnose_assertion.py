@@ -74,6 +74,7 @@ def run_matrix(code: str):
         runner.write_text(RUNNER, encoding="utf-8")
         proc = subprocess.run(
             [sys.executable, str(runner), str(candidate), json.dumps(CASES)],
+            check=False,
             capture_output=True,
             text=True,
             timeout=30,

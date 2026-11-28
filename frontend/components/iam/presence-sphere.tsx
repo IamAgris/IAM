@@ -189,7 +189,8 @@ export function PresenceSphere({
       ctx.setTransform(d, 0, 0, d, 0, 0);
       cx = W / 2;
       cy = H * 0.4;
-      baseR = Math.min(W * 0.9, H * 0.62) * 0.27;
+      const compact = W < 600;
+      baseR = Math.min(W * (compact ? 0.78 : 0.9), H * (compact ? 0.5 : 0.62)) * 0.27;
       R = baseR * viewRef.current.zoom;
     };
 
@@ -220,32 +221,13 @@ export function PresenceSphere({
       P.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r, s: Math.random() });
     }
 
-    // Deterministic starfield so the "space" backdrop never flickers between
-    // frames and works in both themes via theme-dependent paint colours.
-    let seed = 20261128;
-    const rand = () => {
-      seed = (seed * 1664525 + 1013904223) % 4294967296;
-      return seed / 4294967296;
-    };
-    const stars = Array.from({ length: 180 }, () => ({
-      x: rand(),
-      y: rand(),
-      r: 0.5 + rand() * 1.3,
-      a: 0.25 + rand() * 0.6,
-      sp: 0.4 + rand() * 1.4,
-      ph: rand() * 6.2832,
-    }));
-
     // Memory nodes can change after mount — rebuild their orbits from live refs
     // each frame while preserving angle/glow state by label.
     const orbitalStates: Record<string, { a: number; g: number }> = {};
 
     // Live research source nodes — keyed by node id so updates never rebuild
     // the particle sphere or restart the animation loop.
-    const sourceStates: Record<string, {
-      ux: number; uy: number; uz: number;
-      g: number; x: number; y: number; z2: number; sc: number;
-    }> = {};
+    const sourceStates: Record<string, { a: number; r: number; g: number; x: number; y: number }> = {};
     const clusterPositions: Record<string, { x: number; y: number }> = {};
 
     const frame = (ts: number) => {
@@ -269,24 +251,6 @@ export function PresenceSphere({
       const tilt = 0.35 + my * 0.4, ct = Math.cos(tilt), st2 = Math.sin(tilt);
 
       ctx.clearRect(0, 0, W, H);
-
-      // Deep-space backdrop. Body gradient stays visible underneath; this adds
-      // depth without hard-coding a single theme.
-      const halo = ctx.createRadialGradient(
-        W / 2, H * 0.4, 0, W / 2, H * 0.4, Math.max(W, H) * 0.75,
-      );
-      halo.addColorStop(0, D ? "rgba(28,38,92,0.3)" : "rgba(255,255,255,0.26)");
-      halo.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = halo;
-      ctx.fillRect(0, 0, W, H);
-      const starRGB = D ? "233,237,255" : "40,55,140";
-      for (const star of stars) {
-        const twinkle = reducedMotion ? 0.85 : 0.7 + 0.3 * Math.sin(t * star.sp + star.ph);
-        ctx.fillStyle = `rgba(${starRGB},${star.a * twinkle})`;
-        ctx.beginPath();
-        ctx.arc(star.x * W, star.y * H, star.r, 0, 6.2832);
-        ctx.fill();
-      }
 
       if (mapRef.current) {
         const mw = Math.min(W * 0.86, 1040);
@@ -372,8 +336,14 @@ export function PresenceSphere({
       ctx.fillStyle = gr;
       ctx.fillRect(0, 0, W, H);
 
-      // Static orbit rings were removed: they read as stray lines around the
-      // sphere. Only real activity (live research) draws rings now.
+      // Orbit rings
+      ctx.strokeStyle = `hsla(${hue},70%,${L}%,.14)`;
+      ctx.lineWidth = 1;
+      [1.6, 1.95].forEach((f) => {
+        ctx.beginPath();
+        ctx.ellipse(ox, oy, R * f, R * f * 0.42, 0, 0, 6.2832);
+        ctx.stroke();
+      });
 
       // Live research scan rings — outward when IAM is actively searching.
       const act = activityRef.current;
@@ -421,7 +391,7 @@ export function PresenceSphere({
         }
         const st = orbitalStates[n.text];
         const sp = i % 2 === 0 ? 0.08 : -0.07;
-        const radius = 1.6 + (i % 3) * 0.15;
+        const radius = (W < 600 ? 1.3 : 1.6) + (i % 3) * (W < 600 ? 0.1 : 0.15);
         const an = st.a + animT * sp;
         const x = ox + Math.cos(an) * R * radius;
         const y = oy + Math.sin(an) * R * radius * 0.42;
@@ -441,50 +411,43 @@ export function PresenceSphere({
         ctx.fill();
         ctx.fillStyle = D ? `rgba(225,230,255,${0.28 + 0.7 * st.g})` : `rgba(20,26,58,${0.35 + 0.65 * st.g})`;
         ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
-        if (front || st.g > 0.1) {
-          ctx.fillText(n.text, x + (Math.cos(an) > 0 ? 12 : -12), y + 4);
+        if (
+          (front || st.g > 0.1)
+          && x > (W < 600 ? 125 : 70)
+          && x < W - (W < 600 ? 125 : 70)
+        ) {
+          ctx.fillText(
+            W < 600 ? n.text.slice(0, 14) : n.text,
+            x + (Math.cos(an) > 0 ? 12 : -12),
+            y + 4,
+          );
         }
       });
 
-      // Live source nodes from public research events. Each node gets a fixed
-      // 3D position (Fibonacci sphere) and is projected with yaw/pitch and
-      // perspective, matching the supplied mock's depth behaviour.
+      // Live source nodes from public research events.
       const sources = sourcesRef.current;
-      const selId = selectedRef.current;
       const labelledDomains = new Set<string>();
       hitRef.current = [];
-      const yaw3 = rot + viewRef.current.yaw;
-      const pitch3 = viewRef.current.pitch;
-      const cyw = Math.cos(yaw3), syw = Math.sin(yaw3);
-      const cp = Math.cos(pitch3), sp = Math.sin(pitch3);
       sources.forEach((s, i) => {
         if (!sourceStates[s.id]) {
-          const phi = Math.acos(1 - 2 * ((i + 0.5) / Math.max(sources.length, 1)));
-          const theta = i * 2.39996;
           sourceStates[s.id] = {
-            ux: Math.cos(theta) * Math.sin(phi),
-            uy: Math.cos(phi),
-            uz: Math.sin(theta) * Math.sin(phi),
+            a: (i * 2.39996) % (Math.PI * 2),
+            r: (W < 600 ? 1.15 : 1.35) + (i % 4) * (W < 600 ? 0.1 : 0.13),
             g: 0,
             x: 0,
             y: 0,
-            z2: 0,
-            sc: 1,
           };
         }
         const ss = sourceStates[s.id];
-        const x1 = ss.ux * cyw - ss.uz * syw;
-        const z1 = ss.ux * syw + ss.uz * cyw;
-        const y1 = ss.uy * cp - z1 * sp;
-        const z2 = ss.uy * sp + z1 * cp;
-        const pr = Math.max(0.45, Math.min(1.6, 1 / (1 + z2 * 0.5)));
-        const orbit = R * (1.25 + (i % 4) * 0.1);
-        ss.x = ox + x1 * orbit * pr;
-        ss.y = oy + y1 * orbit * pr * 0.72;
-        ss.z2 = z2;
-        ss.sc = pr;
+        const an = ss.a + animT * (i % 2 === 0 ? 0.05 : -0.045) + viewRef.current.yaw;
+        ss.x = ox + Math.cos(an) * R * ss.r;
+        ss.y = oy + Math.sin(an) * R * ss.r * 0.5;
         const fresh = freshnessRef.current[s.id];
         const fstate = fresh?.state;
+        const nodeHue = fstate === "contradicted" ? 2
+          : fstate === "unverified" || fstate === "needs_review" ? 38
+          : fstate === "historical" || fstate === "stale" ? hue - 12
+          : hue + (s.recalled ? 30 : 0);
         const freshnessWeight = fstate === "contradicted" ? 0.7
           : fstate === "historical" ? 0.4
           : fstate === "stale" ? 0.55
@@ -495,6 +458,8 @@ export function PresenceSphere({
           : s.state === "extracted" ? 0.85
           : s.state === "opened" ? 0.6 : 0.3) * freshnessWeight;
         ss.g += (targetGlow - ss.g) * Math.min(1, dt * 2);
+        const front = Math.sin(an) > 0;
+
         if (s.recalled) {
           ctx.strokeStyle = `hsla(${hue + 25},95%,${L}%,0.22)`;
           ctx.lineWidth = 1;
@@ -502,6 +467,45 @@ export function PresenceSphere({
           ctx.moveTo(ss.x, ss.y);
           ctx.quadraticCurveTo((ss.x + ox) / 2, (ss.y + oy) / 2 - 12, ox, oy);
           ctx.stroke();
+        }
+
+        ctx.fillStyle = `hsla(${nodeHue},95%,${D ? 72 : 45}%,${Math.min(1, 0.35 + 0.65 * ss.g)})`;
+        ctx.beginPath();
+        ctx.arc(ss.x, ss.y, 2.5 + 3.5 * ss.g, 0, 6.2832);
+        ctx.fill();
+        if (fstate === "contradicted") {
+          ctx.strokeStyle = "hsla(2,90%,65%,0.75)";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 8, 0.2, Math.PI - 0.2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 8, Math.PI + 0.2, 6.0832);
+          ctx.stroke();
+        } else if (fstate === "needs_review" || fstate === "unverified") {
+          ctx.strokeStyle = `hsla(38,90%,65%,${reducedMotion ? 0.5 : 0.3 + 0.25 * Math.sin(t * 3)})`;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 7.5, 0, 6.2832);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        if (
+          (front || ss.g > 0.6)
+          && !labelledDomains.has(s.domain)
+          && ss.x > (W < 600 ? 125 : 70)
+          && ss.x < W - (W < 600 ? 125 : 70)
+        ) {
+          labelledDomains.add(s.domain);
+          ctx.fillStyle = D ? `rgba(225,230,255,${0.3 + 0.6 * ss.g})` : `rgba(20,26,58,${0.4 + 0.6 * ss.g})`;
+          ctx.font = `300 ${W < 600 ? 9 : 10}px 'Space Grotesk', sans-serif`;
+          ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
+          ctx.fillText(
+            s.domain.slice(0, W < 600 ? 10 : 22),
+            ss.x + (Math.cos(an) > 0 ? 8 : -8),
+            ss.y + 3,
+          );
         }
         hitRef.current.push({
           ...s,
@@ -512,75 +516,10 @@ export function PresenceSphere({
         });
       });
 
-      // Draw orbs back-to-front so nearer public sources sit above the rest.
-      sources
-        .slice()
-        .sort((a, b) => (sourceStates[b.id]?.z2 ?? 0) - (sourceStates[a.id]?.z2 ?? 0))
-        .forEach((s) => {
-          const ss = sourceStates[s.id];
-          if (!ss) return;
-          const fresh = freshnessRef.current[s.id];
-          const fstate = fresh?.state;
-          const dim = selId && s.id !== selId ? 0.28 : 1;
-          const nodeHue = fstate === "contradicted" ? 2
-            : fstate === "unverified" || fstate === "needs_review" ? 38
-            : fstate === "historical" || fstate === "stale" ? hue - 12
-            : hue + (s.recalled ? 30 : 0);
-          const orbR = (6 + 8 * ss.g + (fresh?.confidence ?? 0.5) * 4) * ss.sc;
-          const glow = ctx.createRadialGradient(
-            ss.x - orbR * 0.25, ss.y - orbR * 0.25, 0,
-            ss.x, ss.y, orbR * 2.4,
-          );
-          glow.addColorStop(0, `hsla(${nodeHue},95%,${D ? 74 : 56}%,${0.95 * dim})`);
-          glow.addColorStop(0.4, `hsla(${nodeHue},90%,${D ? 60 : 44}%,${0.42 * dim})`);
-          glow.addColorStop(1, `hsla(${nodeHue},90%,60%,0)`);
-          ctx.fillStyle = glow;
-          ctx.fillRect(ss.x - orbR * 2.4, ss.y - orbR * 2.4, orbR * 4.8, orbR * 4.8);
-          ctx.fillStyle = `hsla(${nodeHue},95%,${D ? 78 : 48}%,${Math.min(1, 0.45 + 0.55 * ss.g) * dim})`;
-          ctx.beginPath();
-          ctx.arc(ss.x, ss.y, orbR * 0.55, 0, 6.2832);
-          ctx.fill();
-          if (selId === s.id) {
-            ctx.strokeStyle = D ? "rgba(233,237,255,0.8)" : "rgba(20,26,58,0.8)";
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 4]);
-            ctx.beginPath();
-            ctx.arc(ss.x, ss.y, orbR * 1.7, 0, 6.2832);
-            ctx.stroke();
-            ctx.setLineDash([]);
-          }
-          if (fstate === "contradicted") {
-            ctx.strokeStyle = "hsla(2,90%,65%,0.75)";
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.arc(ss.x, ss.y, orbR * 1.4, 0.2, Math.PI - 0.2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(ss.x, ss.y, orbR * 1.4, Math.PI + 0.2, 6.0832);
-            ctx.stroke();
-          } else if (fstate === "needs_review" || fstate === "unverified") {
-            ctx.strokeStyle = `hsla(38,90%,65%,${reducedMotion ? 0.5 : 0.3 + 0.25 * Math.sin(t * 3)})`;
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 3]);
-            ctx.beginPath();
-            ctx.arc(ss.x, ss.y, orbR * 1.3, 0, 6.2832);
-            ctx.stroke();
-            ctx.setLineDash([]);
-          }
-          if ((ss.z2 < 0.1 || ss.g > 0.6) && !labelledDomains.has(s.domain)) {
-            labelledDomains.add(s.domain);
-            const right = ss.x > ox;
-            ctx.fillStyle = D ? `rgba(225,230,255,${(0.3 + 0.6 * ss.g) * dim})` : `rgba(20,26,58,${(0.4 + 0.6 * ss.g) * dim})`;
-            ctx.font = `300 ${W < 600 ? 9 : 10}px 'Space Grotesk', sans-serif`;
-            ctx.textAlign = right ? "left" : "right";
-            ctx.fillText(s.domain.slice(0, 22), ss.x + (right ? 8 : -8), ss.y + orbR + 8);
-          }
-        });
-
       // Persistent topic clusters from verified public knowledge.
       clustersRef.current.forEach((c, i) => {
         const an = (i / Math.max(clustersRef.current.length, 1)) * Math.PI * 2 + animT * 0.018 + viewRef.current.yaw;
-        const radius = 2.05 + (i % 2) * 0.12;
+        const radius = (W < 600 ? 1.7 : 2.05) + (i % 2) * (W < 600 ? 0.08 : 0.12);
         const x = ox + Math.cos(an) * R * radius;
         const y = oy + Math.sin(an) * R * radius * 0.5;
         clusterPositions[c.name] = { x, y };
@@ -594,11 +533,15 @@ export function PresenceSphere({
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, 6.2832);
         ctx.stroke();
-        if (c.count > 0) {
+        if (c.count > 0 && x > (W < 600 ? 105 : 70) && x < W - (W < 600 ? 105 : 70)) {
           ctx.fillStyle = D ? "rgba(225,230,255,0.7)" : "rgba(20,26,58,0.7)";
           ctx.font = `300 ${W < 600 ? 9 : 11}px 'Space Grotesk', sans-serif`;
           ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
-          ctx.fillText(`${c.name} · ${c.count}`, x + (Math.cos(an) > 0 ? 12 : -12), y + 3);
+          ctx.fillText(
+            `${W < 600 ? c.name.slice(0, 12) : c.name} · ${c.count}`,
+            x + (Math.cos(an) > 0 ? 12 : -12),
+            y + 3,
+          );
         }
         hitRef.current.push({
           id: c.node_id,
@@ -627,7 +570,7 @@ export function PresenceSphere({
         const total = clustersRef.current.length + linked.length;
         const idx = clustersRef.current.length + i;
         const an = (idx / Math.max(total, 1)) * Math.PI * 2 + animT * 0.018 + viewRef.current.yaw;
-        const radius = 2.05 + (idx % 2) * 0.12;
+        const radius = (W < 600 ? 1.7 : 2.05) + (idx % 2) * (W < 600 ? 0.08 : 0.12);
         const x = ox + Math.cos(an) * R * radius;
         const y = oy + Math.sin(an) * R * radius * 0.5;
         clusterPositions[name] = { x, y };
@@ -641,9 +584,11 @@ export function PresenceSphere({
         ctx.arc(x, y, 7, 0, 6.2832);
         ctx.stroke();
         ctx.fillStyle = D ? "rgba(225,230,255,0.6)" : "rgba(20,26,58,0.6)";
-        ctx.font = `300 ${W < 600 ? 8 : 9}px 'Space Grotesk', sans-serif`;
-        ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
-        ctx.fillText(name.slice(0, 22), x + (Math.cos(an) > 0 ? 10 : -10), y + 3);
+        if (x > (W < 600 ? 105 : 70) && x < W - (W < 600 ? 105 : 70)) {
+          ctx.font = `300 ${W < 600 ? 8 : 9}px 'Space Grotesk', sans-serif`;
+          ctx.textAlign = Math.cos(an) > 0 ? "left" : "right";
+          ctx.fillText(name.slice(0, W < 600 ? 12 : 22), x + (Math.cos(an) > 0 ? 10 : -10), y + 3);
+        }
         hitRef.current.push({
           id: `cluster:${name}`,
           title: `${name} cluster`,
@@ -657,8 +602,29 @@ export function PresenceSphere({
         });
       });
 
+      // Bow a link's control point away from the sphere centre so connections
+      // wrap around the particle shell instead of cutting straight through it.
+      const bowedControl = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        let dx = mx - ox;
+        let dy = my - oy;
+        let len = Math.hypot(dx, dy);
+        if (len < 1) {
+          dx = -(b.y - a.y);
+          dy = b.x - a.x;
+          len = Math.hypot(dx, dy) || 1;
+        }
+        // Always push the control point beyond the midpoint, even when both
+        // endpoints are already outside the shell; otherwise far links render
+        // as a straight line.
+        const target = Math.max(R * 1.35, len + Math.min(70, R * 0.35));
+        const scale = target / len;
+        return { x: ox + dx * scale, y: oy + dy * scale };
+      };
+
       // Persistent links between topic clusters.
-      graphRef.current.forEach((link, i) => {
+      graphRef.current.forEach((link) => {
         const a = clusterPositions[link.from_cluster || link.from];
         const b = clusterPositions[link.to_cluster || link.to];
         if (!a || !b) return;
@@ -667,70 +633,41 @@ export function PresenceSphere({
         ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
-        ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 24, b.x, b.y);
+        const ctrl = bowedControl(a, b);
+        ctx.quadraticCurveTo(ctrl.x, ctrl.y, b.x, b.y);
         ctx.stroke();
-        const p = reducedMotion ? 0.5 : (t * 0.22 + i * 0.17) % 1;
-        const px = a.x + (b.x - a.x) * p;
-        const py = a.y + (b.y - a.y) * p - 12 * Math.sin(Math.PI * p);
-        ctx.fillStyle = `hsla(${hue + 35},90%,${D ? 78 : 36}%,0.8)`;
-        ctx.beginPath();
-        ctx.arc(px, py, 1.8, 0, 6.2832);
-        ctx.fill();
       });
 
       // Source → cluster provenance is drawn only where a stored link records
       // that relationship. Proximity alone is never presented as evidence.
-      graphRef.current.forEach((link, i) => {
+      graphRef.current.forEach((link) => {
         const sourceId = link.from_node || link.to_node;
         const clusterName = link.from_cluster || link.to_cluster;
         const ss = sourceId ? sourceStates[sourceId] : null;
         const cluster = clusterName ? clusterPositions[clusterName] : null;
         if (!ss || !cluster) return;
-        const confidence = freshnessRef.current[sourceId || ""]?.confidence ?? 0.5;
-        const focus = !selId || selId === sourceId;
-        ctx.strokeStyle = `hsla(${hue},80%,${L}%,${(0.16 + confidence * 0.34) * (focus ? 1 : 0.25)})`;
-        ctx.lineWidth = 0.8 + confidence * 1.2;
+        ctx.strokeStyle = `hsla(${hue},80%,${L}%,0.28)`;
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(ss.x, ss.y);
-        ctx.quadraticCurveTo((ss.x + cluster.x) / 2, (ss.y + cluster.y) / 2 - 10, cluster.x, cluster.y);
+        const ctrl = bowedControl(ss, cluster);
+        ctx.quadraticCurveTo(ctrl.x, ctrl.y, cluster.x, cluster.y);
         ctx.stroke();
-        if (focus) {
-          const p = reducedMotion ? 0.5 : (t * 0.25 + i * 0.23) % 1;
-          const px = ss.x + (cluster.x - ss.x) * p;
-          const py = ss.y + (cluster.y - ss.y) * p - 5 * Math.sin(Math.PI * p);
-          ctx.fillStyle = `hsla(${hue},90%,${D ? 78 : 36}%,0.7)`;
-          ctx.beginPath();
-          ctx.arc(px, py, 1.5, 0, 6.2832);
-          ctx.fill();
-        }
       });
 
       // Knowledge connections discovered between sources.
       ctx.lineWidth = 1;
-      connectionsRef.current.forEach((c, i) => {
+      connectionsRef.current.forEach((c) => {
         const a = sourceStates[c.from];
         const b = sourceStates[c.to];
         if (!a || !b) return;
-        const weight = (
-          (freshnessRef.current[c.from]?.confidence ?? 0.5)
-          + (freshnessRef.current[c.to]?.confidence ?? 0.5)
-        ) / 2;
-        const focus = !selId || selId === c.from || selId === c.to;
-        ctx.strokeStyle = `hsla(${hue},90%,${L}%,${(0.16 + weight * 0.42) * (focus ? 1 : 0.2)})`;
-        ctx.lineWidth = 0.8 + weight * 1.6;
+        ctx.strokeStyle = `hsla(${hue},90%,${L}%,0.42)`;
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
-        ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 18, b.x, b.y);
+        const ctrl = bowedControl(a, b);
+        ctx.quadraticCurveTo(ctrl.x, ctrl.y, b.x, b.y);
         ctx.stroke();
-        if (focus) {
-          const p = reducedMotion ? 0.5 : (t * 0.28 + i * 0.19) % 1;
-          const px = a.x + (b.x - a.x) * p;
-          const py = a.y + (b.y - a.y) * p - 9 * Math.sin(Math.PI * p);
-          ctx.fillStyle = `hsla(${hue},90%,${D ? 78 : 36}%,0.85)`;
-          ctx.beginPath();
-          ctx.arc(px, py, 1.8, 0, 6.2832);
-          ctx.fill();
-        }
       });
 
       // Information flowing inward after a source is stored.
@@ -888,6 +825,7 @@ export function PresenceSphere({
         onClick={handleClick}
         style={{
           position: "fixed", inset: 0, width: "100%", height: "100%", display: "block",
+          touchAction: "none",
           opacity: mapMode ? 0 : 1,
           pointerEvents: mapMode ? "none" : "auto",
         }}

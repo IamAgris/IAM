@@ -89,7 +89,7 @@ async def list_conversations(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     q: Optional[str] = None,
-):
+) -> List[ConversationResponse]:
     """List the caller's conversations, newest first."""
     service = ConversationService(db)
     conversations = await service.list_conversations(
@@ -115,7 +115,7 @@ async def create_conversation(
     conversation: ConversationCreate,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> ConversationResponse:
     """Create a conversation owned by the caller."""
     conv = Conversation(
         title=conversation.title,
@@ -130,10 +130,10 @@ async def create_conversation(
     await db.refresh(conv)
     return ConversationResponse(
         id=str(conv.id),
-        title=conv.title,
+        title=str(conv.title) if conv.title else None,
         started_at=conv.started_at.isoformat() if conv.started_at else None,
         ended_at=conv.ended_at.isoformat() if conv.ended_at else None,
-        metadata=conv.metadata_ or {},
+        metadata=dict(conv.metadata_ or {}),
     )
 
 
@@ -143,7 +143,7 @@ async def create_message(
     message: MessageCreate,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> MessageResponse:
     """Create a message in one of the caller's conversations."""
     owner = conversation_owner(http_request)
     conv_id = message.conversation_id
@@ -157,8 +157,8 @@ async def create_message(
     else:
         conv_id = _conversation_uuid(conv_id)
         result = await db.execute(select(Conversation).where(Conversation.id == conv_id))
-        conv = result.scalar_one_or_none()
-        if conv is None or not ConversationService._is_owner(conv, owner):
+        existing = result.scalar_one_or_none()
+        if existing is None or not ConversationService._is_owner(existing, owner):
             raise HTTPException(status_code=404, detail="Conversation not found")
 
     msg = ConversationMessage(
@@ -173,10 +173,10 @@ async def create_message(
     return MessageResponse(
         id=str(msg.id),
         conversation_id=str(msg.conversation_id),
-        role=msg.role,
-        content=crypto.decrypt(msg.content),
+        role=str(msg.role),
+        content=crypto.decrypt(str(msg.content)),
         created_at=msg.created_at.isoformat() if msg.created_at else None,
-        metadata=msg.metadata_ or {},
+        metadata=dict(msg.metadata_ or {}),
     )
 
 
@@ -185,7 +185,7 @@ async def get_messages(
     conversation_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> List[MessageResponse]:
     """Get messages from one of the caller's conversations."""
     conversation_id = _conversation_uuid(conversation_id)
     service = ConversationService(db)
@@ -201,10 +201,10 @@ async def get_messages(
         MessageResponse(
             id=str(m.id),
             conversation_id=str(m.conversation_id),
-            role=m.role,
-            content=crypto.decrypt(m.content),
+            role=str(m.role),
+            content=crypto.decrypt(str(m.content)),
             created_at=m.created_at.isoformat() if m.created_at else None,
-            metadata=m.metadata_ or {},
+            metadata=dict(m.metadata_ or {}),
         )
         for m in messages
     ]
@@ -218,7 +218,7 @@ async def get_conversation(
     conversation_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> ConversationDetailResponse:
     """Get a conversation together with all its messages."""
     conversation_id = _conversation_uuid(conversation_id)
     service = ConversationService(db)
@@ -235,7 +235,7 @@ async def claim_conversation(
     conversation_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> ConversationResponse:
     """Bind an anonymous browser's conversation to the signed-in identity.
 
     Requires an authenticated credential and ownership of the cookie token.
@@ -256,15 +256,15 @@ async def claim_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     metadata = dict(conversation.metadata_ or {})
     metadata[ConversationService.OWNER_KEY] = owner
-    conversation.metadata_ = metadata
+    conversation.metadata_ = metadata  # type: ignore[assignment]
     await db.commit()
     await db.refresh(conversation)
     return ConversationResponse(
         id=str(conversation.id),
-        title=conversation.title,
+        title=str(conversation.title) if conversation.title else None,
         started_at=conversation.started_at.isoformat() if conversation.started_at else None,
         ended_at=conversation.ended_at.isoformat() if conversation.ended_at else None,
-        metadata=conversation.metadata_ or {},
+        metadata=dict(conversation.metadata_ or {}),
     )
 
 
@@ -274,7 +274,7 @@ async def update_conversation(
     conversation: ConversationCreate,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> ConversationResponse:
     """Update a conversation's title, metadata or ended_at."""
     conversation_id = _conversation_uuid(conversation_id)
     service = ConversationService(db)
@@ -301,7 +301,7 @@ async def delete_conversation(
     conversation_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> None:
     """Delete one of the caller's conversations and its messages."""
     conversation_id = _conversation_uuid(conversation_id)
     deleted = await ConversationService(db).delete_conversation(
@@ -319,7 +319,7 @@ async def update_message(
     message: MessageCreate,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> MessageResponse:
     """Update a message in one of the caller's conversations."""
     conversation_id = _conversation_uuid(conversation_id)
     service = ConversationService(db)
@@ -341,7 +341,7 @@ async def delete_message(
     message_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
-):
+) -> None:
     """Delete a message from one of the caller's conversations."""
     conversation_id = _conversation_uuid(conversation_id)
     service = ConversationService(db)

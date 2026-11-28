@@ -843,10 +843,10 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       />
 
       {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-3 p-5 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-2 p-3 sm:gap-3 sm:p-5 pointer-events-none">
         <div className="pointer-events-auto">
-          <h1 className="font-medium tracking-widest text-lg" style={{ letterSpacing: "0.08em" }}>IAM</h1>
-          <p className="flex items-center gap-2 text-[13px] opacity-60">
+          <h1 className="font-medium tracking-widest text-base sm:text-lg" style={{ letterSpacing: "0.08em" }}>IAM</h1>
+          <p className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[13px] opacity-60">
             Intellectual Artificial Mainbrain
             <span
               title={connected === true ? "Connected" : connected === false ? "Offline" : "Connecting"}
@@ -856,7 +856,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
           </p>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto">
           <div className="relative">
             <button
               type="button"
@@ -864,7 +864,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
               aria-haspopup="menu"
               onClick={() => setSuggestionsOpen((open) => !open)}
               onKeyDown={(e) => { if (e.key === "Escape") setSuggestionsOpen(false); }}
-              className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-xl"
+              className="px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-[13px] rounded-full border border-[var(--line)] backdrop-blur-xl whitespace-nowrap"
               style={{ background: "var(--glass)", color: "var(--mute)" }}
             >
               Suggestions
@@ -873,7 +873,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
               <div
                 role="menu"
                 aria-label="Suggestions"
-                className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-[var(--line)] p-2 backdrop-blur-xl space-y-1"
+                className="absolute right-0 top-full mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-[var(--line)] p-2 backdrop-blur-xl space-y-1"
                 style={{ background: "var(--glass)", color: "var(--mute)" }}
               >
                 {suggestions.map((s) => (
@@ -890,13 +890,13 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
               </div>
             )}
           </div>
-          <div className="flex gap-1.5 p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label="Mode">
+          <div className="flex gap-0.5 p-0.5 sm:gap-1.5 sm:p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label="Mode">
             {(Object.keys(MODE_CONFIG) as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => changeMode(m)}
                 aria-pressed={mode === m}
-                className="px-3.5 py-1.5 rounded-full text-[13px] transition-all"
+                className="px-2 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-[13px] rounded-full transition-all"
                 style={mode === m
                   ? { background: "var(--ink)", color: "var(--bg2)" }
                   : { color: "var(--mute)" }}
@@ -910,7 +910,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* Live intelligence activity — driven by real IAM events */}
       {activity && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5 text-[11px] backdrop-blur-xl pointer-events-none"
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-[var(--line)] px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] backdrop-blur-xl pointer-events-none whitespace-nowrap"
           style={{ background: "var(--glass)", color: "var(--mute)" }}>
           <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "var(--accent)" }} />
           <span className="uppercase tracking-wider opacity-60">Live activity</span>
@@ -927,10 +927,10 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       {/* Source node detail — stays on the same screen */}
       {(selectedSource || hoveredSource) && (() => {
         const node = selectedSource || hoveredSource!.node;
-        const x = Math.min(hoveredSource?.x ?? window.innerWidth / 2, window.innerWidth - 280);
+        const x = Math.min(hoveredSource?.x ?? window.innerWidth / 2, window.innerWidth - 262);
         const y = Math.min(hoveredSource?.y ?? 180, window.innerHeight - 220);
         return (
-          <div className="fixed z-30 w-[250px] rounded-2xl border border-[var(--line)] p-3 backdrop-blur-2xl pointer-events-auto"
+          <div className="fixed z-30 w-[min(250px,calc(100vw-24px))] rounded-2xl border border-[var(--line)] p-3 backdrop-blur-2xl pointer-events-auto"
             style={{ background: "var(--glass)", left: Math.max(12, x + 16), top: Math.max(80, y + 12) }}>
             <div className="flex items-start justify-between gap-2 mb-2">
               <p className="text-xs font-medium leading-snug">{node.title}</p>
@@ -1070,7 +1070,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* Conversation history — expandable, unobtrusive */}
       {showHistory && (
-        <div className="fixed right-20 top-24 bottom-28 z-20 w-[min(380px,calc(100vw-120px))] rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-4 overflow-y-auto pointer-events-auto"
+        <div className="fixed inset-x-3 top-20 bottom-40 z-20 w-auto rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 overflow-y-auto pointer-events-auto md:inset-x-auto md:right-20 md:top-24 md:bottom-28 md:w-[min(380px,calc(100vw-120px))]"
           style={{ background: "var(--glass)" }}>
           <h2 className="text-sm font-medium mb-3 text-[var(--mute)]">Conversation</h2>
           {messages.length === 0 ? (
@@ -1091,7 +1091,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
 
       {/* In-screen options — no extra pages, no navigation */}
       {showOptions && (
-        <div className="fixed right-20 top-24 z-20 w-[min(340px,calc(100vw-120px))] rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-4 pointer-events-auto"
+        <div className="fixed inset-x-3 top-20 z-20 w-auto max-h-[68vh] overflow-y-auto rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:right-20 md:top-24 md:max-h-none md:w-[min(340px,calc(100vw-120px))]"
           style={{ background: "var(--glass)" }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-medium text-[var(--mute)]">IAM options</h2>
@@ -1192,7 +1192,8 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       )}
 
       {/* Center response + input */}
-      <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-4 pb-6 pointer-events-none">
+      <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 sm:gap-4 px-3 sm:px-4 pb-6 pointer-events-none"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
         <span className="sr-only" aria-live="polite">
           {generating ? "IAM is responding" : response && !responseDismissed ? "Response ready" : ""}
         </span>
@@ -1295,22 +1296,6 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
                 ) : null}
               </>
             )}
-          </div>
-        )}
-
-        {(!response || responseDismissed) && (
-          <div className="ghost flex gap-2 flex-wrap justify-center pointer-events-auto">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                disabled={generating}
-                onClick={() => ask(s)}
-                className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-md transition-colors hover:border-[var(--accent)] disabled:opacity-40 disabled:pointer-events-none"
-                style={{ background: "var(--glass)", color: "var(--mute)" }}
-              >
-                {s}
-              </button>
-            ))}
           </div>
         )}
 

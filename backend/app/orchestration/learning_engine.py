@@ -117,7 +117,7 @@ class LearningEngine:
             # BeliefRecord may expose review_history directly
             rh = getattr(belief, "review_history", None)
             if rh is not None:
-                return rh
+                return list(rh)
             # Fallback to KnowledgeItem-style metadata_
             meta = getattr(belief, "metadata_", None)
             return meta.get("review_history", []) if isinstance(meta, dict) else []

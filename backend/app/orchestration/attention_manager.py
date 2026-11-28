@@ -229,7 +229,7 @@ class AttentionManager:
         if reviewed and reviewed.tzinfo is None:
             reviewed = reviewed.replace(tzinfo=timezone.utc)
 
-        hours_since_review = (now - reviewed).total_seconds() / 3600.0
+        hours_since_review = float((now - reviewed).total_seconds() / 3600.0)
 
         # Beliefs reviewed in the last hour don't need attention
         if hours_since_review < 1:

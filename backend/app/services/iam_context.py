@@ -312,7 +312,7 @@ async def record_belief(
     belief_type: str = "observation",
     provenance: str = "system_derived",
     metadata_: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+) -> BeliefRecord:
     """Create or update a shared belief (KnowledgeItem) with evidence and provenance.
 
     This is the write gate for IAM's shared epistemic state. Every belief carries

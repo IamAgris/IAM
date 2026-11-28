@@ -709,9 +709,10 @@ class InferenceService:
                     f"{mode} provider returned {response.status_code}: {response.text[:300]}"
                 )
             result = response.json()
-            choices = result.get("choices")
-            if not isinstance(choices, list) or not choices:
+            raw_choices = result.get("choices")
+            if not isinstance(raw_choices, list) or not raw_choices:
                 raise InferenceUnavailable("provider returned no choices; response rejected")
+            choices = raw_choices
             message = choices[0].get("message") if isinstance(choices[0], dict) else None
             if not isinstance(message, dict):
                 raise InferenceUnavailable("provider returned a malformed message; response rejected")
@@ -962,7 +963,7 @@ class InferenceService:
             if tools_offered and not streamed_text.strip() and requested_tools:
                 # The model asked for live evidence: execute it, then stream the
                 # grounded answer. Normal chats keep true token-by-token SSE.
-                followup_messages = [dict(item) for item in messages]
+                followup_messages: List[Dict[str, Any]] = [dict(item) for item in messages]
                 emitted: List[Dict[str, Any]] = []
                 for idx, entry in enumerate(requested_tools):
                     call_id = entry.get("id") or f"call-{idx}"

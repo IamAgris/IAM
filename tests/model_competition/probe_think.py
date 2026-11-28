@@ -8,7 +8,7 @@ from pathlib import Path
 key = re.search(
     r"^LITELLM_MASTER_KEY=(.*)$",
     Path(".env").read_text(encoding="utf-8"),
-    re.M,
+    re.MULTILINE,
 ).group(1).strip().strip('"')
 
 for extra in ({"think": False}, {"options": {"think": False}}):
@@ -29,5 +29,5 @@ for extra in ({"think": False}, {"options": {"think": False}}):
             data = json.loads(resp.read().decode("utf-8"))
         choice = data["choices"][0]["message"]
         print(extra, "->", repr(choice.get("content")), "usage=", data.get("usage"))
-    except Exception as exc:
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as exc:
         print(extra, "ERROR", str(exc)[:300])

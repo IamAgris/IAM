@@ -117,7 +117,7 @@ class CuriosityEngine:
             if last_reviewed:
                 if isinstance(last_reviewed, str):
                     try:
-                        last_reviewed = datetime.fromisoformat(last_reviewed)
+                        last_reviewed = datetime.fromisoformat(last_reviewed)  # type: ignore[assignment]
                     except ValueError:
                         last_reviewed = None
 
@@ -163,7 +163,7 @@ class CuriosityEngine:
                         reason="belief is contradicted by another belief",
                     )
                 )
-            elif last_reviewed is not None and last_reviewed < stale_cutoff:
+            elif last_reviewed is not None and last_reviewed < stale_cutoff:  # type: ignore[operator]
                 gaps.append(
                     KnowledgeGap(
                         id=str(uuid.uuid4()),

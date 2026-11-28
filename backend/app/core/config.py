@@ -377,6 +377,13 @@ class Settings(BaseSettings):
     model_development_checkpoint_ref: str = ""
     model_development_dataset_licence: str = ""
 
+    # Local Ollama development path. Opt-in: it creates a servable candidate
+    # through /api/create (prompt/template adaptation), not weight fine-tuning.
+    model_development_local_training: bool = False
+    model_development_ollama_candidate: str = ""
+    # Owner-declared consent types permitted for training data. Empty fails closed.
+    training_consent_types: list[str] = []
+
     # Independent evaluation evidence lives outside IAM's writable database.
     # The signing key is operator-held and must not be exposed to IAM tools.
     independent_eval_artifact_root: str = ""

@@ -216,18 +216,18 @@ class IntellectualHistory:
             beliefs_by_topic=beliefs_by_topic,
             beliefs_by_status=beliefs_by_status,
             topic_histories=[
-                {
-                    "topic": t.topic,
-                    "belief_count": t.belief_count,
-                    "total_revisions": t.total_revisions,
-                    "current_status": t.current_status,
-                    "current_confidence": t.current_confidence,
-                    "first_belief_date": t.first_belief_date,
-                    "last_revision_date": t.last_revision_date,
-                    "revision_count": len(t.revision_history),
-                    "status_change_count": len(t.status_changes),
-                    "confidence_drift": t.confidence_drift,
-                }
+                TopicIntellectualHistory(
+                    topic=t.topic,
+                    belief_count=t.belief_count,
+                    total_revisions=t.total_revisions,
+                    current_status=t.current_status,
+                    current_confidence=t.current_confidence,
+                    first_belief_date=t.first_belief_date,
+                    last_revision_date=t.last_revision_date,
+                    revision_history=t.revision_history,
+                    status_changes=t.status_changes,
+                    confidence_drift=t.confidence_drift,
+                )
                 for t in sorted_topics
             ],
             global_timeline=global_timeline,
@@ -241,7 +241,7 @@ class IntellectualHistory:
         try:
             rh = getattr(b, "review_history", None)
             if rh is not None:
-                return rh
+                return list(rh)
             meta = getattr(b, "metadata_", None)
             return meta.get("review_history", []) if isinstance(meta, dict) else []
         except Exception:
@@ -306,19 +306,19 @@ class IntellectualHistory:
         # Identify topics with most change
         most_changed = sorted(
             history.topic_histories,
-            key=lambda t: abs(t["confidence_drift"]),
+            key=lambda t: abs(t.confidence_drift),
             reverse=True,
         )[:5]
 
         # Identify stable beliefs (high confidence, verified)
         stable_beliefs = [
             {
-                "topic": t["topic"],
-                "status": t["current_status"],
-                "confidence": t["current_confidence"],
+                "topic": t.topic,
+                "status": t.current_status,
+                "confidence": t.current_confidence,
             }
             for t in history.topic_histories
-            if t["current_status"] == "verified" and t["current_confidence"] >= 0.8
+            if t.current_status == "verified" and t.current_confidence >= 0.8
         ][:5]
 
         return {
@@ -331,9 +331,9 @@ class IntellectualHistory:
             "major_changes": major_changes,
             "most_changed_topics": [
                 {
-                    "topic": t["topic"],
-                    "confidence_drift": t["confidence_drift"],
-                    "revisions": t["revision_count"],
+                    "topic": t.topic,
+                    "confidence_drift": t.confidence_drift,
+                    "revisions": len(t.revision_history),
                 }
                 for t in most_changed
             ],

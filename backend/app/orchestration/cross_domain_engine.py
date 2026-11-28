@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 import loguru
 
 from app.services import iam_context
@@ -392,10 +392,10 @@ class CrossDomainEngine:
         beliefs_b: List[Any],
     ) -> List[str]:
         """Find content words shared between two topic's beliefs."""
-        words_a: set = set()
+        words_a: Set[str] = set()
         for b in beliefs_a:
             words_a.update(self._content_words(b.title + " " + b.content))
-        words_b: set = set()
+        words_b: Set[str] = set()
         for b in beliefs_b:
             words_b.update(self._content_words(b.title + " " + b.content))
         shared = words_a & words_b

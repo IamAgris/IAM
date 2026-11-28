@@ -137,9 +137,9 @@ class ConversationService:
             and (not query or query.lower() in str(c.title or "").lower())
         ][offset:offset + limit]
 
-        result = []
+        items: List[Dict[str, Any]] = []
         for c in conversations:
-            result.append(
+            items.append(
                 {
                     "id": str(c.id),
                     "title": c.title,
@@ -154,7 +154,7 @@ class ConversationService:
                 }
             )
 
-        return result
+        return items
 
     async def update_conversation(
         self,
@@ -174,15 +174,15 @@ class ConversationService:
             return None
 
         if title is not None:
-            conversation.title = title
+            conversation.title = title  # type: ignore[assignment]
         if metadata_ is not None:
             # Never let a caller overwrite the ownership marker.
             metadata = dict(metadata_)
             if owner is not None:
                 metadata[self.OWNER_KEY] = owner
-            conversation.metadata_ = metadata
+            conversation.metadata_ = metadata  # type: ignore[assignment]
         if ended_at is not None:
-            conversation.ended_at = ended_at
+            conversation.ended_at = ended_at  # type: ignore[assignment]
 
         await self.db.commit()
         await self.db.refresh(conversation)
@@ -267,7 +267,7 @@ class ConversationService:
             "id": str(message.id),
             "conversation_id": str(message.conversation_id),
             "role": message.role,
-            "content": crypto.decrypt(message.content),
+            "content": crypto.decrypt(str(message.content)),
             "created_at": (
                 message.created_at.isoformat()
                 if message.created_at
@@ -298,7 +298,7 @@ class ConversationService:
                 "id": str(m.id),
                 "conversation_id": str(m.conversation_id),
                 "role": m.role,
-                "content": crypto.decrypt(m.content),
+                "content": crypto.decrypt(str(m.content)),
                 "created_at": (
                     m.created_at.isoformat() if m.created_at else None
                 ),
@@ -320,7 +320,7 @@ class ConversationService:
             .order_by(ConversationMessage.created_at.desc())
             .limit(limit)
         )
-        messages = result.scalars().all()
+        messages = list(result.scalars().all())
         # Reverse to get chronological order
         messages.reverse()
 
@@ -329,7 +329,7 @@ class ConversationService:
                 "id": str(m.id),
                 "conversation_id": str(m.conversation_id),
                 "role": m.role,
-                "content": crypto.decrypt(m.content),
+                "content": crypto.decrypt(str(m.content)),
                 "created_at": (
                     m.created_at.isoformat()
                     if m.created_at
@@ -358,9 +358,9 @@ class ConversationService:
             return None
 
         if content is not None:
-            message.content = crypto.encrypt(content)
+            message.content = crypto.encrypt(content)  # type: ignore[assignment]
         if metadata_ is not None:
-            message.metadata_ = metadata_
+            message.metadata_ = metadata_  # type: ignore[assignment]
 
         await self.db.commit()
         await self.db.refresh(message)
@@ -369,7 +369,7 @@ class ConversationService:
             "id": str(message.id),
             "conversation_id": str(message.conversation_id),
             "role": message.role,
-            "content": crypto.decrypt(message.content),
+            "content": crypto.decrypt(str(message.content)),
             "created_at": (
                 message.created_at.isoformat()
                 if message.created_at
@@ -412,7 +412,7 @@ class ConversationService:
             .order_by(ConversationMessage.created_at.asc())
         )
         for message in result.scalars().all():
-            metadata = message.metadata_ or {}
+            metadata: Dict[str, Any] = dict(message.metadata_ or {})
             if metadata.get("turn_key") == key:
                 return True
         return False
@@ -431,7 +431,7 @@ class ConversationService:
             or conversation.title not in (None, "", "New Conversation")
         ):
             return False
-        conversation.title = title[:200]
+        conversation.title = title[:200]  # type: ignore[assignment]
         await self.db.commit()
         return True
 

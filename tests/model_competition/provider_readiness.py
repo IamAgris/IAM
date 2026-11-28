@@ -35,7 +35,7 @@ ALIASES = [
 def env_values() -> dict:
     text = ENV.read_text(encoding="utf-8") if ENV.exists() else ""
     values = {}
-    for match in re.finditer(r"^([A-Z][A-Z0-9_]*)=(.*)$", text, re.M):
+    for match in re.finditer(r"^([A-Z][A-Z0-9_]*)=(.*)$", text, re.MULTILINE):
         values[match.group(1)] = match.group(2).strip().strip('"')
     return values
 
@@ -44,7 +44,7 @@ def ollama_reachable() -> bool:
     try:
         with urllib.request.urlopen(OLLAMA, timeout=5) as resp:
             return resp.status == 200
-    except Exception:
+    except (OSError, ValueError):
         return False
 
 

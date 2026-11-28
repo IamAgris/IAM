@@ -1,0 +1,57 @@
+{
+  "cases_per_op": 32,
+  "gate": "G2",
+  "method": "For each operation, strict FP32 reference outputs are compared with an independent FP64 oracle over deterministic synthetic cases. abs_tol = max(2x observed max_abs_diff, 1e-6); cos_min = min(0.9999, observed minimum cosine). Q8_0 dequant is exact: abs_tol 0 plus an element-wise exact_matches check (cosine in float64 is not bit-exact for identical arrays), so cos_min stays at 0.9999.",
+  "operations": {
+    "attention_causal": {
+      "abs_tol": 1e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 2.618809602505934e-07,
+      "observed_ref_vs_oracle_min_cosine": 0.9999999999999979
+    },
+    "dequant_q8_0_row": {
+      "abs_tol": 0.0,
+      "cos_min": 0.9999,
+      "exact_required": true,
+      "observed_ref_vs_oracle_max_abs_diff": 0.0,
+      "observed_ref_vs_oracle_min_cosine": 0.9999999999999998
+    },
+    "rmsnorm": {
+      "abs_tol": 1e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 4.0752798957655045e-07,
+      "observed_ref_vs_oracle_min_cosine": 0.999999999999999
+    },
+    "rope_apply": {
+      "abs_tol": 1e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 1.6553410109310107e-07,
+      "observed_ref_vs_oracle_min_cosine": 0.999999999999999
+    },
+    "rope_cos_sin": {
+      "abs_tol": 2.887e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 1.4433531813629052e-06,
+      "observed_ref_vs_oracle_min_cosine": 0.9999999999999309
+    },
+    "rope_inv_freq": {
+      "abs_tol": 1e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 1.0462637811681219e-08,
+      "observed_ref_vs_oracle_min_cosine": 1.0
+    },
+    "swiglu": {
+      "abs_tol": 5.482e-06,
+      "cos_min": 0.9999,
+      "exact_required": false,
+      "observed_ref_vs_oracle_max_abs_diff": 2.741018509055948e-06,
+      "observed_ref_vs_oracle_min_cosine": 0.9999999999999701
+    }
+  },
+  "seed": 20261128
+}
