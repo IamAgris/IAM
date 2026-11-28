@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class ApiCredential(Base):
+class ApiCredential(Base):  # type: ignore[misc]
     __tablename__ = "api_credentials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

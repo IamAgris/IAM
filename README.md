@@ -1,6 +1,6 @@
 # IAM
 
-[IAM Controlled Community Licence](LICENSES/IAM-COMMUNITY-LICENSE.md) | [Commercial Licensing](LICENSES/COMMERCIAL-LICENSING.md) | [Contributing](CONTRIBUTING.md) | [CLA](CLA.md)
+[IAM Controlled Community Licence](LICENSES/IAM-COMMUNITY-LICENSE.md) | [Commercial Licensing](LICENSES/COMMERCIAL-LICENSING.md) | [Contributing](docs/CONTRIBUTING.md) | [CLA](docs/CLA.md)
 
 ## Overview
 
@@ -34,11 +34,11 @@ See [LICENSES/COMMERCIAL-LICENSING.md](LICENSES/COMMERCIAL-LICENSING.md) for com
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Contributor Licence Agreement (CLA.md)](CLA.md).
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) and the [Contributor Licence Agreement (docs/CLA.md)](docs/CLA.md).
 
 ## Trademarks
 
-"IAM", the IAM name, logo, and branding are all rights reserved. See [TRADEMARKs.md](TRADEMARKS.md).
+"IAM", the IAM name, logo, and branding are all rights reserved. See [TRADEMARKs.md](docs/TRADEMARKS.md).
 
 ## Legal Notice
 

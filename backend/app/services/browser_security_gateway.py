@@ -21,6 +21,7 @@ from app.services.aegis import AegisEngine
 from app.services.browser_evidence_service import BrowserEvidenceService
 from app.services.creatorapproval_service import CreatorApprovalService
 from app.services.internetaccess_service import InternetAccessService
+from app.services.path_safety import UnsafePathError, contained_path
 
 BRANDS = ("paypal", "google", "microsoft", "apple", "amazon", "bank", "github", "facebook")
 DANGEROUS_EXTENSIONS = {
@@ -134,16 +135,25 @@ class BrowserSecurityGateway:
         actor_type: str = "agent",
     ) -> Dict[str, Any]:
         """Hash, classify and isolate a download. Never execute it."""
-        source = Path(source_path).resolve()
+        root = self.quarantine_root()
+        try:
+            # codeql[py/path-injection] source is contained under the evidence root by contained_path.
+            source = contained_path(root.parent, source_path)
+        except (UnsafePathError, OSError, ValueError) as exc:
+            raise BrowserSecurityGatewayError(
+                "download source is outside the browser evidence root"
+            ) from exc
         if not source.is_file():
             raise BrowserSecurityGatewayError("download file does not exist")
+        # codeql[py/path-injection] source is resolved and contained above.
         raw = source.read_bytes()
         digest = hashlib.sha256(raw).hexdigest()
         name = original_name or source.name
         suffix = Path(name).suffix.lower()
         risky = suffix in DANGEROUS_EXTENSIONS
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        target = self.quarantine_root() / f"{stamp}-{digest[:16]}-{Path(name).name}"
+        # codeql[py/path-injection] Path(name).name is a basename and root is resolved.
+        target = root / f"{stamp}-{digest[:16]}-{Path(name).name}"
         shutil.move(str(source), str(target))
         result: Dict[str, Any] = {
             "status": "quarantined",
@@ -174,10 +184,12 @@ class BrowserSecurityGateway:
             raise BrowserSecurityGatewayError(
                 "releasing a download requires signed Creator authorization"
             )
-        source = Path(quarantine_path).resolve()
-        root = self.quarantine_root()
-        if root not in source.parents:
-            raise BrowserSecurityGatewayError("path is outside the quarantine root")
+        try:
+            # codeql[py/path-injection] contained_path resolves and enforces the quarantine root.
+            source = contained_path(self.quarantine_root(), quarantine_path)
+        except (UnsafePathError, OSError, ValueError) as exc:
+            raise BrowserSecurityGatewayError("path is outside the quarantine root") from exc
+        # codeql[py/path-injection] source is contained by contained_path above.
         if not source.is_file():
             raise BrowserSecurityGatewayError("quarantined file does not exist")
         return {

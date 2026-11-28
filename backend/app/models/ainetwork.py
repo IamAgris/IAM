@@ -13,7 +13,7 @@ import uuid
 from app.core.database import Base
 
 
-class ExternalAgent(Base):
+class ExternalAgent(Base):  # type: ignore[misc]
     """Discovered external AI system in IAM's network."""
     __tablename__ = "external_agents"
 
@@ -54,7 +54,7 @@ class ExternalAgent(Base):
     collaborations = relationship("AgentCollaboration", back_populates="agent", cascade="all, delete-orphan")
 
 
-class AgentInteraction(Base):
+class AgentInteraction(Base):  # type: ignore[misc]
     """Complete audit record of external AI communication."""
     __tablename__ = "agent_interactions"
 
@@ -76,7 +76,7 @@ class AgentInteraction(Base):
     agent = relationship("ExternalAgent", back_populates="interactions")
 
 
-class AgentInterview(Base):
+class AgentInterview(Base):  # type: ignore[misc]
     """Structured technical interview question and answer with provenance (Doc 18 §4).
 
     Answers are untrusted data. They are stored as claims with a risk marker,
@@ -100,7 +100,7 @@ class AgentInterview(Base):
     agent = relationship("ExternalAgent", back_populates="interviews")
 
 
-class AgentTrustRecord(Base):
+class AgentTrustRecord(Base):  # type: ignore[misc]
     """Trust and reliability assessment based on observed behaviour."""
     __tablename__ = "agent_trust_records"
 
@@ -114,7 +114,7 @@ class AgentTrustRecord(Base):
     agent = relationship("ExternalAgent", back_populates="trust_records")
 
 
-class AgentCollaboration(Base):
+class AgentCollaboration(Base):  # type: ignore[misc]
     """Task coordination with an external AI agent."""
     __tablename__ = "agent_collaborations"
 
@@ -136,7 +136,7 @@ class AgentCollaboration(Base):
     agent = relationship("ExternalAgent", back_populates="collaborations")
 
 
-class ExternalIntegration(Base):
+class ExternalIntegration(Base):  # type: ignore[misc]
     """API/webhook integration with an external service."""
     __tablename__ = "external_integrations"
 
@@ -157,7 +157,7 @@ class ExternalIntegration(Base):
     )
 
 
-class InternetResource(Base):
+class InternetResource(Base):  # type: ignore[misc]
     """Web/research resources IAM has accessed."""
     __tablename__ = "internet_resources"
 
@@ -174,7 +174,7 @@ class InternetResource(Base):
     )
 
 
-class CloudWorkload(Base):
+class CloudWorkload(Base):  # type: ignore[misc]
     """IAM's cloud-hosted applications and services."""
     __tablename__ = "cloud_workloads"
 

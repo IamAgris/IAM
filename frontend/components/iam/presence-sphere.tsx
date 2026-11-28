@@ -141,6 +141,8 @@ export function PresenceSphere({
   const selectedRef = React.useRef<string | null>(selectedId);
   const viewRef = React.useRef({ yaw: 0, pitch: 0.3, zoom: 1 });
   const dragRef = React.useRef({ active: false, x: 0, y: 0, moved: false });
+  const pointersRef = React.useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = React.useRef<{ dist: number; zoom: number } | null>(null);
   const reducedMotion = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -227,8 +229,11 @@ export function PresenceSphere({
 
     // Live research source nodes — keyed by node id so updates never rebuild
     // the particle sphere or restart the animation loop.
-    const sourceStates: Record<string, { a: number; r: number; g: number; x: number; y: number }> = {};
+    const sourceStates: Record<string, {
+      a: number; r: number; g: number; x: number; y: number; born: number;
+    }> = {};
     const clusterPositions: Record<string, { x: number; y: number }> = {};
+    const linkBirths: Record<string, number> = {};
 
     const frame = (ts: number) => {
       const t = ts * 0.001;
@@ -436,6 +441,7 @@ export function PresenceSphere({
             g: 0,
             x: 0,
             y: 0,
+            born: reducedMotion ? -10 : t,
           };
         }
         const ss = sourceStates[s.id];
@@ -469,10 +475,20 @@ export function PresenceSphere({
           ctx.stroke();
         }
 
+        const bornAge = t - ss.born;
+        const arriving = !reducedMotion && bornAge >= 0 && bornAge < 1.4;
         ctx.fillStyle = `hsla(${nodeHue},95%,${D ? 72 : 45}%,${Math.min(1, 0.35 + 0.65 * ss.g)})`;
         ctx.beginPath();
-        ctx.arc(ss.x, ss.y, 2.5 + 3.5 * ss.g, 0, 6.2832);
+        ctx.arc(ss.x, ss.y, (2.5 + 3.5 * ss.g) * (arriving ? 0.6 + bornAge * 0.5 : 1), 0, 6.2832);
         ctx.fill();
+        if (arriving) {
+          const phase = bornAge / 1.4;
+          ctx.strokeStyle = `hsla(${nodeHue},95%,${D ? 78 : 42}%,${(1 - phase) * 0.7})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 5 + phase * 22, 0, 6.2832);
+          ctx.stroke();
+        }
         if (fstate === "contradicted") {
           ctx.strokeStyle = "hsla(2,90%,65%,0.75)";
           ctx.lineWidth = 1.2;
@@ -661,13 +677,28 @@ export function PresenceSphere({
         const a = sourceStates[c.from];
         const b = sourceStates[c.to];
         if (!a || !b) return;
-        ctx.strokeStyle = `hsla(${hue},90%,${L}%,0.42)`;
+        const key = `${c.from}-${c.to}`;
+        if (linkBirths[key] === undefined) {
+          linkBirths[key] = reducedMotion ? -10 : t;
+        }
+        const age = t - linkBirths[key];
+        const arriving = !reducedMotion && age >= 0 && age < 1.2;
+        ctx.strokeStyle = `hsla(${hue},90%,${L}%,${0.42 * (arriving ? Math.min(1, age * 2.5) : 1)})`;
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         const ctrl = bowedControl(a, b);
         ctx.quadraticCurveTo(ctrl.x, ctrl.y, b.x, b.y);
         ctx.stroke();
+        if (arriving) {
+          const phase = age / 1.2;
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2;
+          ctx.fillStyle = `hsla(${hue},95%,${D ? 82 : 40}%,${(1 - phase) * 0.9})`;
+          ctx.beginPath();
+          ctx.arc(mx, my, 2 + phase * 5, 0, 6.2832);
+          ctx.fill();
+        }
       });
 
       // Information flowing inward after a source is stored.
@@ -716,11 +747,38 @@ export function PresenceSphere({
   }, [reducedMotion, state, mode, nodes, activity, sourceNodes, connections, clusters, graphConnections, freshness]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    dragRef.current = { active: true, x: e.clientX, y: e.clientY, moved: false };
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     e.currentTarget.setPointerCapture(e.pointerId);
+    if (pointersRef.current.size === 1) {
+      dragRef.current = { active: true, x: e.clientX, y: e.clientY, moved: false };
+    } else if (pointersRef.current.size === 2) {
+      const [a, b] = Array.from(pointersRef.current.values());
+      pinchRef.current = {
+        dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        zoom: viewRef.current.zoom,
+      };
+      dragRef.current.active = false;
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (pointersRef.current.size >= 2 && pinchRef.current) {
+      const [a, b] = Array.from(pointersRef.current.values());
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const next = Math.max(
+        0.7,
+        Math.min(1.8, pinchRef.current.zoom * (dist / pinchRef.current.dist)),
+      );
+      if (next !== viewRef.current.zoom) {
+        viewRef.current.zoom = next;
+        resizeRef.current?.();
+        if (reducedMotion) drawRef.current?.();
+      }
+      return;
+    }
     const d = dragRef.current;
     if (d.active) {
       const dx = e.clientX - d.x;
@@ -744,7 +802,14 @@ export function PresenceSphere({
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    dragRef.current.active = false;
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+    if (pointersRef.current.size === 0) {
+      dragRef.current.active = false;
+    } else if (pointersRef.current.size === 1) {
+      const [point] = Array.from(pointersRef.current.values());
+      dragRef.current = { active: true, x: point.x, y: point.y, moved: true };
+    }
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
   };
 

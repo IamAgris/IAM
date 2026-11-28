@@ -99,6 +99,7 @@ class OnionServiceIntelligence:
         proxy = f"socks5://127.0.0.1:{settings.tor_socks_port}"
         try:
             async with httpx.AsyncClient(proxy=proxy, timeout=8.0) as client:
+                # codeql[py/full-ssrf] address passed the strict V3_ONION regex gate above.
                 response = await client.get(f"http://{address.strip().lower()}/")
             return {
                 "reachable": True,

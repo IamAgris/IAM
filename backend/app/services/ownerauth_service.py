@@ -59,8 +59,8 @@ class OwnerAuthService:
         auth = result.scalar_one_or_none()
         if not auth:
             return False
-        auth.is_active = False
-        auth.revoked_at = datetime.now(timezone.utc)
+        auth.is_active = False  # type: ignore[assignment]
+        auth.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return True
 

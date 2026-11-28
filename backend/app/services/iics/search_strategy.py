@@ -24,7 +24,27 @@ STRATEGIES = (
 CONTRADICTION_HINTS = re.compile(
     r"(?i)\b(conflict|contradict|disagree|verify|compare|versus|vs\.?|outdated|rumour|rumor)\b"
 )
-SUBQUESTION_SPLIT = re.compile(r"\s+(?:and|also|plus|;)\s+|\s*\?\s*")
+# Split sub-questions without a regex whose ``\s+``/``\s*`` quantifiers sit on
+# user-controlled text: that pattern backtracks quadratically on long runs of
+# whitespace (CodeQL py/polynomial-redos). Tokenising with str.split is linear.
+_SPLIT_WORDS = frozenset({"and", "also", "plus", ";", "?"})
+
+
+def split_subquestions(text: str) -> List[str]:
+    """Return sub-questions split on ``?`` and space-delimited join words."""
+    normalized = (text or "").replace("?", " ? ")
+    parts: List[str] = []
+    current: List[str] = []
+    for token in normalized.split():
+        if token in _SPLIT_WORDS:
+            if current:
+                parts.append(" ".join(current))
+                current = []
+        else:
+            current.append(token)
+    if current:
+        parts.append(" ".join(current))
+    return parts
 
 
 @dataclass(frozen=True)
@@ -72,7 +92,7 @@ class StrategySelector:
                 [f"site:{domain} {text}" for domain in domains[:5]],
                 domains,
             )
-        parts = [part.strip() for part in SUBQUESTION_SPLIT.split(text) if part.strip()]
+        parts = [part for part in split_subquestions(text) if part]
         if len(parts) > 1:
             return StrategyDecision(
                 "query_decomposition",

@@ -20,7 +20,7 @@ class CreatorEmailWorker:
     def __init__(self, interval: int | None = None):
         self.interval = interval or settings.creator_email_retry_interval_seconds
         self.state = "stopped"
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task | None = None  # type: ignore[type-arg]
 
     async def _cycle(self) -> None:
         async with get_session_factory()() as db:

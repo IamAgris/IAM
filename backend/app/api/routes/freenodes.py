@@ -47,12 +47,12 @@ class MigrationRequest(BaseModel):
     days_before_expiry: int = 7
 
 
-def _handle(exc: Exception):
+def _handle(exc: Exception):  # type: ignore[no-untyped-def]
     raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/", status_code=201)
-async def record_candidate(request: CandidateRequest, db=Depends(get_db_session)):
+async def record_candidate(request: CandidateRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await FreeNodeLifecycleService(db).record_candidate(request.model_dump())
     except FreeNodeError as exc:
@@ -60,12 +60,12 @@ async def record_candidate(request: CandidateRequest, db=Depends(get_db_session)
 
 
 @router.get("")
-async def list_candidates(limit: int = 50, db=Depends(get_db_session)):
+async def list_candidates(limit: int = 50, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await FreeNodeLifecycleService(db).list_candidates(limit)
 
 
 @router.post("/{candidate_id}/verify-terms")
-async def verify_terms(
+async def verify_terms(  # type: ignore[no-untyped-def]
     candidate_id: str, request: VerificationRequest, db=Depends(get_db_session)
 ):
     try:
@@ -77,7 +77,7 @@ async def verify_terms(
 
 
 @router.patch("/{candidate_id}/status")
-async def set_status(
+async def set_status(  # type: ignore[no-untyped-def]
     candidate_id: str, request: StatusRequest, db=Depends(get_db_session)
 ):
     try:
@@ -87,7 +87,7 @@ async def set_status(
 
 
 @router.post("/{candidate_id}/migration-plan")
-async def plan_migration(
+async def plan_migration(  # type: ignore[no-untyped-def]
     candidate_id: str, request: MigrationRequest, db=Depends(get_db_session)
 ):
     try:

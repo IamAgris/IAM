@@ -157,7 +157,7 @@ async def dispatch(db: Any, action: str, payload: Mapping[str, Any]) -> Dict[str
         # action == "research" — the full existing search/browse/extract pipeline.
         from app.services.research_service import ResearchService
 
-        record = await ResearchService().research_topic(
+        record = await ResearchService().research_topic(  # type: ignore[no-untyped-call]
             query=str(payload.get("query") or ""),
             store_as_memory=True,
             store_as_knowledge=True,

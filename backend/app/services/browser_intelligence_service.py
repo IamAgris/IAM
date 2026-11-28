@@ -217,7 +217,7 @@ class BrowserIntelligenceService:
         self.evidence = BrowserEvidenceService(db)
         self.ocr = ocr_adapter or TesseractOcrAdapter()
 
-    async def _page(self, session_token: str):
+    async def _page(self, session_token: str):  # type: ignore[no-untyped-def]
         if not session_token:
             raise BrowserIntelligenceError("session_token is required")
         return await browser_service.get_persistent_page(session_token)

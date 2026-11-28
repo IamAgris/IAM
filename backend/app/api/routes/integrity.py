@@ -35,7 +35,7 @@ def _require_admin(request: Request) -> None:
 
 
 @router.post("/integrity/manifest")
-async def approve_manifest(
+async def approve_manifest(  # type: ignore[no-untyped-def]
     payload: ManifestRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -51,12 +51,12 @@ async def approve_manifest(
 
 
 @router.get("/integrity/status")
-async def integrity_status(db: AsyncSession = Depends(get_db_session)):
+async def integrity_status(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AttestationService(db).integrity_status()
 
 
 @router.post("/sync/objects")
-async def publish_sync_object(
+async def publish_sync_object(  # type: ignore[no-untyped-def]
     payload: SyncObjectRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -71,7 +71,7 @@ async def publish_sync_object(
 
 
 @router.get("/sync/objects")
-async def list_sync_objects(
+async def list_sync_objects(  # type: ignore[no-untyped-def]
     since: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -79,5 +79,5 @@ async def list_sync_objects(
 
 
 @router.get("/sync/status")
-async def sync_status(db: AsyncSession = Depends(get_db_session)):
+async def sync_status(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AttestationService(db).sync_status()

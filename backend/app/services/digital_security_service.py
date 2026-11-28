@@ -105,10 +105,10 @@ class DigitalSecurityService:
         valid_statuses = ("open", "investigating", "resolved", "closed", "false_positive")
         if status not in valid_statuses:
             raise DigitalSecurityIncidentError(f"Invalid status: {status}")
-        row.status = status
+        row.status = status  # type: ignore[assignment]
         if status == "resolved":
             from datetime import datetime, timezone
-            row.resolved_at = None  # set by caller if desired
+            row.resolved_at = None  # type: ignore[assignment]  # set by caller if desired
         await self.db.commit()
         return self._row_dict(row)
 

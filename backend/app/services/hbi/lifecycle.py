@@ -40,7 +40,7 @@ def drift_report(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             undated += 1
         else:
             buckets[year // 10 * 10].append(float(record.get("confidence", 0.0)))
-    periods = [
+    periods: List[Dict[str, Any]] = [
         {"period": f"{decade}s", "n": len(values),
          "mean_confidence": round(sum(values) / len(values), 3)}
         for decade, values in sorted(buckets.items())

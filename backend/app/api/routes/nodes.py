@@ -46,7 +46,7 @@ def _require_admin(request: Request) -> None:
 
 
 @router.post("/register")
-async def register_node(
+async def register_node(  # type: ignore[no-untyped-def]
     request: NodeRegistrationRequest,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -59,12 +59,12 @@ async def register_node(
 
 
 @router.get("")
-async def list_nodes(db: AsyncSession = Depends(get_db_session)):
+async def list_nodes(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await NodeService(db).list_nodes()
 
 
 @router.get("/{node_id}")
-async def node_status(node_id: str, db: AsyncSession = Depends(get_db_session)):
+async def node_status(node_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await NodeService(db).status(node_id)
     except ValueError as exc:
@@ -72,7 +72,7 @@ async def node_status(node_id: str, db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/{node_id}/resources")
-async def report_resources(
+async def report_resources(  # type: ignore[no-untyped-def]
     node_id: str,
     request: ResourceReportRequest,
     http_request: Request,
@@ -97,7 +97,7 @@ class RestrictedReportRequest(BaseModel):
 
 
 @router.post("/{node_id}/attestation")
-async def attest_node(
+async def attest_node(  # type: ignore[no-untyped-def]
     node_id: str,
     request: AttestationRequest,
     http_request: Request,
@@ -115,7 +115,7 @@ async def attest_node(
 
 
 @router.post("/{node_id}/restricted-report")
-async def restricted_report(
+async def restricted_report(  # type: ignore[no-untyped-def]
     node_id: str,
     request: RestrictedReportRequest,
     http_request: Request,
@@ -131,7 +131,7 @@ async def restricted_report(
 
 
 @router.post("/{node_id}/revoke")
-async def revoke_node(
+async def revoke_node(  # type: ignore[no-untyped-def]
     node_id: str,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -145,7 +145,7 @@ async def revoke_node(
 
 
 @router.get("/protocol/diagnostics")
-async def sdk_diagnostics():
+async def sdk_diagnostics():  # type: ignore[no-untyped-def]
     """Non-sensitive protocol diagnostics for SDK clients."""
     return {
         "protocol_version": settings.iam_protocol_version,

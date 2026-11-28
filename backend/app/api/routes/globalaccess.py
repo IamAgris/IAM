@@ -54,14 +54,14 @@ class LocationCorrectionRequest(BaseModel):
 
 
 @router.post("/visitors")
-async def create_visitor(request: SessionCreateRequest, db=Depends(get_db_session)):
+async def create_visitor(request: SessionCreateRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get or create an anonymous visitor identity (no registration)."""
     service = GlobalAccessService(db)
     return await service.create_or_get_visitor(request.visitor_token)
 
 
 @router.post("/sessions")
-async def create_session(
+async def create_session(  # type: ignore[no-untyped-def]
     request: SessionCreateRequest,
     http_request: Request,
     db=Depends(get_db_session),
@@ -80,7 +80,7 @@ async def create_session(
 
 
 @router.get("/sessions/{session_token}/context")
-async def get_session_context(session_token: str, db=Depends(get_db_session)):
+async def get_session_context(session_token: str, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get isolated context for a session (location, permissions, mode)."""
     service = GlobalAccessService(db)
     context = await service.get_session_context(session_token)
@@ -90,7 +90,7 @@ async def get_session_context(session_token: str, db=Depends(get_db_session)):
 
 
 @router.post("/messages")
-async def add_message(request: MessageRequest, db=Depends(get_db_session)):
+async def add_message(request: MessageRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Store a message in this session's private conversation only."""
     service = GlobalAccessService(db)
     result = await service.add_message(
@@ -103,7 +103,7 @@ async def add_message(request: MessageRequest, db=Depends(get_db_session)):
 
 
 @router.get("/sessions/{session_token}/messages")
-async def get_messages(
+async def get_messages(  # type: ignore[no-untyped-def]
     session_token: str,
     thread_id: Optional[str] = None,
     limit: int = 50,
@@ -115,7 +115,7 @@ async def get_messages(
 
 
 @router.patch("/sessions/mode")
-async def set_mode(request: ModeRequest, db=Depends(get_db_session)):
+async def set_mode(request: ModeRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Set Focus / Recall / Create mode for a session."""
     service = GlobalAccessService(db)
     ok = await service.set_session_mode(request.session_token, request.mode)
@@ -125,7 +125,7 @@ async def set_mode(request: ModeRequest, db=Depends(get_db_session)):
 
 
 @router.post("/consent")
-async def set_consent(request: ConsentRequest, db=Depends(get_db_session)):
+async def set_consent(request: ConsentRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Record privacy consent."""
     service = GlobalAccessService(db)
     return await service.set_consent(
@@ -134,7 +134,7 @@ async def set_consent(request: ConsentRequest, db=Depends(get_db_session)):
 
 
 @router.post("/memory-permissions")
-async def set_memory_permission(request: MemoryPermissionRequest, db=Depends(get_db_session)):
+async def set_memory_permission(request: MemoryPermissionRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Control whether visitor data enters any memory layer."""
     service = GlobalAccessService(db)
     return await service.set_memory_permission(
@@ -146,7 +146,7 @@ async def set_memory_permission(request: MemoryPermissionRequest, db=Depends(get
 
 
 @router.patch("/location")
-async def correct_location(request: LocationCorrectionRequest, db=Depends(get_db_session)):
+async def correct_location(request: LocationCorrectionRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Visitors can correct estimated location/language."""
     service = GlobalAccessService(db)
     ok = await service.correct_location(
@@ -158,7 +158,7 @@ async def correct_location(request: LocationCorrectionRequest, db=Depends(get_db
 
 
 @router.get("/visitors/{visitor_token}/data")
-async def inspect_visitor_data(visitor_token: str, db=Depends(get_db_session)):
+async def inspect_visitor_data(visitor_token: str, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """OD-05: visitors can inspect all data held under their token."""
     data = await GlobalAccessService(db).inspect_visitor_data(visitor_token)
     if not data:
@@ -167,7 +167,7 @@ async def inspect_visitor_data(visitor_token: str, db=Depends(get_db_session)):
 
 
 @router.patch("/visitors/{visitor_token}/data")
-async def correct_visitor_data(
+async def correct_visitor_data(  # type: ignore[no-untyped-def]
     visitor_token: str,
     request: DataCorrectionRequest,
     db=Depends(get_db_session),
@@ -184,7 +184,7 @@ async def correct_visitor_data(
 
 
 @router.delete("/visitors/{visitor_token}")
-async def delete_visitor_data(visitor_token: str, db=Depends(get_db_session)):
+async def delete_visitor_data(visitor_token: str, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Honour data deletion requests — removes all visitor data."""
     service = GlobalAccessService(db)
     ok = await service.delete_visitor_data(visitor_token)

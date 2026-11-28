@@ -100,7 +100,7 @@ class ReflectionService:
             raise ValueError("This principle is immutable - cannot be changed by IAM")
 
         if principle_statement:
-            principle.principle_statement = principle_statement
+            principle.principle_statement = principle_statement  # type: ignore[assignment]
         await self.db.commit()
 
         return {
@@ -110,7 +110,7 @@ class ReflectionService:
             "is_mutable": principle.is_mutable,
         }
 
-    async def initialize_default_principles(self):
+    async def initialize_default_principles(self):  # type: ignore[no-untyped-def]
         """Initialize default operating principles."""
         default_principles = [
             ("transparency", "Always disclose that I am an AI when interacting with people", "personal", True),

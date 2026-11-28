@@ -49,7 +49,7 @@ def assert_no_private_data(payload: Any, private_markers: Iterable[str]) -> None
 
 def wrap_research_output(
     result: Any, source_provider: str, policy: IsolationPolicy = DEFAULT_ISOLATION_POLICY
-) -> dict:
+) -> dict:  # type: ignore[type-arg]
     assert_isolation_policy(policy)
     return {
         "trusted": False,

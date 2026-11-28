@@ -41,17 +41,17 @@ class ScheduledActivityResponse(BaseModel):
 
 
 @router.get("/", response_model=List[ScheduledActivityResponse])
-async def list_scheduled_activities(db: AsyncSession = Depends(get_db_session)):
+async def list_scheduled_activities(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all scheduled activities."""
     result = await db.execute(select(ScheduledActivity).order_by(ScheduledActivity.created_at.desc()))
     activities = result.scalars().all()
     return [
         ScheduledActivityResponse(
             id=str(a.id),
-            name=a.name,
-            cron_expression=a.cron_expression,
+            name=a.name,  # type: ignore[arg-type]
+            cron_expression=a.cron_expression,  # type: ignore[arg-type]
             next_run_at=a.next_run_at.isoformat() if a.next_run_at else None,
-            is_active=a.is_active,
+            is_active=a.is_active,  # type: ignore[arg-type]
             last_run_at=a.last_run_at.isoformat() if a.last_run_at else None,
             created_at=a.created_at.isoformat() if a.created_at else None,
         )
@@ -60,7 +60,7 @@ async def list_scheduled_activities(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/", response_model=ScheduledActivityResponse)
-async def create_scheduled_activity(
+async def create_scheduled_activity(  # type: ignore[no-untyped-def]
     activity: ScheduledActivityCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -76,17 +76,17 @@ async def create_scheduled_activity(
 
     return ScheduledActivityResponse(
         id=str(a.id),
-        name=a.name,
-        cron_expression=a.cron_expression,
+        name=a.name,  # type: ignore[arg-type]
+        cron_expression=a.cron_expression,  # type: ignore[arg-type]
         next_run_at=a.next_run_at.isoformat() if a.next_run_at else None,
-        is_active=a.is_active,
+        is_active=a.is_active,  # type: ignore[arg-type]
         last_run_at=a.last_run_at.isoformat() if a.last_run_at else None,
         created_at=a.created_at.isoformat() if a.created_at else None,
     )
 
 
 @router.patch("/{activity_id}", response_model=ScheduledActivityResponse)
-async def update_scheduled_activity(
+async def update_scheduled_activity(  # type: ignore[no-untyped-def]
     activity_id: str,
     update: ScheduledActivityUpdate,
     db: AsyncSession = Depends(get_db_session),
@@ -110,10 +110,10 @@ async def update_scheduled_activity(
 
     return ScheduledActivityResponse(
         id=str(activity.id),
-        name=activity.name,
-        cron_expression=activity.cron_expression,
+        name=activity.name,  # type: ignore[arg-type]
+        cron_expression=activity.cron_expression,  # type: ignore[arg-type]
         next_run_at=activity.next_run_at.isoformat() if activity.next_run_at else None,
-        is_active=activity.is_active,
+        is_active=activity.is_active,  # type: ignore[arg-type]
         last_run_at=activity.last_run_at.isoformat() if activity.last_run_at else None,
         created_at=activity.created_at.isoformat() if activity.created_at else None,
     )

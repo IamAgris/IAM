@@ -7,22 +7,20 @@ document content is untrusted data, never instructions.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
-import ipaddress
 import re
-import socket
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
-import httpx
 from docx import Document
 from openpyxl import load_workbook
 from pypdf import PdfReader
 
+from app.core.config import settings
 from app.services.browser_evidence_service import BrowserEvidenceService
+from app.services.iics.egress import EgressGateway
 
 MAX_DOWNLOAD_BYTES = 5_000_000
 MAX_TEXT_CHARS = 30_000
@@ -36,38 +34,18 @@ class DocumentParsingError(ValueError):
     """Raised when a document cannot be fetched or parsed safely."""
 
 
+def _allowed_hosts() -> list[str]:
+    """Configured public-host boundary for document fetching (empty = public web)."""
+    return [
+        host.strip().lower().rstrip(".")
+        for host in settings.browser_document_allowed_hosts.split(",")
+        if host.strip()
+    ]
+
+
 async def is_public_url(url: str) -> bool:
-    """Fail closed: http(s) only, no credentials, no private/loopback targets."""
-    try:
-        parsed = urlparse(url)
-    except ValueError:
-        return False
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        return False
-    if parsed.username or parsed.password:
-        return False
-    host = parsed.hostname.lower()
-    if host in ("localhost", "localhost.localdomain") or host.endswith(".localhost"):
-        return False
-    try:
-        try:
-            literal = ipaddress.ip_address(host)
-            addresses = [literal]
-        except ValueError:
-            resolved = await asyncio.to_thread(socket.getaddrinfo, host, None)
-            addresses = [ipaddress.ip_address(item[4][0]) for item in resolved]
-    except (ValueError, OSError, IndexError):
-        return False
-    if not addresses:
-        return False
-    return all(
-        not addr.is_private
-        and not addr.is_loopback
-        and not addr.is_link_local
-        and not addr.is_reserved
-        and not addr.is_multicast
-        for addr in addresses
-    )
+    """Compatibility wrapper; the shared egress gateway is the authoritative gate."""
+    return EgressGateway(allowed_hosts=_allowed_hosts(), timeout=20.0).assess(url).allowed
 
 
 def parse_pdf(raw: bytes) -> Dict[str, Any]:
@@ -161,29 +139,28 @@ class BrowserDocumentService:
         self.evidence = BrowserEvidenceService(db)
 
     async def fetch(self, url: str) -> tuple[bytes, str, str]:
-        if not await is_public_url(url):
-            raise DocumentParsingError("document URL is not a permitted public target")
-        try:
-            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
-                async with client.stream("GET", url) as response:
-                    final_url = str(response.url)
-                    if not await is_public_url(final_url):
-                        raise DocumentParsingError("redirect target is not a permitted public URL")
-                    if response.status_code >= 400:
-                        raise DocumentParsingError(
-                            f"document fetch failed with HTTP {response.status_code}"
-                        )
-                    content_type = str(response.headers.get("content-type", ""))
-                    chunks: List[bytes] = []
-                    total = 0
-                    async for chunk in response.aiter_bytes():
-                        total += len(chunk)
-                        if total > MAX_DOWNLOAD_BYTES:
-                            raise DocumentParsingError("document exceeds the download limit")
-                        chunks.append(chunk)
-                    return b"".join(chunks), final_url, content_type
-        except httpx.HTTPError as exc:
-            raise DocumentParsingError(f"document fetch failed: {type(exc).__name__}") from exc
+        """Fetch through the pinned egress gateway.
+
+        Each hop is assessed and its validated IP is pinned for the connection,
+        so DNS rebinding and internal/metadata redirects cannot reach a private
+        service. The original hostname is retained for SNI and TLS verification.
+        """
+        gateway = EgressGateway(
+            allowed_hosts=_allowed_hosts(),
+            timeout=20.0,
+            max_bytes=MAX_DOWNLOAD_BYTES,
+            max_redirects=3,
+        )
+        result = await gateway.fetch_pinned(url)
+        if not result.ok:
+            raise DocumentParsingError(
+                f"document URL is not a permitted public target: {result.error}"
+            )
+        if result.status_code is None or result.status_code >= 400:
+            raise DocumentParsingError("document fetch failed with HTTP error")
+        if result.truncated:
+            raise DocumentParsingError("document exceeds the download limit")
+        return result.body, result.url, result.content_type
 
     def parse(self, raw: bytes, name: str, content_type: str = "") -> Dict[str, Any]:
         kind = detect_kind(name, content_type)

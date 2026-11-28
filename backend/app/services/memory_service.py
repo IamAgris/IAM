@@ -20,7 +20,7 @@ MEMORY_TIERS = frozenset(
 )
 
 
-async def _emit_recall(db, **details: Any) -> None:
+async def _emit_recall(db, **details: Any) -> None:  # type: ignore[no-untyped-def]
     """Emit a privacy-filtered recall signal to the durable activity stream."""
     db.add(
         AuditEvent(
@@ -191,7 +191,7 @@ class MemoryService:
                 {"embedding": embedding_str, "limit": limit},
             )
 
-        rows = result.fetchall()
+        rows = result.fetchall()  # type: ignore[assignment]
         await self._emit_recall_from_rows(rows)
 
         return [
@@ -208,7 +208,7 @@ class MemoryService:
             for row in rows
         ]
 
-    async def _emit_recall_from_rows(self, rows) -> None:
+    async def _emit_recall_from_rows(self, rows) -> None:  # type: ignore[no-untyped-def]
         """Emit only counts and source fingerprints — never memory content."""
         if not rows:
             return
@@ -246,7 +246,7 @@ class MemoryService:
         if not memory:
             return False
         memory.verification_status = status  # type: ignore[assignment]
-        memory.last_reviewed_at = datetime.now(timezone.utc)
+        memory.last_reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return True
 
@@ -267,7 +267,7 @@ class MemoryService:
             .execution_options(synchronize_session="fetch")
         )
         await self.db.commit()
-        return result.rowcount or 0
+        return int(getattr(result, "rowcount", 0) or 0)
 
     async def create_memory_relationship(
         self,

@@ -16,7 +16,7 @@ depends_on = None
 UUID = postgresql.UUID(as_uuid=True)
 
 
-def upgrade():
+def upgrade():  # type: ignore[no-untyped-def]
     op.create_table(
         "prediction_markets",
         sa.Column("id", UUID, primary_key=True),
@@ -146,7 +146,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade():  # type: ignore[no-untyped-def]
     op.drop_table("provider_registry_entries")
     op.drop_table("investment_research_records")
     op.drop_table("gaming_research_records")

@@ -31,7 +31,7 @@ class VisionService:
     Does not permanently store every video encountered.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         self.model = settings.vision_model  # Replaceable multimodal model (OD-38)
         self.max_video_frames = 16  # Sample frames for video analysis
         self.frame_interval_seconds = 5
@@ -294,7 +294,7 @@ class VisionService:
                 logger.warning(f"ffmpeg frame extraction failed: {result.stderr[-300:]!r}")
                 return []
 
-            frames = []
+            frames: list[Any] = []
             data = result.stdout
             while True:
                 start = data.find(b"\xff\xd8")
@@ -325,7 +325,7 @@ class VisionService:
     # Multimodal Memory Storage
     # -------------------------------------------------------------------------
 
-    async def store_vision_finding_in_memory(
+    async def store_vision_finding_in_memory(  # type: ignore[no-untyped-def]
         self,
         db_session,
         content: str,
@@ -359,4 +359,4 @@ class VisionService:
 
 
 # Singleton instance
-vision_service = VisionService()
+vision_service = VisionService()  # type: ignore[no-untyped-call]

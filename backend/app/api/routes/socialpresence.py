@@ -30,7 +30,7 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/presences")
-async def list_presences(
+async def list_presences(  # type: ignore[no-untyped-def]
     verified_only: bool = False,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -38,7 +38,7 @@ async def list_presences(
 
 
 @router.post("/presences")
-async def register_presence(
+async def register_presence(  # type: ignore[no-untyped-def]
     payload: PresenceCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -57,7 +57,7 @@ async def register_presence(
 
 
 @router.post("/presences/{presence_id}/verify")
-async def verify_presence(
+async def verify_presence(  # type: ignore[no-untyped-def]
     presence_id: str,
     payload: PresenceVerify,
     request: Request,

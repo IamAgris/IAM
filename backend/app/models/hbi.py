@@ -12,7 +12,7 @@ import uuid
 from app.core.database import Base
 
 
-class HBIKnowledgeRecord(Base):
+class HBIKnowledgeRecord(Base):  # type: ignore[misc]
     """A single epistemic object: observation, interpretation, hypothesis or prediction."""
 
     __tablename__ = "hbi_knowledge_records"
@@ -55,7 +55,7 @@ class HBIKnowledgeRecord(Base):
     )
 
 
-class HBIGraphNode(Base):
+class HBIGraphNode(Base):  # type: ignore[misc]
     """E1: typed node in the historical/behavioural knowledge graph."""
 
     __tablename__ = "hbi_graph_nodes"
@@ -80,7 +80,7 @@ class HBIGraphNode(Base):
     )
 
 
-class HBIGraphEdge(Base):
+class HBIGraphEdge(Base):  # type: ignore[misc]
     """Typed, evidence-graded relation between two graph nodes."""
 
     __tablename__ = "hbi_graph_edges"
@@ -100,7 +100,7 @@ class HBIGraphEdge(Base):
     )
 
 
-class HBIDPIASignoff(Base):
+class HBIDPIASignoff(Base):  # type: ignore[misc]
     """Durable record of an authorised reviewer's DPIA decision."""
 
     __tablename__ = "hbi_dpia_signoffs"
@@ -117,7 +117,7 @@ class HBIDPIASignoff(Base):
     )
 
 
-class HBIAuditEvent(Base):
+class HBIAuditEvent(Base):  # type: ignore[misc]
     """Append-only record of governance decisions and HBI operations."""
 
     __tablename__ = "hbi_audit_events"

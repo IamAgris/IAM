@@ -54,8 +54,10 @@ def detect_resources() -> ResourceSnapshot:
     total_mb, available_mb = 8192, 4096
     try:
         meminfo = Path("/proc/meminfo").read_text(encoding="utf-8")
-        total_kb = int(re.search(r"MemTotal:\s+(\d+) kB", meminfo).group(1))
-        free_kb = int(re.search(r"MemAvailable:\s+(\d+) kB", meminfo).group(1))
+        total_match = re.search(r"MemTotal:\s+(\d+) kB", meminfo)
+        free_match = re.search(r"MemAvailable:\s+(\d+) kB", meminfo)
+        total_kb = int(total_match.group(1)) if total_match else 0
+        free_kb = int(free_match.group(1)) if free_match else 0
         total_mb, available_mb = total_kb // 1024, free_kb // 1024
     except (OSError, AttributeError, ValueError):
         pass
@@ -99,7 +101,7 @@ class AdaptiveModelSelector:
         task_complexity: int,
         available_aliases: Set[str],
         task_type: str = "conversation",
-    ) -> dict:
+    ) -> dict:  # type: ignore[type-arg]
         """Return a routing decision dict.
 
         task_complexity: 1 simple text, 2 light coding, 3 regular coding,
@@ -158,6 +160,7 @@ class AdaptiveModelSelector:
                 headers={"Content-Type": "application/json"},
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
-                return resp.status == 200
+                _typed_result: bool = resp.status == 200
+                return _typed_result
         except Exception:
             return False

@@ -9,7 +9,7 @@ Governing decisions: OD-27, OD-30, OD-46 (shared primary Qwen2.5-Coder 3B),
 OD-49 (Doc 29), OD-51 (model-provider governance). Automatic retrieval is
 free-provider-only and fail-closed for paid search (OD-04/OD-25).
 
-Proposed specification: ``IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md``
+Proposed specification: ``docs/IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md``
 (Document 34, proposed — not part of the frozen baseline).
 """
 

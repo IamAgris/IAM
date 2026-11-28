@@ -137,12 +137,12 @@ class WebsiteAccountService:
             valid_mfa = ("none", "totp", "hardware_key", "sms", "email", "multi")
             if mfa_status not in valid_mfa:
                 raise WebsiteAccountError(f"Invalid MFA status: {mfa_status}")
-            row.mfa_status = mfa_status
+            row.mfa_status = mfa_status  # type: ignore[assignment]
         if recovery_method is not None:
-            row.recovery_method = recovery_method
+            row.recovery_method = recovery_method  # type: ignore[assignment]
         if passkey_registered is not None:
-            row.passkey_registered = passkey_registered
-        row.last_security_check_at = None  # will be set by caller if desired
+            row.passkey_registered = passkey_registered  # type: ignore[assignment]
+        row.last_security_check_at = None  # type: ignore[assignment]  # will be set by caller if desired
         await self.db.commit()
         return self._row_dict(row)
 
@@ -159,25 +159,25 @@ class WebsiteAccountService:
         valid_statuses = ("active", "suspended", "restricted", "closed", "deleted")
         if account_status not in valid_statuses:
             raise WebsiteAccountError(f"Invalid account status: {account_status}")
-        row.account_status = account_status
+        row.account_status = account_status  # type: ignore[assignment]
         if account_status == "suspended":
-            row.suspension_reason = suspension_reason or "suspended"
-            row.suspension_date = None  # set by caller if desired
+            row.suspension_reason = suspension_reason or "suspended"  # type: ignore[assignment]
+            row.suspension_date = None  # type: ignore[assignment]  # set by caller if desired
         elif account_status == "closed":
-            row.closure_reason = suspension_reason or "closed"
-            row.closure_date = None
+            row.closure_reason = suspension_reason or "closed"  # type: ignore[assignment]
+            row.closure_date = None  # type: ignore[assignment]
         elif account_status == "active":
-            row.suspension_reason = None
-            row.suspension_date = None
-            row.closure_reason = None
-            row.closure_date = None
+            row.suspension_reason = None  # type: ignore[assignment]
+            row.suspension_date = None  # type: ignore[assignment]
+            row.closure_reason = None  # type: ignore[assignment]
+            row.closure_date = None  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 
     async def record_login(self, account_id: str, actor: str) -> Dict[str, Any]:
         """Record a successful login for an account."""
         row = await self._account(account_id)
-        row.last_login_at = None  # set by caller if desired
+        row.last_login_at = None  # type: ignore[assignment]  # set by caller if desired
         await self.db.commit()
         return self._row_dict(row)
 

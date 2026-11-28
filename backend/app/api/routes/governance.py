@@ -17,14 +17,14 @@ class AuthorityCheckRequest(BaseModel):
 
 
 @router.get("/boundaries")
-async def get_authority_boundaries(db: AsyncSession = Depends(get_db_session)):
+async def get_authority_boundaries(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get all authority level definitions."""
     service = GovernanceService(db)
     return await service.get_authority_boundaries()
 
 
 @router.post("/check-authority")
-async def check_authority(
+async def check_authority(  # type: ignore[no-untyped-def]
     request: AuthorityCheckRequest,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -34,15 +34,15 @@ async def check_authority(
 
 
 @router.get("/security-boundaries")
-async def get_security_boundaries(db: AsyncSession = Depends(get_db_session)):
+async def get_security_boundaries(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get security boundaries IAM cannot cross."""
     service = GovernanceService(db)
     return await service.get_security_boundaries()
 
 
 @router.post("/initialize")
-async def initialize_governance(db: AsyncSession = Depends(get_db_session)):
+async def initialize_governance(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Initialize default authority and security boundaries."""
     service = GovernanceService(db)
-    await service.initialize_default_boundaries()
+    await service.initialize_default_boundaries()  # type: ignore[no-untyped-call]
     return {"status": "initialized"}

@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class CapabilityDefinition(Base):
+class CapabilityDefinition(Base):  # type: ignore[misc]
     """Catalogue of what IAM can do, cannot do, wants to learn."""
     __tablename__ = "capability_definitions"
 
@@ -30,7 +30,7 @@ class CapabilityDefinition(Base):
     assessments = relationship("CapabilityAssessment", back_populates="capability", cascade="all, delete-orphan")
 
 
-class CapabilityAssessment(Base):
+class CapabilityAssessment(Base):  # type: ignore[misc]
     """Measurable assessment of a capability."""
     __tablename__ = "capability_assessments"
 
@@ -50,7 +50,7 @@ class CapabilityAssessment(Base):
     capability = relationship("CapabilityDefinition", back_populates="assessments")
 
 
-class LearningPath(Base):
+class LearningPath(Base):  # type: ignore[misc]
     """Planned learning journey for a capability."""
     __tablename__ = "learning_paths"
 

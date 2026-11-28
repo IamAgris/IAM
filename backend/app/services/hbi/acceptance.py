@@ -42,7 +42,7 @@ async def run_acceptance(service: Any) -> Dict[str, Any]:
 
     governance_scope = False
     try:
-        await service.analyse(AnalysisRequest(question="test", purpose="research", scope="individual"))
+        await service.analyse(AnalysisRequest(question="test", purpose="research", scope="individual"))  # type: ignore[arg-type]
     except Exception as error:
         governance_scope = getattr(error, "code", None) == "SCOPE_VIOLATION"
     check("governance_scope_gate", governance_scope, {"scope": "individual"})

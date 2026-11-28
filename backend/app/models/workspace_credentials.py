@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class WorkspaceCredential(Base):
+class WorkspaceCredential(Base):  # type: ignore[misc]
     """A short-lived, scoped credential reference.
 
     ``secret_env_var`` names an environment variable; the secret value is never

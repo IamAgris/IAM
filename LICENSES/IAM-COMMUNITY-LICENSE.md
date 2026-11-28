@@ -87,7 +87,7 @@ Submitting a pull request or Contribution to IAM does **not** automatically tran
 
 ### 5.2 Contributor Licence Agreement (CLA)
 
-Before a Contribution can be merged into the Software, the Contributor must sign the IAM Contributor Licence Agreement (see `CLA.md`). The CLA grants the Licensor the non-exclusive right to use, modify, distribute, and commercially license the Contributed code as part of the Software, while allowing the Contributor to retain their own copyright where agreed.
+Before a Contribution can be merged into the Software, the Contributor must sign the IAM Contributor Licence Agreement (see `docs/CLA.md`). The CLA grants the Licensor the non-exclusive right to use, modify, distribute, and commercially license the Contributed code as part of the Software, while allowing the Contributor to retain their own copyright where agreed.
 
 ### 5.3 Contribution Terms
 
@@ -107,7 +107,7 @@ The Licensor retains all right, title, and interest in and to the original IAM c
 
 ### 6.2 Trademarks
 
-"IAM," the IAM name, logo, and branding are trademarks of the Licensor and are **all rights reserved**. This Licence does not grant any right to use IAM trademarks or branding. See `TRADEMARKS.md`.
+"IAM," the IAM name, logo, and branding are trademarks of the Licensor and are **all rights reserved**. This Licence does not grant any right to use IAM trademarks or branding. See `docs/TRADEMARKS.md`.
 
 ### 6.3 Documentation
 
@@ -173,9 +173,9 @@ This Licence, the CLA, contributor rights, and international enforceability shou
 | `LICENSES/IAM-COMMUNITY-LICENSE.md` | This full licence text |
 | `LICENSES/THIRD-PARTY-LICENSES.md` | Register of third-party dependency licences |
 | `LICENSES/COMMERCIAL-LICENSING.md` | Separate commercial licence terms |
-| `CONTRIBUTING.md` | How to contribute to IAM |
-| `CLA.md` | Contributor Licence Agreement |
+| `docs/CONTRIBUTING.md` | How to contribute to IAM |
+| `docs/CLA.md` | Contributor Licence Agreement |
 | `COPYRIGHT` | Copyright ownership statement |
 | `NOTICE` | Attribution and copyright notices |
-| `TRADEMARKS.md` | IAM trademark and branding policy |
+| `docs/TRADEMARKS.md` | IAM trademark and branding policy |
 | `README.md` | Project overview, including source-available notice |

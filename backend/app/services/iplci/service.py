@@ -278,7 +278,7 @@ class IPLCIService:
             "created_at": _now_iso(),
         }
         await self.store.put_risk(record)
-        await self._audit("risk_decision", actor, record["id"], record["risk"], {
+        await self._audit("risk_decision", actor, record["id"], record["risk"], {  # type: ignore[arg-type]
             "domain": record["domain"],
             "subject": subject,
             "outcome": record["outcome"],

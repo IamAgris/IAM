@@ -32,7 +32,7 @@ _CAVEAT = (
 )
 
 
-def _hits(text: str, terms) -> List[str]:
+def _hits(text: str, terms) -> List[str]:  # type: ignore[no-untyped-def]
     lowered = text.lower()
     return sorted({term for term in terms if term in lowered})
 

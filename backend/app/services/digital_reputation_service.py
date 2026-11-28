@@ -106,7 +106,7 @@ class DigitalReputationService:
         row = await self._reputation(reputation_id)
         warnings = list(row.platform_warnings or [])
         warnings.append(warning)
-        row.platform_warnings = warnings
+        row.platform_warnings = warnings  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 
@@ -120,7 +120,7 @@ class DigitalReputationService:
         row = await self._reputation(reputation_id)
         suspensions = list(row.suspensions or [])
         suspensions.append(suspension)
-        row.suspensions = suspensions
+        row.suspensions = suspensions  # type: ignore[assignment]
         row.account_status = "suspended"  # mirror to account lifecycle if present
         await self.db.commit()
         return self._row_dict(row)
@@ -135,7 +135,7 @@ class DigitalReputationService:
         row = await self._reputation(reputation_id)
         changes = list(row.tos_changes or [])
         changes.append(change)
-        row.tos_changes = changes
+        row.tos_changes = changes  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 
@@ -149,7 +149,7 @@ class DigitalReputationService:
         row = await self._reputation(reputation_id)
         changes = list(row.privacy_changes or [])
         changes.append(change)
-        row.privacy_changes = changes
+        row.privacy_changes = changes  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

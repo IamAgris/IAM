@@ -36,7 +36,7 @@ def generate_ulid() -> str:
 
 
 class BootstrapService:
-    def __init__(self, db_session: AsyncSession) -> Any:
+    def __init__(self, db_session: AsyncSession) -> None:
         self.db = db_session
 
     async def initialize_all(self) -> Dict[str, Any]:

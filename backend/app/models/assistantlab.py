@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class AssistantSystem(Base):
+class AssistantSystem(Base):  # type: ignore[misc]
     __tablename__ = "assistant_systems"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -36,7 +36,7 @@ class AssistantSystem(Base):
     )
 
 
-class AssistantResearchNote(Base):
+class AssistantResearchNote(Base):  # type: ignore[misc]
     __tablename__ = "assistant_research_notes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -62,7 +62,7 @@ class AssistantResearchNote(Base):
     )
 
 
-class AssistantAdapter(Base):
+class AssistantAdapter(Base):  # type: ignore[misc]
     __tablename__ = "assistant_adapters"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -89,7 +89,7 @@ class AssistantAdapter(Base):
     )
 
 
-class ReplicationExperiment(Base):
+class ReplicationExperiment(Base):  # type: ignore[misc]
     __tablename__ = "replication_experiments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -111,7 +111,7 @@ class ReplicationExperiment(Base):
     )
 
 
-class CapabilityComparison(Base):
+class CapabilityComparison(Base):  # type: ignore[misc]
     __tablename__ = "capability_comparisons"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

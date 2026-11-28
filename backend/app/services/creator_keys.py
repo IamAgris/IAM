@@ -70,6 +70,10 @@ def verify_signature(public_key_pem_or_b64: str, payload_hash: str, decision: st
             key = serialization.load_pem_public_key(public_key_pem_or_b64.encode())
         else:
             key = Ed25519PublicKey.from_public_bytes(base64.b64decode(public_key_pem_or_b64, validate=True))
+        # Only Ed25519 keys are used for Creator signatures; fail closed on any
+        # other loaded key type instead of calling an incompatible verify().
+        if not isinstance(key, Ed25519PublicKey):
+            return False
         msg = f"{payload_hash}|{decision}".encode()
         key.verify(base64.b64decode(signature_b64, validate=True), msg)
         return True

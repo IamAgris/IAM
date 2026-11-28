@@ -70,7 +70,7 @@ def _guard_sensitive(payload: Dict[str, Any]) -> None:
         )
 
 
-def _domains(evidence: Dict[str, Any]) -> set:
+def _domains(evidence: Dict[str, Any]) -> set:  # type: ignore[type-arg]
     urls = re.findall(r"https?://[^\s\"']+", json.dumps(evidence, ensure_ascii=False))
     return {urlparse(url).netloc.lower() for url in urls if urlparse(url).netloc}
 
@@ -162,8 +162,8 @@ class HumanPresenceService:
             raise PresenceError(
                 "at least two independent public source domains are required before a profile can be verified"
             )
-        profile.status = "verified"
-        profile.confidence = max(profile.confidence, 0.8)
+        profile.status = "verified"  # type: ignore[assignment]
+        profile.confidence = max(profile.confidence, 0.8)  # type: ignore[arg-type]
         self.db.add(
             AuditEvent(
                 event_type="public_profile_verified",
@@ -295,7 +295,7 @@ class HumanPresenceService:
             last_seen_at=datetime.now(timezone.utc),
             supersedes_id=original.id,
         )
-        original.status = "corrected"
+        original.status = "corrected"  # type: ignore[assignment]
         self.db.add(correction)
         await self.db.commit()
         await self.db.refresh(correction)

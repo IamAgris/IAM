@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class IntegrityManifest(Base):
+class IntegrityManifest(Base):  # type: ignore[misc]
     """Known-good measurement of the protected core, explicitly approved."""
 
     __tablename__ = "integrity_manifests"
@@ -27,7 +27,7 @@ class IntegrityManifest(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class NodeAttestation(Base):
+class NodeAttestation(Base):  # type: ignore[misc]
     """Signed evidence submitted by a node about its own software state."""
 
     __tablename__ = "node_attestations"
@@ -56,7 +56,7 @@ class NodeAttestation(Base):
     )
 
 
-class SyncObject(Base):
+class SyncObject(Base):  # type: ignore[misc]
     """Signed, untrusted-by-default knowledge object from a trusted node."""
 
     __tablename__ = "sync_objects"

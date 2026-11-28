@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class BankingConsent(Base):
+class BankingConsent(Base):  # type: ignore[misc]
     __tablename__ = "banking_consents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

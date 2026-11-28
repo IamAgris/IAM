@@ -50,7 +50,7 @@ def _fail(exc: WebsiteAccountError) -> HTTPException:
 
 
 @router.post("")
-async def create_account(
+async def create_account(  # type: ignore[no-untyped-def]
     payload: AccountCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -76,7 +76,7 @@ async def create_account(
 
 
 @router.get("")
-async def list_accounts(
+async def list_accounts(  # type: ignore[no-untyped-def]
     website_knowledge_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -85,7 +85,7 @@ async def list_accounts(
 
 
 @router.get("/{account_id}")
-async def get_account(account_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_account(account_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single website account lifecycle record."""
     try:
         return await WebsiteAccountService(db).get(account_id)
@@ -94,7 +94,7 @@ async def get_account(account_id: str, db: AsyncSession = Depends(get_db_session
 
 
 @router.patch("/{account_id}/security")
-async def update_security(
+async def update_security(  # type: ignore[no-untyped-def]
     account_id: str,
     payload: AccountSecurityUpdate,
     request: Request,
@@ -116,7 +116,7 @@ async def update_security(
 
 
 @router.patch("/{account_id}/status")
-async def update_status(
+async def update_status(  # type: ignore[no-untyped-def]
     account_id: str,
     payload: AccountStatusUpdate,
     request: Request,
@@ -137,7 +137,7 @@ async def update_status(
 
 
 @router.post("/{account_id}/login")
-async def record_login(
+async def record_login(  # type: ignore[no-untyped-def]
     account_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

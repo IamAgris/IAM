@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class AssistanceRequest(Base):
+class AssistanceRequest(Base):  # type: ignore[misc]
     """A paused task waiting for a specific level of human participation."""
 
     __tablename__ = "assistance_requests"
@@ -24,7 +24,7 @@ class AssistanceRequest(Base):
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
-class WebsiteCredential(Base):
+class WebsiteCredential(Base):  # type: ignore[misc]
     """Encrypted website credential reference; raw secrets are never logged."""
 
     __tablename__ = "website_credentials"

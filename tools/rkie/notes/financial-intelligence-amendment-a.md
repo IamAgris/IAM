@@ -5,7 +5,7 @@
 
 ## What landed
 
-Doc 25 `IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` was expanded
+Doc 25 `docs/IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md` was expanded
 (v1.2, §§11–24): prediction markets, gaming/casino intelligence, investments, provider
 ecosystem, South African boundaries, autonomy matrix and implementation status.
 Sections 1–10 and OD-04/OD-25 financial authority were unchanged. Amendment A was

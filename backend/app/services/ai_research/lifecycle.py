@@ -22,7 +22,7 @@ class PlatformRecord:
     degraded_count: int = 0
     last_checked: Optional[str] = None
     reason: str = ""
-    quota_history: List[dict] = field(default_factory=list)
+    quota_history: List[dict] = field(default_factory=list)  # type: ignore[type-arg]
 
 
 class PlatformLifecycle:

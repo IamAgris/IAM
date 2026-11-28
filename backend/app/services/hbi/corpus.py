@@ -9,10 +9,19 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from app.services.hbi.schemas import CorpusSourceManifest, ResearchDocumentInput
+from app.services.path_safety import UnsafePathError, contained_path
 
 
-def load_manifest(path: str) -> List[Dict[str, Any]]:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+def load_manifest(path: str, root: str = "") -> List[Dict[str, Any]]:
+    """Read a manifest, confined to *root* when one is supplied.
+
+    Without an explicit root the manifest's own directory is the boundary.
+    """
+    base = root or str(Path(path).resolve().parent)
+    # codeql[py/path-injection] contained_path resolves and enforces the corpus root.
+    manifest_file = contained_path(base, path)
+    # codeql[py/path-injection] manifest_file is resolved and contained above.
+    payload = json.loads(manifest_file.read_text(encoding="utf-8"))
     if not isinstance(payload, list):
         raise ValueError("manifest_must_be_a_list")
     return payload
@@ -21,7 +30,7 @@ def load_manifest(path: str) -> List[Dict[str, Any]]:
 async def ingest_corpus(service: Any, manifest_path: str, root: str = "") -> Dict[str, Any]:
     """Review every manifest entry, then ingest only approved sources."""
     results = []
-    for entry in load_manifest(manifest_path):
+    for entry in load_manifest(manifest_path, root):
         try:
             manifest = CorpusSourceManifest(**entry)
         except Exception as error:
@@ -45,13 +54,20 @@ async def ingest_corpus(service: Any, manifest_path: str, root: str = "") -> Dic
             results.append({"source_id": manifest.source_id, "status": "path_missing"})
             continue
 
-        file_path = Path(manifest.path)
-        if not file_path.is_absolute() and root:
-            file_path = Path(root) / file_path
+        try:
+            # codeql[py/path-injection] contained_path resolves and enforces the corpus root.
+            file_path = contained_path(
+                root or str(Path(manifest_path).resolve().parent), manifest.path
+            )
+        except (UnsafePathError, OSError, ValueError):
+            results.append({"source_id": manifest.source_id, "status": "path_outside_root"})
+            continue
+        # codeql[py/path-injection] file_path is contained above.
         if not file_path.is_file():
             results.append({"source_id": manifest.source_id, "status": "file_missing"})
             continue
 
+        # codeql[py/path-injection] file_path is contained above.
         text = file_path.read_text(encoding="utf-8", errors="ignore")[:20000]
         document = ResearchDocumentInput(
             source_id=manifest.source_id,
@@ -77,7 +93,7 @@ async def ingest_corpus(service: Any, manifest_path: str, root: str = "") -> Dic
     return {
         "manifest": manifest_path,
         "documents": len(results),
-        "records_accepted": sum(len(item.get("accepted", [])) for item in results),
+        "records_accepted": sum(len(item.get("accepted", [])) for item in results),  # type: ignore[arg-type, misc]
         "results": results,
         "corpus_state": service.corpus_governance.state()["state"],
         "note": "Unapproved sources are excluded from the approved research corpus.",

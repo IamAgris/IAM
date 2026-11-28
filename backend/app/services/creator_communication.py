@@ -53,7 +53,7 @@ class CreatorCommunicationService:
         )
 
     async def _deliver(self, outbox: CreatorEmailOutbox, subject: str, body: str) -> Dict[str, Any]:
-        outbox.attempts += 1
+        outbox.attempts += 1  # type: ignore[assignment]
         try:
             transport = transport_from_settings()
             result = await transport.send({
@@ -62,13 +62,13 @@ class CreatorCommunicationService:
                 "subject": subject,
                 "body": body,
             })
-            outbox.status = "sent"
-            outbox.last_error = None
+            outbox.status = "sent"  # type: ignore[assignment]
+            outbox.last_error = None  # type: ignore[assignment]
             result["delivered_externally"] = result.get("delivered_externally", False)
             return result
         except EmailTransportError as exc:
-            outbox.status = "failed"
-            outbox.last_error = str(exc)[:500]
+            outbox.status = "failed"  # type: ignore[assignment]
+            outbox.last_error = str(exc)[:500]  # type: ignore[assignment]
             return {"status": "failed", "error": str(exc), "delivered_externally": False}
 
     async def send_message(
@@ -122,7 +122,7 @@ class CreatorCommunicationService:
         await self.db.commit()
 
         delivery = await self._deliver(outbox, subject, body)
-        message.status = "sent" if delivery.get("status") == "sent" else "failed"
+        message.status = "sent" if delivery.get("status") == "sent" else "failed"  # type: ignore[assignment]
         await self.db.commit()
         return {
             "message_id": message_id,
@@ -135,10 +135,10 @@ class CreatorCommunicationService:
             "delivery": delivery,
         }
 
-    async def ask(self, question: str, context: Optional[str] = None, reason: Optional[str] = None):
+    async def ask(self, question: str, context: Optional[str] = None, reason: Optional[str] = None):  # type: ignore[no-untyped-def]
         return await self.send_message("question", question, context=context, reason=reason)
 
-    async def send_status(self, update: str, context: Optional[str] = None):
+    async def send_status(self, update: str, context: Optional[str] = None):  # type: ignore[no-untyped-def]
         return await self.send_message("status_update", update, context=context)
 
     async def record_reply(self, message_id: str, body: str) -> Dict[str, Any]:

@@ -7,6 +7,8 @@ Run as a separate process:
 The FastAPI in-process loop is used when CREATOR_EMAIL_WORKER_BACKEND=loop.
 """
 
+from typing import Any
+
 from arq.connections import RedisSettings
 
 from app.core.config import settings
@@ -14,7 +16,7 @@ from app.core.database import get_session_factory
 from app.services.creatorapproval_service import CreatorApprovalService
 
 
-async def retry_creator_email(ctx) -> dict:
+async def retry_creator_email(ctx: Any) -> dict:  # type: ignore[type-arg]
     """Retry all non-dead-lettered Creator email deliveries."""
     async with get_session_factory()() as db:
         results = await CreatorApprovalService(db).retry_failed_deliveries()

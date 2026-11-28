@@ -107,7 +107,7 @@ class BeliefRecord:
 
 def _belief_metadata(item: KnowledgeItem) -> Dict[str, Any]:
     """Extract the belief-specific fields from a KnowledgeItem's metadata."""
-    metadata = item.metadata_ or {}
+    metadata: Any = item.metadata_ or {}
     if not isinstance(metadata, dict):
         return {}
     return {
@@ -130,7 +130,7 @@ def _set_belief_metadata(
     provenance: Optional[str] = None,
     review_history: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
-    metadata = item.metadata_ or {}
+    metadata: Any = item.metadata_ or {}
     if not isinstance(metadata, dict):
         metadata = {}
     if evidence is not None:
@@ -152,12 +152,12 @@ def _item_to_belief(item: KnowledgeItem) -> BeliefRecord:
     meta = _belief_metadata(item)
     return BeliefRecord(
         id=str(item.id),
-        title=item.title,
-        content=item.content,
-        source=item.source or "",
+        title=item.title,  # type: ignore[arg-type]
+        content=item.content,  # type: ignore[arg-type]
+        source=item.source or "",  # type: ignore[arg-type]
         confidence_level=float(item.confidence_level) if item.confidence_level else 0.5,
-        verification_status=item.verification_status or "unverified",
-        topic=item.topic,
+        verification_status=item.verification_status or "unverified",  # type: ignore[arg-type]
+        topic=item.topic,  # type: ignore[arg-type]
         evidence=meta.get("evidence", []),
         dependencies=list(meta.get("dependencies", [])),
         contradicts=list(meta.get("contradicts", [])),
@@ -283,7 +283,7 @@ async def assemble_context(
     if local and include_memory and settings.iam_context_include_private_memory:
         try:
             found = await MemoryService(db).search_memory(query=query, limit=MAX_MEMORY_ITEMS)
-            for item in found[:MAX_MEMORY_ITEMS]:
+            for item in found[:MAX_MEMORY_ITEMS]:  # type: ignore[assignment]
                 bundle.memories.append(
                     {
                         "content": item.get("content", ""),
@@ -344,10 +344,10 @@ async def record_belief(
 
     if existing is not None:
         belief = existing
-        belief.content = content.strip()
-        belief.confidence_level = confidence_level
-        belief.topic = topic
-        belief.last_reviewed_at = datetime.now(timezone.utc)
+        belief.content = content.strip()  # type: ignore[assignment]
+        belief.confidence_level = confidence_level  # type: ignore[assignment]
+        belief.topic = topic  # type: ignore[assignment]
+        belief.last_reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         _set_belief_metadata(
             belief,
             evidence=evidence,
@@ -357,12 +357,12 @@ async def record_belief(
             provenance=provenance,
             review_history=_append_review(
                 _belief_metadata(belief).get("review_history", []),
-                belief.verification_status,
+                belief.verification_status,  # type: ignore[arg-type]
                 confidence_level,
             ),
         )
         if metadata_:
-            belief.metadata_ = {**belief.metadata_, **metadata_}
+            belief.metadata_ = {**belief.metadata_, **metadata_}  # type: ignore[assignment]
     else:
         belief = KnowledgeItem(
             title=title.strip(),
@@ -427,12 +427,12 @@ async def revise_belief(
         return False
 
     if content is not None:
-        belief.content = content.strip()
+        belief.content = content.strip()  # type: ignore[assignment]
     if confidence_level is not None:
-        belief.confidence_level = max(0.0, min(1.0, float(confidence_level)))
+        belief.confidence_level = max(0.0, min(1.0, float(confidence_level)))  # type: ignore[arg-type]
     if verification_status is not None:
-        belief.verification_status = verification_status
-    belief.last_reviewed_at = datetime.now(timezone.utc)
+        belief.verification_status = verification_status  # type: ignore[assignment]
+    belief.last_reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
 
     meta = _belief_metadata(belief)
     new_meta = dict(meta)
@@ -443,8 +443,8 @@ async def revise_belief(
     new_meta["provenance"] = provenance if provenance is not None else meta.get("provenance", "system_derived")
     new_meta["review_history"] = _append_review(
         meta.get("review_history", []),
-        belief.verification_status,
-        belief.confidence_level if belief.confidence_level else 0.5,
+        belief.verification_status,  # type: ignore[arg-type]
+        belief.confidence_level if belief.confidence_level else 0.5,  # type: ignore[arg-type]
     )
     await db.execute(
         update(KnowledgeItem)
@@ -508,8 +508,8 @@ async def link_beliefs(
     source_new_meta["contradicts"] = source_contras
     source_new_meta["review_history"] = _append_review(
         source_meta.get("review_history", []),
-        source_belief.verification_status,
-        source_belief.confidence_level if source_belief.confidence_level else 0.5,
+        source_belief.verification_status,  # type: ignore[arg-type]
+        source_belief.confidence_level if source_belief.confidence_level else 0.5,  # type: ignore[arg-type]
     )
     await db.execute(
         update(KnowledgeItem)
@@ -528,8 +528,8 @@ async def link_beliefs(
     target_new_meta["contradicts"] = target_contras
     target_new_meta["review_history"] = _append_review(
         target_meta.get("review_history", []),
-        target_belief.verification_status,
-        target_belief.confidence_level if target_belief.confidence_level else 0.5,
+        target_belief.verification_status,  # type: ignore[arg-type]
+        target_belief.confidence_level if target_belief.confidence_level else 0.5,  # type: ignore[arg-type]
     )
     await db.execute(
         update(KnowledgeItem)
@@ -587,9 +587,9 @@ async def detect_contradictions(
                     )
 
     # Topic-level status conflicts: verified vs disputed/retracted on the same topic.
-    topics = {}
+    topics: dict[str, Any] = {}
     for b in beliefs:
-        t = b.topic or "__untopiced__"
+        t = str(b.topic or "__untopiced__")
         topics.setdefault(t, []).append(b)
 
     for t, items in topics.items():

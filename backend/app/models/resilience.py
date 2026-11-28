@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class HealthCheck(Base):
+class HealthCheck(Base):  # type: ignore[misc]
     """Service health monitoring records."""
     __tablename__ = "health_checks"
 
@@ -25,7 +25,7 @@ class HealthCheck(Base):
     )
 
 
-class RecoveryLog(Base):
+class RecoveryLog(Base):  # type: ignore[misc]
     """Automatic recovery actions taken."""
     __tablename__ = "recovery_logs"
 
@@ -37,7 +37,7 @@ class RecoveryLog(Base):
     performed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class BackupVerification(Base):
+class BackupVerification(Base):  # type: ignore[misc]
     """Backup restoration verification records."""
     __tablename__ = "backup_verifications"
 
@@ -49,7 +49,7 @@ class BackupVerification(Base):
     verified_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class IncidentRecord(Base):
+class IncidentRecord(Base):  # type: ignore[misc]
     """Security and failure incident records."""
     __tablename__ = "incident_records"
 
@@ -67,7 +67,7 @@ class IncidentRecord(Base):
     )
 
 
-class CredentialRotation(Base):
+class CredentialRotation(Base):  # type: ignore[misc]
     """Credential rotation history."""
     __tablename__ = "credential_rotations"
 

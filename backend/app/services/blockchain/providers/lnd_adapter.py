@@ -59,7 +59,7 @@ class LndAdapter:
             read_secret(settings.lnd_macaroon_env)
         )
 
-    def _tls(self):
+    def _tls(self):  # type: ignore[no-untyped-def]
         """Never disable verification: use a cert path or PEM from the secret."""
         material = read_secret(settings.lnd_tls_cert_env) or ""
         if not material:
@@ -93,7 +93,7 @@ class LndAdapter:
         macaroon = read_secret(settings.lnd_macaroon_env) or ""
         headers = {"Grpc-Metadata-macaroon": macaroon}
         async with httpx.AsyncClient(
-            timeout=settings.web3_request_timeout_seconds, verify=self._tls()
+            timeout=settings.web3_request_timeout_seconds, verify=self._tls()  # type: ignore[no-untyped-call]
         ) as client:
             response = await client.get(f"{settings.lnd_rest_url.rstrip('/')}{path}", headers=headers)
             response.raise_for_status()
@@ -140,7 +140,7 @@ class LndAdapter:
             raise ProviderDenied("a separate write-scoped LND macaroon is required")
         headers = {"Grpc-Metadata-macaroon": macaroon, "Content-Type": "application/json"}
         async with httpx.AsyncClient(
-            timeout=settings.web3_request_timeout_seconds, verify=self._tls()
+            timeout=settings.web3_request_timeout_seconds, verify=self._tls()  # type: ignore[no-untyped-call]
         ) as client:
             response = await client.post(
                 f"{settings.lnd_rest_url.rstrip('/')}{path}", json=body, headers=headers
@@ -149,7 +149,7 @@ class LndAdapter:
             return ProviderResponse(
                 provider=self.name,
                 operation=path,
-                data={"result": response.json(), "authorization": authorization.summary(), "read_only": False},
+                data={"result": response.json(), "authorization": authorization.summary() if authorization is not None else {}, "read_only": False},
                 network_calls_made=True,
                 read_only=False,
             )
@@ -159,7 +159,7 @@ class LndAdapter:
     ) -> ProviderResponse:
         Web3ApprovalService.require_authorization(authorization, "web3.invoice.create")
         try:
-            value = int(payload.get("amount_sats"))
+            value = int(payload.get("amount_sats"))  # type: ignore[arg-type]
         except (TypeError, ValueError) as exc:
             raise ProviderDenied("amount_sats must be an integer") from exc
         if value <= 0:

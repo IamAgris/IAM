@@ -124,7 +124,7 @@ def _new_turn_message(request: ChatRequest) -> Optional[ChatMessage]:
     return None
 
 
-async def _prepare_messages(
+async def _prepare_messages(  # type: ignore[no-untyped-def]
     request: ChatRequest,
     db: AsyncSession,
     status,
@@ -267,7 +267,7 @@ class ModelInfo(BaseModel):
 
 
 @router.get("/")
-async def list_models():
+async def list_models():  # type: ignore[no-untyped-def]
     """List available models from LiteLLM gateway."""
     try:
         async with httpx.AsyncClient() as client:
@@ -287,13 +287,13 @@ async def list_models():
 
 
 @router.get("/readiness")
-async def model_readiness():
+async def model_readiness():  # type: ignore[no-untyped-def]
     """Report whether real inference is available. Never exposes provider keys."""
     return (await inference_service.resolve()).as_dict()
 
 
 @router.get("/primary")
-async def primary_model():
+async def primary_model():  # type: ignore[no-untyped-def]
     """The single primary model IAM uses for frontend and backend intelligence.
 
     Hosted models are listed as optional delegates/specialists. Callers should
@@ -316,7 +316,7 @@ async def primary_model():
 
 
 @router.post("/chat")
-async def chat_completion(
+async def chat_completion(  # type: ignore[no-untyped-def]
     request: ChatRequest,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -383,14 +383,14 @@ async def chat_completion(
 
 
 @router.post("/chat/stream")
-async def chat_stream(
+async def chat_stream(  # type: ignore[no-untyped-def]
     request: ChatRequest,
     http_request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Streaming chat via Server-Sent Events (SSE).
 
-    Event schema (see IAM_API_CONTRACTS.md):
+    Event schema (see docs/IAM_API_CONTRACTS.md):
       event: start  -> {request_id, model}
       event: delta  -> {text}
       event: done   -> {finish_reason}
@@ -421,7 +421,7 @@ async def chat_stream(
     conv_service = ConversationService(db)
 
     async def generate() -> AsyncGenerator[str, None]:
-        def evt(event: str, data: dict) -> str:
+        def evt(event: str, data: dict) -> str:  # type: ignore[type-arg]
             return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
         if not status.available:
@@ -495,7 +495,7 @@ async def chat_stream(
 
 
 @router.get("/{model_name}")
-async def get_model(model_name: str):
+async def get_model(model_name: str):  # type: ignore[no-untyped-def]
     """Get details for a specific model."""
     try:
         async with httpx.AsyncClient() as client:

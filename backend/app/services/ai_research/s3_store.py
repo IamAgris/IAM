@@ -27,7 +27,7 @@ class S3ArtifactStore:
             self.client = client
         else:
             try:
-                import boto3  # type: ignore
+                import boto3
             except ImportError as exc:  # pragma: no cover - dependency present in backend
                 raise ResearchError("boto3 is required for S3 research storage") from exc
             from app.core.config import settings
@@ -77,12 +77,13 @@ class S3ArtifactStore:
             sha256=meta["sha256"],
             size_bytes=len(payload),
             created_at=datetime.now(timezone.utc).isoformat(),
-            metadata=metadata or {},
+            metadata=metadata or {},  # type: ignore[arg-type]
         )
 
     def get(self, key: str) -> bytes:
         response = self.client.get_object(Bucket=self.bucket, Key=self._key(key))
-        return response["Body"].read()
+        _typed_result: bytes = response["Body"].read()
+        return _typed_result
 
     def exists(self, key: str) -> bool:
         try:

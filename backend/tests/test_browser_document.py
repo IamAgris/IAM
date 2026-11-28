@@ -19,9 +19,7 @@ def public_dns(*_args, **_kwargs):
 
 class UrlGuardTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_url_accepted_with_dns(self):
-        with patch(
-            "app.services.browser_document_service.socket.getaddrinfo", new=public_dns
-        ):
+        with patch("app.services.iics.egress.socket.getaddrinfo", new=public_dns):
             self.assertTrue(await is_public_url("https://example.com/report.pdf"))
 
     async def test_private_and_non_http_targets_rejected(self):

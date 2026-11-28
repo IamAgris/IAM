@@ -34,21 +34,21 @@ class EngineAdapter:
 class ChromiumAdapter(EngineAdapter):
     name = "chromium"
 
-    def capabilities(self):
+    def capabilities(self):  # type: ignore[no-untyped-def]
         return {"screenshots": True, "pdf": True, "headless": True}
 
 
 class FirefoxAdapter(EngineAdapter):
     name = "firefox"
 
-    def capabilities(self):
+    def capabilities(self):  # type: ignore[no-untyped-def]
         return {"screenshots": True, "pdf": False, "headless": True}
 
 
 class WebKitAdapter(EngineAdapter):
     name = "webkit"
 
-    def capabilities(self):
+    def capabilities(self):  # type: ignore[no-untyped-def]
         return {"screenshots": True, "pdf": False, "headless": True}
 
 
@@ -72,7 +72,7 @@ def available_engines(playwright: Any) -> Dict[str, Dict[str, Any]]:
     for name, adapter in ADAPTERS.items():
         try:
             adapter.engine(playwright)
-            result[name] = adapter.capabilities()
+            result[name] = adapter.capabilities()  # type: ignore[no-untyped-call]
         except BrowserEngineUnavailable:
             continue
     return result

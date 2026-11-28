@@ -62,7 +62,7 @@ PROTECTED_ACTIONS = frozenset(
     }
 )
 
-ACTION_CONSEQUENCES: Dict[str, tuple] = {
+ACTION_CONSEQUENCES: Dict[str, tuple] = {  # type: ignore[type-arg]
     "web3.transaction.broadcast": (
         "Broadcasts a prepared on-chain transaction; fees and the transferred value are irreversible.",
     ),

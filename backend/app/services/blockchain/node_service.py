@@ -38,7 +38,7 @@ def _outbound(channels_payload: Any) -> int:
 
 
 class NodeService:
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         self.bitcoin = BitcoinCoreAdapter()
         self.lnd = LndAdapter()
         self.cln = ClnAdapter()
@@ -71,7 +71,7 @@ class NodeService:
             "execution_enabled": False,
         }
 
-    async def _lightning_node(self, adapter) -> Dict[str, Any]:
+    async def _lightning_node(self, adapter) -> Dict[str, Any]:  # type: ignore[no-untyped-def]
         info = await adapter.get_info()
         if not info.data.get("available"):
             return {"configured": False, "reason": "node adapter not configured"}

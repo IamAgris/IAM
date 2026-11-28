@@ -8,7 +8,7 @@ documented rollback path. This gate never relaxes governance.
 from typing import Any, Dict, List
 
 
-async def readiness(service: Any, config: Dict[str, Any] = None) -> Dict[str, Any]:
+async def readiness(service: Any, config: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     """Return a go/no-go verdict with concrete blockers."""
     blockers: List[str] = []
     config = config or {}

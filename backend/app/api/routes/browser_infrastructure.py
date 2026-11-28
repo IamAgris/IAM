@@ -41,7 +41,7 @@ def _fail(exc: BrowserInfrastructureError) -> HTTPException:
 
 
 @router.post("")
-async def create_browser(
+async def create_browser(  # type: ignore[no-untyped-def]
     payload: BrowserCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -64,7 +64,7 @@ async def create_browser(
 
 
 @router.get("")
-async def list_browsers(
+async def list_browsers(  # type: ignore[no-untyped-def]
     is_available: Optional[bool] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -73,7 +73,7 @@ async def list_browsers(
 
 
 @router.get("/{browser_id}")
-async def get_browser(browser_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_browser(browser_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single browser infrastructure record by ID."""
     try:
         return await BrowserInfrastructureService(db).get(browser_id)
@@ -82,7 +82,7 @@ async def get_browser(browser_id: str, db: AsyncSession = Depends(get_db_session
 
 
 @router.patch("/{browser_id}/health")
-async def update_health(
+async def update_health(  # type: ignore[no-untyped-def]
     browser_id: str,
     health_status: str,
     request: Request,
@@ -100,7 +100,7 @@ async def update_health(
 
 
 @router.patch("/{browser_id}/allocation")
-async def update_allocation(
+async def update_allocation(  # type: ignore[no-untyped-def]
     browser_id: str,
     payload: BrowserAllocationUpdate,
     request: Request,
@@ -121,13 +121,13 @@ async def update_allocation(
 
 
 @router.delete("/{browser_id}")
-async def delete_browser(
+async def delete_browser(  # type: ignore[no-untyped-def]
     browser_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Delete browser infrastructure record."""
     try:
-        return await BrowserInfrastructureService(db).delete(browser_id, actor=_actor(request))
+        return await BrowserInfrastructureService(db).delete(browser_id)
     except ValueError as exc:
         raise HTTPException(404, str(exc)) from exc

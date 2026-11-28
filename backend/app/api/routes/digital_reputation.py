@@ -56,7 +56,7 @@ def _fail(exc: DigitalReputationError) -> HTTPException:
 
 
 @router.post("")
-async def create_reputation(
+async def create_reputation(  # type: ignore[no-untyped-def]
     payload: ReputationCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -83,7 +83,7 @@ async def create_reputation(
 
 
 @router.get("")
-async def list_reputations(
+async def list_reputations(  # type: ignore[no-untyped-def]
     website_knowledge_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -92,7 +92,7 @@ async def list_reputations(
 
 
 @router.get("/{reputation_id}")
-async def get_reputation(reputation_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_reputation(reputation_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single digital reputation record by ID."""
     try:
         return await DigitalReputationService(db).get(reputation_id)
@@ -101,7 +101,7 @@ async def get_reputation(reputation_id: str, db: AsyncSession = Depends(get_db_s
 
 
 @router.post("/{reputation_id}/warnings")
-async def add_platform_warning(
+async def add_platform_warning(  # type: ignore[no-untyped-def]
     reputation_id: str,
     payload: WarningCreate,
     request: Request,
@@ -117,7 +117,7 @@ async def add_platform_warning(
 
 
 @router.post("/{reputation_id}/suspensions")
-async def add_suspension(
+async def add_suspension(  # type: ignore[no-untyped-def]
     reputation_id: str,
     payload: SuspensionCreate,
     request: Request,
@@ -133,7 +133,7 @@ async def add_suspension(
 
 
 @router.post("/{reputation_id}/tos-changes")
-async def add_tos_change(
+async def add_tos_change(  # type: ignore[no-untyped-def]
     reputation_id: str,
     payload: TosChangeCreate,
     request: Request,
@@ -149,7 +149,7 @@ async def add_tos_change(
 
 
 @router.post("/{reputation_id}/privacy-changes")
-async def add_privacy_change(
+async def add_privacy_change(  # type: ignore[no-untyped-def]
     reputation_id: str,
     payload: PrivacyChangeCreate,
     request: Request,

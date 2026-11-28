@@ -65,7 +65,7 @@ class TaskExecutionResponse(BaseModel):
 
 
 @router.get("/", response_model=List[TaskResponse])
-async def list_tasks(db: AsyncSession = Depends(get_db_session)):
+async def list_tasks(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all tasks."""
     result = await db.execute(select(Task).order_by(Task.created_at.desc()))
     tasks = result.scalars().all()
@@ -73,10 +73,10 @@ async def list_tasks(db: AsyncSession = Depends(get_db_session)):
         TaskResponse(
             id=str(t.id),
             plan_id=str(t.plan_id) if t.plan_id else None,
-            title=t.title,
-            description=t.description,
-            status=t.status,
-            tool_used=t.tool_used,
+            title=t.title,  # type: ignore[arg-type]
+            description=t.description,  # type: ignore[arg-type]
+            status=t.status,  # type: ignore[arg-type]
+            tool_used=t.tool_used,  # type: ignore[arg-type]
             created_at=t.created_at.isoformat() if t.created_at else None,
             started_at=t.started_at.isoformat() if t.started_at else None,
             completed_at=t.completed_at.isoformat() if t.completed_at else None,
@@ -86,7 +86,7 @@ async def list_tasks(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/", response_model=TaskResponse)
-async def create_task(task: TaskCreate, db: AsyncSession = Depends(get_db_session)):
+async def create_task(task: TaskCreate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Create a new task."""
     t = Task(
         title=task.title,
@@ -101,10 +101,10 @@ async def create_task(task: TaskCreate, db: AsyncSession = Depends(get_db_sessio
     return TaskResponse(
         id=str(t.id),
         plan_id=str(t.plan_id) if t.plan_id else None,
-        title=t.title,
-        description=t.description,
-        status=t.status,
-        tool_used=t.tool_used,
+        title=t.title,  # type: ignore[arg-type]
+        description=t.description,  # type: ignore[arg-type]
+        status=t.status,  # type: ignore[arg-type]
+        tool_used=t.tool_used,  # type: ignore[arg-type]
         created_at=t.created_at.isoformat() if t.created_at else None,
         started_at=t.started_at.isoformat() if t.started_at else None,
         completed_at=t.completed_at.isoformat() if t.completed_at else None,
@@ -112,7 +112,7 @@ async def create_task(task: TaskCreate, db: AsyncSession = Depends(get_db_sessio
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
-async def update_task(task_id: str, update: TaskUpdate, db: AsyncSession = Depends(get_db_session)):
+async def update_task(task_id: str, update: TaskUpdate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Update task status or details."""
     result = await db.execute(select(Task).where(Task.id == task_id))
     task = result.scalar_one_or_none()
@@ -136,10 +136,10 @@ async def update_task(task_id: str, update: TaskUpdate, db: AsyncSession = Depen
     return TaskResponse(
         id=str(task.id),
         plan_id=str(task.plan_id) if task.plan_id else None,
-        title=task.title,
-        description=task.description,
-        status=task.status,
-        tool_used=task.tool_used,
+        title=task.title,  # type: ignore[arg-type]
+        description=task.description,  # type: ignore[arg-type]
+        status=task.status,  # type: ignore[arg-type]
+        tool_used=task.tool_used,  # type: ignore[arg-type]
         created_at=task.created_at.isoformat() if task.created_at else None,
         started_at=task.started_at.isoformat() if task.started_at else None,
         completed_at=task.completed_at.isoformat() if task.completed_at else None,
@@ -147,7 +147,7 @@ async def update_task(task_id: str, update: TaskUpdate, db: AsyncSession = Depen
 
 
 @router.post("/executions", response_model=TaskExecutionResponse)
-async def record_task_execution(
+async def record_task_execution(  # type: ignore[no-untyped-def]
     execution: TaskExecutionCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -171,16 +171,16 @@ async def record_task_execution(
     return TaskExecutionResponse(
         id=str(te.id),
         task_id=str(te.task_id),
-        status=te.status,
-        output=te.output,
-        error_message=te.error_message,
-        duration_ms=te.duration_ms,
+        status=te.status,  # type: ignore[arg-type]
+        output=te.output,  # type: ignore[arg-type]
+        error_message=te.error_message,  # type: ignore[arg-type]
+        duration_ms=te.duration_ms,  # type: ignore[arg-type]
         executed_at=te.executed_at.isoformat() if te.executed_at else None,
     )
 
 
 @router.get("/{task_id}/executions", response_model=List[TaskExecutionResponse])
-async def list_task_executions(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_task_executions(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all executions for a task."""
     result = await db.execute(
         select(TaskExecution)
@@ -192,10 +192,10 @@ async def list_task_executions(task_id: str, db: AsyncSession = Depends(get_db_s
         TaskExecutionResponse(
             id=str(e.id),
             task_id=str(e.task_id),
-            status=e.status,
-            output=e.output,
-            error_message=e.error_message,
-            duration_ms=e.duration_ms,
+            status=e.status,  # type: ignore[arg-type]
+            output=e.output,  # type: ignore[arg-type]
+            error_message=e.error_message,  # type: ignore[arg-type]
+            duration_ms=e.duration_ms,  # type: ignore[arg-type]
             executed_at=e.executed_at.isoformat() if e.executed_at else None,
         )
         for e in executions

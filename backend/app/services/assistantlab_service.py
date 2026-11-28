@@ -108,7 +108,7 @@ class AssistantLabService:
             raise LabError("invalid note status")
         if status == "verified":
             source_host = urlparse(payload["source_url"]).netloc.lower()
-            docs_host = urlparse(system.official_docs_url).netloc.lower()
+            docs_host = urlparse(str(system.official_docs_url)).netloc.lower()
             if source_host != docs_host:
                 raise LabError("verified notes require an official documentation source")
         note = AssistantResearchNote(
@@ -201,7 +201,7 @@ class AssistantLabService:
         if result in {"succeeded", "failed"} and not evidence:
             raise LabError("evidence is required for a concluded experiment")
         experiment.result = result
-        experiment.evidence = evidence
+        experiment.evidence = evidence  # type: ignore[assignment]
         await self.db.commit()
         return self.experiment_dict(experiment)
 
@@ -215,8 +215,8 @@ class AssistantLabService:
             raise LabError("creator approval reference is required; IAM cannot self-adopt")
         if not experiment.isolated:
             raise LabError("experiments must be isolated before adoption")
-        experiment.production_adopted = True
-        experiment.creator_approval_reference = creator_approval_reference
+        experiment.production_adopted = True  # type: ignore[assignment]
+        experiment.creator_approval_reference = creator_approval_reference  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="assistant_capability_adopted",

@@ -17,6 +17,7 @@ from app.services.memory_service import MemoryService
 from app.models.memory import MemoryItem
 from app.models.autonomy import Goal, Task, DecisionRecord
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = loguru.logger
 
@@ -29,12 +30,12 @@ class AutonomyWorker:
     It sleeps between ticks to conserve resources.
     """
 
-    def __init__(self, tick_interval: int = 30) -> Any:
+    def __init__(self, tick_interval: int = 30) -> None:
         self.tick_interval = tick_interval
         self.state = "idle"
         self.running = False
         self.last_cycle: Optional[Dict[str, Any]] = None
-        self._task: Optional[asyncio.Task] = None
+        self._task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
         self._ticks = 0
 
     async def start(self) -> Any:
@@ -174,7 +175,7 @@ class AutonomyWorker:
             self.state = "reviewing"
             logger.info(f"Autonomy tick complete: {decision.get('action', 'observe')}")
 
-    async def _observe(self, db: AsyncSessionLocal) -> List[Dict[str, Any]]:
+    async def _observe(self, db: AsyncSession) -> List[Dict[str, Any]]:
         """Check for new unprocessed conversation messages."""
         from app.models.memory import ConversationMessage
         result = await db.execute(

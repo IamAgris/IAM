@@ -36,7 +36,7 @@ class ModelReleaseError(PermissionError):
     """Raised when a model version fails an evidence or authority gate."""
 
 
-def default_release_store():
+def default_release_store():  # type: ignore[no-untyped-def]
     """Return the configured research artifact store (local or durable S3)."""
     from .artifacts import default_store
 
@@ -44,9 +44,9 @@ def default_release_store():
 
 
 class ModelReleaseService:
-    def __init__(self, db: AsyncSession, store=None):
+    def __init__(self, db: AsyncSession, store=None):  # type: ignore[no-untyped-def]
         self.db = db
-        self.store = store or default_release_store()
+        self.store = store or default_release_store()  # type: ignore[no-untyped-call]
         self.registry = ModelRegistry(self.store)
 
     async def _model_row(self, model: str) -> ModelRegistryRow:
@@ -127,7 +127,7 @@ class ModelReleaseService:
         )
         self.registry.register(entry)
         row = await self._model_row(model)
-        row.capabilities = list(capability_profile.keys())
+        row.capabilities = list(capability_profile.keys())  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="model_version_registered",
@@ -203,8 +203,8 @@ class ModelReleaseService:
         if not version_row:
             version_row = ModelVersionRow(model_id=row.id, version=version)
             self.db.add(version_row)
-        version_row.is_primary = True
-        version_row.deployed_at = datetime.now(timezone.utc)
+        version_row.is_primary = True  # type: ignore[assignment]
+        version_row.deployed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         self.db.add(
             ModelEvaluationRow(
                 model_id=row.id,
@@ -265,7 +265,7 @@ class ModelReleaseService:
             select(ModelVersionRow).where(ModelVersionRow.model_id == row.id)
         )
         for item in versions.scalars().all():
-            item.is_primary = item.version == version
+            item.is_primary = item.version == version  # type: ignore[assignment]
         self.db.add(
             UpgradeHistory(
                 component=model,

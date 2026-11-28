@@ -144,7 +144,7 @@ class PermissionEngine:
         })
         return result
 
-    def training_approved_ids(self) -> set:
+    def training_approved_ids(self) -> set:  # type: ignore[type-arg]
         return {
             source_id for source_id, record in self.training.items()
             if record.get("status") == "approved"

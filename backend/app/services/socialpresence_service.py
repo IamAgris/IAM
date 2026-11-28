@@ -87,8 +87,8 @@ class SocialPresenceService:
             raise SocialPresenceError("no signed Creator authorization for this verification")
         if approval_id and authority.get("authorization_id") != approval_id:
             raise SocialPresenceError("approval_id does not match the active authorization")
-        row.verified = True
-        row.verification_ref = str(authority["authorization_id"])
+        row.verified = True  # type: ignore[assignment]
+        row.verification_ref = str(authority["authorization_id"])  # type: ignore[assignment]
         await self._audit(
             row.id, actor, "social_presence_verified",
             {"verification_ref": row.verification_ref},

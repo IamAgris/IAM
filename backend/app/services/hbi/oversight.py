@@ -12,7 +12,7 @@ CONSEQUENTIAL = {
 }
 
 
-def check(decision_type: str, evidence: Dict[str, Any] = None) -> Dict[str, Any]:
+def check(decision_type: str, evidence: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     normalised = decision_type.strip().lower().replace(" ", "_")
     if normalised in CONSEQUENTIAL:
         return {

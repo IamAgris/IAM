@@ -1,8 +1,10 @@
 """Document 26 (OD-45): module registry and Phase 2 analysis framework.
 
-Modules 1–4 (Division 1) are functional in this increment. Every other module
-returns a structured A8 refusal until implemented and validated. No module
-produces a profile of an identifiable person.
+All 38 registered modules are listed in ``IMPLEMENTED``. A module still returns
+a structured ``INSUFFICIENT_EVIDENCE`` refusal until graded records for that
+module and question exist; unknown modules return ``UNKNOWN_MODULE``. Module 14
+uses its dedicated defensive manipulation detector. No module produces a
+profile of an identifiable person.
 """
 
 import re
@@ -139,7 +141,7 @@ def analyse(module_id: int, question: str, records: List[Dict[str, Any]]) -> Dic
 
     tokens = set(_TOKEN.findall(question.lower()))
     cues = MODULE_CUES.get(module_id, set())
-    matched = []
+    matched: List[Any] = []
     for record in records:
         claim = record["claim"].lower()
         score = (2 if module_id in (record.get("module_ids") or []) else 0)

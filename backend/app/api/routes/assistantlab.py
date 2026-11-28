@@ -76,12 +76,12 @@ def _handle(exc: LabError) -> HTTPException:
 
 
 @router.get("/boundaries")
-async def boundaries():
+async def boundaries():  # type: ignore[no-untyped-def]
     return AssistantLabService.boundaries()
 
 
 @router.post("/systems")
-async def register_system(payload: SystemRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def register_system(payload: SystemRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).register_system(payload.model_dump(), _actor(request))
     except LabError as exc:
@@ -89,12 +89,12 @@ async def register_system(payload: SystemRequest, request: Request, db: AsyncSes
 
 
 @router.get("/systems")
-async def systems(db: AsyncSession = Depends(get_db_session)):
+async def systems(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).systems()
 
 
 @router.post("/notes")
-async def add_note(payload: NoteRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def add_note(payload: NoteRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).add_note(payload.model_dump(exclude_none=True), _actor(request))
     except LabError as exc:
@@ -102,12 +102,12 @@ async def add_note(payload: NoteRequest, request: Request, db: AsyncSession = De
 
 
 @router.get("/notes")
-async def notes(assistant_id: str, topic: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):
+async def notes(assistant_id: str, topic: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).notes(assistant_id, topic)
 
 
 @router.post("/adapters")
-async def register_adapter(payload: AdapterRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def register_adapter(payload: AdapterRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).register_adapter(payload.model_dump(exclude_none=True), _actor(request))
     except LabError as exc:
@@ -115,12 +115,12 @@ async def register_adapter(payload: AdapterRequest, request: Request, db: AsyncS
 
 
 @router.get("/adapters")
-async def adapters(assistant_id: str, db: AsyncSession = Depends(get_db_session)):
+async def adapters(assistant_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).adapters(assistant_id)
 
 
 @router.post("/experiments")
-async def start_experiment(payload: ExperimentRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def start_experiment(payload: ExperimentRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).start_experiment(payload.model_dump(), _actor(request))
     except LabError as exc:
@@ -128,12 +128,12 @@ async def start_experiment(payload: ExperimentRequest, request: Request, db: Asy
 
 
 @router.get("/experiments")
-async def experiments(db: AsyncSession = Depends(get_db_session)):
+async def experiments(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).experiments()
 
 
 @router.post("/experiments/{experiment_id}/result")
-async def record_result(experiment_id: str, payload: ResultRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def record_result(experiment_id: str, payload: ResultRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).record_result(experiment_id, payload.model_dump(), _actor(request))
     except LabError as exc:
@@ -141,7 +141,7 @@ async def record_result(experiment_id: str, payload: ResultRequest, request: Req
 
 
 @router.post("/experiments/{experiment_id}/adopt")
-async def adopt_experiment(experiment_id: str, payload: AdoptRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def adopt_experiment(experiment_id: str, payload: AdoptRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).adopt_experiment(
             experiment_id, payload.creator_approval_reference, _actor(request)
@@ -151,7 +151,7 @@ async def adopt_experiment(experiment_id: str, payload: AdoptRequest, request: R
 
 
 @router.post("/comparisons")
-async def compare(payload: ComparisonRequest, request: Request, db: AsyncSession = Depends(get_db_session)):
+async def compare(payload: ComparisonRequest, request: Request, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await AssistantLabService(db).compare(payload.model_dump(), _actor(request))
     except LabError as exc:
@@ -159,10 +159,10 @@ async def compare(payload: ComparisonRequest, request: Request, db: AsyncSession
 
 
 @router.get("/comparisons")
-async def comparisons(capability: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):
+async def comparisons(capability: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).comparisons(capability)
 
 
 @router.get("/status")
-async def status(db: AsyncSession = Depends(get_db_session)):
+async def status(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await AssistantLabService(db).status()

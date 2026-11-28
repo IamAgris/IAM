@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class IntegrationRegistry(Base):
+class IntegrationRegistry(Base):  # type: ignore[misc]
     __tablename__ = "integration_registry"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -26,7 +26,7 @@ class IntegrationRegistry(Base):
     credentials = relationship("CredentialReference", back_populates="integration", cascade="all, delete-orphan")
 
 
-class IntegrationPermission(Base):
+class IntegrationPermission(Base):  # type: ignore[misc]
     __tablename__ = "integration_permissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -39,7 +39,7 @@ class IntegrationPermission(Base):
     integration = relationship("IntegrationRegistry", back_populates="permissions")
 
 
-class AuditEvent(Base):
+class AuditEvent(Base):  # type: ignore[misc]
     __tablename__ = "audit_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -50,7 +50,7 @@ class AuditEvent(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SecurityIncident(Base):
+class SecurityIncident(Base):  # type: ignore[misc]
     __tablename__ = "security_incidents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -67,7 +67,7 @@ class SecurityIncident(Base):
     )
 
 
-class CredentialReference(Base):
+class CredentialReference(Base):  # type: ignore[misc]
     __tablename__ = "credential_references"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

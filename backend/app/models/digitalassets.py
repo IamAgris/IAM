@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class DigitalAsset(Base):
+class DigitalAsset(Base):  # type: ignore[misc]
     """Software, digital products, research and other created assets."""
     __tablename__ = "digital_assets"
 
@@ -31,7 +31,7 @@ class DigitalAsset(Base):
     licences = relationship("AssetLicence", back_populates="asset", cascade="all, delete-orphan")
 
 
-class AssetLicence(Base):
+class AssetLicence(Base):  # type: ignore[misc]
     """Copyright and licensing records for assets."""
     __tablename__ = "asset_licences"
 
@@ -45,7 +45,7 @@ class AssetLicence(Base):
     asset = relationship("DigitalAsset", back_populates="licences")
 
 
-class DomainRegistration(Base):
+class DomainRegistration(Base):  # type: ignore[misc]
     """Domain registrations owned by IAM's projects."""
     __tablename__ = "domain_registrations"
 
@@ -57,7 +57,7 @@ class DomainRegistration(Base):
     owner_entity = Column(Text, nullable=False)
 
 
-class IPRecord(Base):
+class IPRecord(Base):  # type: ignore[misc]
     """Intellectual property records."""
     __tablename__ = "ip_records"
 

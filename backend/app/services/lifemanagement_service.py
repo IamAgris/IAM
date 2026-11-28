@@ -46,7 +46,7 @@ class LifeManagementService:
             )
             cycle = result.scalar_one_or_none()
             if cycle:
-                cycle.ended_at = datetime.now(timezone.utc)
+                cycle.ended_at = datetime.now(timezone.utc)  # type: ignore[assignment]
                 await self.db.commit()
 
         # Start new cycle

@@ -141,7 +141,7 @@ def cross_lingual_duplicates(documents: List[Any], threshold: float = 0.8) -> Li
 
 
 class ResearchIngestionService:
-    def __init__(self, store: Any, learned_weights: Dict[str, Any] = None):
+    def __init__(self, store: Any, learned_weights: Dict[str, Any] = None):  # type: ignore[assignment]
         self.store = store
         self.learned_weights = learned_weights or {}
 
@@ -198,7 +198,7 @@ class ResearchIngestionService:
                 continue
             payload = KnowledgeRecordInput(
                 claim=claim,
-                epistemic_type="interpretation",
+                epistemic_type="interpretation",  # type: ignore[arg-type]
                 evidence_class=verification["evidence_class"],
                 alternatives=["alternative_explanation_not_established_by_this_source"],
                 scope=document.scope,
@@ -209,9 +209,9 @@ class ResearchIngestionService:
                     "culture": {"tags": tags},
                     "language": language,
                 },
-                evidence=evidence,
+                evidence=evidence,  # type: ignore[arg-type]
                 confidence=round(source_rating["reliability"] * 0.8, 2),
-                causal_status="correlational",
+                causal_status="correlational",  # type: ignore[arg-type]
                 module_ids=document.module_ids,
                 provenance_kind="licensed_corpus",
             )

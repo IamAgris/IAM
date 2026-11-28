@@ -42,15 +42,15 @@ class ColabMCPDriver:
     async def subscription(self) -> Dict[str, Any]:
         return await self.tool("get_subscription")
 
-    async def runtime_specs(self) -> List[dict]:
+    async def runtime_specs(self) -> List[dict]:  # type: ignore[type-arg]
         data = await self.tool("list_runtime_specs")
         return list(data.get("runtimeSpecs") or [])
 
-    async def runtimes(self) -> List[dict]:
+    async def runtimes(self) -> List[dict]:  # type: ignore[type-arg]
         data = await self.tool("list_runtimes")
         return list(data.get("runtimes") or [])
 
-    def pick_gpu_spec(self, specs: List[dict], shape: str = "SHAPE_STANDARD") -> dict:
+    def pick_gpu_spec(self, specs: List[dict], shape: str = "SHAPE_STANDARD") -> dict:  # type: ignore[type-arg]
         for accelerator in self.preferred:
             for spec in specs:
                 key = spec.get("key") or {}
@@ -129,7 +129,8 @@ class ColabMCPDriver:
         )
         text = output.get("stdout") or ""
         try:
-            return json.loads(text)
+            _typed_result: dict[str, Any] = json.loads(text)
+            return _typed_result
         except json.JSONDecodeError as exc:
             raise SandboxError("Colab result file was not valid JSON") from exc
 

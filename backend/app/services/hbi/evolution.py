@@ -23,7 +23,8 @@ async def revise(store: Any, old_ref: str, payload: Any, rationale: str) -> Dict
 
 
 def deprecate(store: Any, record_ref: str, reason: str) -> Dict[str, Any]:
-    return store.deprecate(record_ref, reason)
+    _typed_result: dict[str, Any] = store.deprecate(record_ref, reason)
+    return _typed_result
 
 
 def lineage(store: Any, record_ref: str) -> Dict[str, Any]:

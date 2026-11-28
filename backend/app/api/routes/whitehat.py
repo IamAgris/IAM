@@ -31,7 +31,7 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/study-plan")
-async def study_plan():
+async def study_plan():  # type: ignore[no-untyped-def]
     """WH-08/WH-09: what IAM studies and the learning-only capability boundary."""
     return {
         "posture": "defensive_only",
@@ -42,7 +42,7 @@ async def study_plan():
 
 
 @router.post("/labs")
-async def create_lab(
+async def create_lab(  # type: ignore[no-untyped-def]
     payload: LabCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -58,12 +58,12 @@ async def create_lab(
 
 
 @router.get("/labs")
-async def list_labs(db: AsyncSession = Depends(get_db_session)):
+async def list_labs(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await WhiteHatLabService(db).list_sessions()
 
 
 @router.post("/labs/{session_id}/start")
-async def start_lab(
+async def start_lab(  # type: ignore[no-untyped-def]
     session_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -77,7 +77,7 @@ async def start_lab(
 
 
 @router.post("/labs/{session_id}/destroy")
-async def destroy_lab(
+async def destroy_lab(  # type: ignore[no-untyped-def]
     session_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -89,7 +89,7 @@ async def destroy_lab(
 
 
 @router.post("/remediations/validate")
-async def validate_remediation(
+async def validate_remediation(  # type: ignore[no-untyped-def]
     payload: RemediationValidationRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

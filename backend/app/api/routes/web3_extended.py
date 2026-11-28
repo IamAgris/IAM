@@ -313,7 +313,7 @@ async def onchain_fee(base_fee: float, priority_fee: float) -> Any:
 
 
 @router.post("/onchain/whales")
-async def onchain_whales(payload: Payload):
+async def onchain_whales(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return OnChainAnalysisService().whale_activity(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -323,12 +323,12 @@ async def onchain_whales(payload: Payload):
 # --- Wallet ecosystem ---------------------------------------------------------
 
 @router.get("/wallets/policy")
-async def wallets_policy():
+async def wallets_policy():  # type: ignore[no-untyped-def]
     return WalletEcosystemService().policy()
 
 
 @router.post("/wallets/siwe/verify")
-async def wallets_siwe_verify(payload: Payload):
+async def wallets_siwe_verify(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return WalletEcosystemService().verify_siwe(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -336,7 +336,7 @@ async def wallets_siwe_verify(payload: Payload):
 
 
 @router.post("/wallets/session-keys/prepare")
-async def wallets_session_key(payload: Payload):
+async def wallets_session_key(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return WalletEcosystemService().session_key(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -344,7 +344,7 @@ async def wallets_session_key(payload: Payload):
 
 
 @router.post("/wallets/multisig/prepare")
-async def wallets_multisig(payload: Payload):
+async def wallets_multisig(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return WalletEcosystemService().multisig(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -352,7 +352,7 @@ async def wallets_multisig(payload: Payload):
 
 
 @router.post("/wallets/transfers/prepare")
-async def wallets_transfer(payload: Payload):
+async def wallets_transfer(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return WalletEcosystemService().prepare_transfer(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -362,7 +362,7 @@ async def wallets_transfer(payload: Payload):
 # --- Transaction operations ---------------------------------------------------
 
 @router.post("/transactions/nonce")
-async def transactions_nonce(payload: Payload):
+async def transactions_nonce(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return {"nonce": NonceManager().next_nonce(**payload.data)}
     except (ProviderDenied, TypeError) as exc:
@@ -370,7 +370,7 @@ async def transactions_nonce(payload: Payload):
 
 
 @router.post("/transactions/gas")
-async def transactions_gas(payload: Payload):
+async def transactions_gas(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return GasManager.estimate(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -378,7 +378,7 @@ async def transactions_gas(payload: Payload):
 
 
 @router.post("/transactions/simulate")
-async def transactions_simulate(payload: Payload):
+async def transactions_simulate(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return TransactionSimulator().simulate(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -386,7 +386,7 @@ async def transactions_simulate(payload: Payload):
 
 
 @router.post("/transactions/stuck")
-async def transactions_stuck(payload: Payload):
+async def transactions_stuck(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return StuckTransactionRecovery.assess(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -396,7 +396,7 @@ async def transactions_stuck(payload: Payload):
 # --- Registries, emergency, accounting ----------------------------------------
 
 @router.get("/contracts/registry")
-async def contracts_registry(
+async def contracts_registry(  # type: ignore[no-untyped-def]
     chain_id: str | None = None, db: AsyncSession = Depends(get_db_session)
 ):
     try:
@@ -406,7 +406,7 @@ async def contracts_registry(
 
 
 @router.get("/tokens/registry")
-async def tokens_registry(
+async def tokens_registry(  # type: ignore[no-untyped-def]
     chain_id: str | None = None, db: AsyncSession = Depends(get_db_session)
 ):
     try:
@@ -416,7 +416,7 @@ async def tokens_registry(
 
 
 @router.get("/providers/health")
-async def provider_health(db: AsyncSession = Depends(get_db_session)):
+async def provider_health(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return {"providers": await ProviderHealthRegistry(db).list()}
     except ProviderDenied as exc:
@@ -424,12 +424,12 @@ async def provider_health(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/emergency/policy")
-async def emergency_policy(db: AsyncSession = Depends(get_db_session)):
+async def emergency_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return Web3EmergencyService(db).policy()
 
 
 @router.post("/emergency/suspend")
-async def emergency_suspend(payload: Payload, db: AsyncSession = Depends(get_db_session)):
+async def emergency_suspend(payload: Payload, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await Web3EmergencyService(db).suspend(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -437,7 +437,7 @@ async def emergency_suspend(payload: Payload, db: AsyncSession = Depends(get_db_
 
 
 @router.post("/accounting/fifo")
-async def accounting_fifo(payload: Payload):
+async def accounting_fifo(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return Web3AccountingService.fifo_basis(**payload.data)
     except (ProviderDenied, TypeError, ValueError) as exc:
@@ -445,7 +445,7 @@ async def accounting_fifo(payload: Payload):
 
 
 @router.post("/accounting/unrealised")
-async def accounting_unrealised(payload: Payload):
+async def accounting_unrealised(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return Web3AccountingService.unrealised_pnl(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -453,7 +453,7 @@ async def accounting_unrealised(payload: Payload):
 
 
 @router.post("/accounting/exposure")
-async def accounting_exposure(payload: Payload):
+async def accounting_exposure(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return Web3AccountingService.portfolio_exposure(payload.data.get("holdings", []))
     except (ProviderDenied, TypeError) as exc:
@@ -463,12 +463,12 @@ async def accounting_exposure(payload: Payload):
 # --- Learning, business, non-EVM, fiat ----------------------------------------
 
 @router.get("/learning/policy")
-async def learning_policy():
+async def learning_policy():  # type: ignore[no-untyped-def]
     return Web3LearningService().policy()
 
 
 @router.post("/learning/research")
-async def learning_research(payload: Payload):
+async def learning_research(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return Web3LearningService().research_record(**payload.data)
     except (ProviderDenied, TypeError) as exc:
@@ -476,7 +476,7 @@ async def learning_research(payload: Payload):
 
 
 @router.post("/learning/benchmark")
-async def learning_benchmark(payload: Payload):
+async def learning_benchmark(payload: Payload):  # type: ignore[no-untyped-def]
     try:
         return Web3LearningService().benchmark(**payload.data)
     except (ProviderDenied, TypeError) as exc:

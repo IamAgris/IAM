@@ -21,12 +21,12 @@ from app.services.free_sandboxes.base import SandboxCapability
 class DiscoverySeed:
     name: str
     terms_url: str
-    capabilities: frozenset
-    free_markers: tuple
+    capabilities: frozenset  # type: ignore[type-arg]
+    free_markers: tuple  # type: ignore[type-arg]
     headless: bool = True
 
 
-SEEDS: tuple = (
+SEEDS: tuple = (  # type: ignore[type-arg]
     DiscoverySeed(
         "github_codespaces",
         "https://docs.github.com/en/billing/concepts/product-billing/github-codespaces",

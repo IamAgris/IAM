@@ -83,7 +83,7 @@ Assert-Contains $out 'No results' 'no results for excluded secret filename'
 # so the OD-46 authority can rank below position 20. Widen deliberately to 50 — still a
 # bounded smoke assertion, not a full-corpus dump.
 $out = (& $searchScript -Query 'OD-46' -Mode docs -MaxResults 50 2>&1 6>&1 | Out-String)
-Assert-Contains $out 'IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md' 'docs mode finds OD-46 authority'
+Assert-Contains $out 'docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md' 'docs mode finds OD-46 authority'
 
 # 5. Content search
 $out = (& $searchScript -Query 'shared primary local brain' -Mode content -Scope backend -MaxResults 5 2>&1 6>&1 | Out-String)

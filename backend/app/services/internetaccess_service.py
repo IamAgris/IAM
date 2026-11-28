@@ -49,7 +49,7 @@ class InternetAccessService:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
-    async def initialize_permissions(self):
+    async def initialize_permissions(self):  # type: ignore[no-untyped-def]
         """Initialize default permission gates."""
         defaults = [
             ("browse_public", "exploration", True, False, "Visit public websites"),
@@ -186,8 +186,8 @@ class InternetAccessService:
         session = result.scalar_one_or_none()
         if not session:
             return False
-        session.is_active = False
-        session.ended_at = datetime.utcnow()
+        session.is_active = False  # type: ignore[assignment]
+        session.ended_at = datetime.utcnow()  # type: ignore[assignment]
         await browser_service.close_persistent_page(token)
         await self.db.commit()
         return True
@@ -317,11 +317,11 @@ class InternetAccessService:
         )
         if not authority.get("authorized"):
             raise PermissionError("signed Creator authorization required to rotate credentials")
-        account.credential_reference = credential_reference
-        account.credential_rotated_at = datetime.now(timezone.utc)
+        account.credential_reference = credential_reference  # type: ignore[assignment]
+        account.credential_rotated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._log_event(
             "account_credential_rotated",
-            account.platform,
+            account.platform,  # type: ignore[arg-type]
             "medium",
             {"account_id": str(account.id), "authorization_id": authority["authorization_id"]},
         )
@@ -339,11 +339,11 @@ class InternetAccessService:
         )
         if not authority.get("authorized"):
             raise PermissionError("signed Creator authorization required to close an account")
-        account.is_authorised = False
-        account.revoked_at = datetime.now(timezone.utc)
+        account.is_authorised = False  # type: ignore[assignment]
+        account.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._log_event(
             "account_closed",
-            account.platform,
+            account.platform,  # type: ignore[arg-type]
             "medium",
             {"account_id": str(account.id), "authorization_id": authority["authorization_id"]},
         )
@@ -443,7 +443,7 @@ class InternetAccessService:
             for e in result.scalars().all()
         ]
 
-    async def _log_event(self, event_type: str, target: Optional[str], risk: str, details: Dict[str, Any]):
+    async def _log_event(self, event_type: str, target: Optional[str], risk: str, details: Dict[str, Any]):  # type: ignore[no-untyped-def]
         self.db.add(InternetEvent(
             event_type=event_type,
             target=target,

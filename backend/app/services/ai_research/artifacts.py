@@ -62,7 +62,7 @@ class ResearchArtifact:
 
 
 class ArtifactStore(Protocol):
-    def put(self, key: str, payload: bytes, metadata: Optional[Dict] = None) -> ResearchArtifact: ...
+    def put(self, key: str, payload: bytes, metadata: Optional[Dict] = None) -> ResearchArtifact: ...  # type: ignore[type-arg]
 
     def get(self, key: str) -> bytes: ...
 
@@ -88,7 +88,7 @@ class FileSystemArtifactStore:
             raise ValueError("artifact key escapes the store root")
         return path
 
-    def put(self, key: str, payload: bytes, metadata: Optional[Dict] = None) -> ResearchArtifact:
+    def put(self, key: str, payload: bytes, metadata: Optional[Dict] = None) -> ResearchArtifact:  # type: ignore[type-arg]
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as handle:
@@ -155,7 +155,7 @@ def default_store() -> ArtifactStore:
     return FileSystemArtifactStore(root)
 
 
-def persist_manifest(store: ArtifactStore, experiment_id: str, manifest: Dict) -> ResearchArtifact:
+def persist_manifest(store: ArtifactStore, experiment_id: str, manifest: Dict) -> ResearchArtifact:  # type: ignore[type-arg]
     payload = json.dumps(manifest, sort_keys=True, indent=2).encode("utf-8")
     return store.put(
         artifact_key(experiment_id, ArtifactKind.JOB_SPEC, "job.json"),

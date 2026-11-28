@@ -111,7 +111,7 @@ class WebsiteCredentialService:
             "id": str(row.id),
             "site": row.site,
             "username": row.username,
-            "password": crypto.decrypt(row.secret_ciphertext) if row.secret_ciphertext else None,
+            "password": crypto.decrypt(row.secret_ciphertext) if row.secret_ciphertext else None,  # type: ignore[arg-type]
             "secret_env_var": row.secret_env_var,
         }
 
@@ -119,8 +119,8 @@ class WebsiteCredentialService:
         row = await self._row(credential_id)
         authority = await self._authority(ROTATE_ACTION, str(row.id))
         new_password = generate_password()
-        row.secret_ciphertext = crypto.encrypt(new_password)
-        row.rotated_at = datetime.now(timezone.utc)
+        row.secret_ciphertext = crypto.encrypt(new_password)  # type: ignore[assignment]
+        row.rotated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._audit(
             row.id, actor, "website_credential_rotated",
             {"authorization_id": authority["authorization_id"]},
@@ -130,8 +130,8 @@ class WebsiteCredentialService:
 
     async def revoke(self, credential_id: str, actor: str) -> Dict[str, Any]:
         row = await self._row(credential_id)
-        row.is_active = False
-        row.revoked_at = datetime.now(timezone.utc)
+        row.is_active = False  # type: ignore[assignment]
+        row.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._audit(row.id, actor, "website_credential_revoked", {})
         await self.db.commit()
         return {"id": str(row.id), "is_active": False}

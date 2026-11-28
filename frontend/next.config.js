@@ -13,6 +13,15 @@ const nextConfig = {
       { source: "/health", destination: `${api}/health` },
     ];
   },
+  async redirects() {
+    // IAM has one page. Old bookmarks/deep-links resolve to it rather than
+    // resurrecting extra routes. The conversation id becomes a query param.
+    return [
+      { source: "/conversations/:id", destination: "/?conversation=:id", permanent: false },
+      { source: "/conversations", destination: "/", permanent: false },
+      { source: "/suggestions", destination: "/", permanent: false },
+    ];
+  },
 };
 
 module.exports = nextConfig;

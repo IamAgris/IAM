@@ -164,9 +164,9 @@ class AuthorisedTargetPolicy:
         )
         approvals = CreatorApprovalService(self.db)
         for authorization in result.scalars().all():
-            if authorization.revoked_at or not _not_expired(authorization.expires_at):
+            if authorization.revoked_at or not _not_expired(authorization.expires_at):  # type: ignore[arg-type]
                 continue
-            scope = authorization.scope or {}
+            scope: Any = authorization.scope or {}
             if target_type and scope.get("target_type") not in (None, target_type):
                 continue
             if not any(target_matches(target, item) for item in scope_targets(scope)):
@@ -177,7 +177,7 @@ class AuthorisedTargetPolicy:
                 continue
             authority = await approvals.check_authorization(
                 AUTHORIZATION_ACTION,
-                target_ref=authorization.target_ref or normalize_target(target),
+                target_ref=authorization.target_ref or normalize_target(target),  # type: ignore[arg-type]
             )
             if not authority.get("authorized"):
                 continue

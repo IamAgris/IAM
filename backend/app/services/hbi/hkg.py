@@ -35,7 +35,7 @@ class HistoricalKnowledgeGraph:
             "properties": properties or {},
             "evidence_class": evidence_class,
         }
-        self.nodes[node["node_ref"]] = node
+        self.nodes[str(node["node_ref"])] = node
         if self.db is not None:
             from app.models.hbi import HBIGraphNode
             self.db.add(HBIGraphNode(**node))
@@ -56,7 +56,7 @@ class HistoricalKnowledgeGraph:
             "evidence_class": evidence_class,
             "properties": properties or {},
         }
-        self.edges[edge["edge_ref"]] = edge
+        self.edges[str(edge["edge_ref"])] = edge
         if self.db is not None:
             from app.models.hbi import HBIGraphEdge
             self.db.add(HBIGraphEdge(**edge))

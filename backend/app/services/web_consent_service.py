@@ -100,15 +100,15 @@ class WebsiteConsentService:
         if consent_status is not None and consent_status not in valid_statuses:
             raise WebsiteConsentError(f"Invalid consent status: {consent_status}")
         if consent_status is not None:
-            row.consent_status = consent_status
+            row.consent_status = consent_status  # type: ignore[assignment]
             from datetime import datetime, timezone
-            row.consent_date = None  # set by caller if desired
+            row.consent_date = None  # type: ignore[assignment]  # set by caller if desired
         if cookie_categories is not None:
-            row.cookie_categories = cookie_categories
+            row.cookie_categories = cookie_categories  # type: ignore[assignment]
         if data_retention_preference is not None:
-            row.data_retention_preference = data_retention_preference
+            row.data_retention_preference = data_retention_preference  # type: ignore[assignment]
         if sensitive_info_classification is not None:
-            row.sensitive_info_classification = sensitive_info_classification
+            row.sensitive_info_classification = sensitive_info_classification  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

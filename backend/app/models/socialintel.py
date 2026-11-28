@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class ConversationContext(Base):
+class ConversationContext(Base):  # type: ignore[misc]
     """Conversation continuity and context tracking."""
     __tablename__ = "conversation_contexts"
 
@@ -23,7 +23,7 @@ class ConversationContext(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SocialProfile(Base):
+class SocialProfile(Base):  # type: ignore[misc]
     """Relationship history and interaction preferences."""
     __tablename__ = "social_profiles"
 
@@ -39,7 +39,7 @@ class SocialProfile(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class SocialPresence(Base):
+class SocialPresence(Base):  # type: ignore[misc]
     """Verified external social presence owned by a legal entity (OD-02/OD-30)."""
 
     __tablename__ = "social_presences"
@@ -55,7 +55,7 @@ class SocialPresence(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class InteractionPreference(Base):
+class InteractionPreference(Base):  # type: ignore[misc]
     """Communication preferences per entity."""
     __tablename__ = "interaction_preferences"
 
@@ -70,7 +70,7 @@ class InteractionPreference(Base):
     profile = relationship("SocialProfile")
 
 
-class ToneAnalysis(Base):
+class ToneAnalysis(Base):  # type: ignore[misc]
     """Doc 17 / OD-33: tone and influence analysis of public text.
 
     Results are possible interpretations with confidence markers, never
@@ -98,7 +98,7 @@ class ToneAnalysis(Base):
     )
 
 
-class ScamDetectionLog(Base):
+class ScamDetectionLog(Base):  # type: ignore[misc]
     """Recognition of scams, manipulation and suspicious requests."""
     __tablename__ = "scam_detection_log"
 

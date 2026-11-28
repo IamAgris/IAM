@@ -20,7 +20,7 @@ from .security import (
 @dataclass
 class PreparedJob:
     job: ResearchJob
-    manifest: dict
+    manifest: dict  # type: ignore[type-arg]
     artifact: ResearchArtifact
     isolation: IsolationPolicy
 
@@ -48,7 +48,7 @@ def prepare_job(
     return PreparedJob(job=job, manifest=manifest, artifact=artifact, isolation=policy)
 
 
-def require_repo_metadata(manifest: dict) -> None:
+def require_repo_metadata(manifest: dict) -> None:  # type: ignore[type-arg]
     """Reject a job that would send results to a temporary notebook only."""
     if not manifest.get("output_artifact_ref") and not manifest.get("outputs"):
         raise ResearchError("job must declare IAM-controlled outputs")

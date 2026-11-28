@@ -139,7 +139,7 @@ class SkillExchangeService:
             raise SkillExchangeError(f"candidate is already {candidate.status}")
 
         findings = self.forge.engine.security.scan_text(
-            candidate.instructions, "SKILL.md"
+            candidate.instructions, "SKILL.md"  # type: ignore[arg-type]
         )
         if self.forge.engine.security.has_blocking_findings(findings):
             raise SkillExchangeError("candidate failed security inspection")
@@ -150,19 +150,19 @@ class SkillExchangeService:
         request = SkillBuildRequest(
             skill_id=imported_id,
             name=f"P2P candidate {suffix}",
-            version=candidate.version,
+            version=candidate.version,  # type: ignore[arg-type]
             description=f"Untrusted candidate received from {candidate.publisher}",
             classification="sensitive",
-            permissions=candidate.permissions,
+            permissions=candidate.permissions,  # type: ignore[arg-type]
             requires_creator_approval=True,
-            instructions=candidate.instructions,
+            instructions=candidate.instructions,  # type: ignore[arg-type]
             provider="community",
             created_by="iam",
             change_note="received via signed P2P skill exchange",
         )
         created = await self.forge.create(request)
-        candidate.status = "approved"
-        candidate.resolved_at = datetime.now(timezone.utc)
+        candidate.status = "approved"  # type: ignore[assignment]
+        candidate.resolved_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return {
             "candidate_id": str(candidate.id),
@@ -173,7 +173,7 @@ class SkillExchangeService:
 
     async def reject(self, candidate_id: str) -> Dict[str, Any]:
         candidate = await self._candidate(candidate_id)
-        candidate.status = "rejected"
-        candidate.resolved_at = datetime.now(timezone.utc)
+        candidate.status = "rejected"  # type: ignore[assignment]
+        candidate.resolved_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return {"candidate_id": str(candidate.id), "status": "rejected"}

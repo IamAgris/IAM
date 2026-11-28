@@ -79,6 +79,7 @@ from app.api.routes import (
     legal,
     iplci,
     creator_communication,
+    user_email,
     geo,
     freesandboxes,
     humanpresence,
@@ -89,6 +90,7 @@ from app.api.routes import (
     workspaces,
     whitehat,
     irwm,
+    provider_compat,
     modelindependence,
     financial_adapters,
     financial_intelligence,
@@ -157,9 +159,11 @@ async def lifespan(app: FastAPI) -> Any:
     async with AsyncSessionLocal() as session:
         await BootstrapService(session).initialize_all()
         from app.services.iics import register_iics_tools
+        from app.services.iam_tool_manifest import register_core_tools
 
         await register_iics_tools(session)
-    logger.info("IAM identity, policies and IICS tools initialized.")
+        await register_core_tools(session)
+    logger.info("IAM identity, policies, IICS tools and core IAM tools initialized.")
 
     # Restore durable emergency state before starting any autonomous work.
     from app.services.emergency_shutdown import emergency
@@ -277,6 +281,7 @@ app.include_router(tone.router)
 app.include_router(legal.router)
 app.include_router(iplci.router)
 app.include_router(creator_communication.router)
+app.include_router(user_email.router)
 app.include_router(geo.router)
 app.include_router(freesandboxes.router)
 app.include_router(humanpresence.router)
@@ -285,6 +290,7 @@ app.include_router(events.router)
 app.include_router(workspaces.router)
 app.include_router(whitehat.router)
 app.include_router(irwm.router)
+app.include_router(provider_compat.router)
 app.include_router(modelindependence.router)
 app.include_router(financial_adapters.blockchain_router)
 app.include_router(financial_adapters.banking_router)
@@ -316,7 +322,7 @@ app.include_router(web3.web3_router)
 app.include_router(web3.nodes_router)
 app.include_router(web3_extended.router)
 
-# Operational endpoints from IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
+# Operational endpoints from docs/IAM_API_CONTRACTS.md section 11 (no /api/v1 prefix)
 app.include_router(ops.router)
 app.include_router(emergency.router)
 

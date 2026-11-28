@@ -79,9 +79,9 @@ class HumanAssistanceService:
         row = await self._request(request_id)
         if row.status != "pending":
             raise AssistanceError("assistance request is no longer pending")
-        row.status = "resolved"
-        row.resolved_by = resolved_by
-        row.resolved_at = datetime.now(timezone.utc)
+        row.status = "resolved"  # type: ignore[assignment]
+        row.resolved_by = resolved_by  # type: ignore[assignment]
+        row.resolved_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._audit(
             row.id, actor, "assistance_resolved",
             {"resolved_by": resolved_by, "note": note[:500]},
@@ -91,7 +91,7 @@ class HumanAssistanceService:
 
     async def escalate(self, request_id: str, actor: str, reason: str = "") -> Dict[str, Any]:
         row = await self._request(request_id)
-        row.status = "escalated"
+        row.status = "escalated"  # type: ignore[assignment]
         await self._audit(
             row.id, actor, "assistance_escalated", {"reason": reason[:500]}
         )
@@ -117,7 +117,7 @@ class HumanAssistanceService:
         return {
             "id": str(row.id),
             "level": row.level,
-            "human_action": LEVELS.get(row.level),
+            "human_action": LEVELS.get(str(row.level)),
             "reason": row.reason,
             "context": row.context or {},
             "task_ref": row.task_ref,

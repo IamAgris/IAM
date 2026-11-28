@@ -4,6 +4,7 @@ Multi-step web task management: task decomposition, checkpoints, retry logic,
 dependency management, scheduled execution, progress reporting, cancellation.
 """
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
@@ -34,6 +35,23 @@ class AutonomousWebTaskService:
         if not row:
             raise ValueError("Autonomous web task not found")
         return row
+
+    @staticmethod
+    def _parse_schedule_at(value: Optional[str]) -> Optional[datetime]:
+        """Parse an ISO 8601 schedule. Naive timestamps are rejected."""
+        if value is None:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise AutonomousWebTaskError(
+                "schedule_at must be an ISO 8601 timestamp with a timezone"
+            ) from exc
+        if parsed.tzinfo is None:
+            raise AutonomousWebTaskError(
+                "schedule_at must include a timezone (e.g. 2026-11-29T10:00:00Z)"
+            )
+        return parsed
 
     async def create(
         self,
@@ -90,7 +108,7 @@ class AutonomousWebTaskService:
             decomposition=decomposition or [],
             checkpoints=checkpoints or [],
             dependencies=dependencies or [],
-            schedule_at=None,  # set by caller if desired
+            schedule_at=self._parse_schedule_at(schedule_at),
             started_at=None,
             completed_at=None,
             cancelled_at=None,
@@ -167,7 +185,7 @@ class AutonomousWebTaskService:
         row = await self._task(task_id)
         if not 0 <= progress_percentage <= 100:
             raise AutonomousWebTaskError("Progress must be between 0 and 100")
-        row.progress_percentage = progress_percentage
+        row.progress_percentage = progress_percentage  # type: ignore[assignment]
         if status is not None:
             valid_statuses = (
                 "pending", "planning", "executing", "paused",
@@ -175,13 +193,13 @@ class AutonomousWebTaskService:
             )
             if status not in valid_statuses:
                 raise AutonomousWebTaskError(f"Invalid status: {status}")
-            row.status = status
+            row.status = status  # type: ignore[assignment]
         if error_message is not None:
-            row.error_message = error_message
+            row.error_message = error_message  # type: ignore[assignment]
         if checkpoint is not None:
             checkpoints = list(row.checkpoints or [])
             checkpoints.append(checkpoint)
-            row.checkpoints = checkpoints
+            row.checkpoints = checkpoints  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 
@@ -196,9 +214,9 @@ class AutonomousWebTaskService:
             raise AutonomousWebTaskError("Only failed tasks can be retried")
         if row.retry_count >= row.max_retries:
             raise AutonomousWebTaskError("Maximum retries exceeded")
-        row.retry_count += 1
-        row.status = "pending"
-        row.error_message = None
+        row.retry_count += 1  # type: ignore[assignment]
+        row.status = "pending"  # type: ignore[assignment]
+        row.error_message = None  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

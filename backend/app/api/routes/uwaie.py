@@ -53,13 +53,13 @@ def _actor(request: Request) -> str:
 
 
 @router.post("/sessions")
-async def create_session(payload: SessionRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_session(payload: SessionRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Create an isolated browser session for a website workflow."""
     return await UWAIEService(db).create_session(payload.purpose)
 
 
 @router.post("/inspect")
-async def inspect(
+async def inspect(  # type: ignore[no-untyped-def]
     payload: InspectRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -71,7 +71,7 @@ async def inspect(
 
 
 @router.post("/execute")
-async def execute(
+async def execute(  # type: ignore[no-untyped-def]
     payload: ExecuteRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -91,7 +91,7 @@ async def execute(
 
 
 @router.get("/workflows")
-async def workflows(
+async def workflows(  # type: ignore[no-untyped-def]
     approved_only: bool = False,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -99,7 +99,7 @@ async def workflows(
 
 
 @router.post("/workflows/{workflow_id}/approve")
-async def approve_workflow(
+async def approve_workflow(  # type: ignore[no-untyped-def]
     workflow_id: str,
     payload: ApproveWorkflowRequest,
     request: Request,
@@ -116,7 +116,7 @@ async def approve_workflow(
 
 
 @router.post("/workflows/{workflow_id}/reuse")
-async def reuse_workflow(
+async def reuse_workflow(  # type: ignore[no-untyped-def]
     workflow_id: str,
     payload: ReuseWorkflowRequest,
     request: Request,
@@ -133,7 +133,7 @@ async def reuse_workflow(
 
 
 @router.post("/handover")
-async def request_handover(
+async def request_handover(  # type: ignore[no-untyped-def]
     payload: HandoverRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

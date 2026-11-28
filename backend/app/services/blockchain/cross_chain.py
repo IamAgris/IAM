@@ -42,7 +42,7 @@ class CrossChainService:
             raise ProviderDenied("at least one route is required")
         ranked = sorted(
             parsed,
-            key=lambda r: (r["amount_out"] - r["fee_usd"]) if r["verified"] else float("-inf"),
+            key=lambda r: (float(str(r["amount_out"])) - float(str(r["fee_usd"]))) if r["verified"] else float("-inf"),
             reverse=True,
         )
         return {"routes": parsed, "best": ranked[0], "execution_enabled": False}

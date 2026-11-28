@@ -61,7 +61,7 @@ class WhiteHatLabService:
                 details=build_security_audit(
                     action=action,
                     actor=actor,
-                    target=session.target,
+                    target=session.target,  # type: ignore[arg-type]
                     scope=details.get("scope", {}),
                     authority=details.get("authority", {}),
                     tool_calls=details.get("tool_calls", []),
@@ -113,7 +113,7 @@ class WhiteHatLabService:
             raise WhiteHatLabError("lab session cannot be started")
         workspace_id = str(session.workspace_id)
         await self.workspaces.start(workspace_id, actor)
-        session.status = "running"
+        session.status = "running"  # type: ignore[assignment]
         await self._audit(session, "simulation_lab_started", actor)
         await self.db.commit()
         return self._serialize(session)
@@ -160,14 +160,14 @@ class WhiteHatLabService:
             outcome = await self.workspaces.execute(
                 workspace["id"], validation_command, actor
             )
-            session.status = "verified" if outcome.get("status") == "completed" else "failed"
+            session.status = "verified" if outcome.get("status") == "completed" else "failed"  # type: ignore[assignment]
         else:
             outcome = {
                 "status": "failed",
                 "reason": "workspace execution disabled; remediation not verified",
             }
-            session.status = "failed"
-        session.completed_at = datetime.now(timezone.utc)
+            session.status = "failed"  # type: ignore[assignment]
+        session.completed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         session.details["validation"] = {
             "status": outcome.get("status"),
             "stdout": str(outcome.get("stdout") or "")[:2000],
@@ -195,8 +195,8 @@ class WhiteHatLabService:
                 await self.workspaces.destroy(str(session.workspace_id), actor)
             except (LookupError, PermissionError):
                 pass
-        session.status = "destroyed"
-        session.completed_at = datetime.now(timezone.utc)
+        session.status = "destroyed"  # type: ignore[assignment]
+        session.completed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._audit(session, "security_session_destroyed", actor)
         await self.db.commit()
         return self._serialize(session)
@@ -208,7 +208,7 @@ class WhiteHatLabService:
             session
             for session in result.scalars().all()
             if session.status not in ("destroyed", "expired", "verified", "failed")
-            and _aware(session.expires_at) <= now
+            and _aware(session.expires_at) <= now  # type: ignore[arg-type]
         ]
         for session in expired:
             if session.workspace_id:
@@ -216,8 +216,8 @@ class WhiteHatLabService:
                     await self.workspaces.destroy(str(session.workspace_id), actor)
                 except (LookupError, PermissionError):
                     pass
-            session.status = "expired"
-            session.completed_at = now
+            session.status = "expired"  # type: ignore[assignment]
+            session.completed_at = now  # type: ignore[assignment]
             await self._audit(session, "security_session_expired", actor)
         if expired:
             await self.db.commit()

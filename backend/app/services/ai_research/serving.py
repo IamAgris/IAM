@@ -83,11 +83,12 @@ class OpenAICompatibleClient:
             with urllib.request.urlopen(
                 f"{self.endpoint.base_url}/v1/models", timeout=10
             ) as response:
-                return response.status == 200
+                _typed_result: bool = response.status == 200
+                return _typed_result
         except Exception:
             return False
 
-    def chat(self, messages: List[Dict[str, str]], max_tokens: Optional[int] = None) -> dict:
+    def chat(self, messages: List[Dict[str, str]], max_tokens: Optional[int] = None) -> dict:  # type: ignore[type-arg]
         payload = json.dumps(
             {
                 "model": self.endpoint.model,
@@ -121,7 +122,7 @@ class ServingReport:
     engine: str
     model: str
     healthy: bool
-    responses: List[dict]
+    responses: List[dict]  # type: ignore[type-arg]
     median_latency_ms: float
     tokens_per_second: float
     peak_vram_mb: int
@@ -135,7 +136,7 @@ class ServingReport:
 
 
 class ServingExperimentRunner:
-    def __init__(
+    def __init__(  # type: ignore[no-untyped-def]
         self,
         store: ArtifactStore,
         driver: ServingDriver,

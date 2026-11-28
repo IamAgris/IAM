@@ -47,7 +47,7 @@ class SkillLayout:
         )
 
     @staticmethod
-    def _segments(skill_id: str) -> list:
+    def _segments(skill_id: str) -> list:  # type: ignore[type-arg]
         parts = skill_id.split(".")
         if len(parts) < 4 or parts[0] != "iam" or parts[1] not in ("native", "imported"):
             raise LayoutError(f"invalid skill id for path resolution: {skill_id!r}")

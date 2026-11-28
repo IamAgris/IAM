@@ -25,7 +25,7 @@ def _actor(request: Request) -> str:
 
 
 @router.post("/objects")
-async def upload_object(
+async def upload_object(  # type: ignore[no-untyped-def]
     payload: UploadRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -43,7 +43,7 @@ async def upload_object(
 
 
 @router.get("/objects")
-async def list_objects(
+async def list_objects(  # type: ignore[no-untyped-def]
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -51,7 +51,7 @@ async def list_objects(
 
 
 @router.get("/objects/{object_id}")
-async def get_object(
+async def get_object(  # type: ignore[no-untyped-def]
     object_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

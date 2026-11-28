@@ -19,10 +19,10 @@ import app.models  # noqa: F401  (register every table on Base.metadata)
 from app.core.database import Base
 
 HERE = Path(__file__).resolve().parent
-DIALECT = postgresql.dialect()
+DIALECT = postgresql.dialect()  # type: ignore[no-untyped-call]
 
 
-def ddl_statements() -> list:
+def ddl_statements() -> list:  # type: ignore[type-arg]
     statements = ["CREATE EXTENSION IF NOT EXISTS vector;"]
     for table in Base.metadata.sorted_tables:
         statements.append(str(CreateTable(table).compile(dialect=DIALECT)).strip().rstrip(";") + ";")
@@ -33,7 +33,7 @@ def ddl_statements() -> list:
     return statements
 
 
-def write_sql(statements: list) -> None:
+def write_sql(statements: list) -> None:  # type: ignore[type-arg]
     body = "\n\n".join(statements)
     (HERE / "001_initial_schema.sql").write_text(
         "-- =============================================================================\n"
@@ -47,7 +47,7 @@ def write_sql(statements: list) -> None:
     )
 
 
-def write_alembic(statements: list) -> None:
+def write_alembic(statements: list) -> None:  # type: ignore[type-arg]
     upgrade_body = "\n".join(
         f"    op.execute(r'''\n{statement}\n    ''')" for statement in statements
     )

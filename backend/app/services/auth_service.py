@@ -56,7 +56,7 @@ class AuthService:
         credential = result.scalar_one_or_none()
         if not credential:
             return None
-        credential.last_used_at = datetime.now(timezone.utc)
+        credential.last_used_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return {
             "id": str(credential.id),
@@ -92,7 +92,7 @@ class AuthService:
         credential = result.scalar_one_or_none()
         if not credential:
             return False
-        credential.is_active = False
-        credential.revoked_at = datetime.now(timezone.utc)
+        credential.is_active = False  # type: ignore[assignment]
+        credential.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return True

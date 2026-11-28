@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class RegisteredNode(Base):
+class RegisteredNode(Base):  # type: ignore[misc]
     """A deployment that offered resources to the core. Candidate, not trusted."""
 
     __tablename__ = "registered_nodes"
@@ -45,7 +45,7 @@ class RegisteredNode(Base):
     )
 
 
-class NodeResourceReport(Base):
+class NodeResourceReport(Base):  # type: ignore[misc]
     """Bounded, measurable resource report from a node."""
 
     __tablename__ = "node_resource_reports"

@@ -53,7 +53,7 @@ class GovernanceService:
 
         level_order = {"1": 1, "2": 2, "3": 3, "4": 4}
         requested_num = level_order.get(requested_level, 0)
-        required_num = level_order.get(boundary.authority_level, 4)
+        required_num = level_order.get(str(boundary.authority_level), 4)
 
         if requested_num < required_num:
             # OD-19: the only escape hatch is a signed Creator authorization
@@ -61,7 +61,7 @@ class GovernanceService:
             from app.services.creatorapproval_service import CreatorApprovalService
 
             creator_auth = await CreatorApprovalService(self.db).check_authorization(
-                action_type, boundary.authority_level
+                action_type, boundary.authority_level  # type: ignore[arg-type]
             )
             if creator_auth.get("authorized"):
                 return {
@@ -103,7 +103,7 @@ class GovernanceService:
             for b in boundaries
         ]
 
-    async def initialize_default_boundaries(self):
+    async def initialize_default_boundaries(self):  # type: ignore[no-untyped-def]
         """Initialize default authority boundaries and security boundaries."""
         # Default authority boundaries
         default_actions = [

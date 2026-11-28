@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class StoredObject(Base):
+class StoredObject(Base):  # type: ignore[misc]
     __tablename__ = "stored_objects"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

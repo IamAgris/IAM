@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class WebsiteWorkflow(Base):
+class WebsiteWorkflow(Base):  # type: ignore[misc]
     __tablename__ = "website_workflows"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

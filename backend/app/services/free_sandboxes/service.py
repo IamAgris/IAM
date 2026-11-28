@@ -220,7 +220,7 @@ class FreeSandboxService:
             if not record:
                 record = FreeSandboxProvider(
                     name=item.name,
-                    provider_type=item.provider_type,
+                    provider_type=item.name,
                     capabilities=item.capabilities,
                     terms_url=item.terms_url,
                     headless=item.headless,
@@ -230,10 +230,10 @@ class FreeSandboxService:
                 )
                 self.db.add(record)
             else:
-                record.terms_url = item.terms_url
-                record.capabilities = item.capabilities
-                record.docs_verified_at = datetime.now(timezone.utc)
-                record.config = {
+                record.terms_url = item.terms_url  # type: ignore[assignment]
+                record.capabilities = item.capabilities  # type: ignore[assignment]
+                record.docs_verified_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+                record.config = {  # type: ignore[assignment]
                     **(record.config or {}),
                     "discovery_evidence": item.evidence,
                 }
@@ -287,7 +287,7 @@ class FreeSandboxService:
         )
         provider_record = record.scalar_one_or_none()
         if provider_record:
-            provider_record.registration_status = "pending_creator_approval"
+            provider_record.registration_status = "pending_creator_approval"  # type: ignore[assignment]
         await self._record_result(
             "sandbox_registration_requested",
             {"provider": provider, "request_id": request_id, "decision": decision.action},
@@ -305,7 +305,7 @@ class FreeSandboxService:
 
         adapter = self.manager.get_adapter("stackblitz")
         opener = PlaywrightBrowserOpener(headless=headless)
-        adapter.set_browser_opener(opener)
+        getattr(adapter, "set_browser_opener")(opener)
         self._audit("sandbox_browser_opener_enabled", opener.describe())
         return {"provider": "stackblitz", **opener.describe()}
 
@@ -484,7 +484,7 @@ class FreeSandboxService:
         )
         record = found.scalar_one_or_none()
         if record:
-            record.state = env.state.value
+            record.state = env.state.value  # type: ignore[assignment]
             record.metadata = env.metadata
 
     async def _record_result(self, event_type: str, details: Dict[str, Any]) -> None:

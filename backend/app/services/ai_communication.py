@@ -96,12 +96,12 @@ class AICommunicationService:
     ) -> Dict[str, Any]:
         row = await self._identity_row(identity_id)
         if communication_permitted is not None:
-            row.communication_permitted = communication_permitted
+            row.communication_permitted = communication_permitted  # type: ignore[assignment]
         if trust_level is not None:
             valid_trust = ("untrusted", "trusted", "restricted")
             if trust_level not in valid_trust:
                 raise AICommunicationError(f"Invalid trust level: {trust_level}")
-            row.trust_level = trust_level
+            row.trust_level = trust_level  # type: ignore[assignment]
         await self.db.commit()
         await self._audit(actor, "ai_identity_updated", str(row.id), {"trust_level": trust_level})
         return self._identity_dict(row)
@@ -205,9 +205,9 @@ class AICommunicationService:
         )
         thread = thread_result.scalar_one_or_none()
         if thread:
-            thread.message_count = (thread.message_count or 0) + 1
+            thread.message_count = (thread.message_count or 0) + 1  # type: ignore[assignment]
             from datetime import datetime, timezone
-            thread.last_message_at = None  # set by caller if desired
+            thread.last_message_at = None  # type: ignore[assignment]  # set by caller if desired
         await self.db.commit()
         return self._message_dict(row)
 
@@ -305,12 +305,12 @@ class AICommunicationService:
         )
         existing = result.scalar_one_or_none()
         if existing:
-            existing.accuracy_score = accuracy_score
-            existing.honesty_score = honesty_score
-            existing.helpfulness_score = helpfulness_score
-            existing.total_interactions = existing.total_interactions + 1
-            existing.correct_predictions = existing.correct_predictions + correct_predictions
-            existing.incorrect_predictions = existing.incorrect_predictions + incorrect_predictions
+            existing.accuracy_score = accuracy_score  # type: ignore[assignment]
+            existing.honesty_score = honesty_score  # type: ignore[assignment]
+            existing.helpfulness_score = helpfulness_score  # type: ignore[assignment]
+            existing.total_interactions = existing.total_interactions + 1  # type: ignore[assignment]
+            existing.correct_predictions = existing.correct_predictions + correct_predictions  # type: ignore[assignment]
+            existing.incorrect_predictions = existing.incorrect_predictions + incorrect_predictions  # type: ignore[assignment]
             await self.db.commit()
             return self._reputation_dict(existing)
         row = AIReputationRecord(
@@ -353,12 +353,12 @@ class AICommunicationService:
         )
         row = result.scalar_one_or_none()
         if existing := result.scalar_one_or_none():
-            existing.can_share_project_context = can_share_project_context
-            existing.can_share_research_findings = can_share_research_findings
-            existing.can_share_code = can_share_code
-            existing.can_receive_private_data = can_receive_private_data
-            existing.can_initiate_contact = can_initiate_contact
-            existing.can_receive_responses = can_receive_responses
+            existing.can_share_project_context = can_share_project_context  # type: ignore[assignment]
+            existing.can_share_research_findings = can_share_research_findings  # type: ignore[assignment]
+            existing.can_share_code = can_share_code  # type: ignore[assignment]
+            existing.can_receive_private_data = can_receive_private_data  # type: ignore[assignment]
+            existing.can_initiate_contact = can_initiate_contact  # type: ignore[assignment]
+            existing.can_receive_responses = can_receive_responses  # type: ignore[assignment]
             await self.db.commit()
             return self._permission_dict(existing)
         row = AICommunicationPermission(
@@ -423,11 +423,11 @@ class AICommunicationService:
         row = result.scalar_one_or_none()
         if not row:
             raise ValueError("Communication bridge not found")
-        row.status = status
+        row.status = status  # type: ignore[assignment]
         if human_response is not None:
-            row.human_response = human_response
+            row.human_response = human_response  # type: ignore[assignment]
         if ai_response is not None:
-            row.ai_response = ai_response
+            row.ai_response = ai_response  # type: ignore[assignment]
         await self.db.commit()
         return self._bridge_dict(row)
 

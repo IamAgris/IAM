@@ -87,14 +87,14 @@ class ForecastEngine:
         for item in evidence:
             if not isinstance(item, dict):
                 raise ForecastDenied("evidence items must be objects")
-            outcome = item.get("outcome")
+            outcome = item.get("outcome")  # type: ignore[assignment]
             if outcome not in scores:
                 raise ForecastDenied(f"evidence references unknown outcome: {outcome}")
             source = str(item.get("source") or "").strip()
             if not source:
                 raise ForecastDenied("each evidence item requires a source")
             try:
-                strength = float(item.get("strength"))
+                strength = float(item.get("strength"))  # type: ignore[arg-type]
             except (TypeError, ValueError) as exc:
                 raise ForecastDenied("evidence strength must be numeric") from exc
             if not 0 <= strength <= 1:

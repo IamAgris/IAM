@@ -1,5 +1,5 @@
 -- =============================================================================
--- IICS foundation overlay (pending proposal — IAM_IICS_GAP_CLOSURE_ADDENDUM.md)
+-- IICS foundation overlay (pending proposal — docs/IAM_IICS_GAP_CLOSURE_ADDENDUM.md)
 -- Egress/source rights, claim evidence, action ledger and benchmark results.
 -- No new top-level system, no new queue (OD-08 ARQ is reused).
 -- =============================================================================

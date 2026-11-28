@@ -16,7 +16,7 @@ from app.core.database import Base
 STATUSES = "verified,self_reported,uncertain,corrected"
 
 
-class PublicPerson(Base):
+class PublicPerson(Base):  # type: ignore[misc]
     __tablename__ = "public_people"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -31,7 +31,7 @@ class PublicPerson(Base):
     )
 
 
-class PublicProfile(Base):
+class PublicProfile(Base):  # type: ignore[misc]
     __tablename__ = "public_profiles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -65,7 +65,7 @@ class PublicProfile(Base):
     )
 
 
-class PresenceClaim(Base):
+class PresenceClaim(Base):  # type: ignore[misc]
     __tablename__ = "presence_claims"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -95,7 +95,7 @@ class PresenceClaim(Base):
     )
 
 
-class IdentityMatch(Base):
+class IdentityMatch(Base):  # type: ignore[misc]
     __tablename__ = "identity_matches"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -119,7 +119,7 @@ class IdentityMatch(Base):
     )
 
 
-class PublicRelationship(Base):
+class PublicRelationship(Base):  # type: ignore[misc]
     __tablename__ = "public_relationships"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

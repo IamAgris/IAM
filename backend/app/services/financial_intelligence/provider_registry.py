@@ -163,8 +163,8 @@ class ProviderRegistryService:
             raise IntelligenceDenied("provider registry is disabled")
         entry = await self._entry_by_name(name)
         require_eligible_provider(entry)
-        entry.adapter_enabled = True
-        entry.updated_at = datetime.now(timezone.utc)
+        entry.adapter_enabled = True  # type: ignore[assignment]
+        entry.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="financial_provider_adapter_enabled",

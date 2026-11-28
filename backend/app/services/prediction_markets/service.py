@@ -165,9 +165,9 @@ class PredictionMarketService:
 
     async def compare(self, market_id: str) -> Dict[str, Any]:
         market = await self._market_by_id(market_id)
-        estimates = await self._estimates(market.id)
+        estimates = await self._estimates(market.id)  # type: ignore[arg-type]
         comparisons = []
-        implied = market.implied_probabilities or {}
+        implied: Any = market.implied_probabilities or {}
         for estimate in estimates:
             market_probability = float(implied.get(estimate.outcome, 0) or 0)
             iam_probability = float(estimate.iam_probability)
@@ -203,8 +203,8 @@ class PredictionMarketService:
         )
         if not authority.get("authorized"):
             raise PredictionMarketDenied("no active signed Creator authorization for legal clearance")
-        market.legal_status = "cleared"
-        market.real_money_enabled = False
+        market.legal_status = "cleared"  # type: ignore[assignment]
+        market.real_money_enabled = False  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="prediction_market_legal_clearance_recorded",
@@ -232,7 +232,7 @@ class PredictionMarketService:
 
     async def estimates(self, market_id: str) -> List[Dict[str, Any]]:
         market = await self._market_by_id(market_id)
-        return [self._estimate(row) for row in await self._estimates(market.id)]
+        return [self._estimate(row) for row in await self._estimates(market.id)]  # type: ignore[arg-type]
 
     async def _market_by_id(self, market_id: str) -> PredictionMarket:
         try:

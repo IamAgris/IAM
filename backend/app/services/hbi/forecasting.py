@@ -5,7 +5,7 @@ after A8 context approval and explicit model validation. Never a verdict.
 """
 
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 def scenario_distribution(probability: Dict[str, float], scenarios: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
@@ -15,7 +15,7 @@ def scenario_distribution(probability: Dict[str, float], scenarios: Optional[Dic
         "negative": "Negative response",
         "little_response": "Little or no response",
     }
-    distribution = []
+    distribution: List[Dict[str, Any]] = []
     for key, value in probability.items():
         distribution.append({
             "outcome": key,

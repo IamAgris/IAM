@@ -43,7 +43,7 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     return {
         "protected_core_actions": [ADOPT_ACTION, FALLBACK_ACTION],
         "requires_signed_creator_authorization": True,
@@ -54,7 +54,7 @@ async def policy():
 
 
 @router.post("/comparisons")
-async def record_comparison(
+async def record_comparison(  # type: ignore[no-untyped-def]
     payload: ComparisonCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -70,12 +70,12 @@ async def record_comparison(
 
 
 @router.get("/comparisons")
-async def list_comparisons(db: AsyncSession = Depends(get_db_session)):
+async def list_comparisons(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await ModelIndependenceService(db).comparisons()
 
 
 @router.post("/comparisons/{comparison_id}/adopt")
-async def adopt_comparison(
+async def adopt_comparison(  # type: ignore[no-untyped-def]
     comparison_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -91,7 +91,7 @@ async def adopt_comparison(
 
 
 @router.post("/exports")
-async def export_portability(
+async def export_portability(  # type: ignore[no-untyped-def]
     payload: ExportRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -103,12 +103,12 @@ async def export_portability(
 
 
 @router.get("/exports")
-async def list_exports(db: AsyncSession = Depends(get_db_session)):
+async def list_exports(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await ModelIndependenceService(db).exports()
 
 
 @router.post("/fallback")
-async def set_fallback(
+async def set_fallback(  # type: ignore[no-untyped-def]
     payload: FallbackRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -125,5 +125,5 @@ async def set_fallback(
 
 
 @router.get("/fallback")
-async def active_fallback(db: AsyncSession = Depends(get_db_session)):
+async def active_fallback(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await ModelIndependenceService(db).active_fallback()

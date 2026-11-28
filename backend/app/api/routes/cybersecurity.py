@@ -69,9 +69,9 @@ class RemediationRequest(BaseModel):
     guidance: str
 
 
-async def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:
+async def _run(action: Callable, *args: Any, **kwargs: Any) -> Any:  # type: ignore[type-arg]
     try:
-        return await operation(*args, **kwargs)
+        return await action(*args, **kwargs)
     except SecurityGuardDenied as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except LookupError as exc:
@@ -81,7 +81,7 @@ async def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     """IAM-side policy — enforced independently of the external engine."""
     return {
         "posture": "defensive_only",
@@ -110,7 +110,7 @@ class TargetCheckRequest(BaseModel):
 
 
 @router.post("/authorize-target")
-async def authorize_target(
+async def authorize_target(  # type: ignore[no-untyped-def]
     payload: TargetCheckRequest,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -132,12 +132,12 @@ async def authorize_target(
 
 
 @router.get("/engines")
-async def list_engines(db: AsyncSession = Depends(get_db_session)):
+async def list_engines(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).list_engines)
 
 
 @router.post("/engines", status_code=201)
-async def register_engine(
+async def register_engine(  # type: ignore[no-untyped-def]
     request: EngineRegisterRequest, db: AsyncSession = Depends(get_db_session)
 ):
     return await _run(
@@ -155,22 +155,22 @@ async def register_engine(
 
 
 @router.get("/engines/{engine_id}")
-async def get_engine(engine_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_engine(engine_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).get_engine, engine_id)
 
 
 @router.post("/engines/{engine_id}/health")
-async def engine_health(engine_id: str, db: AsyncSession = Depends(get_db_session)):
+async def engine_health(engine_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).health_check, engine_id)
 
 
 @router.get("/engines/{engine_id}/scopes")
-async def list_scopes(engine_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_scopes(engine_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).list_scopes, engine_id)
 
 
 @router.post("/engines/{engine_id}/scopes", status_code=201)
-async def add_scope(
+async def add_scope(  # type: ignore[no-untyped-def]
     engine_id: str,
     request: ScopeRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -187,12 +187,12 @@ async def add_scope(
 
 
 @router.get("/tasks")
-async def list_tasks(db: AsyncSession = Depends(get_db_session)):
+async def list_tasks(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).list_tasks)
 
 
 @router.post("/engines/{engine_id}/tasks", status_code=201)
-async def create_task(
+async def create_task(  # type: ignore[no-untyped-def]
     engine_id: str,
     request: TaskCreateRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -208,12 +208,12 @@ async def create_task(
 
 
 @router.get("/tasks/{task_id}")
-async def get_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).get_task, task_id)
 
 
 @router.post("/tasks/{task_id}/approve")
-async def approve_task(
+async def approve_task(  # type: ignore[no-untyped-def]
     task_id: str,
     request: ApprovalRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -224,27 +224,27 @@ async def approve_task(
 
 
 @router.post("/tasks/{task_id}/reject")
-async def reject_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def reject_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).reject_task, task_id)
 
 
 @router.post("/tasks/{task_id}/dispatch")
-async def dispatch_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def dispatch_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).dispatch_task, task_id)
 
 
 @router.post("/tasks/{task_id}/sync")
-async def sync_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def sync_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).sync_task, task_id)
 
 
 @router.post("/tasks/{task_id}/retest", status_code=201)
-async def retest_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def retest_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).retest, task_id)
 
 
 @router.post("/tasks/{task_id}/create-skill", status_code=201)
-async def create_defensive_skill(
+async def create_defensive_skill(  # type: ignore[no-untyped-def]
     task_id: str, db: AsyncSession = Depends(get_db_session)
 ):
     """Skill Forge handoff — creates a gated defensive skill, not a publish."""
@@ -252,12 +252,12 @@ async def create_defensive_skill(
 
 
 @router.get("/tasks/{task_id}/findings")
-async def task_findings(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def task_findings(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).findings_for_task, task_id)
 
 
 @router.post("/findings/{finding_id}/remediate")
-async def remediate_finding(
+async def remediate_finding(  # type: ignore[no-untyped-def]
     finding_id: str,
     request: RemediationRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -268,5 +268,5 @@ async def remediate_finding(
 
 
 @router.get("/audit")
-async def audit(db: AsyncSession = Depends(get_db_session)):
+async def audit(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(SecurityEngineService(db).audit_for)

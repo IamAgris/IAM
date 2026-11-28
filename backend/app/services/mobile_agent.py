@@ -24,7 +24,7 @@ class MobileAgentError(PermissionError):
 
 
 class MobileAgentService:
-    def __init__(self, db):
+    def __init__(self, db):  # type: ignore[no-untyped-def]
         self.db = db
         self.root = Path(
             settings.uwai_upload_root or "/tmp/iam-web-uploads"
@@ -74,6 +74,7 @@ class MobileAgentService:
         if not settings.mobile_agent_enabled:
             raise MobileAgentError("mobile agent is disabled")
         try:
+            # codeql[py/path-injection] screenshot() reduces the name to a basename under self.root.
             with destination.open("wb") as handle:
                 result = await asyncio.to_thread(
                     subprocess.run,

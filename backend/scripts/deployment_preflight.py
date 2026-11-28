@@ -13,6 +13,7 @@ def main() -> int:
     report = check_deployment()
     for check in report["checks"]:
         marker = {"ok": "OK   ", "blocker": "BLOCK", "warning": "WARN "}[check["status"]]
+        # codeql[py/clear-text-logging-sensitive-data] check_deployment() returns redacted status text and env-var names only.
         print(f"[{marker}] {check['name']}: {check['detail']}")
     print()
     print(f"ready={report['ready']}")

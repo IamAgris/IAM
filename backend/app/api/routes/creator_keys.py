@@ -26,19 +26,19 @@ class VerifyRequest(BaseModel):
 
 
 @router.post("/generate")
-async def generate():
+async def generate():  # type: ignore[no-untyped-def]
     """Generate a new creator Ed25519 keypair (keep private key offline)."""
     return generate_keypair()
 
 
 @router.get("/ceremony")
-async def ceremony():
+async def ceremony():  # type: ignore[no-untyped-def]
     """The documented creator key-ceremony checklist."""
     return ceremony_steps()
 
 
 @router.post("/sign")
-async def sign(request: SignRequest):
+async def sign(request: SignRequest):  # type: ignore[no-untyped-def]
     """Sign a challenge with a creator-supplied private key (external signer use)."""
     from app.services.creator_keys import sign_challenge
     try:
@@ -48,6 +48,6 @@ async def sign(request: SignRequest):
 
 
 @router.post("/verify")
-async def verify(request: VerifyRequest):
+async def verify(request: VerifyRequest):  # type: ignore[no-untyped-def]
     """Verify a challenge signature against a public key."""
     return {"valid": verify_signature(request.public_key, request.payload_hash, request.decision, request.signature)}

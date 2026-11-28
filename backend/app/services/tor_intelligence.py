@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional
 
 from app.core.config import settings
 from app.services.browser_evidence_service import BrowserEvidenceService
+from app.services.path_safety import UnsafePathError, contained_path, safe_child_name
 
 DEFAULT_LOCATIONS = (
     "/opt/tor-browser/Browser/start-tor-browser",
@@ -244,11 +245,18 @@ class TorManager:
             raise TorBrowserNotFound(
                 "official Tor Browser executable not found; refusing proxy-only fallback"
             )
-        profile = self._profile_root() / session_id
+        try:
+            session_id = safe_child_name(session_id)
+            # codeql[py/path-injection] contained_path resolves and enforces the profile root.
+            profile = contained_path(self._profile_root(), session_id)
+        except (UnsafePathError, OSError, ValueError) as exc:
+            raise TorUnavailable("invalid Tor session identifier") from exc
+        # codeql[py/path-injection] profile is a validated child of the profile root.
         profile.mkdir(parents=True, exist_ok=True)
         try:
             handle = await self.launcher.open(profile)
         except Exception:
+            # codeql[py/path-injection] profile is a contained child of the profile root.
             shutil.rmtree(profile, ignore_errors=True)
             raise
         self.sessions[session_id] = {

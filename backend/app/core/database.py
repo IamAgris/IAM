@@ -4,7 +4,7 @@ Engine creation is lazy: importing the app for OpenAPI/schema generation must no
 require a DBAPI driver (which may be blocked by host application-control policies).
 """
 
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -74,7 +74,7 @@ class _LazySessionLocal:
 AsyncSessionLocal = _LazySessionLocal()
 
 
-async def get_db_session() -> AsyncSession:
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get a database session."""
     async with get_session_factory()() as session:
         try:

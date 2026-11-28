@@ -88,7 +88,7 @@ def load_links() -> dict[str, Any]:
 def specs_for(path: str) -> tuple[str, list[str], str]:
     links = load_links()
     default = links.get("default", {})
-    spec = default.get("spec", "IAM_FINAL_CONSOLIDATION.md")
+    spec = default.get("spec", "docs/IAM_FINAL_CONSOLIDATION.md")
     decisions: list[str] = list(default.get("decisions", []))
     area = default.get("area", "general")
     for mapping in links.get("mappings", []):

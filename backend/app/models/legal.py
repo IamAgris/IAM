@@ -16,7 +16,7 @@ from app.core.database import Base
 LIFECYCLE = "discover,authenticate,understand,assess,recommend,authorise,implement,verify"
 
 
-class LegalSource(Base):
+class LegalSource(Base):  # type: ignore[misc]
     __tablename__ = "legal_sources"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -41,7 +41,7 @@ class LegalSource(Base):
     )
 
 
-class LegalInstrument(Base):
+class LegalInstrument(Base):  # type: ignore[misc]
     __tablename__ = "legal_instruments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -75,7 +75,7 @@ class LegalInstrument(Base):
     )
 
 
-class LegalVersion(Base):
+class LegalVersion(Base):  # type: ignore[misc]
     __tablename__ = "legal_versions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -93,7 +93,7 @@ class LegalVersion(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class LegalChange(Base):
+class LegalChange(Base):  # type: ignore[misc]
     __tablename__ = "legal_changes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -130,7 +130,7 @@ class LegalChange(Base):
     )
 
 
-class LegalImpact(Base):
+class LegalImpact(Base):  # type: ignore[misc]
     __tablename__ = "legal_impacts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

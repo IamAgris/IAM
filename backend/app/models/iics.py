@@ -1,6 +1,6 @@
 """IICS foundation records — egress decisions, source rights, action ledger and QA.
 
-Pending proposal (IAM_IICS_GAP_CLOSURE_ADDENDUM.md): overlay modules inside
+Pending proposal (docs/IAM_IICS_GAP_CLOSURE_ADDENDUM.md): overlay modules inside
 existing systems. Nothing here creates a new top-level system or queue.
 """
 

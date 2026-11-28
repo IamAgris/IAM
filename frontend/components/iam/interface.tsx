@@ -9,6 +9,14 @@ import { listConversations, createConversation, getConversationMessages, createC
 
 type Mode = "focus" | "recall" | "create";
 
+const SPEECH_LOCALES: Record<Locale, string> = {
+  en: "en-US",
+  fr: "fr-FR",
+  de: "de-DE",
+  es: "es-ES",
+  zu: "zu-ZA",
+};
+
 interface ProvenanceSource {
   title: string;
   url: string | null;
@@ -843,7 +851,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
       try {
         const SR = (window as any).webkitSpeechRecognition;
         const rec = new SR();
-        rec.lang = "en-US";
+        rec.lang = SPEECH_LOCALES[locale];
         rec.interimResults = false;
         rec.continuous = false;
         rec.onresult = (e: any) => {
@@ -875,6 +883,7 @@ export function IAMInterface({ initialConversationId }: { initialConversationId?
         try {
           const form = new FormData();
           form.append("audio", new Blob(chunks, { type: chunks[0]?.type || "audio/webm" }), "speech.webm");
+          form.append("language", SPEECH_LOCALES[locale]);
           const r = await api.post("/api/v1/voice/speech-to-text", form, {
             headers: { "Content-Type": "multipart/form-data" },
           });

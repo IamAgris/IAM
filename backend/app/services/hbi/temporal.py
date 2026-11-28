@@ -10,7 +10,7 @@ from typing import Any, Dict, List
 from app.services.hbi.chronology import _year
 
 
-def _record_year(record: Dict[str, Any], context_key: str):
+def _record_year(record: Dict[str, Any], context_key: str):  # type: ignore[no-untyped-def]
     dims = record.get("context_dimensions") or {}
     candidates = [
         dims.get(context_key),

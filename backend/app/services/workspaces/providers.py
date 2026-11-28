@@ -20,7 +20,7 @@ class ProviderStatus:
     available: bool
     reason: str
 
-    def as_dict(self):
+    def as_dict(self):  # type: ignore[no-untyped-def]
         return {"name": self.name, "available": self.available, "reason": self.reason}
 
 

@@ -66,7 +66,7 @@ class BrowserService:
         if connected:
             return
         try:
-            await self.stop()
+            await self.stop()  # type: ignore[no-untyped-call]
         except Exception as exc:
             logger.warning(f"Browser cleanup before restart failed: {exc}")
         self._browser = None
@@ -76,15 +76,15 @@ class BrowserService:
         self._tabs.clear()
         self._contexts.clear()
         self._session_meta.clear()
-        await self.start()
+        await self.start()  # type: ignore[no-untyped-call]
 
-    async def start(self):
+    async def start(self):  # type: ignore[no-untyped-def]
         """Launch the browser instance."""
         # The container installs browsers at /ms-playwright. Honour that path
         # even when the environment variable was not passed at container start.
         if os.path.isdir("/ms-playwright") and not os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
             os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/ms-playwright"
-        self._playwright = await async_playwright().start()
+        self._playwright = await async_playwright().start()  # type: ignore[assignment]
         self.transfer_root.mkdir(parents=True, exist_ok=True)
         adapter = get_adapter(self.engine)
         engine = adapter.engine(self._playwright)
@@ -108,7 +108,7 @@ class BrowserService:
         )
         logger.info("Browser service started")
 
-    async def stop(self):
+    async def stop(self):  # type: ignore[no-untyped-def]
         """Close the browser instance and every session context."""
         for token in list(self._contexts):
             await self.close_session(token)
@@ -134,6 +134,7 @@ class BrowserService:
         """Get or create a page in the default browser context."""
         await self._ensure_browser()
         if not self._context:
+            assert self._browser is not None  # _ensure_browser() started it above
             self._context = await self._browser.new_context()
         return await self._context.new_page()
 
@@ -266,7 +267,7 @@ class BrowserService:
         }
 
         try:
-            response = await page.goto(url, wait_until=wait_until, timeout=self.timeout)
+            response = await page.goto(url, wait_until=wait_until, timeout=self.timeout)  # type: ignore[arg-type]
             result["status_code"] = response.status if response else None
             result["title"] = await page.title()
 
@@ -314,6 +315,7 @@ class BrowserService:
         """Open an additional tab inside the same isolated session context."""
         await self._ensure_browser()
         if not self._context:
+            assert self._browser is not None  # _ensure_browser() started it above
             self._context = await self._browser.new_context()
         tab_id = uuid.uuid4().hex[:12]
         self._tabs.setdefault(session_token, {})[tab_id] = await self._context.new_page()
@@ -423,6 +425,7 @@ class BrowserService:
                 return result
 
         try:
+            assert page is not None  # a page is acquired in every branch above
             if action == "navigate":
                 response = await page.goto(target, wait_until="domcontentloaded", timeout=self.timeout)
                 result["result"] = f"Navigated to {target} (status {response.status if response else 'unknown'})"
@@ -489,7 +492,7 @@ class BrowserService:
     async def _extract_metadata(self, page: Page) -> Dict[str, Any]:
         """Extract page metadata (description, author, charset, etc.)."""
         try:
-            return await page.evaluate("""
+            _typed_result: Dict[str, Any] = await page.evaluate("""
                 () => {
                     const meta = {};
                     document.querySelectorAll('meta').forEach(m => {
@@ -502,6 +505,7 @@ class BrowserService:
                     return { meta, author, description: desc, charset: document.characterSet };
                 }
             """)
+            return _typed_result
         except Exception:
             return {}
 

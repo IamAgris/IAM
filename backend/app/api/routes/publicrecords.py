@@ -63,7 +63,7 @@ def _actor(request: Request) -> str:
 
 
 @router.post("/sources")
-async def register_source(
+async def register_source(  # type: ignore[no-untyped-def]
     payload: SourceRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -75,12 +75,12 @@ async def register_source(
 
 
 @router.get("/sources")
-async def list_sources(db: AsyncSession = Depends(get_db_session)):
+async def list_sources(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await PublicRecordsService(db).sources()
 
 
 @router.post("/records")
-async def ingest_record(
+async def ingest_record(  # type: ignore[no-untyped-def]
     payload: RecordRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -92,7 +92,7 @@ async def ingest_record(
 
 
 @router.get("/records")
-async def search_records(
+async def search_records(  # type: ignore[no-untyped-def]
     category: Optional[str] = None,
     jurisdiction: Optional[str] = None,
     subject_name: Optional[str] = None,
@@ -112,7 +112,7 @@ async def search_records(
 
 
 @router.post("/records/{record_id}/cross-reference")
-async def cross_reference(
+async def cross_reference(  # type: ignore[no-untyped-def]
     record_id: str,
     payload: CrossReferenceRequest,
     request: Request,
@@ -133,7 +133,7 @@ async def cross_reference(
 
 
 @router.post("/records/{record_id}/corrections")
-async def correct_record(
+async def correct_record(  # type: ignore[no-untyped-def]
     record_id: str,
     payload: CorrectionRequest,
     request: Request,
@@ -154,7 +154,7 @@ async def correct_record(
 
 
 @router.get("/records/{record_id}/relationships")
-async def relationships(
+async def relationships(  # type: ignore[no-untyped-def]
     record_id: str,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -165,5 +165,5 @@ async def relationships(
 
 
 @router.get("/status")
-async def status(db: AsyncSession = Depends(get_db_session)):
+async def status(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await PublicRecordsService(db).status()

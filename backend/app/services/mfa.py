@@ -153,7 +153,7 @@ class MFAService:
             is_active=True,
         )
         self.db.add(passkey)
-        challenge.consumed_at = datetime.now(timezone.utc)
+        challenge.consumed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.flush()
         await self._audit(actor, "webauthn_passkey_registered", {"rp_id": challenge.rp_id})
         await self.db.commit()
@@ -233,7 +233,7 @@ class MFAService:
             raise MFAError("passkey assertion signature is invalid") from exc
         except (ValueError, TypeError) as exc:
             raise MFAError("assertion data is malformed") from exc
-        challenge.consumed_at = datetime.now(timezone.utc)
+        challenge.consumed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         passkey.last_used_at = challenge.consumed_at
         await self._audit(
             actor, "webauthn_assertion_verified", {"credential_id": credential_id}
@@ -305,7 +305,7 @@ class MFAService:
         if not enrollment:
             raise MFAError("no active TOTP enrollment")
         now = datetime.now(timezone.utc)
-        secret = crypto.decrypt(enrollment.secret_ciphertext)
+        secret = crypto.decrypt(enrollment.secret_ciphertext)  # type: ignore[arg-type]
         valid = any(
             hmac.compare_digest(totp_code(secret, now + timedelta(seconds=step * TOTP_PERIOD)), code)
             for step in (-1, 0, 1)
@@ -316,7 +316,7 @@ class MFAService:
             hashes = list(enrollment.recovery_hashes or [])
             if digest in hashes:
                 hashes.remove(digest)
-                enrollment.recovery_hashes = hashes
+                enrollment.recovery_hashes = hashes  # type: ignore[assignment]
                 used_recovery = True
                 valid = True
         if not valid:
@@ -336,7 +336,7 @@ class MFAService:
         enrollment = result.scalar_one_or_none()
         if not enrollment:
             raise MFAError("no TOTP enrollment")
-        enrollment.is_active = False
+        enrollment.is_active = False  # type: ignore[assignment]
         await self._audit(actor, "totp_disabled", {})
         await self.db.commit()
         return {"disabled": True}

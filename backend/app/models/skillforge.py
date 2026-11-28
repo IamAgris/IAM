@@ -29,7 +29,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class SkillPackage(Base):
+class SkillPackage(Base):  # type: ignore[misc]
     """Registry entry for one skill (native or imported), with its current version."""
 
     __tablename__ = "skillforge_packages"
@@ -95,7 +95,7 @@ class SkillPackage(Base):
     )
 
 
-class SkillVersion(Base):
+class SkillVersion(Base):  # type: ignore[misc]
     """Immutable snapshot of a skill manifest at a given version."""
 
     __tablename__ = "skillforge_versions"
@@ -119,7 +119,7 @@ class SkillVersion(Base):
     )
 
 
-class SkillTestResult(Base):
+class SkillTestResult(Base):  # type: ignore[misc]
     """Evidence produced by the Skill Testing Engine for one version."""
 
     __tablename__ = "skillforge_test_results"
@@ -137,7 +137,7 @@ class SkillTestResult(Base):
     executed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SkillAuditEvent(Base):
+class SkillAuditEvent(Base):  # type: ignore[misc]
     """Append-only audit trail for every Skill Forge state change."""
 
     __tablename__ = "skillforge_audit_events"
@@ -154,7 +154,7 @@ class SkillAuditEvent(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SkillPermissionGrant(Base):
+class SkillPermissionGrant(Base):  # type: ignore[misc]
     """Owner-issued, skill-scoped permission grants.
 
     A skill manifest is descriptive only. Grants live here, outside the skill

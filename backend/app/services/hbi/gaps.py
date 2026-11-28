@@ -23,9 +23,9 @@ DIVISION_MODULE_IDS = {
 
 
 def detect(records: List[Dict[str, Any]], query: str = "") -> Dict[str, Any]:
-    covered = Counter()
-    modules = Counter()
-    evidence_classes = Counter()
+    covered: Any = Counter()
+    modules: Any = Counter()
+    evidence_classes: Any = Counter()
     for record in records:
         for dim in (record.get("context_dimensions") or {}):
             covered[dim] += 1

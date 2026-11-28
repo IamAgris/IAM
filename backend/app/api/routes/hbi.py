@@ -65,7 +65,7 @@ from app.services.hbi.sources import SourceNotAuthorised
 router = APIRouter(prefix="/api/v1/hbi", tags=["human-behaviour-intelligence"])
 
 
-async def _service(db=Depends(get_db_session)) -> AsyncIterator[HBIService]:
+async def _service(db=Depends(get_db_session)) -> AsyncIterator[HBIService]:  # type: ignore[no-untyped-def]
     """Commit knowledge and audit writes only on a successful request."""
     service = HBIService(db)
     try:
@@ -82,12 +82,12 @@ def _translate(error: GovernanceRefusal) -> HTTPException:
 
 
 @router.get("/status")
-async def status():
+async def status():  # type: ignore[no-untyped-def]
     return HBIService().status()
 
 
 @router.post("/knowledge/records")
-async def add_record(request: KnowledgeRecordInput, service: HBIService = Depends(_service)):
+async def add_record(request: KnowledgeRecordInput, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Store a graded epistemic object with provenance and epistemic discipline."""
     try:
         return await service.add_record(request)
@@ -96,13 +96,13 @@ async def add_record(request: KnowledgeRecordInput, service: HBIService = Depend
 
 
 @router.post("/knowledge/ingest")
-async def ingest(request: ResearchDocumentInput, service: HBIService = Depends(_service)):
+async def ingest(request: ResearchDocumentInput, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Ingest a licensed document; weak or unlicensed material is quarantined."""
     return await service.ingest(request)
 
 
 @router.get("/knowledge/records")
-async def search_records(
+async def search_records(  # type: ignore[no-untyped-def]
     scope: Optional[Scope] = None,
     tier: Optional[str] = None,
     epistemic_type: Optional[str] = None,
@@ -123,13 +123,13 @@ async def search_records(
 
 
 @router.get("/knowledge/quarantine")
-async def quarantine(service: HBIService = Depends(_service)):
+async def quarantine(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """List quarantined material; it is never promoted silently."""
     return service.quarantine()
 
 
 @router.post("/analysis")
-async def analyse(request: AnalysisRequest, service: HBIService = Depends(_service)):
+async def analyse(request: AnalysisRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     try:
         return await service.analyse(request)
     except GovernanceRefusal as error:
@@ -137,7 +137,7 @@ async def analyse(request: AnalysisRequest, service: HBIService = Depends(_servi
 
 
 @router.post("/research/search")
-async def research(request: ResearchRequest, service: HBIService = Depends(_service)):
+async def research(request: ResearchRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     try:
         return await service.research(request)
     except GovernanceRefusal as error:
@@ -145,7 +145,7 @@ async def research(request: ResearchRequest, service: HBIService = Depends(_serv
 
 
 @router.post("/predictions")
-async def predict(request: PredictionRequest, service: HBIService = Depends(_service)):
+async def predict(request: PredictionRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Phase 1 returns a structured A8 refusal, never an unverified forecast."""
     try:
         return await service.predict(request)
@@ -154,27 +154,27 @@ async def predict(request: PredictionRequest, service: HBIService = Depends(_ser
 
 
 @router.get("/gaps")
-async def gaps(query: str = "", service: HBIService = Depends(_service)):
+async def gaps(query: str = "", service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return await service.gaps(query)
 
 
 @router.post("/contradictions/detect")
-async def contradictions(service: HBIService = Depends(_service)):
+async def contradictions(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return await service.detect_contradictions()
 
 
 @router.post("/chronology/resolve")
-async def chronology(request: ChronologyInput, service: HBIService = Depends(_service)):
+async def chronology(request: ChronologyInput, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return service.resolve_chronology(request)
 
 
 @router.get("/modules")
-async def list_modules(service: HBIService = Depends(_service)):
+async def list_modules(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return service.list_modules()
 
 
 @router.post("/modules/{module_id}/analyse")
-async def analyse_module(module_id: int, request: ModuleAnalysisRequest,
+async def analyse_module(module_id: int, request: ModuleAnalysisRequest,  # type: ignore[no-untyped-def]
                          service: HBIService = Depends(_service)):
     try:
         return await service.analyse_module(module_id, request)
@@ -183,7 +183,7 @@ async def analyse_module(module_id: int, request: ModuleAnalysisRequest,
 
 
 @router.post("/temporal")
-async def temporal(request: TemporalRequest, service: HBIService = Depends(_service)):
+async def temporal(request: TemporalRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     try:
         return await service.temporal(request)
     except GovernanceRefusal as error:
@@ -191,13 +191,13 @@ async def temporal(request: TemporalRequest, service: HBIService = Depends(_serv
 
 
 @router.get("/sources")
-async def list_sources(service: HBIService = Depends(_service)):
+async def list_sources(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """List explicitly authorised public sources."""
     return service.list_sources()
 
 
 @router.post("/sources/register")
-async def register_source(request: SourceRegisterRequest, service: HBIService = Depends(_service)):
+async def register_source(request: SourceRegisterRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Register a domain with a licence and permitted purpose before fetching."""
     try:
         return service.register_source(request)
@@ -206,7 +206,7 @@ async def register_source(request: SourceRegisterRequest, service: HBIService = 
 
 
 @router.post("/sources/fetch")
-async def fetch_source(url: str, service: HBIService = Depends(_service)):
+async def fetch_source(url: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Fetch from an allowlisted source via the robots-respecting transport."""
     try:
         return service.fetch_source(url, http_fetch)
@@ -217,13 +217,13 @@ async def fetch_source(url: str, service: HBIService = Depends(_service)):
 
 
 @router.post("/backtest")
-async def backtest(request: BacktestRequest, service: HBIService = Depends(_service)):
+async def backtest(request: BacktestRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Leakage-free retrospective forecast with scoring."""
     return service.backtest(request)
 
 
 @router.post("/models/validate")
-async def validate_model(model_id: str, request: BacktestRequest,
+async def validate_model(model_id: str, request: BacktestRequest,  # type: ignore[no-untyped-def]
                          service: HBIService = Depends(_service)):
     """Validate a model against backtests before permitting emission."""
     from app.services.hbi.prediction import HistoricalCase
@@ -241,7 +241,7 @@ async def validate_model(model_id: str, request: BacktestRequest,
 
 
 @router.post("/research/self-directed")
-async def self_directed_research(query: str, purpose: str,
+async def self_directed_research(query: str, purpose: str,  # type: ignore[no-untyped-def]
                                  service: HBIService = Depends(_service)):
     """A1: turn knowledge gaps into candidate research directions."""
     try:
@@ -251,14 +251,14 @@ async def self_directed_research(query: str, purpose: str,
 
 
 @router.post("/theories/compare")
-async def compare_theories(request: TheoryComparisonRequest,
+async def compare_theories(request: TheoryComparisonRequest,  # type: ignore[no-untyped-def]
                            service: HBIService = Depends(_service)):
     """A2: compare competing theories on held-out cases."""
     return service.compare_theories(request)
 
 
 @router.post("/hypotheses/generate")
-async def generate_hypotheses(purpose: str, service: HBIService = Depends(_service)):
+async def generate_hypotheses(purpose: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """A3: generate falsifiable hypotheses, stored as hypothesis records."""
     try:
         return await service.generate_hypotheses(purpose)
@@ -267,25 +267,25 @@ async def generate_hypotheses(purpose: str, service: HBIService = Depends(_servi
 
 
 @router.post("/history/analogy")
-async def analogy(request: AnalogyRequest, service: HBIService = Depends(_service)):
+async def analogy(request: AnalogyRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """A4: score a historical analogy and allow a weak/misleading verdict."""
     return service.analogy(request)
 
 
 @router.post("/predictions/evaluate")
-async def evaluate_prediction(request: PredictionEvaluationRequest,
+async def evaluate_prediction(request: PredictionEvaluationRequest,  # type: ignore[no-untyped-def]
                               service: HBIService = Depends(_service)):
     """A5: diagnose prediction error without rewriting the original."""
     return service.evaluate_prediction(request)
 
 
 @router.post("/history/graph/nodes")
-async def add_graph_node(request: GraphNodeRequest, service: HBIService = Depends(_service)):
+async def add_graph_node(request: GraphNodeRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return await service.add_graph_node(request)
 
 
 @router.post("/history/graph/edges")
-async def add_graph_edge(request: GraphEdgeRequest, service: HBIService = Depends(_service)):
+async def add_graph_edge(request: GraphEdgeRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     try:
         return await service.add_graph_edge(request)
     except ValueError as error:
@@ -293,7 +293,7 @@ async def add_graph_edge(request: GraphEdgeRequest, service: HBIService = Depend
 
 
 @router.get("/history/graph/query")
-async def query_graph(node_type: Optional[str] = None, period: Optional[str] = None,
+async def query_graph(node_type: Optional[str] = None, period: Optional[str] = None,  # type: ignore[no-untyped-def]
                       region: Optional[str] = None, relation: Optional[str] = None,
                       keyword: Optional[str] = None, limit: int = 50,
                       service: HBIService = Depends(_service)):
@@ -302,7 +302,7 @@ async def query_graph(node_type: Optional[str] = None, period: Optional[str] = N
 
 
 @router.get("/history/graph/{node_ref}/expand")
-async def expand_graph(node_ref: str, depth: int = 1,
+async def expand_graph(node_ref: str, depth: int = 1,  # type: ignore[no-untyped-def]
                        service: HBIService = Depends(_service)):
     try:
         return service.expand_graph(node_ref, depth)
@@ -311,20 +311,20 @@ async def expand_graph(node_ref: str, depth: int = 1,
 
 
 @router.post("/history/timeline/ingest")
-async def ingest_timeline(request: ChronologyInput, service: HBIService = Depends(_service)):
+async def ingest_timeline(request: ChronologyInput, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Materialise E13 chronology output into the historical knowledge graph."""
     return await service.ingest_timeline(request)
 
 
 @router.post("/reasoning/cross-disciplinary")
-async def cross_disciplinary(request: CrossDisciplinaryRequest,
+async def cross_disciplinary(request: CrossDisciplinaryRequest,  # type: ignore[no-untyped-def]
                              service: HBIService = Depends(_service)):
     """A6: fuse graded claims from multiple disciplines without dominance."""
     return service.cross_disciplinary(request)
 
 
 @router.post("/knowledge/revise")
-async def revise(request: RevisionRequest, service: HBIService = Depends(_service)):
+async def revise(request: RevisionRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """A7: supersede a record with a new version, preserving the old one."""
     try:
         return await service.revise(request)
@@ -333,7 +333,7 @@ async def revise(request: RevisionRequest, service: HBIService = Depends(_servic
 
 
 @router.post("/knowledge/deprecate")
-async def deprecate(request: DeprecateRequest, service: HBIService = Depends(_service)):
+async def deprecate(request: DeprecateRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     try:
         return service.deprecate(request)
     except ValueError as error:
@@ -341,12 +341,12 @@ async def deprecate(request: DeprecateRequest, service: HBIService = Depends(_se
 
 
 @router.get("/knowledge/{record_ref}/lineage")
-async def lineage(record_ref: str, service: HBIService = Depends(_service)):
+async def lineage(record_ref: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return service.lineage(record_ref)
 
 
 @router.post("/uncertainty/assess")
-async def uncertainty(query: str, purpose: str, service: HBIService = Depends(_service)):
+async def uncertainty(query: str, purpose: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """A8: decide whether the question is reliably predictable at all."""
     try:
         return service.uncertainty_assessment(query, purpose)
@@ -355,13 +355,13 @@ async def uncertainty(query: str, purpose: str, service: HBIService = Depends(_s
 
 
 @router.post("/manipulation/analyse")
-async def manipulation(request: ManipulationRequest, service: HBIService = Depends(_service)):
+async def manipulation(request: ManipulationRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Defensive recognition of manipulation patterns in supplied text."""
     return service.analyse_manipulation(request)
 
 
 @router.post("/behaviour/forecast")
-async def forecast(request: ForecastRequest, service: HBIService = Depends(_service)):
+async def forecast(request: ForecastRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Module 13: probability distribution over scenarios, gated by A8 and validation."""
     try:
         return await service.forecast(request)
@@ -370,7 +370,7 @@ async def forecast(request: ForecastRequest, service: HBIService = Depends(_serv
 
 
 @router.post("/history/modules/{module_id}/analyse")
-async def historical_module(module_id: int, question: str, purpose: str = "historical_research",
+async def historical_module(module_id: int, question: str, purpose: str = "historical_research",  # type: ignore[no-untyped-def]
                             service: HBIService = Depends(_service)):
     """Modules 16–23: historical analysis with preserved contested evidence."""
     try:
@@ -380,20 +380,20 @@ async def historical_module(module_id: int, question: str, purpose: str = "histo
 
 
 @router.post("/history/analogy/evaluate")
-async def evaluate_analogies(request: AnalogyEvaluationRequest,
+async def evaluate_analogies(request: AnalogyEvaluationRequest,  # type: ignore[no-untyped-def]
                              service: HBIService = Depends(_service)):
     """Measure whether strong analogies actually predicted documented outcomes."""
     return service.evaluate_analogies(request)
 
 
 @router.get("/causal/assess")
-async def causal(question: str, service: HBIService = Depends(_service)):
+async def causal(question: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Return whether causal language is permitted for this question."""
     return service.causal(question)
 
 
 @router.post("/history/civilisation/analyse")
-async def civilisation(question: str, purpose: str = "historical_research",
+async def civilisation(question: str, purpose: str = "historical_research",  # type: ignore[no-untyped-def]
                        service: HBIService = Depends(_service)):
     """Module 27: multi-factor development and decline analysis."""
     try:
@@ -403,20 +403,20 @@ async def civilisation(question: str, purpose: str = "historical_research",
 
 
 @router.post("/knowledge/ingest/multilingual")
-async def ingest_multilingual(request: MultilingualIngestRequest,
+async def ingest_multilingual(request: MultilingualIngestRequest,  # type: ignore[no-untyped-def]
                               service: HBIService = Depends(_service)):
     """Batch ingestion with language/script detection and duplicate screening."""
     return await service.ingest_multilingual(request)
 
 
 @router.post("/acceptance/run")
-async def run_acceptance(service: HBIService = Depends(_service)):
+async def run_acceptance(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Run all §11.7 acceptance gates; a failed gate blocks promotion."""
     return await service.run_acceptance()
 
 
 @router.post("/knowledge/corpus/ingest")
-async def ingest_corpus(request: CorpusIngestRequest, service: HBIService = Depends(_service)):
+async def ingest_corpus(request: CorpusIngestRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Ingest a local corpus; every source must first pass the fail-closed gate."""
     try:
         return await service.ingest_corpus(request)
@@ -425,120 +425,120 @@ async def ingest_corpus(request: CorpusIngestRequest, service: HBIService = Depe
 
 
 @router.post("/knowledge/corpus/review")
-async def review_corpus_source(request: CorpusReviewRequest,
+async def review_corpus_source(request: CorpusReviewRequest,  # type: ignore[no-untyped-def]
                                service: HBIService = Depends(_service)):
     """Approve, reject or quarantine a source with an auditable reason."""
     return service.review_corpus_source(request)
 
 
 @router.get("/knowledge/corpus/state")
-async def corpus_state(service: HBIService = Depends(_service)):
+async def corpus_state(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Overall corpus state: not_validated, validated or restricted."""
     return service.corpus_state()
 
 
 @router.get("/knowledge/corpus/audit")
-async def corpus_audit(service: HBIService = Depends(_service)):
+async def corpus_audit(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Who approved a source, when, and which rules were applied."""
     return service.corpus_audit()
 
 
 @router.post("/knowledge/corpus/restrict")
-async def restrict_corpus_source(request: CorpusRestrictionRequest,
+async def restrict_corpus_source(request: CorpusRestrictionRequest,  # type: ignore[no-untyped-def]
                                  service: HBIService = Depends(_service)):
     """Suspend a previously accepted source and record the reason."""
     return service.restrict_corpus_source(request)
 
 
 @router.post("/knowledge/corpus/training-request")
-async def training_request(request: TrainingRequest, service: HBIService = Depends(_service)):
+async def training_request(request: TrainingRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Pipeline 3: request training rights for an approved source."""
     return service.request_training(request)
 
 
 @router.post("/knowledge/corpus/training-approve")
-async def training_approve(request: TrainingApprovalRequest,
+async def training_approve(request: TrainingApprovalRequest,  # type: ignore[no-untyped-def]
                            service: HBIService = Depends(_service)):
     """Independent approval required; ingestion approval is not sufficient."""
     return service.approve_training(request)
 
 
 @router.get("/knowledge/corpus/training-approved")
-async def training_approved(service: HBIService = Depends(_service)):
+async def training_approved(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Sources whose model-training rights have been independently approved."""
     return service.training_approved()
 
 
 @router.post("/research/partnerships")
-async def add_partnership(request: PartnershipRequest, service: HBIService = Depends(_service)):
+async def add_partnership(request: PartnershipRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Record a research partnership request, including training-right negotiation."""
     return service.add_partnership(request)
 
 
 @router.get("/research/partnerships")
-async def list_partnerships(service: HBIService = Depends(_service)):
+async def list_partnerships(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return service.list_partnerships()
 
 
 @router.get("/research/legal-context")
-async def legal_context(service: HBIService = Depends(_service)):
+async def legal_context(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Owner-supplied legal context; unverified until counsel records a reference."""
     return service.legal_context()
 
 
 @router.post("/research/legal-context/verify")
-async def verify_legal_context(request: LegalContextVerificationRequest,
+async def verify_legal_context(request: LegalContextVerificationRequest,  # type: ignore[no-untyped-def]
                                service: HBIService = Depends(_service)):
     """Record counsel verification of a legal-context entry."""
     return service.verify_legal_context(request)
 
 
 @router.get("/research/permission-audit")
-async def permission_audit(service: HBIService = Depends(_service)):
+async def permission_audit(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Audit of training, partnership and legal-context decisions."""
     return service.permission_audit()
 
 
 @router.post("/models/calibrate-sources")
-async def calibrate_sources(request: SourceCalibrationRequest,
+async def calibrate_sources(request: SourceCalibrationRequest,  # type: ignore[no-untyped-def]
                             service: HBIService = Depends(_service)):
     """Learn empirical source reliability from labelled outcomes."""
     return service.calibrate_sources(request)
 
 
 @router.get("/backtest/library")
-async def backtest_library(service: HBIService = Depends(_service)):
+async def backtest_library(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Inspect the versioned backtest case library and its provenance status."""
     return service.backtest_library()
 
 
 @router.post("/models/validate-library")
-async def validate_library(model_id: str = "ensemble",
+async def validate_library(model_id: str = "ensemble",  # type: ignore[no-untyped-def]
                            service: HBIService = Depends(_service)):
     """Validate a model on the illustrative fixture library."""
     return service.validate_on_library(model_id)
 
 
 @router.post("/governance/dual-use/review")
-async def dual_use_review(request: DualUseRequest, service: HBIService = Depends(_service)):
+async def dual_use_review(request: DualUseRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Classify a capability before deployment; prohibited capabilities are blocked."""
     return service.dual_use_review(request)
 
 
 @router.get("/governance/dpia")
-async def dpia(service: HBIService = Depends(_service)):
+async def dpia(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Technical DPIA input for an authorised reviewer; not legal clearance."""
     return service.dpia()
 
 
 @router.post("/governance/oversight/check")
-async def oversight(request: OversightRequest, service: HBIService = Depends(_service)):
+async def oversight(request: OversightRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Consequential decisions always require an accountable human reviewer."""
     return service.oversight(request)
 
 
 @router.post("/governance/dpia/signoff")
-async def sign_off_dpia(request: DPIASignoffRequest, service: HBIService = Depends(_service)):
+async def sign_off_dpia(request: DPIASignoffRequest, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Record an authorised reviewer's DPIA decision."""
     try:
         return await service.sign_off_dpia(request)
@@ -547,106 +547,106 @@ async def sign_off_dpia(request: DPIASignoffRequest, service: HBIService = Depen
 
 
 @router.post("/governance/deployment/readiness")
-async def deployment_readiness(config: Dict[str, Any] = Body(default_factory=dict),
+async def deployment_readiness(config: Dict[str, Any] = Body(default_factory=dict),  # type: ignore[no-untyped-def]
                                service: HBIService = Depends(_service)):
     """Go/no-go check for production activation; IAM cannot self-approve."""
     return await service.deployment_readiness(config)
 
 
 @router.get("/validation/cases")
-async def validation_cases(service: HBIService = Depends(_service)):
+async def validation_cases(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Derive leakage-safe backtest cases from graded, dated records only."""
     return service.validation_cases()
 
 
 @router.get("/validation/bias")
-async def validation_bias(service: HBIService = Depends(_service)):
+async def validation_bias(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Measure performance disparities across recorded populations."""
     return service.validation_bias()
 
 
 @router.get("/validation/report")
-async def validation_report(model_id: str = "ensemble",
+async def validation_report(model_id: str = "ensemble",  # type: ignore[no-untyped-def]
                             service: HBIService = Depends(_service)):
     """Validation verdict; refuses to claim validation without real evidence."""
     return service.validation_report(model_id)
 
 
 @router.get("/validation/corpus-readiness")
-async def corpus_readiness(service: HBIService = Depends(_service)):
+async def corpus_readiness(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Report whether licensed corpus evidence — not fixtures — is available."""
     return service.corpus_readiness()
 
 
 @router.get("/lifecycle/drift")
-async def drift(service: HBIService = Depends(_service)):
+async def drift(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Detect confidence drift across dated periods."""
     return service.drift_report()
 
 
 @router.get("/lifecycle/re-evaluation")
-async def re_evaluation(service: HBIService = Depends(_service)):
+async def re_evaluation(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """List models needing periodic re-evaluation."""
     return service.re_evaluation_plan()
 
 
 @router.post("/lifecycle/rollback-drill")
-async def rollback_drill(model_id: str = "ensemble",
+async def rollback_drill(model_id: str = "ensemble",  # type: ignore[no-untyped-def]
                          service: HBIService = Depends(_service)):
     """Exercise rollback without promoting an unvalidated model."""
     return service.rollback_drill(model_id)
 
 
 @router.get("/ecosystem/channels")
-async def channels(service: HBIService = Depends(_service)):
+async def channels(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """The twelve acquisition channels."""
     return service.acquisition_channels()
 
 
 @router.get("/ecosystem/targets")
-async def targets(service: HBIService = Depends(_service)):
+async def targets(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Discovery targets; all terms unverified until counsel review."""
     return service.discovery_targets()
 
 
 @router.post("/ecosystem/targets/verify")
-async def verify_target(request: TargetVerificationRequest,
+async def verify_target(request: TargetVerificationRequest,  # type: ignore[no-untyped-def]
                         service: HBIService = Depends(_service)):
     return service.verify_target(request)
 
 
 @router.get("/ecosystem/classify/{source_id}")
-async def classify_source(source_id: str, service: HBIService = Depends(_service)):
+async def classify_source(source_id: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Classify a source as A training / B research / C retrieval / D restricted / E prohibited."""
     return service.source_classification(source_id)
 
 
 @router.get("/ecosystem/enforce/{source_id}")
-async def enforce(source_id: str, action: str, service: HBIService = Depends(_service)):
+async def enforce(source_id: str, action: str, service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     """Central legal enforcement gate for a specific action."""
     return service.enforce(source_id, action)
 
 
 @router.post("/ecosystem/contributions")
-async def add_contribution(request: ContributionRequest,
+async def add_contribution(request: ContributionRequest,  # type: ignore[no-untyped-def]
                            service: HBIService = Depends(_service)):
     return service.add_contribution(request)
 
 
 @router.get("/ecosystem/contributions")
-async def list_contributions(service: HBIService = Depends(_service)):
+async def list_contributions(service: HBIService = Depends(_service)):  # type: ignore[no-untyped-def]
     return service.list_contributions()
 
 
 @router.post("/ecosystem/federated")
-async def federated_request(request: FederatedRequest,
+async def federated_request(request: FederatedRequest,  # type: ignore[no-untyped-def]
                             service: HBIService = Depends(_service)):
     """Request analysis in place; raw source data is never transferred."""
     return service.federated_request(request)
 
 
 @router.post("/ecosystem/federated/approve")
-async def federated_approve(request: FederatedApprovalRequest,
+async def federated_approve(request: FederatedApprovalRequest,  # type: ignore[no-untyped-def]
                             service: HBIService = Depends(_service)):
     return service.federated_approve(request)
 

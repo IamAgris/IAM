@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class GeoProvider(Base):
+class GeoProvider(Base):  # type: ignore[misc]
     __tablename__ = "geo_providers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,7 +38,7 @@ class GeoProvider(Base):
     )
 
 
-class GeoPlace(Base):
+class GeoPlace(Base):  # type: ignore[misc]
     __tablename__ = "geo_places"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -60,7 +60,7 @@ class GeoPlace(Base):
     )
 
 
-class GeoDataFile(Base):
+class GeoDataFile(Base):  # type: ignore[misc]
     __tablename__ = "geo_data_files"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -73,7 +73,7 @@ class GeoDataFile(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class LiveGeoFeed(Base):
+class LiveGeoFeed(Base):  # type: ignore[misc]
     __tablename__ = "live_geo_feeds"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -96,7 +96,7 @@ class LiveGeoFeed(Base):
     )
 
 
-class MapTileCache(Base):
+class MapTileCache(Base):  # type: ignore[misc]
     __tablename__ = "map_tile_cache"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -111,7 +111,7 @@ class MapTileCache(Base):
     fetched_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class LocationPermission(Base):
+class LocationPermission(Base):  # type: ignore[misc]
     __tablename__ = "location_permissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

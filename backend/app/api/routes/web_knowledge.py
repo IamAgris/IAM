@@ -53,7 +53,7 @@ def _fail(exc: WebsiteKnowledgeError) -> HTTPException:
 
 
 @router.post("")
-async def create_knowledge(
+async def create_knowledge(  # type: ignore[no-untyped-def]
     payload: KnowledgeCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -81,13 +81,13 @@ async def create_knowledge(
 
 
 @router.get("")
-async def list_knowledge(db: AsyncSession = Depends(get_db_session)):
+async def list_knowledge(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all website knowledge records."""
     return await WebsiteKnowledgeService(db).list()
 
 
 @router.get("/{knowledge_id}")
-async def get_knowledge(knowledge_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_knowledge(knowledge_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single website knowledge record by ID."""
     try:
         return await WebsiteKnowledgeService(db).get(knowledge_id)
@@ -96,7 +96,7 @@ async def get_knowledge(knowledge_id: str, db: AsyncSession = Depends(get_db_ses
 
 
 @router.patch("/{knowledge_id}")
-async def update_knowledge(
+async def update_knowledge(  # type: ignore[no-untyped-def]
     knowledge_id: str,
     payload: KnowledgeUpdate,
     request: Request,
@@ -127,13 +127,13 @@ async def update_knowledge(
 
 
 @router.delete("/{knowledge_id}")
-async def delete_knowledge(
+async def delete_knowledge(  # type: ignore[no-untyped-def]
     knowledge_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Delete website knowledge."""
     try:
-        return await WebsiteKnowledgeService(db).delete(knowledge_id, actor=_actor(request))
+        return await WebsiteKnowledgeService(db).delete(knowledge_id)
     except ValueError as exc:
         raise HTTPException(404, str(exc)) from exc

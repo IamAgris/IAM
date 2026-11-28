@@ -254,27 +254,27 @@ async def web3_broadcast(
 
 @nodes_router.get("/policy")
 async def nodes_policy():
-    return NodeService().policy()
+    return NodeService().policy()  # type: ignore[no-untyped-call]
 
 
 @nodes_router.get("/bitcoin")
 async def nodes_bitcoin():
-    return await NodeService().bitcoin_report()
+    return await NodeService().bitcoin_report()  # type: ignore[no-untyped-call]
 
 
 @nodes_router.get("/lightning")
 async def nodes_lightning():
-    return await NodeService().lightning_report()
+    return await NodeService().lightning_report()  # type: ignore[no-untyped-call]
 
 
 @nodes_router.get("/compare")
 async def nodes_compare():
-    return await NodeService().compare()
+    return await NodeService().compare()  # type: ignore[no-untyped-call]
 
 
 @nodes_router.get("/health")
 async def nodes_health():
-    return await NodeService().health()
+    return await NodeService().health()  # type: ignore[no-untyped-call]
 
 
 @nodes_router.post("/lnd/invoices")

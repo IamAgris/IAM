@@ -10,7 +10,7 @@ from typing import Any, Dict, List
 
 def learn_source_weights(cases: List[Dict[str, Any]], min_n: int = 3) -> Dict[str, Dict[str, Any]]:
     """Learn per-source-type reliability from labelled, licensed outcomes."""
-    groups = defaultdict(lambda: {"n": 0, "successes": 0})
+    groups: Any = defaultdict(lambda: {"n": 0, "successes": 0})
     for case in cases:
         source_type = str(case.get("source_type") or "unknown")
         groups[source_type]["n"] += 1

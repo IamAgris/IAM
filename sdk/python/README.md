@@ -1,15 +1,12 @@
-# iam-sdk (Python)
+# iamagris-sdk (Python)
 
-Official Python client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
+Official Python client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
 
-Python 3.11+. Published to the GitHub Packages Python registry; authenticate with a token that has `read:packages`:
+Python 3.11+. Published to PyPI:
 
 ```bash
-pip install --index-url https://pypi.pkg.github.com/IamAgris iam-sdk \
-  --extra-index-url https://pypi.org/simple
+pip install iamagris-sdk
 ```
-
-`--extra-index-url` is needed for dependencies such as `httpx`, which are not mirrored in GitHub Packages.
 
 ```python
 import asyncio
@@ -28,7 +25,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Same protocol and conceptual surface as `@iam/sdk`: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`, `creator`, `integrity`, `uwaie`, `public_records`, `legal`, `geo`, `human_presence`, `assistant_lab`, `free_sandbox`. Scoped bearer tokens, version negotiation, controlled retries, offline task queue with `tasks.flush_queue()`. No database access and no protected-core modification.
+Same protocol and conceptual surface as `@iamagris/sdk`: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`, `creator`, `integrity`, `uwaie`, `public_records`, `legal`, `geo`, `human_presence`, `assistant_lab`, `free_sandbox`. Scoped bearer tokens, version negotiation, controlled retries, offline task queue with `tasks.flush_queue()`. No database access and no protected-core modification.
 
 ## Creator CLI (no email dependency)
 

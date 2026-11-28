@@ -1,0 +1,40 @@
+{
+  "file_size": 1929903008,
+  "gguf_version": 3,
+  "qk_norm_tensor_names": [],
+  "selected_metadata": {
+    "general.architecture": "qwen2",
+    "general.file_type": 15,
+    "general.parameter_count": null,
+    "qwen2.attention.head_count": 16,
+    "qwen2.attention.head_count_kv": 2,
+    "qwen2.block_count": 36,
+    "qwen2.context_length": 32768,
+    "qwen2.embedding_length": 2048,
+    "qwen2.feed_forward_length": 11008,
+    "tokenizer.ggml.bos_token_id": 151643,
+    "tokenizer.ggml.eos_token_id": 151645
+  },
+  "source": "C:\\Users\\kagis\\AppData\\Local\\Temp\\opencode\\llmasm-audit\\qwen25_3b_model.gguf",
+  "special_token_ids": {
+    "</tool_call>": 151658,
+    "<tool_call>": 151657,
+    "<|endoftext|>": 151643,
+    "<|im_end|>": 151645,
+    "<|im_start|>": 151644
+  },
+  "standalone_output_weight_present": false,
+  "tensor_count": 434,
+  "tensor_dims": {
+    "token_embd.weight": [
+      2048,
+      151936
+    ]
+  },
+  "tensor_sha256": {
+    "token_embd.weight": "86dbc3e9b2035ef30496653a1b1ab2edc931949250ce25c56cd12b50b117eea4"
+  },
+  "tied_embedding_consistent_with_gguf": true,
+  "tied_embedding_note": "GGUF has no standalone output.weight; only token_embd.weight is present. This is consistent with tied embeddings (no separate tensor to hash).",
+  "vocab_size_from_tokens_array": 151936
+}

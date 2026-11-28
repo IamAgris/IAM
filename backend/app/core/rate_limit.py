@@ -13,7 +13,7 @@ from typing import Dict, Tuple
 class RateLimiter:
     def __init__(self, default_limit: int = 120):
         self.default_limit = default_limit
-        self._events: Dict[str, deque] = defaultdict(deque)
+        self._events: Dict[str, deque] = defaultdict(deque)  # type: ignore[type-arg]
 
     def check(self, key: str, limit: int | None = None) -> Tuple[bool, int]:
         """Return (allowed, retry_after_seconds)."""
@@ -45,7 +45,7 @@ class RedisRateLimiter:
         import redis.asyncio as redis
 
         limit = limit or self.default_limit
-        client = redis.from_url(self.url, decode_responses=True)
+        client = redis.from_url(self.url, decode_responses=True)  # type: ignore[no-untyped-call]
         now = time.time()
         member = f"{now}-{uuid.uuid4().hex}"
         try:

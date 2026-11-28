@@ -71,7 +71,7 @@ async def verify_protected_deployment(
     for authorization in authorizations.scalars().all():
         if authorization.target_ref != str(project_uuid):
             continue
-        if authorization.revoked_at or not _not_expired(authorization.expires_at):
+        if authorization.revoked_at or not _not_expired(authorization.expires_at):  # type: ignore[arg-type]
             continue
         authority = await approvals.check_authorization(
             PROTECTED_DEPLOY_ACTION, target_ref=str(project_uuid)

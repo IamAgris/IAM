@@ -25,7 +25,7 @@ class InvokeRequest(BaseModel):
     arguments: Dict[str, Any] = Field(default_factory=dict)
 
 
-async def _run(request: Request, operation: Callable, *args: Any, **kwargs: Any) -> Any:
+async def _run(request: Request, operation: Callable, *args: Any, **kwargs: Any) -> Any:  # type: ignore[type-arg]
     try:
         return await operation(*args, **kwargs)
     except SkillRuntimeRateLimited as exc:
@@ -39,7 +39,7 @@ async def _run(request: Request, operation: Callable, *args: Any, **kwargs: Any)
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     return {
         "enabled": settings.skill_runtime_enabled,
         "adapter": settings.skill_runtime_adapter,
@@ -64,7 +64,7 @@ async def policy():
 
 
 @router.get("/capabilities/{skill_id}")
-async def capabilities(
+async def capabilities(  # type: ignore[no-untyped-def]
     skill_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -73,7 +73,7 @@ async def capabilities(
 
 
 @router.post("/invoke")
-async def invoke(
+async def invoke(  # type: ignore[no-untyped-def]
     payload: InvokeRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -92,7 +92,7 @@ async def invoke(
 
 
 @router.get("/executions/{execution_id}/logs")
-async def execution_logs(
+async def execution_logs(  # type: ignore[no-untyped-def]
     execution_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -101,7 +101,7 @@ async def execution_logs(
 
 
 @router.get("/executions")
-async def executions(
+async def executions(  # type: ignore[no-untyped-def]
     request: Request,
     skill_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),

@@ -98,7 +98,7 @@ class WebKnowledgeIntegrationService:
     ) -> Dict[str, Any]:
         """Create a proposal; never write to memory or knowledge here."""
         verification = await self.verify_sources(claim, sources, task_id)
-        legal = await IPLCIService(self.db).gate_check(
+        legal = await IPLCIService(self.db).gate_check(  # type: ignore[arg-type]
             {
                 "operation": "store",
                 "source_id": legal_source_id,
@@ -155,7 +155,7 @@ class WebKnowledgeIntegrationService:
         rows = result.scalars().all() if hasattr(result, "scalars") else result.all()
         if status:
             rows = [row for row in rows if row.status == status]
-        return [self._row_dict(row) for row in rows]
+        return [self._row_dict(row) for row in rows]  # type: ignore[arg-type]
 
     async def approve(self, proposal_id: str, actor: str) -> Dict[str, Any]:
         """Signed Creator approval produces a promotion payload, not a silent write."""
@@ -175,10 +175,10 @@ class WebKnowledgeIntegrationService:
             raise WebKnowledgeIntegrationError(
                 "proposal is not verified and legally cleared"
             )
-        row.status = "approved"
-        row.reviewed_by = str(actor)
-        row.reviewed_at = datetime.now(timezone.utc)
-        row.promotion_ref = f"proposal:{row.id}"
+        row.status = "approved"  # type: ignore[assignment]
+        row.reviewed_by = str(actor)  # type: ignore[assignment]
+        row.reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        row.promotion_ref = f"proposal:{row.id}"  # type: ignore[assignment]
         await self.db.commit()
         return {
             "status": "approved",
@@ -197,10 +197,10 @@ class WebKnowledgeIntegrationService:
         row = await self._proposal(proposal_id)
         if row.status not in ("pending_review", "quarantined"):
             raise WebKnowledgeIntegrationError("proposal is already final")
-        row.status = "rejected"
-        row.reviewed_by = str(actor)
-        row.reviewed_at = datetime.now(timezone.utc)
-        row.payload = {**(row.payload or {}), "rejection_reason": reason[:1000]}
+        row.status = "rejected"  # type: ignore[assignment]
+        row.reviewed_by = str(actor)  # type: ignore[assignment]
+        row.reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        row.payload = {**(row.payload or {}), "rejection_reason": reason[:1000]}  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

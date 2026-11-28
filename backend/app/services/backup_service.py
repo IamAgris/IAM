@@ -137,7 +137,8 @@ class BackupService:
         if not path.exists():
             raise BackupError("backup metadata not found")
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            _typed_result: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            return _typed_result
         except (OSError, ValueError) as exc:
             raise BackupError(f"unreadable backup metadata: {type(exc).__name__}") from exc
 

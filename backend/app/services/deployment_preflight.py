@@ -16,6 +16,7 @@ from app.services.cybersecurity.security_guard import (
     SecurityGuard,
     SecurityGuardDenied,
 )
+from app.core.infisical import get_infisical_client
 from app.core.secrets import placeholder_secrets
 from app.services.blockchain.activation import check_web3_activation
 from app.services.crypto_service import CryptoService
@@ -55,7 +56,7 @@ def check_deployment() -> Dict[str, Any]:
     )
     add(
         "creator_public_key",
-        _public_key_valid(settings.creator_public_key),
+        _public_key_valid(settings.creator_public_key),  # type: ignore[arg-type]
         "CREATOR_PUBLIC_KEY must be a valid ED25519 public key",
     )
     add(
@@ -120,6 +121,44 @@ def check_deployment() -> Dict[str, Any]:
         ),
         blocking=settings.app_env.lower() == "production",
     )
+
+    # Optional Infisical Cloud source (OD-58). Redacted: names/status only.
+    backend = settings.secrets_backend.lower()
+    add(
+        "secrets_backend",
+        backend in {"docker", "infisical"},
+        "SECRETS_BACKEND must be docker or infisical",
+    )
+    if backend == "infisical":
+        client = get_infisical_client()
+        add(
+            "infisical_host",
+            client.host_allowed(),
+            "INFISICAL_SITE_URL must be an HTTPS allowlisted Infisical host",
+        )
+        add(
+            "infisical_credentials",
+            client.has_credentials(),
+            f"{settings.infisical_client_id_env} and "
+            f"{settings.infisical_client_secret_env} must be Docker secrets",
+        )
+        add(
+            "infisical_project",
+            bool(settings.infisical_project_id),
+            "INFISICAL_PROJECT_ID is required when the Infisical backend is enabled",
+        )
+        client.refresh()
+        reachable = bool(client.status()["reachable"])
+        add(
+            "infisical_reachability",
+            reachable,
+            (
+                "Infisical secrets fetched; Docker secrets remain the fallback"
+                if reachable
+                else "Infisical fetch failed; Docker secrets remain the fallback"
+            ),
+            blocking=False,
+        )
 
     # API credentials
     add(

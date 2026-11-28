@@ -82,7 +82,7 @@ class BlockchainAuditService:
         prev_hash = last.entry_hash if last else GENESIS_HASH
         safe_details = redact(details or {})
         digest = entry_hash(
-            seq=seq, prev_hash=prev_hash, event_type=event_type, actor=actor,
+            seq=seq, prev_hash=prev_hash, event_type=event_type, actor=actor,  # type: ignore[arg-type]
             target=target, approval_id=approval_id, details=safe_details,
         )
         entry = BlockchainAuditLog(
@@ -126,12 +126,12 @@ class BlockchainAuditService:
                 issues.append(f"broken chain link at seq {row.seq}")
             digest = entry_hash(
                 seq=int(row.seq), prev_hash=str(row.prev_hash),
-                event_type=row.event_type, actor=row.actor, target=row.target,
-                approval_id=row.approval_id, details=row.details or {},
+                event_type=row.event_type, actor=row.actor, target=row.target,  # type: ignore[arg-type]
+                approval_id=row.approval_id, details=row.details or {},  # type: ignore[arg-type]
             )
             if digest != row.entry_hash:
                 issues.append(f"hash mismatch at seq {row.seq}")
-            expected_prev = row.entry_hash
+            expected_prev = row.entry_hash  # type: ignore[assignment]
         return {
             "verified": not issues,
             "entries": len(rows),

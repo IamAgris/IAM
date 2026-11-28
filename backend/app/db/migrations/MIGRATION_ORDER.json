@@ -344,6 +344,11 @@
     },
     {
       "sequence": 69,
+      "number": 72,
+      "path": "072_user_email_communication.sql"
+    },
+    {
+      "sequence": 70,
       "number": 73,
       "path": "073_memory_tiers.sql"
     }

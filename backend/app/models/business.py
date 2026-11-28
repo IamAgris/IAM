@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class BusinessOpportunity(Base):
+class BusinessOpportunity(Base):  # type: ignore[misc]
     __tablename__ = "business_opportunities"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -28,7 +28,7 @@ class BusinessOpportunity(Base):
     projects = relationship("BusinessProject", back_populates="opportunity")
 
 
-class BusinessProject(Base):
+class BusinessProject(Base):  # type: ignore[misc]
     __tablename__ = "business_projects"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -50,7 +50,7 @@ class BusinessProject(Base):
     performance = relationship("BusinessPerformance", back_populates="project", cascade="all, delete-orphan")
 
 
-class BusinessPerformance(Base):
+class BusinessPerformance(Base):  # type: ignore[misc]
     __tablename__ = "business_performance"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -64,7 +64,7 @@ class BusinessPerformance(Base):
     project = relationship("BusinessProject", back_populates="performance")
 
 
-class FinancialLedger(Base):
+class FinancialLedger(Base):  # type: ignore[misc]
     __tablename__ = "financial_ledger"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -75,7 +75,7 @@ class FinancialLedger(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class FinancialBudget(Base):
+class FinancialBudget(Base):  # type: ignore[misc]
     __tablename__ = "financial_budgets"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -86,7 +86,7 @@ class FinancialBudget(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class FinancialTransaction(Base):
+class FinancialTransaction(Base):  # type: ignore[misc]
     __tablename__ = "financial_transactions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -104,7 +104,7 @@ class FinancialTransaction(Base):
     ledger_entries = relationship("FinancialLedger", backref="transaction", cascade="all, delete-orphan")
 
 
-class IncomingReceipt(Base):
+class IncomingReceipt(Base):  # type: ignore[misc]
     """An incoming payment recorded under separate authority from spending.
 
     Receiving funds never creates autonomous spending budget (OD-25).
@@ -126,7 +126,7 @@ class IncomingReceipt(Base):
     received_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class CryptoActivity(Base):
+class CryptoActivity(Base):  # type: ignore[misc]
     __tablename__ = "crypto_activities"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -140,7 +140,7 @@ class CryptoActivity(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class OperatingExpense(Base):
+class OperatingExpense(Base):  # type: ignore[misc]
     __tablename__ = "operating_expenses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

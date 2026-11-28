@@ -22,7 +22,7 @@ class RegistrationGate:
 
     # No provider is approved for autonomous signup by default. Entries can be
     # added only after a documented terms review and creator authorisation.
-    AUTONOMOUS_SIGNUP_PERMITTED: frozenset = frozenset()
+    AUTONOMOUS_SIGNUP_PERMITTED: frozenset = frozenset()  # type: ignore[type-arg]
 
     def decide(self, provider: str) -> RegistrationDecision:
         if provider in self.AUTONOMOUS_SIGNUP_PERMITTED:

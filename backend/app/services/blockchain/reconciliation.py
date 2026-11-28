@@ -44,7 +44,7 @@ class ReconciliationService:
             if key not in references:
                 issues.append(f"web3 transaction {row.id} has no ledger reference {key}")
                 continue
-            if row.amount is not None and abs(float(row.amount) - amounts.get(key, 0)) > 0.0001:
+            if row.amount is not None and abs(float(row.amount) - amounts.get(str(key), 0)) > 0.0001:
                 issues.append(f"web3 transaction {row.id} amount differs from ledger entry {key}")
 
         result = {

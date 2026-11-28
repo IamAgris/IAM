@@ -1,4 +1,4 @@
-"""Operational endpoints documented in IAM_API_CONTRACTS.md section 11.
+"""Operational endpoints documented in docs/IAM_API_CONTRACTS.md section 11.
 
 These routes are intentionally outside the /api/v1 namespace: the contract
 specifies /health, /health/ready, /health/live and /metrics.

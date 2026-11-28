@@ -10,7 +10,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class SkillRuntimeExecution(Base):
+class SkillRuntimeExecution(Base):  # type: ignore[misc]
     __tablename__ = "skill_runtime_executions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -37,7 +37,7 @@ class SkillRuntimeExecution(Base):
     )
 
 
-class SkillRuntimeLog(Base):
+class SkillRuntimeLog(Base):  # type: ignore[misc]
     """Captured stdout/stderr for one Skill Runtime invocation."""
 
     __tablename__ = "skill_runtime_logs"

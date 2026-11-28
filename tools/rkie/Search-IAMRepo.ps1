@@ -44,7 +44,7 @@ Mode        What it searches
 auto        Filename + content + architecture docs (default)
 content     Text inside source files
 files       Filenames and paths (the fix for the 'modelrouter' GitHub miss)
-docs        Authoritative architecture documents only (root *.md, canonical/, notes)
+docs        Authoritative architecture documents only (docs/, canonical/, notes)
 symbols     Function / class / method definitions in Python and TypeScript
 history     Git pickaxe: commits where the string was added or removed
 api         backend/app/api/routes/
@@ -100,7 +100,7 @@ function Get-CandidateFiles {
         $ext = [System.IO.Path]::GetExtension($rel).ToLowerInvariant()
         if ($TextOnly -and $textExtensions -notcontains $ext) { continue }
 
-        $isDoc = $rel -match '\.md$' -and ($rel -notmatch '/' -or $rel -like 'canonical/*' -or $rel -like 'tools/rkie/*')
+        $isDoc = $rel -match '\.md$' -and ($rel -notmatch '/' -or $rel -like 'docs/*' -or $rel -like 'canonical/*' -or $rel -like 'tools/rkie/*')
         if ($DocsOnly -and -not $isDoc) { continue }
 
         $full = Join-Path $RepoRoot ($rel -replace '/', [System.IO.Path]::DirectorySeparatorChar)

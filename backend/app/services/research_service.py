@@ -22,7 +22,7 @@ from sqlalchemy import select
 logger = loguru.logger
 
 
-async def _emit(db, event_type: str, target: str, **details: Any) -> None:
+async def _emit(db, event_type: str, target: str, **details: Any) -> None:  # type: ignore[no-untyped-def]
     """Write a real activity event to the durable audit/SSE stream."""
     db.add(
         AuditEvent(
@@ -43,7 +43,7 @@ class ResearchService:
     multiple-source evaluation. Source provenance is always preserved.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         self.max_sources_per_query = 5
         self.min_credibility_for_knowledge = 0.6
 
@@ -76,7 +76,7 @@ class ResearchService:
                 source_id=resolved["source_id"],
                 agent_id=str(resolved.get("agent_id") or "main"),
             )
-        research_record = {
+        research_record: dict[str, Any] = {
             "query": query,
             "started_at": datetime.utcnow().isoformat(),
             "sources": [],
@@ -436,4 +436,4 @@ class ResearchService:
 
 
 # Singleton instance
-research_service = ResearchService()
+research_service = ResearchService()  # type: ignore[no-untyped-call]

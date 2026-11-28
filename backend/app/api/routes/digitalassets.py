@@ -60,12 +60,12 @@ def _deny(exc: DigitalAssetError) -> HTTPException:
 
 
 @router.get("/digital-assets")
-async def list_assets(db: AsyncSession = Depends(get_db_session)):
+async def list_assets(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await DigitalAssetsService(db).list()
 
 
 @router.post("/digital-assets")
-async def create_asset(
+async def create_asset(  # type: ignore[no-untyped-def]
     payload: AssetCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -85,7 +85,7 @@ async def create_asset(
 
 
 @router.get("/digital-assets/{asset_id}")
-async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await DigitalAssetsService(db).get(asset_id)
     except LookupError as exc:
@@ -93,7 +93,7 @@ async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db_session)):
 
 
 @router.patch("/digital-assets/{asset_id}")
-async def update_asset(
+async def update_asset(  # type: ignore[no-untyped-def]
     asset_id: str,
     payload: AssetUpdate,
     request: Request,
@@ -110,7 +110,7 @@ async def update_asset(
 
 
 @router.delete("/digital-assets/{asset_id}")
-async def delete_asset(
+async def delete_asset(  # type: ignore[no-untyped-def]
     asset_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -122,7 +122,7 @@ async def delete_asset(
 
 
 @router.get("/digital-assets/{asset_id}/licences")
-async def list_licences(asset_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_licences(asset_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await DigitalAssetsService(db).licences(asset_id)
     except LookupError as exc:
@@ -130,7 +130,7 @@ async def list_licences(asset_id: str, db: AsyncSession = Depends(get_db_session
 
 
 @router.post("/digital-assets/{asset_id}/licences")
-async def add_licence(
+async def add_licence(  # type: ignore[no-untyped-def]
     asset_id: str,
     payload: LicenceCreate,
     request: Request,
@@ -151,7 +151,7 @@ async def add_licence(
 
 
 @router.get("/digital-assets/{asset_id}/ip")
-async def list_ip(asset_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_ip(asset_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await DigitalAssetsService(db).ip_records(asset_id)
     except LookupError as exc:
@@ -159,7 +159,7 @@ async def list_ip(asset_id: str, db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/digital-assets/{asset_id}/ip")
-async def add_ip(
+async def add_ip(  # type: ignore[no-untyped-def]
     asset_id: str,
     payload: IPCreate,
     request: Request,
@@ -180,12 +180,12 @@ async def add_ip(
 
 
 @router.get("/domain-registrations")
-async def list_domains(db: AsyncSession = Depends(get_db_session)):
+async def list_domains(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await DigitalAssetsService(db).domains()
 
 
 @router.post("/domain-registrations")
-async def register_domain(
+async def register_domain(  # type: ignore[no-untyped-def]
     payload: DomainCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

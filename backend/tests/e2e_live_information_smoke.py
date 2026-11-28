@@ -59,10 +59,12 @@ async def main() -> None:
             print("FAIL: no live evidence retrieved", file=sys.stderr)
             raise SystemExit(1)
         if "SABC" in QUERY and not any(
+            # codeql[py/incomplete-url-substring-sanitization] test assertion on trusted fixture URLs.
             "sabcnews.com" in item["url"] for item in evidence.results
         ):
             print("FAIL: no SABC article retrieved", file=sys.stderr)
             raise SystemExit(2)
+        # codeql[py/incomplete-url-substring-sanitization] test assertion on trusted fixture URLs.
         if any("wikipedia.org" in item["url"] for item in evidence.results):
             print("FAIL: Wikipedia fallback was presented as live evidence", file=sys.stderr)
             raise SystemExit(3)

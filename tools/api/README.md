@@ -19,7 +19,7 @@ snapshot-but-removed paths. It is wired into `.github/workflows/openapi-drift.ym
 **536 paths / 332 schemas**; the snapshot has **505 / 320**. 31 declared paths
 are absent from the snapshot, mostly HBI and interface routes from uncommitted
 work. Refresh the snapshot with `--update` only after reviewing that change as
-an approved contract update. The older note in `IAM_EXTERNAL_MODULES_REVIEW.md`
+an approved contract update. The older note in `docs/IAM_EXTERNAL_MODULES_REVIEW.md`
 claiming 442 live paths is itself stale.
 
 `backend/print_spec.py` (uncommitted user file) also regenerates the snapshot

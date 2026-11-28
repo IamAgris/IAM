@@ -357,6 +357,7 @@ class LiveRetrievalAcceptanceTests(unittest.IsolatedAsyncioTestCase):
             AsyncMock(side_effect=browser),
             free=free,
         )
+        # codeql[py/incomplete-url-substring-sanitization] test assertion on trusted fixture URLs.
         self.assertTrue(any("bbc.com" in item["url"] for item in evidence.results))
 
     async def test_05_current_technology_question_uses_live_web_retrieval(self) -> None:

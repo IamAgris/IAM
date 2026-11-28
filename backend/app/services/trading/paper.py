@@ -115,7 +115,7 @@ class PaperTradingService:
 
         notional = round(quantity * price, 4)
         fee = round(notional * FEE_RATE, 4)
-        limits = portfolio.risk_limits or {}
+        limits: Any = portfolio.risk_limits or {}
         if notional > float(limits.get("max_order_usd", settings.trading_max_order_usd)):
             raise TradingDenied("order exceeds the per-order limit")
 
@@ -145,8 +145,8 @@ class PaperTradingService:
                 raise TradingDenied("insufficient simulated position")
             holdings[symbol] = float(holdings.get(symbol, 0)) - quantity
             cash += notional - fee
-        portfolio.cash_balance = cash
-        portfolio.holdings = holdings
+        portfolio.cash_balance = cash  # type: ignore[assignment]
+        portfolio.holdings = holdings  # type: ignore[assignment]
 
         order = PaperOrder(
             portfolio_id=portfolio.id,
@@ -196,7 +196,7 @@ class PaperTradingService:
                 if value < 0:
                     raise TradingDenied(f"{key} must be non-negative")
                 merged[key] = value
-        portfolio.risk_limits = merged
+        portfolio.risk_limits = merged  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="paper_trading_limits_updated",
@@ -213,7 +213,7 @@ class PaperTradingService:
     ) -> Dict[str, Any]:
         portfolio = await self._portfolio(portfolio_id)
         authority = await self._authority(STOP_ACTION, str(portfolio.id))
-        portfolio.emergency_stop = bool(enabled)
+        portfolio.emergency_stop = bool(enabled)  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="paper_trading_emergency_stop",
@@ -233,7 +233,7 @@ class PaperTradingService:
         orders = list(result.scalars().all())
         invested = sum(float(order.notional) for order in orders if order.side == "buy")
         realised = sum(float(order.notional) for order in orders if order.side == "sell")
-        limits = portfolio.risk_limits or {}
+        limits: Any = portfolio.risk_limits or {}
         if realised - invested < -float(limits.get("max_loss_usd", settings.trading_max_loss_usd)):
             return {
                 **self._portfolio_dict(portfolio),

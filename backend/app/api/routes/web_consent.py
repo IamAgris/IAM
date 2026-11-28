@@ -42,7 +42,7 @@ def _fail(exc: WebsiteConsentError) -> HTTPException:
 
 
 @router.post("")
-async def create_consent(
+async def create_consent(  # type: ignore[no-untyped-def]
     payload: ConsentCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -64,7 +64,7 @@ async def create_consent(
 
 
 @router.get("")
-async def list_consents(
+async def list_consents(  # type: ignore[no-untyped-def]
     website_knowledge_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -73,7 +73,7 @@ async def list_consents(
 
 
 @router.get("/{consent_id}")
-async def get_consent(consent_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_consent(consent_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single website consent record by ID."""
     try:
         return await WebsiteConsentService(db).get(consent_id)
@@ -82,7 +82,7 @@ async def get_consent(consent_id: str, db: AsyncSession = Depends(get_db_session
 
 
 @router.patch("/{consent_id}")
-async def update_consent(
+async def update_consent(  # type: ignore[no-untyped-def]
     consent_id: str,
     payload: ConsentUpdate,
     request: Request,
@@ -105,13 +105,13 @@ async def update_consent(
 
 
 @router.delete("/{consent_id}")
-async def delete_consent(
+async def delete_consent(  # type: ignore[no-untyped-def]
     consent_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Delete website consent record."""
     try:
-        return await WebsiteConsentService(db).delete(consent_id, actor=_actor(request))
+        return await WebsiteConsentService(db).delete(consent_id)
     except ValueError as exc:
         raise HTTPException(404, str(exc)) from exc

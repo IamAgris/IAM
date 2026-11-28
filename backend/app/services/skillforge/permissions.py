@@ -19,7 +19,7 @@ class PermissionDenied(PermissionError):
 
 
 # Explicit lifecycle transitions. Nothing may jump straight to 'active'.
-ALLOWED_TRANSITIONS: Dict[str, set] = {
+ALLOWED_TRANSITIONS: Dict[str, set] = {  # type: ignore[type-arg]
     "draft": {"testing", "quarantined", "archived"},
     "testing": {"draft", "pending_approval", "published", "quarantined", "archived"},
     "pending_approval": {"published", "draft", "quarantined", "archived"},

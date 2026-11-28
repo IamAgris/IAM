@@ -23,4 +23,4 @@ if [ ! -f .env ] && [ -f .env.example ]; then
 fi
 
 echo "==> Setup complete"
-echo "Next steps: docker compose up -d, then start the backend and frontend (see IAM_FREE_SANDBOXES.md)."
+echo "Next steps: docker compose up -d, then start the backend and frontend (see docs/IAM_FREE_SANDBOXES.md)."

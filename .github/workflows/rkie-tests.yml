@@ -7,12 +7,12 @@ on:
     paths:
       - 'tools/rkie/**'
       - 'AGENTS.md'
-      - 'ARCHITECTURE_INDEX.md'
+      - 'docs/ARCHITECTURE_INDEX.md'
   pull_request:
     paths:
       - 'tools/rkie/**'
       - 'AGENTS.md'
-      - 'ARCHITECTURE_INDEX.md'
+      - 'docs/ARCHITECTURE_INDEX.md'
   workflow_dispatch:
 
 permissions:

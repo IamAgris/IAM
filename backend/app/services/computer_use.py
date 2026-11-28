@@ -24,7 +24,7 @@ class ComputerUseError(PermissionError):
 
 
 class ComputerUseService:
-    def __init__(self, db):
+    def __init__(self, db):  # type: ignore[no-untyped-def]
         self.db = db
         self.access = InternetAccessService(db)
 

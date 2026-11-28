@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class SecurityWorkSession(Base):
+class SecurityWorkSession(Base):  # type: ignore[misc]
     """A bounded, isolated session bound to a signed scope authorization."""
 
     __tablename__ = "security_work_sessions"

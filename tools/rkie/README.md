@@ -140,7 +140,7 @@ is settled.
 2. **Locate** with `-Mode files` first if a filename is known; otherwise
    `-Mode content`. Narrow with `-Scope` before going broad.
 3. **Read authority** — open the spec/decision named in the file's `spec` and
-   `decisions` fields (or look it up in `ARCHITECTURE_INDEX.md`).
+   `decisions` fields (or look it up in `docs/ARCHITECTURE_INDEX.md`).
 4. **Trace** — search the symbol name to find call sites, routes, models,
    migrations and tests.
 5. **Verify** with the relevant acceptance test or `.github/workflows/ci.yml`.
@@ -156,7 +156,7 @@ The full agent-facing version of this procedure is in the root `AGENTS.md`.
 
 Three intelligence systems must stay distinct:
 
-1. **Repository intelligence** — this toolkit plus `ARCHITECTURE_INDEX.md`.
+1. **Repository intelligence** — this toolkit plus `docs/ARCHITECTURE_INDEX.md`.
 2. **Knowledge & architecture intelligence** — IAM runtime memory, verified
    knowledge, HBI knowledge graph and world model under `backend/app/services/`.
 3. **External research intelligence** — `search_service.py`,

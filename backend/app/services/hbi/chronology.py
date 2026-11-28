@@ -62,7 +62,7 @@ def resolve(events: List[Dict[str, Any]],
             uncertain_periods: Optional[List[Dict[str, Any]]] = None,
             conflicting_accounts: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Order events by approximate date while retaining overlaps and conflicts."""
-    resolved = []
+    resolved: list[Any] = []
     for event in events:
         bounds = _event_bounds(event)
         resolved.append({

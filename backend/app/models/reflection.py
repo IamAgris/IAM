@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class ReflectionEntry(Base):
+class ReflectionEntry(Base):  # type: ignore[misc]
     """Review decisions and experiences."""
     __tablename__ = "reflection_entries"
 
@@ -28,7 +28,7 @@ class ReflectionEntry(Base):
     )
 
 
-class OperatingPrinciple(Base):
+class OperatingPrinciple(Base):  # type: ignore[misc]
     """IAM's evolving operating principles."""
     __tablename__ = "operating_principles"
 

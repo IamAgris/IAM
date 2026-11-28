@@ -25,6 +25,7 @@ SECRET_FIELDS = (
     "creator_public_key",
     "creator_gateway_secret",
     # Proposed Doc 35 / OD-55 — credentials are Docker secrets, never values in config.
+    "thirdweb_client_id",
     "thirdweb_secret_key",
     "bitcoin_rpc_cookie",
     "lnd_macaroon",
@@ -94,7 +95,7 @@ class Settings(BaseSettings):
     # in-memory behaviour used by single-node tests and default deployments.
     p2p_state_path: str = ""
     # Gateway routing alias, not IAM's identity or a permanent model (OD-38).
-    # Foundation-model policy: IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
+    # Foundation-model policy: docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     iam_sdk_default_model: str = "nvidia-nemotron-3.5-lightning"
     # Free hosted specialist for background internal reasoning. OD-46 keeps the
     # local primary as IAM's brain; this sub-agent uses the separate hosted
@@ -108,7 +109,7 @@ class Settings(BaseSettings):
 
     # One shared primary model for the whole IAM experience (frontend and
     # backend). Hosted providers remain optional specialists reached only by
-    # explicit model id; see IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
+    # explicit model id; see docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md.
     # Owner-directed reopening of OD-46 (27 Nov 2026): Qwen2.5-3B is IAM's
     # shared primary local brain. Qwen2.5-Coder 3B remains an optional secondary.
     iam_primary_model: str = "local-qwen-3b"
@@ -296,6 +297,8 @@ class Settings(BaseSettings):
     browser_session_ttl_seconds: int = 1800
     browser_profile_root: str = ""  # empty => temp dir
     browser_evidence_dir: str = ""  # empty => temp dir
+    # Optional egress boundary for local document fetching (comma-separated hosts).
+    browser_document_allowed_hosts: str = ""
     browser_task_worker_backend: str = "loop"  # loop | arq
     browser_ocr_enabled: bool = False  # opt-in: local Tesseract OCR on screenshots
 
@@ -467,6 +470,9 @@ class Settings(BaseSettings):
     # Extended Web3 capability modules (proposed Doc 35). Research/prepare only.
     web3_defi_enabled: bool = False
     web3_x402_enabled: bool = False
+    # Optional egress boundary for x402 discovery: comma-separated public hosts.
+    # Empty means the general public-web egress policy applies (private IPs still blocked).
+    web3_x402_allowed_hosts: str = ""
     web3_nft_enabled: bool = False
     web3_dao_enabled: bool = False
     web3_contract_dev_enabled: bool = False
@@ -541,6 +547,21 @@ class Settings(BaseSettings):
     creator_email_max_attempts: int = 5
     creator_alert_webhook_url: str = ""
 
+    # Opt-in email carrier for private user communication (OD-59 / Doc 39).
+    # Default-off: no external call and no inbound endpoint until configured.
+    user_email_enabled: bool = False
+    user_email_from: str = ""
+    user_email_domain: str = ""
+    user_email_smtp_host: str = ""
+    user_email_smtp_port: int = 587
+    user_email_smtp_user: str = ""
+    user_email_smtp_password_env: str = "USER_EMAIL_SMTP_PASSWORD"
+    user_email_smtp_use_tls: bool = True
+    user_email_webhook_secret_env: str = "USER_EMAIL_WEBHOOK_SECRET"
+    user_email_verification_ttl_seconds: int = 900
+    user_email_max_body_chars: int = 20000
+    user_email_max_attempts: int = 5
+
     # External Security Engines — ARTEX connector (default-disabled, defensive-only)
     artex_enabled: bool = False
     artex_dry_run: bool = True
@@ -555,12 +576,24 @@ class Settings(BaseSettings):
     skillforge_root: str = str(Path(__file__).resolve().parents[3] / "iam" / "skills")
     skillforge_max_file_bytes: int = 262144  # skip oversized files during inspection
 
+    # Infisical Cloud secrets source (OD-58, default-off; Docker secrets remain fallback)
+    secrets_backend: str = "docker"  # docker | infisical
+    infisical_site_url: str = "https://app.infisical.com"
+    infisical_project_id: str = ""
+    infisical_environment: str = ""  # empty => derived from app_env
+    infisical_client_id_env: str = "INFISICAL_CLIENT_ID"
+    infisical_client_secret_env: str = "INFISICAL_CLIENT_SECRET"
+    infisical_allowed_hosts: str = "app.infisical.com,eu.infisical.com"
+    infisical_cache_ttl_seconds: int = 300
+    infisical_token_refresh_margin_seconds: int = 60
+    infisical_timeout_seconds: float = 5.0
+
     # Monitoring
     otel_exporter_otlp_endpoint: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
-    def _load_secret_files(cls, values):
+    def _load_secret_files(cls, values):  # type: ignore[no-untyped-def]
         """Docker secrets override plain environment values for secret fields."""
         if not isinstance(values, dict):
             return values

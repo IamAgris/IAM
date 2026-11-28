@@ -15,10 +15,11 @@ LIBRARY_PATH = Path(__file__).parent / "data" / "backtest_library.json"
 
 def load(path: Path = LIBRARY_PATH) -> Dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    return payload
+    _typed_result: dict[str, Any] = payload
+    return _typed_result
 
 
-def cases(payload: Dict[str, Any] = None) -> List[HistoricalCase]:
+def cases(payload: Dict[str, Any] = None) -> List[HistoricalCase]:  # type: ignore[assignment]
     data = payload or load()
     return [
         HistoricalCase(
@@ -33,7 +34,7 @@ def cases(payload: Dict[str, Any] = None) -> List[HistoricalCase]:
     ]
 
 
-def summary(payload: Dict[str, Any] = None) -> Dict[str, Any]:
+def summary(payload: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     data = payload or load()
     items = data["cases"]
     return {

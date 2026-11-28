@@ -104,12 +104,12 @@ class TechnologyRegistryService:
         record = result.scalar_one_or_none()
         if not record:
             raise TechnologyRegistryError("technology not found")
-        if not self.is_valid_transition(record.lifecycle_state, next_state):
+        if not self.is_valid_transition(record.lifecycle_state, next_state):  # type: ignore[arg-type]
             raise TechnologyRegistryError(
                 f"invalid transition {record.lifecycle_state} -> {next_state}"
             )
-        record.lifecycle_state = next_state
-        record.last_reviewed_at = datetime.utcnow()
+        record.lifecycle_state = next_state  # type: ignore[assignment]
+        record.last_reviewed_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return {"id": str(record.id), "lifecycle_state": record.lifecycle_state}
 
@@ -124,8 +124,8 @@ class TechnologyRegistryService:
         entry["recorded_at"] = datetime.utcnow().isoformat()
         benchmarks = list(record.benchmarks or [])
         benchmarks.append(entry)
-        record.benchmarks = benchmarks
-        record.last_reviewed_at = datetime.utcnow()
+        record.benchmarks = benchmarks  # type: ignore[assignment]
+        record.last_reviewed_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return {"id": str(record.id), "benchmark_count": len(benchmarks)}
 

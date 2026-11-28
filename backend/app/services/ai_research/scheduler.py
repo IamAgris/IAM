@@ -72,7 +72,7 @@ class ResearchScheduler:
         return sorted(decisions, key=lambda d: d.score, reverse=True)
 
     @staticmethod
-    def _as_job(snapshot: ResearchQuotaSnapshot, profile: WorkloadProfile):
+    def _as_job(snapshot: ResearchQuotaSnapshot, profile: WorkloadProfile):  # type: ignore[no-untyped-def]
         # Reuse the quota guard by translating the workload into a minimal job.
         from .jobs import HardwareRequirement, ResearchJob, ResearchMethod
 

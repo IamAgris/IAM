@@ -56,7 +56,7 @@ function Get-Sha256 {
 function Get-Category {
     param([string] $Rel)
     if ($Rel -match '\.md$') {
-        if ($Rel -notmatch '/' -or $Rel -like 'canonical/*') { return 'document-authoritative' }
+        if ($Rel -notmatch '/' -or $Rel -like 'docs/*' -or $Rel -like 'canonical/*') { return 'document-authoritative' }
         return 'document'
     }
     if ($Rel -like 'backend/app/api/routes/*') { return 'api-route' }

@@ -78,7 +78,7 @@ def validate_contribution(payload: KnowledgeContributionCreate) -> None:
 
 
 @router.get("/", response_model=List[KnowledgeItemResponse])
-async def list_knowledge(
+async def list_knowledge(  # type: ignore[no-untyped-def]
     limit: int = 50,
     topic: Optional[str] = None,
     verification_status: Optional[str] = None,
@@ -95,12 +95,12 @@ async def list_knowledge(
     return [
         KnowledgeItemResponse(
             id=str(k.id),
-            title=k.title,
-            content=k.content,
-            source=k.source,
+            title=k.title,  # type: ignore[arg-type]
+            content=k.content,  # type: ignore[arg-type]
+            source=k.source,  # type: ignore[arg-type]
             confidence_level=float(k.confidence_level) if k.confidence_level else 0.5,
-            verification_status=k.verification_status,
-            topic=k.topic,
+            verification_status=k.verification_status,  # type: ignore[arg-type]
+            topic=k.topic,  # type: ignore[arg-type]
             created_at=k.created_at.isoformat() if k.created_at else None,
             last_reviewed_at=k.last_reviewed_at.isoformat() if k.last_reviewed_at else None,
         )
@@ -109,7 +109,7 @@ async def list_knowledge(
 
 
 @router.post("/", response_model=KnowledgeItemResponse)
-async def create_knowledge(
+async def create_knowledge(  # type: ignore[no-untyped-def]
     item: KnowledgeItemCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -144,19 +144,19 @@ async def create_knowledge(
 
     return KnowledgeItemResponse(
         id=str(knowledge.id),
-        title=knowledge.title,
-        content=knowledge.content,
-        source=knowledge.source,
+        title=knowledge.title,  # type: ignore[arg-type]
+        content=knowledge.content,  # type: ignore[arg-type]
+        source=knowledge.source,  # type: ignore[arg-type]
         confidence_level=float(knowledge.confidence_level),
-        verification_status=knowledge.verification_status,
-        topic=knowledge.topic,
+        verification_status=knowledge.verification_status,  # type: ignore[arg-type]
+        topic=knowledge.topic,  # type: ignore[arg-type]
         created_at=knowledge.created_at.isoformat() if knowledge.created_at else None,
         last_reviewed_at=knowledge.last_reviewed_at.isoformat() if knowledge.last_reviewed_at else None,
     )
 
 
 @router.post("/contributions", response_model=KnowledgeContributionResponse)
-async def contribute_knowledge(
+async def contribute_knowledge(  # type: ignore[no-untyped-def]
     contribution: KnowledgeContributionCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -219,12 +219,12 @@ async def contribute_knowledge(
 
     return KnowledgeContributionResponse(
         id=str(knowledge.id),
-        title=knowledge.title,
-        content=knowledge.content,
-        source=knowledge.source,
+        title=knowledge.title,  # type: ignore[arg-type]
+        content=knowledge.content,  # type: ignore[arg-type]
+        source=knowledge.source,  # type: ignore[arg-type]
         confidence_level=float(knowledge.confidence_level),
-        verification_status=knowledge.verification_status,
-        topic=knowledge.topic,
+        verification_status=knowledge.verification_status,  # type: ignore[arg-type]
+        topic=knowledge.topic,  # type: ignore[arg-type]
         created_at=knowledge.created_at.isoformat() if knowledge.created_at else None,
         last_reviewed_at=knowledge.last_reviewed_at.isoformat() if knowledge.last_reviewed_at else None,
         contribution_id=str(knowledge.id),
@@ -232,7 +232,7 @@ async def contribute_knowledge(
 
 
 @router.post("/verify/{knowledge_id}")
-async def verify_knowledge(
+async def verify_knowledge(  # type: ignore[no-untyped-def]
     knowledge_id: str,
     status: str,
     db: AsyncSession = Depends(get_db_session),
@@ -246,8 +246,8 @@ async def verify_knowledge(
     if not knowledge:
         raise HTTPException(status_code=404, detail="Knowledge item not found")
 
-    knowledge.verification_status = status
-    knowledge.last_reviewed_at = datetime.utcnow()
+    knowledge.verification_status = status  # type: ignore[assignment]
+    knowledge.last_reviewed_at = datetime.utcnow()  # type: ignore[assignment]
     await db.commit()
 
     return {

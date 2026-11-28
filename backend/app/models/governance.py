@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class AuthorityBoundary(Base):
+class AuthorityBoundary(Base):  # type: ignore[misc]
     """Four-level authority model enforcement."""
     __tablename__ = "authority_boundaries"
 
@@ -26,7 +26,7 @@ class AuthorityBoundary(Base):
     )
 
 
-class ApprovalPolicy(Base):
+class ApprovalPolicy(Base):  # type: ignore[misc]
     """Approval policies for different action types."""
     __tablename__ = "approval_policies"
 
@@ -41,7 +41,7 @@ class ApprovalPolicy(Base):
     )
 
 
-class SecurityBoundary(Base):
+class SecurityBoundary(Base):  # type: ignore[misc]
     """Security boundaries IAM cannot cross."""
     __tablename__ = "security_boundaries"
 

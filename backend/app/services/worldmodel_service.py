@@ -325,7 +325,7 @@ class WorldModelService:
         }
 
         projections: List[Dict[str, Any]] = []
-        visited_chains: set = set()
+        visited_chains: set = set()  # type: ignore[type-arg]
         queue: List[tuple[str, str, float, int]] = [
             (str(root), trigger_description, 1.0, 0)
         ]

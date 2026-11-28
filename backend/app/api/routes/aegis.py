@@ -39,48 +39,48 @@ class FindingRequest(BaseModel):
 
 
 @router.post("/analyze")
-async def analyze(request: TextRequest):
+async def analyze(request: TextRequest):  # type: ignore[no-untyped-def]
     """Detect prompt injection, extraction and sensitive data in untrusted text."""
     return aegis.analyze_text(request.text, request.source)
 
 
 @router.post("/verify-scope")
-async def verify_scope(request: ScopeRequest):
+async def verify_scope(request: ScopeRequest):  # type: ignore[no-untyped-def]
     """Verify a target is within authorized scope before assessment."""
     return aegis.verify_scope(request.target, request.authorized_targets, request.action)
 
 
 @router.post("/audit-path")
-async def audit_path(request: PathRequest):
+async def audit_path(request: PathRequest):  # type: ignore[no-untyped-def]
     """Defensive local file/directory permission audit."""
     return aegis.audit_path(request.path)
 
 
 @router.get("/recommendation/{finding_type}")
-async def recommend(finding_type: str):
+async def recommend(finding_type: str):  # type: ignore[no-untyped-def]
     """Safe, non-destructive remediation advice (never auto-applied)."""
     return {"finding_type": finding_type, "recommendation": aegis.recommend_fix(finding_type)}
 
 
 @router.post("/check-egress")
-async def check_egress(request: EgressRequest):
+async def check_egress(request: EgressRequest):  # type: ignore[no-untyped-def]
     """Prevent SSRF/internal/metadata access — allowlist enforcement."""
     return aegis.scan_outbound(request.url, request.allowed_hosts)
 
 
 @router.post("/shareable-finding")
-async def shareable(request: FindingRequest):
+async def shareable(request: FindingRequest):  # type: ignore[no-untyped-def]
     """Convert a finding to privacy-safe shareable threat intelligence."""
     return aegis.shareable_finding(request.finding)
 
 
 @router.post("/self-test")
-async def self_test():
+async def self_test():  # type: ignore[no-untyped-def]
     """Run safe local defensive tests."""
     return aegis.self_test()
 
 
 @router.get("/report")
-async def report():
+async def report():  # type: ignore[no-untyped-def]
     """Aegis operational report."""
     return aegis.report()

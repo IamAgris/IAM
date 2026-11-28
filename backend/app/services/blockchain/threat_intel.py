@@ -49,7 +49,7 @@ class ThreatIntelService:
         if not target:
             raise ProviderDenied("target is required")
         names: List[str] = []
-        sources: set = set()
+        sources: set = set()  # type: ignore[type-arg]
         for item in signals:
             if not isinstance(item, dict) or not item.get("name"):
                 raise ProviderDenied("each signal needs a name and source")

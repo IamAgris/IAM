@@ -52,7 +52,7 @@ class ThirdwebReadAdapter:
             network_calls_made=False,
         )
 
-    async def _rpc(self, method: str, params: list) -> ProviderResponse:
+    async def _rpc(self, method: str, params: list) -> ProviderResponse:  # type: ignore[type-arg]
         require_flag(settings.thirdweb_read_enabled, "thirdweb read adapter is disabled")
         if not self.configured():
             raise ProviderDenied("thirdweb adapter is not configured; set operator-reviewed base URL and client id")
@@ -62,7 +62,7 @@ class ThirdwebReadAdapter:
         headers = {"Content-Type": "application/json", "X-Client-Id": client_id}
         payload = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
         async with httpx.AsyncClient(timeout=settings.web3_request_timeout_seconds) as client:
-            response = await client.post(settings.thirdweb_base_url, json=payload, headers=headers)
+            response = await client.post(settings.thirdweb_base_url, json=payload, headers=headers)  # type: ignore[arg-type]
             response.raise_for_status()
             body = response.json()
         if body.get("error"):
@@ -126,7 +126,7 @@ class ThirdwebReadAdapter:
         if not to_address or not isinstance(to_address, str):
             raise ProviderDenied("to_address is required")
         try:
-            value = float(amount)
+            value = float(amount)  # type: ignore[arg-type]
         except (TypeError, ValueError) as exc:
             raise ProviderDenied("amount must be numeric") from exc
         if value <= 0:

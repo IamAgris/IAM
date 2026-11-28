@@ -12,7 +12,7 @@
 | `docker-compose.yml` | Optional `caddy` service behind Compose profile `edge`; volumes `aura_caddy_data`, `aura_caddy_config` |
 | `tests/load_test.py` | 50 concurrent sessions × 2 messages; measures p50/p95/p99, errors |
 | `tests/results/load_test.json` | Evidence output (overwritten each run) |
-| `IAM_OPEN_SPECS_RESOLVED.md` | Implementation note appended to open spec E |
+| `docs/IAM_OPEN_SPECS_RESOLVED.md` | Implementation note appended to open spec E |
 
 ## Run
 
@@ -28,7 +28,7 @@ The edge is opt-in: the default `docker compose up -d` does not start Caddy.
 
 - Proxy: `/health` 200, `/` 200, `/api/v1/openapi.json` 200 via port 8080.
 - Load: 50/50 sessions, 150 requests, 0 errors, p50 736 ms, p95 2427 ms, p99 2486 ms — passes
-  the 5000 ms target from `IAM_OPEN_SPECS_RESOLVED.md` §E.
+  the 5000 ms target from `docs/IAM_OPEN_SPECS_RESOLVED.md` §E.
 
 ## Boundary
 

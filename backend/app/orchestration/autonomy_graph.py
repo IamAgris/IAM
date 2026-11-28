@@ -457,7 +457,7 @@ async def identify_objectives(state: AutonomyState) -> Dict[str, Any]:
     return {"objectives": objectives, "steps": ["identify_objectives"]}
 
 
-def _infer_action(objective: dict, decision: Optional[Dict[str, Any]]) -> str:
+def _infer_action(objective: dict, decision: Optional[Dict[str, Any]]) -> str:  # type: ignore[type-arg]
     preferred = (decision or {}).get("action")
     if preferred in action_dispatch.AVAILABLE:
         return str(preferred)
@@ -1789,7 +1789,7 @@ def _after_execute(state: AutonomyState) -> str:
     return "verify"
 
 
-def build_graph(checkpointer: AsyncSqliteSaver):
+def build_graph(checkpointer: AsyncSqliteSaver):  # type: ignore[no-untyped-def]
     """Compile the durable autonomy graph."""
     g = StateGraph(AutonomyState)
     for name, node in (

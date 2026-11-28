@@ -93,7 +93,7 @@ class ContinuousImprovement:
         store: Any=None,
         adapters: Any=None,
         audit_sink: Any=None,
-    ) -> Any:
+    ) -> None:
         self.db = db
         self.store = store or default_store()
         self.adapters = list(adapters or default_adapters())
@@ -158,7 +158,7 @@ class ContinuousImprovement:
         return str(definition.id)
 
     async def run(self, job: ResearchJob, actor: str = "iam") -> ContinuousRunResult:
-        suggestion = self.memory.suggest_next(job.task_type)
+        suggestion: Dict[str, Any] = self.memory.suggest_next(job.task_type)
         metadata = dict(job.metadata or {})
         metadata["continuous_improvement"] = {
             "from_failures": suggestion["from_failures"],
@@ -250,8 +250,8 @@ class ContinuousImprovement:
             recovered_from=recovered_from,
             reflection_id=str(reflection.id),
             capability_id=capability_id,
-            prior_failures=list(suggestion["from_failures"]),
-            avoided_tags=list(suggestion["avoid"]),
+            prior_failures=list(suggestion.get("from_failures") or []),
+            avoided_tags=list(suggestion.get("avoid") or []),
         )
 
     async def history(self) -> List[Dict[str, Any]]:

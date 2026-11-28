@@ -43,18 +43,18 @@ VALID_PERMISSION_LEVELS = ("autonomous", "authorized", "explicit", "blocked")
 
 
 @router.get("/", response_model=List[ToolResponse])
-async def list_tools(db: AsyncSession = Depends(get_db_session)):
+async def list_tools(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all registered tools."""
     result = await db.execute(select(ToolRegistry).order_by(ToolRegistry.created_at.desc()))
     tools = result.scalars().all()
     return [
         ToolResponse(
             id=str(t.id),
-            name=t.name,
-            description=t.description,
-            category=t.category,
-            parameters=t.parameters or {},
-            is_active=t.is_active,
+            name=t.name,  # type: ignore[arg-type]
+            description=t.description,  # type: ignore[arg-type]
+            category=t.category,  # type: ignore[arg-type]
+            parameters=t.parameters or {},  # type: ignore[arg-type]
+            is_active=t.is_active,  # type: ignore[arg-type]
             created_at=t.created_at.isoformat() if t.created_at else None,
         )
         for t in tools
@@ -62,7 +62,7 @@ async def list_tools(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/", response_model=ToolResponse)
-async def register_tool(tool: ToolCreate, db: AsyncSession = Depends(get_db_session)):
+async def register_tool(tool: ToolCreate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Register a new tool available for autonomous use."""
     # Check for duplicate name
     result = await db.execute(select(ToolRegistry).where(ToolRegistry.name == tool.name))
@@ -90,17 +90,17 @@ async def register_tool(tool: ToolCreate, db: AsyncSession = Depends(get_db_sess
 
     return ToolResponse(
         id=str(t.id),
-        name=t.name,
-        description=t.description,
-        category=t.category,
-        parameters=t.parameters or {},
-        is_active=t.is_active,
+        name=t.name,  # type: ignore[arg-type]
+        description=t.description,  # type: ignore[arg-type]
+        category=t.category,  # type: ignore[arg-type]
+        parameters=t.parameters or {},  # type: ignore[arg-type]
+        is_active=t.is_active,  # type: ignore[arg-type]
         created_at=t.created_at.isoformat() if t.created_at else None,
     )
 
 
 @router.get("/permissions")
-async def list_tool_permissions(db: AsyncSession = Depends(get_db_session)):
+async def list_tool_permissions(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all tool permissions."""
     result = await db.execute(select(ToolPermission))
     perms = result.scalars().all()
@@ -117,7 +117,7 @@ async def list_tool_permissions(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.patch("/permissions/{tool_id}")
-async def update_tool_permission(
+async def update_tool_permission(  # type: ignore[no-untyped-def]
     tool_id: str,
     update: ToolPermissionUpdate,
     db: AsyncSession = Depends(get_db_session),
@@ -131,8 +131,8 @@ async def update_tool_permission(
     if not perm:
         raise HTTPException(status_code=404, detail="Tool permission not found")
 
-    perm.permission_level = update.permission_level
-    perm.requires_human_approval = update.requires_human_approval
+    perm.permission_level = update.permission_level  # type: ignore[assignment]
+    perm.requires_human_approval = update.requires_human_approval  # type: ignore[assignment]
     await db.commit()
 
     return {

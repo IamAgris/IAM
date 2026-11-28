@@ -1,6 +1,6 @@
 """Doc 21 / OD-37: bounded concurrent-session load test.
 
-Target from IAM_OPEN_SPECS_RESOLVED.md: 50 concurrent anonymous sessions,
+Target from docs/IAM_OPEN_SPECS_RESOLVED.md: 50 concurrent anonymous sessions,
 p95 response time < 5s, no cross-session leakage, no 5xx.
 
 Run:  python tests/load_test.py

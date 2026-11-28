@@ -32,13 +32,13 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/generate")
-async def generate():
+async def generate():  # type: ignore[no-untyped-def]
     """Return a fresh password once; IAM stores only its encrypted form."""
     return {"password": generate_password()}
 
 
 @router.post("")
-async def register(
+async def register(  # type: ignore[no-untyped-def]
     payload: CredentialRegister,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -61,12 +61,12 @@ async def register(
 
 
 @router.get("")
-async def list_credentials(db: AsyncSession = Depends(get_db_session)):
+async def list_credentials(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await WebsiteCredentialService(db).list()
 
 
 @router.post("/{credential_id}/reveal")
-async def reveal(
+async def reveal(  # type: ignore[no-untyped-def]
     credential_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -80,7 +80,7 @@ async def reveal(
 
 
 @router.post("/{credential_id}/rotate")
-async def rotate(
+async def rotate(  # type: ignore[no-untyped-def]
     credential_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -94,7 +94,7 @@ async def rotate(
 
 
 @router.post("/{credential_id}/revoke")
-async def revoke(
+async def revoke(  # type: ignore[no-untyped-def]
     credential_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

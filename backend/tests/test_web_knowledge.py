@@ -336,6 +336,41 @@ class AutonomousWebTaskTests(unittest.IsolatedAsyncioTestCase):
         retried = await self.service.retry(str(task["id"]), actor="iam")
         self.assertEqual(retried["status"], "pending")
 
+    async def test_schedule_at_is_persisted(self):
+        scheduled = await self.service.create(
+            title="Scheduled monitoring",
+            task_type="monitoring",
+            schedule_at="2026-11-29T10:30:00Z",
+            actor="iam",
+        )
+        self.assertEqual(scheduled["schedule_at"], "2026-11-29T10:30:00+00:00")
+        row = await self.service._task(str(scheduled["id"]))
+        self.assertIsNotNone(row.schedule_at)
+        self.assertEqual(row.schedule_at.tzinfo.utcoffset(row.schedule_at).total_seconds(), 0)
+
+        unscheduled = await self.service.create(
+            title="Immediate task",
+            task_type="research",
+            actor="iam",
+        )
+        self.assertIsNone(unscheduled["schedule_at"])
+
+    async def test_schedule_at_rejects_naive_and_invalid(self):
+        with self.assertRaises(AutonomousWebTaskError):
+            await self.service.create(
+                title="Naive timestamp",
+                task_type="research",
+                schedule_at="2026-11-29T10:30:00",
+                actor="iam",
+            )
+        with self.assertRaises(AutonomousWebTaskError):
+            await self.service.create(
+                title="Invalid timestamp",
+                task_type="research",
+                schedule_at="not-a-timestamp",
+                actor="iam",
+            )
+
     async def test_max_retries_exceeded(self):
         wk_service = WebsiteKnowledgeService(self.db)
         wk = await wk_service.create(

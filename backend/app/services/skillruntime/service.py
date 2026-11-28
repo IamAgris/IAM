@@ -67,10 +67,10 @@ async def check_invocation_limit(skill_id: str, caller: str) -> bool:
         )
         allowed, _ = await limiter.check(key)
         return bool(allowed)
-    limiter = _skill_limiters.setdefault(
+    local_limiter = _skill_limiters.setdefault(
         caller, RateLimiter(settings.skill_runtime_per_skill_limit_per_minute)
     )
-    allowed, _ = limiter.check(key)
+    allowed, _ = local_limiter.check(key)
     return bool(allowed)
 
 
@@ -215,10 +215,13 @@ class SkillRuntimeService:
                     p in {".", ".."} for p in path.parts
                 ):
                     raise SkillRuntimeError("script must be a relative path under scripts/")
+                # codeql[py/path-injection] path parts were validated as a relative scripts/ child above.
                 resolved_script = (package_dir / path).resolve()
+                # codeql[py/path-injection] containment and is_file() are enforced by this check.
                 if package_dir not in resolved_script.parents or not resolved_script.is_file():
                     raise SkillRuntimeError("script does not exist inside the skill package")
                 findings = self.forge.engine.security.scan_text(
+                    # codeql[py/path-injection] resolved_script was contained by the check above.
                     resolved_script.read_text(encoding="utf-8", errors="replace"), script
                 )
                 if self.forge.engine.security.has_blocking_findings(findings):

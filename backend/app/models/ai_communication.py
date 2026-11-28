@@ -15,7 +15,7 @@ import uuid
 from app.core.database import Base
 
 
-class AIIdentityRegistry(Base):
+class AIIdentityRegistry(Base):  # type: ignore[misc]
     """AI systems IAM knows about and can communicate with."""
 
     __tablename__ = "ai_identity_registry"
@@ -39,7 +39,7 @@ class AIIdentityRegistry(Base):
     )
 
 
-class AICapabilityRegistry(Base):
+class AICapabilityRegistry(Base):  # type: ignore[misc]
     """What each AI system can do, with confidence scores."""
 
     __tablename__ = "ai_capability_registry"
@@ -62,7 +62,7 @@ class AICapabilityRegistry(Base):
     )
 
 
-class AIConversationThread(Base):
+class AIConversationThread(Base):  # type: ignore[misc]
     """Conversation threads per AI system."""
 
     __tablename__ = "ai_conversation_threads"
@@ -89,7 +89,7 @@ class AIConversationThread(Base):
     )
 
 
-class AIConversationMessage(Base):
+class AIConversationMessage(Base):  # type: ignore[misc]
     """Individual messages within a conversation thread."""
 
     __tablename__ = "ai_conversation_messages"
@@ -119,7 +119,7 @@ class AIConversationMessage(Base):
     )
 
 
-class AIContextExchange(Base):
+class AIContextExchange(Base):  # type: ignore[misc]
     """Context shared with an AI system."""
 
     __tablename__ = "ai_context_exchange"
@@ -143,7 +143,7 @@ class AIContextExchange(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class AIResponseVerification(Base):
+class AIResponseVerification(Base):  # type: ignore[misc]
     """Verification of AI responses."""
 
     __tablename__ = "ai_response_verification"
@@ -171,7 +171,7 @@ class AIResponseVerification(Base):
     )
 
 
-class AIReputationRecord(Base):
+class AIReputationRecord(Base):  # type: ignore[misc]
     """Per-AI reliability tracking."""
 
     __tablename__ = "ai_reputation_records"
@@ -201,7 +201,7 @@ class AIReputationRecord(Base):
     )
 
 
-class AICommunicationPermission(Base):
+class AICommunicationPermission(Base):  # type: ignore[misc]
     """Per-AI permission rules."""
 
     __tablename__ = "ai_communication_permissions"
@@ -224,7 +224,7 @@ class AICommunicationPermission(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class HumanCommunicationBridge(Base):
+class HumanCommunicationBridge(Base):  # type: ignore[misc]
     """Human-mediated communication: IAM prepares, human submits, human returns response."""
 
     __tablename__ = "human_communication_bridge"
@@ -254,7 +254,7 @@ class HumanCommunicationBridge(Base):
     )
 
 
-class AICommunicationAudit(Base):
+class AICommunicationAudit(Base):  # type: ignore[misc]
     """Audit trail for all AI communication events."""
 
     __tablename__ = "ai_communication_audit"

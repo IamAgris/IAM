@@ -8,7 +8,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade():  # type: ignore[no-untyped-def]
     op.execute(r'''
 CREATE EXTENSION IF NOT EXISTS vector;
     ''')
@@ -3458,7 +3458,7 @@ CREATE TABLE visitor_messages (
     ''')
 
 
-def downgrade():
+def downgrade():  # type: ignore[no-untyped-def]
     op.execute("DROP TABLE IF EXISTS visitor_messages CASCADE")
     op.execute("DROP TABLE IF EXISTS task_executions CASCADE")
     op.execute("DROP TABLE IF EXISTS security_findings CASCADE")

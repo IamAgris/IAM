@@ -1,6 +1,6 @@
 # Cloudflare Tunnel + Access for the Core (deployed 28 November 2026)
 
-Based on `infra/cloudflare/README.md`, `IAM_OWNER_DECISIONS.md` (OD-03/19/42)
+Based on `infra/cloudflare/README.md`, `docs/IAM_OWNER_DECISIONS.md` (OD-03/19/42)
 and live `cf` CLI verification on 28 November 2026.
 
 ## Account and zone

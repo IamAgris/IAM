@@ -125,14 +125,14 @@ class BrowserMultiAgentService:
         row = await self._session(session_token)
         if row.agent_id != str(agent_id) and row.owner != str(agent_id):
             raise BrowserMultiAgentError("session belongs to a different agent")
-        await browser_service.close_session(row.session_token)  # type: ignore[arg-type]
-        row.state = "closed"  # type: ignore[assignment]
-        row.closed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        await browser_service.close_session(row.session_token)
+        row.state = "closed"
+        row.closed_at = datetime.now(timezone.utc)
         await self.db.commit()
         if row.task_id:
             await self.evidence.append_audit(
-                row.task_id, actor=actor, action="browser.agent.session_close",  # type: ignore[arg-type]
-                target=row.session_token, outcome={"agent_id": agent_id},  # type: ignore[arg-type]
+                row.task_id, actor=actor, action="browser.agent.session_close",
+                target=row.session_token, outcome={"agent_id": agent_id},
             )
         return self._row(row)
 
@@ -155,16 +155,16 @@ class BrowserMultiAgentService:
         row = await self._session(session_token)
         if row.agent_id != str(from_agent):
             raise BrowserMultiAgentError("source agent does not own this session")
-        row.agent_id = str(to_agent)  # type: ignore[assignment]
-        row.owner = str(to_agent)  # type: ignore[assignment]
-        row.payload = {  # type: ignore[assignment]
+        row.agent_id = str(to_agent)
+        row.owner = str(to_agent)
+        row.payload = {
             **(row.payload or {}),
             "transferred_with": authorization_id,
             "transferred_at": datetime.now(timezone.utc).isoformat(),
         }
         await self.db.commit()
         await self.evidence.append_audit(
-            row.task_id or session_token, actor=actor,  # type: ignore[arg-type]
+            row.task_id or session_token, actor=actor,
             actor_type="creator", action="browser.agent.session_transfer",
             target=session_token,
             outcome={"from": from_agent, "to": to_agent,
@@ -184,11 +184,11 @@ class BrowserMultiAgentService:
             level="4",  # human performs the step
             reason=reason,
             context={"session_token": session_token, "agent_id": row.agent_id},
-            task_ref=row.task_id,  # type: ignore[arg-type]
+            task_ref=row.task_id,
             actor=actor,
         )
         await self.evidence.append_audit(
-            row.task_id or session_token, actor=actor,  # type: ignore[arg-type]
+            row.task_id or session_token, actor=actor,
             action="browser.agent.handover", target=session_token,
             outcome={"request_id": request.get("id"), "level": "4"},
         )
@@ -202,24 +202,24 @@ class BrowserMultiAgentService:
     ) -> Dict[str, Any]:
         row = await self._session(session_token)
         if row.state != "recovering":
-            row.state = "recovering"  # type: ignore[assignment]
+            row.state = "recovering"
             await self.db.commit()
         page = await browser_service.get_persistent_page(session_token)
         if page and not getattr(page, "is_closed", lambda: False)():
-            row.state = "open"  # type: ignore[assignment]
+            row.state = "open"
             await self.db.commit()
             return {"recovered": True, "session_id": session_token}
         # Re-open the isolated context; never fall back to a shared session.
         await browser_service.close_session(session_token)
         meta = await browser_service.open_session(
-            session_token, mode=row.isolation_level, owner=row.owner,  # type: ignore[arg-type]
+            session_token, mode=row.isolation_level, owner=row.owner,
             permission_scope=list(row.permission_scope or []),
         )
-        row.state = "open"  # type: ignore[assignment]
-        row.payload = {**(row.payload or {}), "recovered_at": datetime.now(timezone.utc).isoformat()}  # type: ignore[assignment]
+        row.state = "open"
+        row.payload = {**(row.payload or {}), "recovered_at": datetime.now(timezone.utc).isoformat()}
         await self.db.commit()
         await self.evidence.append_audit(
-            row.task_id or session_token, actor=actor,  # type: ignore[arg-type]
+            row.task_id or session_token, actor=actor,
             action="browser.agent.recovery", target=session_token,
             outcome={"recovered": True, "engine": meta.get("engine")},
         )

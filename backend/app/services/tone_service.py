@@ -54,7 +54,7 @@ FORMAL = {"regards", "sincerely", "dear", "please", "kindly", "respectfully"}
 INFORMAL = {"lol", "omg", "nah", "dude", "guys", "wtf", "tbh", "imo"}
 
 
-def _hits(text: str, terms) -> List[str]:
+def _hits(text: str, terms) -> List[str]:  # type: ignore[no-untyped-def]
     return sorted({term for term in terms if re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", text)})
 
 

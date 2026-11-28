@@ -163,7 +163,7 @@ class GeoService:
         result = await self.db.execute(select(GeoPlace))
         matches = []
         for place in result.scalars().all():
-            distance = haversine_km(latitude, longitude, place.latitude, place.longitude)
+            distance = haversine_km(latitude, longitude, place.latitude, place.longitude)  # type: ignore[arg-type]
             if distance <= radius_km:
                 item = self.place_dict(place)
                 item["distance_km"] = round(distance, 3)
@@ -197,7 +197,7 @@ class GeoService:
         try:
             async with httpx.AsyncClient(timeout=10, headers={"User-Agent": "IAM-Geospatial/1.0"}) as client:
                 response = await client.get(
-                    provider.base_url,
+                    provider.base_url,  # type: ignore[arg-type]
                     params={"q": query, "format": "json", "limit": 5},
                 )
             if response.status_code != 200:
@@ -289,7 +289,7 @@ class GeoService:
                     "place_type": place.place_type,
                     "country_code": place.country_code,
                     "confidence": place.confidence,
-                    **(place.attributes or {}),
+                    **dict(place.attributes or {}),
                 },
             }
             for place in result.scalars().all()
@@ -342,8 +342,8 @@ class GeoService:
             raise GeoError("feed not found")
         digest = _hash(data)
         changed = feed.last_data_hash is not None and feed.last_data_hash != digest
-        feed.last_data_hash = digest
-        feed.last_fetched_at = datetime.now(timezone.utc)
+        feed.last_data_hash = digest  # type: ignore[assignment]
+        feed.last_fetched_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return {
             "feed_id": feed_id,

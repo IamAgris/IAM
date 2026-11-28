@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db_session
+from app.services.workspaces.errors import WorkspaceError
 from app.services.workspaces.providers import provider_statuses
 from app.services.workspaces.service import (
     SUPPORTED_PROVIDERS,
-    WorkspaceError,
     WorkspaceService,
 )
 
@@ -46,13 +46,13 @@ def _fail(exc: WorkspaceError) -> HTTPException:
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     return {
         "enabled": settings.workspace_enabled,
         "adapter": settings.workspace_adapter,
         "default_adapter": "stub",
         "supported_providers": list(SUPPORTED_PROVIDERS),
-        "providers": [status.as_dict() for status in provider_statuses()],
+        "providers": [status.as_dict() for status in provider_statuses()],  # type: ignore[no-untyped-call]
         "credential_ttl_seconds": settings.workspace_credential_ttl_seconds,
         "isolation": {
             "core_access": False,
@@ -67,7 +67,7 @@ async def policy():
 
 
 @router.post("")
-async def create_workspace(
+async def create_workspace(  # type: ignore[no-untyped-def]
     payload: WorkspaceCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -87,12 +87,12 @@ async def create_workspace(
 
 
 @router.get("")
-async def list_workspaces(db: AsyncSession = Depends(get_db_session)):
+async def list_workspaces(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await WorkspaceService(db).list()
 
 
 @router.post("/{workspace_id}/start")
-async def start_workspace(
+async def start_workspace(  # type: ignore[no-untyped-def]
     workspace_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -106,7 +106,7 @@ async def start_workspace(
 
 
 @router.post("/{workspace_id}/execute")
-async def execute_in_workspace(
+async def execute_in_workspace(  # type: ignore[no-untyped-def]
     workspace_id: str,
     payload: ExecuteRequest,
     request: Request,
@@ -123,7 +123,7 @@ async def execute_in_workspace(
 
 
 @router.post("/{workspace_id}/save")
-async def save_workspace(
+async def save_workspace(  # type: ignore[no-untyped-def]
     workspace_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -137,7 +137,7 @@ async def save_workspace(
 
 
 @router.post("/{workspace_id}/credentials")
-async def issue_workspace_credential(
+async def issue_workspace_credential(  # type: ignore[no-untyped-def]
     workspace_id: str,
     payload: CredentialCreate,
     request: Request,
@@ -160,7 +160,7 @@ async def issue_workspace_credential(
 
 
 @router.get("/{workspace_id}/credentials")
-async def list_workspace_credentials(
+async def list_workspace_credentials(  # type: ignore[no-untyped-def]
     workspace_id: str,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -171,7 +171,7 @@ async def list_workspace_credentials(
 
 
 @router.delete("/{workspace_id}/credentials/{credential_id}")
-async def revoke_workspace_credential(
+async def revoke_workspace_credential(  # type: ignore[no-untyped-def]
     workspace_id: str,
     credential_id: str,
     request: Request,
@@ -188,7 +188,7 @@ async def revoke_workspace_credential(
 
 
 @router.delete("/{workspace_id}")
-async def destroy_workspace(
+async def destroy_workspace(  # type: ignore[no-untyped-def]
     workspace_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

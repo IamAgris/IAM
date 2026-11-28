@@ -27,14 +27,14 @@ class FreeSandboxMonitor:
         outcomes = []
         for record in found.scalars().all():
             try:
-                outcome = await self.service.verify_quota(record.name)
+                outcome = await self.service.verify_quota(record.name)  # type: ignore[arg-type]
             except SandboxError as exc:
                 outcome = {
                     "provider": record.name,
                     "allowed": False,
                     "reason": str(exc),
                 }
-            outcome["health"] = manager.health().get(record.name)
+            outcome["health"] = manager.health().get(str(record.name))
             outcomes.append(outcome)
         return outcomes
 

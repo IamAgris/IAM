@@ -16,6 +16,7 @@ import os
 import re
 import loguru
 
+from app.services.path_safety import contained_path as _contained_path
 from app.services.security_policy import (
     forbidden_capability,
     is_broad_target,
@@ -102,26 +103,47 @@ class AegisEngine:
         return result
 
     # --- Component 3: Defensive Vulnerability Research (safe file/dir checks) ---
-    def audit_path(self, path: str) -> Dict[str, Any]:
-        """Local defensive checks: permissions, world-writable files, exposed secrets."""
-        issues = []
+    def audit_path(self, path: str, *, root: Optional[str] = None) -> Dict[str, Any]:
+        """Local defensive checks, restricted to the configured audit root.
+
+        The HTTP route supplies an untrusted ``path``. Resolving it and requiring
+        containment under ``root`` (the working directory by default) prevents
+        the audit endpoint from probing arbitrary files on the host.
+        """
+        issues: List[Dict[str, Any]] = []
         try:
-            st = os.stat(path)
+            target = _contained_path(root or os.getcwd(), path)
+        except (ValueError, OSError):
+            issues.append({
+                "type": "path_outside_audit_root", "path": str(path)[:300],
+                "severity": "high",
+            })
+            self.findings.extend(issues)
+            return {
+                "path": path, "issues": issues,
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+                "note": "paths outside the audit root are refused",
+            }
+        try:
+            # codeql[py/path-injection] target is resolved and contained by _contained_path above.
+            st = os.stat(target)
             if st.st_mode & 0o002:
-                issues.append({"type": "world_writable", "path": path, "severity": "high"})
-            if os.path.isdir(path):
-                for root, _dirs, files in os.walk(path):
+                issues.append({"type": "world_writable", "path": str(target), "severity": "high"})
+            # codeql[py/path-injection] target is resolved and contained by _contained_path above.
+            if os.path.isdir(target):
+                # codeql[py/path-injection] walk starts from the contained target.
+                for walk_root, _dirs, files in os.walk(target):
                     for f in files[:100]:  # bounded
-                        fp = os.path.join(root, f)
+                        fp = os.path.join(walk_root, f)
                         try:
                             if os.stat(fp).st_mode & 0o002:
                                 issues.append({"type": "world_writable", "path": fp, "severity": "medium"})
                         except OSError:
                             continue
         except OSError as e:
-            issues.append({"type": "stat_failed", "path": path, "severity": "low", "detail": str(e)[:120]})
+            issues.append({"type": "stat_failed", "path": str(target), "severity": "low", "detail": str(e)[:120]})
         self.findings.extend(issues)
-        return {"path": path, "issues": issues, "checked_at": datetime.now(timezone.utc).isoformat()}
+        return {"path": str(target), "issues": issues, "checked_at": datetime.now(timezone.utc).isoformat()}
 
     # --- Component 4: Secure Remediation Engine ---
     def recommend_fix(self, finding_type: str) -> str:

@@ -23,7 +23,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class ExternalSecurityEngine(Base):
+class ExternalSecurityEngine(Base):  # type: ignore[misc]
     """A configured external security-testing engine (e.g. ARTEX)."""
 
     __tablename__ = "security_engines"
@@ -61,7 +61,7 @@ class ExternalSecurityEngine(Base):
     )
 
 
-class SecurityEngineScope(Base):
+class SecurityEngineScope(Base):  # type: ignore[misc]
     """Explicit, owner-registered target allowlist entry."""
 
     __tablename__ = "security_engine_scopes"
@@ -81,7 +81,7 @@ class SecurityEngineScope(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SecurityEngineTask(Base):
+class SecurityEngineTask(Base):  # type: ignore[misc]
     """One IAM-controlled security-testing task sent to an external engine."""
 
     __tablename__ = "security_engine_tasks"
@@ -130,7 +130,7 @@ class SecurityEngineTask(Base):
     )
 
 
-class SecurityFinding(Base):
+class SecurityFinding(Base):  # type: ignore[misc]
     """Normalised, untrusted finding evidence returned by an external engine."""
 
     __tablename__ = "security_findings"
@@ -152,7 +152,7 @@ class SecurityFinding(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SecurityEngineAudit(Base):
+class SecurityEngineAudit(Base):  # type: ignore[misc]
     """Append-only record of every engine configuration and task action."""
 
     __tablename__ = "security_engine_audit"

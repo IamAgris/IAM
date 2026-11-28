@@ -11,10 +11,10 @@ Qwen2.5-Coder 3B choice in OD-46 is superseded; the coder remains an optional se
 | `docker-compose.yml` | Defaults for `IAM_PRIMARY_MODEL` / `IAM_PRIMARY_LOCAL_TAG` → qwen2.5:3b |
 | `.env` | Explicit overrides updated (Compose/env beat code defaults) |
 | `infra/litellm/config.yaml` | `local-qwen-3b` active; coder alias commented as optional secondary |
-| `IAM_OWNER_DECISIONS.md` | OD-46 row, details and status note record the reopening |
-| `IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` | Amendment + primary row + alias evidence |
-| `IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` | Shared primary row, history and configuration |
-| `ARCHITECTURE_INDEX.md` | Note reflects the reopening |
+| `docs/IAM_OWNER_DECISIONS.md` | OD-46 row, details and status note record the reopening |
+| `docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md` | Amendment + primary row + alias evidence |
+| `docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md` | Shared primary row, history and configuration |
+| `docs/ARCHITECTURE_INDEX.md` | Note reflects the reopening |
 
 ## Verification
 

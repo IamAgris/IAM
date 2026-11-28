@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -119,7 +119,7 @@ class EvaluationSuite:
     candidate against a recorded baseline before promotion.
     """
 
-    def __init__(self, manifest_path: str = DEFAULT_SUITE_MANIFEST, client_factory: Any=None) -> Any:
+    def __init__(self, manifest_path: str = DEFAULT_SUITE_MANIFEST, client_factory: Any=None) -> None:
         path = _resolve_path(manifest_path)
         raw = path.read_bytes()
         self.path = str(path)
@@ -133,7 +133,7 @@ class EvaluationSuite:
         suites = manifest.get("suites") or []
         if not suites:
             raise LMEvalError("eval manifest has no suites")
-        self.suites = []
+        self.suites: List[Dict[str, Any]] = []
         for item in suites:
             name = str(item.get("name") or "")
             dataset = str(item.get("dataset") or "")
@@ -186,7 +186,7 @@ class EvaluationSuite:
         max_drop: float = 0.05,
     ) -> Dict[str, Any]:
         """Detect any domain that regressed beyond the allowed margin."""
-        regressions = []
+        regressions: List[Dict[str, Any]] = []
         for name, previous in (baseline or {}).items():
             current = (candidate or {}).get(name)
             if not current:

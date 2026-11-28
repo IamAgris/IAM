@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 def assess(records: List[Dict[str, Any]], gap_result: Dict[str, Any],
            contradiction_result: Dict[str, Any], scope: str = "aggregate",
-           validation: Dict[str, Any] = None) -> Dict[str, Any]:
+           validation: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     conditions: List[Dict[str, str]] = []
 
     if not records:

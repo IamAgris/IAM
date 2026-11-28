@@ -7,10 +7,18 @@ a payment rail, neither of which is enabled by this module.
 
 from typing import Any, Dict, Optional
 
-import httpx
-
 from app.core.config import settings
 from app.services.blockchain.providers.base import ProviderDenied, require_flag
+from app.services.iics.egress import EgressGateway
+
+
+def _allowed_hosts() -> list[str]:
+    """Configured public-host boundary for x402 discovery (empty = public web)."""
+    return [
+        host.strip().lower().rstrip(".")
+        for host in settings.web3_x402_allowed_hosts.split(",")
+        if host.strip()
+    ]
 
 
 class X402Service:
@@ -24,19 +32,30 @@ class X402Service:
         }
 
     async def discover(self, service_url: str) -> Dict[str, Any]:
-        """GET a service endpoint and report its 402 price without paying."""
+        """GET a service endpoint and report its 402 price without paying.
+
+        All egress goes through the shared pinned gateway: scheme/host/DNS checks,
+        private and metadata rejection, per-hop redirect re-assessment, a timeout
+        and a response-size cap. The optional configured host list is an extra
+        boundary for deployments that only talk to known providers.
+        """
         require_flag(settings.web3_x402_enabled, "x402 discovery is disabled")
-        if not service_url.startswith(("https://", "http://")):
-            raise ProviderDenied("service_url must be an http(s) URL")
-        async with httpx.AsyncClient(
-            timeout=settings.web3_request_timeout_seconds, follow_redirects=False
-        ) as client:
-            response = await client.get(service_url, headers={"Accept": "application/json"})
-        if response.status_code != 402:
+        gateway = EgressGateway(
+            allowed_hosts=_allowed_hosts(),
+            timeout=float(settings.web3_request_timeout_seconds),
+            max_bytes=100_000,
+        )
+        result = await gateway.fetch_pinned(
+            service_url, headers={"Accept": "application/json"}
+        )
+        if not result.ok:
+            raise ProviderDenied(f"x402 discovery blocked: {result.error}")
+        body = result.body[:1000].decode("utf-8", errors="replace")
+        if result.status_code != 402:
             return {
                 "paid_endpoint": False,
-                "status_code": response.status_code,
-                "body_excerpt": response.text[:500],
+                "status_code": result.status_code,
+                "body_excerpt": body[:500],
                 "note": "No 402 challenge returned; nothing was paid.",
             }
         return {
@@ -44,10 +63,10 @@ class X402Service:
             "status_code": 402,
             "challenge_headers": {
                 key: value[:500]
-                for key, value in response.headers.items()
-                if key.lower() in ("x-price", "www-authenticate", "content-type")
+                for key, value in result.headers.items()
+                if key in ("x-price", "www-authenticate", "content-type")
             },
-            "body_excerpt": response.text[:1000],
+            "body_excerpt": body,
             "untrusted": True,
             "note": "Provider and price must be independently verified before approval.",
         }

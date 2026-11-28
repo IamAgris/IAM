@@ -4,7 +4,7 @@
 
 - `scripts/build-multiarch.ps1` — buildx script for backend + frontend, `linux/amd64` and
   `linux/arm64`, exporting `artifacts/multiarch/<service>-<arch>.tar`.
-- `IAM_HARDWARE_ADAPTATION.md` — implementation note added at the end; criterion 4 remains
+- `docs/IAM_HARDWARE_ADAPTATION.md` — implementation note added at the end; criterion 4 remains
   unverified until an image is built.
 
 ## What happened

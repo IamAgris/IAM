@@ -1,8 +1,8 @@
 # Document conflict resolution status — 28 November 2026
 
-Based on `IAM_DOCUMENTATION_INVENTORY_AND_CONFLICT_REPORT.md` (C01–C35) and the
-current working tree. `ARCHITECTURE_INDEX.md` authority tables and
-`IAM_OWNER_DECISIONS.md` are **not** rewritten here: `AGENTS.md` requires owner
+Based on `docs/IAM_DOCUMENTATION_INVENTORY_AND_CONFLICT_REPORT.md` (C01–C35) and the
+current working tree. `docs/ARCHITECTURE_INDEX.md` authority tables and
+`docs/IAM_OWNER_DECISIONS.md` are **not** rewritten here: `AGENTS.md` requires owner
 confirmation for source-of-truth tables.
 
 ## Resolved by implementation since the report

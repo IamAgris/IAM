@@ -24,11 +24,11 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-def _now():
+def _now():  # type: ignore[no-untyped-def]
     return datetime.now(timezone.utc)
 
 
-class FreeSandboxProvider(Base):
+class FreeSandboxProvider(Base):  # type: ignore[misc]
     __tablename__ = "free_sandbox_providers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -60,7 +60,7 @@ class FreeSandboxProvider(Base):
     )
 
 
-class FreeSandboxQuotaSnapshot(Base):
+class FreeSandboxQuotaSnapshot(Base):  # type: ignore[misc]
     __tablename__ = "free_sandbox_quota_snapshots"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -79,7 +79,7 @@ class FreeSandboxQuotaSnapshot(Base):
     captured_at = Column(DateTime(timezone=True), default=_now, nullable=False)
 
 
-class FreeSandboxEnvironment(Base):
+class FreeSandboxEnvironment(Base):  # type: ignore[misc]
     __tablename__ = "free_sandbox_environments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -108,7 +108,7 @@ class FreeSandboxEnvironment(Base):
     )
 
 
-class FreeSandboxResult(Base):
+class FreeSandboxResult(Base):  # type: ignore[misc]
     __tablename__ = "free_sandbox_results"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)

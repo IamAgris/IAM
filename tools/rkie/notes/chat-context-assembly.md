@@ -21,7 +21,7 @@ background worker:
 - `backend/app/services/governance_service.py` — `GovernanceService.check_authority`,
   used in the background autonomy graph, not in chat.
 
-No constitution runtime check exists. Per `IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`,
+No constitution runtime check exists. Per `docs/IAM_HUMAN_BEHAVIOUR_EQUALITY_AND_RESPONSIBILITY_SPEC.md`,
 personality/constitution teach the law; infrastructure enforcement defines what
 IAM can do — so a "constitution gate" in chat would be a fake security control.
 
@@ -243,7 +243,7 @@ gaps.
   a generated `CREATOR_GATEWAY_SECRET` were added to the local `.env` (secret never
   printed). `creator_signer_example.py` now accepts
   `IAM_CREATOR_SIGNING_KEY_FILE`.
-- `IAM_CREATOR_SIGNER_SETUP.md` documents the ceremony and the remaining human
+- `docs/IAM_CREATOR_SIGNER_SETUP.md` documents the ceremony and the remaining human
   step: set the verified `CREATOR_EMAIL`. Deployment preflight now shows
   `creator_public_key`, `creator_gateway_secret`, `creator_email_transport` OK;
   `creator_email` is still a blocker by design.

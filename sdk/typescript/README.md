@@ -1,6 +1,6 @@
 # @iam/sdk (TypeScript)
 
-Official TypeScript/JavaScript client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
+Official TypeScript/JavaScript client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
 
 Published to GitHub Packages as `@iamagris/sdk`. Add the scope to `.npmrc` before installing:
 

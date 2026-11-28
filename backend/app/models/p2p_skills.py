@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class P2PSkillCandidate(Base):
+class P2PSkillCandidate(Base):  # type: ignore[misc]
     __tablename__ = "p2p_skill_candidates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

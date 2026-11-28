@@ -120,8 +120,8 @@ class NodeService:
             permitted_ram_bytes=ram * percent / 100,
             permitted_storage_bytes=storage * percent / 100,
         )
-        node.last_seen_at = datetime.now(timezone.utc)
-        node.resources = {
+        node.last_seen_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        node.resources = {  # type: ignore[assignment]
             **node.resources,
             "cpu_cores": payload["cpu_cores"],
             "ram_bytes": ram,

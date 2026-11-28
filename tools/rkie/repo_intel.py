@@ -163,7 +163,7 @@ BENCHMARKS = [
     ("modelrouter", "filename", "backend/app/api/routes/modelrouter.py"),
     ("IntelligenceRouter", "symbol", "backend/app/services/intel_router_service.py"),
     ("/api/v1/memory", "fts", "backend/app/api/routes/memory.py"),
-    ("OD-46", "fts", "IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md"),
+    ("OD-46", "fts", "docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md"),
     ("KnowledgeItem", "symbol", "backend/app/models/memory.py"),
 ]
 

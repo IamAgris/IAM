@@ -2,7 +2,7 @@
 
 **Date:** 27 November 2026 · **Based on:** current working tree; verified with
 `Search-IAMRepo.ps1 -Query lifecycle -Mode files -Scope backend` (only `ai_research/lifecycle.py`
-and `hbi/lifecycle.py` existed) and Doc 19 spec in `ARCHITECTURE_INDEX.md`.
+and `hbi/lifecycle.py` existed) and Doc 19 spec in `docs/ARCHITECTURE_INDEX.md`.
 
 This is **not** Doc 22's `free_sandboxes` (notebooks/spaces). It assesses cloud VM nodes
 (GCP/AWS/Railway-class) for supplementary use and manages their lifecycle.

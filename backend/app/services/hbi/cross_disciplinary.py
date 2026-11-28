@@ -14,9 +14,9 @@ DISCIPLINES = ["psychology", "history", "economics", "neuroscience", "sociology"
 
 def fuse(question: str,
          claims_by_discipline: Dict[str, List[Dict[str, Any]]],
-         calibration_weights: Dict[str, float] = None) -> Dict[str, Any]:
-    contributions = []
-    flat = []
+         calibration_weights: Dict[str, float] = None) -> Dict[str, Any]:  # type: ignore[assignment]
+    contributions: List[Dict[str, Any]] = []
+    flat: list[Any] = []
     weights = calibration_weights or {d: 1.0 / len(DISCIPLINES) for d in DISCIPLINES}
     total_weight = sum(weights.get(d, 0.0) for d in DISCIPLINES) or 1.0
 

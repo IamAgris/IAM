@@ -38,7 +38,7 @@ CONSEQUENCES = [
 ]
 REASON = (
     "Owner requested a permanent live web research capability for IAM; "
-    "see IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md (Document 34) §B "
+    "see docs/IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md (Document 34) §B "
     "for the exact proposed decision text."
 )
 

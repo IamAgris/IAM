@@ -7,7 +7,7 @@ not authority. Re-verify against current files before reusing it.
 
 ## Why OD-55 / Doc 35
 
-`IAM_OWNER_DECISIONS.md` and `ARCHITECTURE_INDEX.md` already assign **OD-50 / Document 30**
+`docs/IAM_OWNER_DECISIONS.md` and `docs/ARCHITECTURE_INDEX.md` already assign **OD-50 / Document 30**
 to the confirmed Voice & Hearing System and OD-51/OD-52 to Docs 31–32. The original Web3
 proposal used colliding numbers; all proposal documents, the Creator request script and
 code comments were renumbered to OD-55 / Doc 35. A cached `OD-50` reference is stale.
@@ -46,4 +46,4 @@ has not been applied to a live DB; no network call was made and no credential wa
 
 Signed OD-55 challenge; Umbrel inspection results; restricted LND/CLN credentials and
 thirdweb secret; operator-reviewed executor URL. Procedure:
-`IAM_WEB3_ACTIVATION_RUNBOOK.md`. Helper: `scripts/umbrel_web3_credentials.sh`.
+`docs/IAM_WEB3_ACTIVATION_RUNBOOK.md`. Helper: `scripts/umbrel_web3_credentials.sh`.

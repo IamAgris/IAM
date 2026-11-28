@@ -56,21 +56,21 @@ def _clamp(value: int) -> int:
 
 
 @router.get("/", response_model=List[LanguageProfileResponse])
-async def list_languages(db: AsyncSession = Depends(get_db_session)):
+async def list_languages(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all language profiles."""
     result = await db.execute(select(LanguageProfile))
     profiles = result.scalars().all()
     return [
         LanguageProfileResponse(
             id=str(p.id),
-            language_code=p.language_code,
-            vocabulary_level=p.vocabulary_level,
-            grammar_level=p.grammar_level,
-            reading_comprehension=p.reading_comprehension,
-            listening_comprehension=p.listening_comprehension,
-            writing_ability=p.writing_ability,
-            conversational_ability=p.conversational_ability,
-            pronunciation_level=p.pronunciation_level,
+            language_code=p.language_code,  # type: ignore[arg-type]
+            vocabulary_level=p.vocabulary_level,  # type: ignore[arg-type]
+            grammar_level=p.grammar_level,  # type: ignore[arg-type]
+            reading_comprehension=p.reading_comprehension,  # type: ignore[arg-type]
+            listening_comprehension=p.listening_comprehension,  # type: ignore[arg-type]
+            writing_ability=p.writing_ability,  # type: ignore[arg-type]
+            conversational_ability=p.conversational_ability,  # type: ignore[arg-type]
+            pronunciation_level=p.pronunciation_level,  # type: ignore[arg-type]
             updated_at=p.updated_at.isoformat() if p.updated_at else None,
         )
         for p in profiles
@@ -78,7 +78,7 @@ async def list_languages(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/", response_model=LanguageProfileResponse)
-async def create_language_profile(
+async def create_language_profile(  # type: ignore[no-untyped-def]
     profile: LanguageProfileCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -99,20 +99,20 @@ async def create_language_profile(
 
     return LanguageProfileResponse(
         id=str(lang.id),
-        language_code=lang.language_code,
-        vocabulary_level=lang.vocabulary_level,
-        grammar_level=lang.grammar_level,
-        reading_comprehension=lang.reading_comprehension,
-        listening_comprehension=lang.listening_comprehension,
-        writing_ability=lang.writing_ability,
-        conversational_ability=lang.conversational_ability,
-        pronunciation_level=lang.pronunciation_level,
+        language_code=lang.language_code,  # type: ignore[arg-type]
+        vocabulary_level=lang.vocabulary_level,  # type: ignore[arg-type]
+        grammar_level=lang.grammar_level,  # type: ignore[arg-type]
+        reading_comprehension=lang.reading_comprehension,  # type: ignore[arg-type]
+        listening_comprehension=lang.listening_comprehension,  # type: ignore[arg-type]
+        writing_ability=lang.writing_ability,  # type: ignore[arg-type]
+        conversational_ability=lang.conversational_ability,  # type: ignore[arg-type]
+        pronunciation_level=lang.pronunciation_level,  # type: ignore[arg-type]
         updated_at=lang.updated_at.isoformat() if lang.updated_at else None,
     )
 
 
 @router.patch("/{language_code}", response_model=LanguageProfileResponse)
-async def update_language_progress(
+async def update_language_progress(  # type: ignore[no-untyped-def]
     language_code: str,
     update: LanguageProfileUpdate,
     db: AsyncSession = Depends(get_db_session),
@@ -135,13 +135,13 @@ async def update_language_progress(
 
     return LanguageProfileResponse(
         id=str(lang.id),
-        language_code=lang.language_code,
-        vocabulary_level=lang.vocabulary_level,
-        grammar_level=lang.grammar_level,
-        reading_comprehension=lang.reading_comprehension,
-        listening_comprehension=lang.listening_comprehension,
-        writing_ability=lang.writing_ability,
-        conversational_ability=lang.conversational_ability,
-        pronunciation_level=lang.pronunciation_level,
+        language_code=lang.language_code,  # type: ignore[arg-type]
+        vocabulary_level=lang.vocabulary_level,  # type: ignore[arg-type]
+        grammar_level=lang.grammar_level,  # type: ignore[arg-type]
+        reading_comprehension=lang.reading_comprehension,  # type: ignore[arg-type]
+        listening_comprehension=lang.listening_comprehension,  # type: ignore[arg-type]
+        writing_ability=lang.writing_ability,  # type: ignore[arg-type]
+        conversational_ability=lang.conversational_ability,  # type: ignore[arg-type]
+        pronunciation_level=lang.pronunciation_level,  # type: ignore[arg-type]
         updated_at=lang.updated_at.isoformat() if lang.updated_at else None,
     )

@@ -7,6 +7,7 @@ Does not create a new top-level system or a second queue.
 from .egress import (
     EgressDecision,
     EgressGateway,
+    PinnedFetchResult,
     default_gateway,
     enforce,
     set_default_gateway,
@@ -31,6 +32,7 @@ from .tool_registry import IICS_TOOLS, register_iics_tools
 __all__ = [
     "EgressDecision",
     "EgressGateway",
+    "PinnedFetchResult",
     "default_gateway",
     "enforce",
     "set_default_gateway",

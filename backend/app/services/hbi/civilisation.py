@@ -31,7 +31,7 @@ def analyse(question: str, records: List[Dict[str, Any]], graph: Any) -> Dict[st
             or factor in str((r.get("context_dimensions") or {}).get("environment", {})).lower()
         ][:5]
 
-    explanations = []
+    explanations: List[Dict[str, Any]] = []
     for factor, evidence in evidence_by_factor.items():
         if evidence:
             explanations.append({

@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class BusinessBudget(Base):
+class BusinessBudget(Base):  # type: ignore[misc]
     """Per-business budget tracking."""
     __tablename__ = "business_budgets"
 
@@ -26,7 +26,7 @@ class BusinessBudget(Base):
     )
 
 
-class CustomerRecord(Base):
+class CustomerRecord(Base):  # type: ignore[misc]
     """Customer tracking for business projects."""
     __tablename__ = "customers"
 
@@ -44,7 +44,7 @@ class CustomerRecord(Base):
     )
 
 
-class SalesRecord(Base):
+class SalesRecord(Base):  # type: ignore[misc]
     """Sales tracking for business projects."""
     __tablename__ = "sales_records"
 
@@ -61,7 +61,7 @@ class SalesRecord(Base):
     )
 
 
-class BusinessReport(Base):
+class BusinessReport(Base):  # type: ignore[misc]
     """Business plans and reports."""
     __tablename__ = "business_reports"
 
@@ -78,7 +78,7 @@ class BusinessReport(Base):
     )
 
 
-class ProjectPortfolio(Base):
+class ProjectPortfolio(Base):  # type: ignore[misc]
     """Multiple project management."""
     __tablename__ = "project_portfolios"
 

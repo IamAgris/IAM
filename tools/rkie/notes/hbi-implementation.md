@@ -1,8 +1,8 @@
 # HBI implementation map (Document 26 / OD-45)
 
 - Question: Where does the confirmed Human Behaviour Intelligence capability live, and how is its state verified?
-- Search modes / queries used: local file listing of `backend/app/services/hbi/`, `ARCHITECTURE_INDEX.md`, `IAM_OWNER_DECISIONS.md`, `grep` for `hbi.*` routes and OD-45.
-- Authoritative spec and decisions: `IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (Doc 26, OD-45 confirmed 26 Nov 2026), `IAM_OWNER_DECISIONS.md`, `ARCHITECTURE_INDEX.md`. Earlier related docs: Doc 17 (OD-33), Doc 24 (OD-43), Doc 14 (OD-30).
+- Search modes / queries used: local file listing of `backend/app/services/hbi/`, `docs/ARCHITECTURE_INDEX.md`, `docs/IAM_OWNER_DECISIONS.md`, `grep` for `hbi.*` routes and OD-45.
+- Authoritative spec and decisions: `docs/IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md` (Doc 26, OD-45 confirmed 26 Nov 2026), `docs/IAM_OWNER_DECISIONS.md`, `docs/ARCHITECTURE_INDEX.md`. Earlier related docs: Doc 17 (OD-33), Doc 24 (OD-43), Doc 14 (OD-30).
 - Key files:
   - `backend/app/api/routes/hbi.py` — 79 versioned `/api/v1/hbi/*` endpoints; `_service` dependency commits/rolls back.
   - `backend/app/services/hbi/permission_engine.py` — Doc 27 (OD-47 owner-confirmed 27 Nov 2026) acquisition permissions, independent training approval, partnerships and unverified legal-context registry.

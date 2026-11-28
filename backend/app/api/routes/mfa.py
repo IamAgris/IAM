@@ -60,7 +60,7 @@ def _fail(exc: MFAError) -> HTTPException:
 
 
 @router.post("/passkeys/register/begin")
-async def begin_registration(
+async def begin_registration(  # type: ignore[no-untyped-def]
     payload: RegisterBegin,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -74,7 +74,7 @@ async def begin_registration(
 
 
 @router.post("/passkeys/register/complete")
-async def complete_registration(
+async def complete_registration(  # type: ignore[no-untyped-def]
     payload: RegisterComplete,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -91,7 +91,7 @@ async def complete_registration(
 
 
 @router.post("/passkeys/authenticate/begin")
-async def begin_authentication(
+async def begin_authentication(  # type: ignore[no-untyped-def]
     payload: AuthBegin,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -103,7 +103,7 @@ async def begin_authentication(
 
 
 @router.post("/passkeys/authenticate/verify")
-async def verify_assertion(
+async def verify_assertion(  # type: ignore[no-untyped-def]
     payload: VerifyAssertion,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -122,7 +122,7 @@ async def verify_assertion(
 
 
 @router.get("/passkeys/{website_credential_id}")
-async def list_passkeys(
+async def list_passkeys(  # type: ignore[no-untyped-def]
     website_credential_id: str, db: AsyncSession = Depends(get_db_session)
 ):
     try:
@@ -132,7 +132,7 @@ async def list_passkeys(
 
 
 @router.post("/totp/enroll")
-async def enroll_totp(
+async def enroll_totp(  # type: ignore[no-untyped-def]
     payload: TotpEnroll,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -149,7 +149,7 @@ async def enroll_totp(
 
 
 @router.post("/totp/verify")
-async def verify_totp(
+async def verify_totp(  # type: ignore[no-untyped-def]
     payload: TotpVerify,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -163,7 +163,7 @@ async def verify_totp(
 
 
 @router.post("/totp/disable")
-async def disable_totp(
+async def disable_totp(  # type: ignore[no-untyped-def]
     payload: CredentialRef,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

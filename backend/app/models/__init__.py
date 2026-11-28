@@ -85,6 +85,11 @@ from app.models.creatorapproval import (
     CreatorMessage,
     CommunicationAudit,
 )
+from app.models.user_email import (
+    UserEmailOptIn,
+    UserEmailOutbox,
+    UserEmailInbound,
+)
 from app.models.sdk import RegisteredNode, NodeResourceReport
 from app.models.storage import StoredObject
 from app.models.uwaie import WebsiteWorkflow
@@ -219,6 +224,8 @@ __all__ = [
     "CreatorRequest", "SignedChallenge", "CreatorApproval",
     "CreatorAuthorization", "CreatorEmailOutbox", "CreatorEmailDeadLetter",
     "CommunicationAudit",
+    # Opt-in user email carrier (OD-59)
+    "UserEmailOptIn", "UserEmailOutbox", "UserEmailInbound",
     # API authentication
     "ApiCredential",
     # Owner authorization

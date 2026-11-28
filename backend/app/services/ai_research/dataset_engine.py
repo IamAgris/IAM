@@ -115,7 +115,7 @@ async def build(
         raise InvalidResearchJob("experiment_id and licence are required")
     if request.max_rows < 1:
         raise InvalidResearchJob("max_rows must be positive")
-    store = store or default_release_store()
+    store = store or default_release_store()  # type: ignore[no-untyped-call]
 
     knowledge_rows = (
         await db.execute(

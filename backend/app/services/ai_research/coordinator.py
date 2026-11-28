@@ -40,7 +40,7 @@ class ResearchRun:
     environment: SandboxEnvironment
     request: WorkloadRequest
     artifacts: List[ResearchArtifact] = field(default_factory=list)
-    results: Optional[dict] = None
+    results: Optional[dict] = None  # type: ignore[type-arg]
 
 
 class ResearchCoordinator:
@@ -132,7 +132,7 @@ class ResearchCoordinator:
             artifacts=[prepared.artifact],
         )
 
-    async def collect(self, run: ResearchRun, adapter: ResearchPlatformAdapter) -> dict:
+    async def collect(self, run: ResearchRun, adapter: ResearchPlatformAdapter) -> dict:  # type: ignore[type-arg]
         raw = await adapter.collect_results(run.environment.external_id)
         wrapped = wrap_research_output(raw, run.provider)
         artifact = self.store.put(

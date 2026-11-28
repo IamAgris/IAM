@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/v1/setup", tags=["setup"])
 
 
 @router.post("/initialize")
-async def initialize(db: AsyncSession = Depends(get_db_session)):
+async def initialize(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Initialize IAM genesis identity, constitution, governance and policies."""
     service = BootstrapService(db)
     result = await service.initialize_all()
@@ -17,7 +17,7 @@ async def initialize(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/genesis")
-async def get_genesis(db: AsyncSession = Depends(get_db_session)):
+async def get_genesis(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get the permanent IAM identity (never changes)."""
     from app.models.lifemanagement import AIIdentityGenesis
     from sqlalchemy import select

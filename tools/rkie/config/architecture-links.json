@@ -2,12 +2,12 @@
   "version": 1,
   "purpose": "Declarative mapping of repository paths to authoritative IAM architecture documents and owner decisions. Used by Update-Index.ps1 to annotate files. Edit this file rather than hardcoding mappings in scripts.",
   "default": {
-    "spec": "IAM_FINAL_CONSOLIDATION.md",
+    "spec": "docs/IAM_FINAL_CONSOLIDATION.md",
     "decisions": [],
     "area": "general"
   },
   "superseded": [
-    "^MASTER_SPECIFICATION\\.md$",
+    "^(docs/)?MASTER_SPECIFICATION\\.md$",
     "^IAM_MASTER_ARCHITECTURE\\.md$",
     "^IAM_INTELLIGENCE_EVOLUTION_SPEC\\.md$",
     "^IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC\\.md$",
@@ -17,14 +17,14 @@
   ],
   "mappings": [
     {
-      "pattern": "^ARCHITECTURE_INDEX\\.md$",
-      "spec": "ARCHITECTURE_INDEX.md",
+      "pattern": "^(docs/)?ARCHITECTURE_INDEX\\.md$",
+      "spec": "docs/ARCHITECTURE_INDEX.md",
       "decisions": [],
       "area": "architecture-index"
     },
     {
-      "pattern": "^IAM_OWNER_DECISIONS\\.md$",
-      "spec": "IAM_OWNER_DECISIONS.md",
+      "pattern": "^(docs/)?IAM_OWNER_DECISIONS\\.md$",
+      "spec": "docs/IAM_OWNER_DECISIONS.md",
       "decisions": [],
       "area": "owner-decisions"
     },
@@ -35,146 +35,146 @@
       "area": "frozen-documents"
     },
     {
-      "pattern": "^IAM_FINAL_CONSOLIDATION\\.md$",
-      "spec": "IAM_FINAL_CONSOLIDATION.md",
+      "pattern": "^(docs/)?IAM_FINAL_CONSOLIDATION\\.md$",
+      "spec": "docs/IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],
       "area": "master-architecture"
     },
     {
       "pattern": "^backend/app/(api/routes/modelrouter\\.py|services/intel_router_service\\.py|services/adaptive_model_selector\\.py|services/model_inference\\.py|services/serving_model\\.py|models/modelrouter\\.py)",
-      "spec": "IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "spec": "docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
       "decisions": ["OD-38", "OD-46"],
       "area": "model-routing-and-inference"
     },
     {
       "pattern": "^backend/app/(api/routes/hbi\\.py|models/hbi\\.py|services/hbi/)",
-      "spec": "IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md",
+      "spec": "docs/IAM_HUMAN_BEHAVIOUR_INTELLIGENCE_SPEC.md",
       "decisions": ["OD-45"],
       "area": "human-behaviour-intelligence"
     },
     {
       "pattern": "^backend/app/(services/research_service\\.py|services/ai_research/|api/routes/development\\.py|api/routes/research\\.py)",
-      "spec": "IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md; IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md",
+      "spec": "docs/IAM_INDEPENDENT_AI_RESEARCH_DEVELOPMENT_AND_EVOLUTION_ARCHITECTURE.md; docs/IAM_AI_RESEARCH_IMPLEMENTATION_PLAN.md",
       "decisions": ["OD-41"],
       "area": "autonomous-research"
     },
     {
       "pattern": "^backend/app/services/(skillforge|skillruntime)/|^iam/skills/",
-      "spec": "IAM_SKILL_FORGE_SPEC.md; IAM_SKILL_RUNTIME_SPEC.md",
+      "spec": "docs/IAM_SKILL_FORGE_SPEC.md; docs/IAM_SKILL_RUNTIME_SPEC.md",
       "decisions": [],
       "area": "skills"
     },
     {
       "pattern": "^backend/app/(services/(workspaces|whitehat_labs|whitehat_policy|computer_use)|api/routes/(workspaces|whitehat|computer_use)\\.py)",
-      "spec": "IAM_WHITEHAT_AND_WORKSPACE.md",
+      "spec": "docs/IAM_WHITEHAT_AND_WORKSPACE.md",
       "decisions": [],
       "area": "workspace-and-whitehat"
     },
     {
       "pattern": "^backend/app/(services/(financial_intelligence|financial_policy|ledger_service|banking|trading|investment_intelligence|prediction_markets|gaming_intelligence)|api/routes/(financial_intelligence|financial_adapters)\\.py|models/(banking|financial_intelligence|trading)\\.py)",
-      "spec": "IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md",
+      "spec": "docs/IAM_FINANCIAL_INTELLIGENCE_AND_ECONOMIC_INDEPENDENCE_SPEC.md",
       "decisions": ["OD-44"],
       "area": "financial-intelligence"
     },
     {
       "pattern": "^backend/app/(services/(memory_service|worldmodel_service|reflection_service)|api/routes/(memory|knowledge|worldmodel)\\.py|models/(memory|worldmodel|reflection)\\.py)",
-      "spec": "IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+      "spec": "docs/IAM_DATABASE_DESIGN.md; docs/IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],
       "area": "runtime-memory-and-knowledge"
     },
     {
       "pattern": "^backend/app/(api/middleware/auth_middleware|core/auth_policy|api/routes/(auth|ownerauth|creatorapproval|mfa)\\.py|services/(ownerauth_service|creatorapproval_service|mfa)\\.py)",
-      "spec": "IAM_API_AUTH_SPEC.md; IAM_CREATOR_APPROVAL_SPEC.md",
+      "spec": "docs/IAM_API_AUTH_SPEC.md; docs/IAM_CREATOR_APPROVAL_SPEC.md",
       "decisions": [],
       "area": "authentication-and-authority"
     },
     {
       "pattern": "^backend/app/(services/(model_credential_vault|model_usage|delegation_orchestrator)\\.py|models/model_provider_key\\.py|api/routes/modelcredentials\\.py|db/migrations/052_model_provider_keys\\.sql)$",
-      "spec": "IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "spec": "docs/IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
       "decisions": ["OD-51"],
       "area": "multi-model-provider-credentials"
     },
     {
       "pattern": "^backend/app/(services/(model_discovery|provider_model_registrar|endpoint_availability|capability_evaluator|providers/)\\S*\\.py|api/routes/modeldiscovery\\.py|workers/arq_model_catalog\\.py)$",
-      "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md",
+      "spec": "docs/IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md",
       "decisions": ["OD-52"],
       "area": "universal-model-discovery"
     },
     {
-      "pattern": "^IAM_PAID_MODEL_ACCESS_DECISION\\.md$",
-      "spec": "IAM_PAID_MODEL_ACCESS_DECISION.md; IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
+      "pattern": "^(docs/)?IAM_PAID_MODEL_ACCESS_DECISION\\.md$",
+      "spec": "docs/IAM_PAID_MODEL_ACCESS_DECISION.md; docs/IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; docs/IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
       "decisions": ["OD-56"],
       "area": "paid-model-access-proposed"
     },
     {
-      "pattern": "^IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC\\.md$",
-      "spec": "IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
+      "pattern": "^(docs/)?IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC\\.md$",
+      "spec": "docs/IAM_UNIVERSAL_MODEL_PROVIDER_ORCHESTRATION_SPEC.md; docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; docs/IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md",
       "decisions": ["OD-52"],
       "area": "universal-model-provider"
     },
     {
-      "pattern": "^IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC\\.md$",
-      "spec": "IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "pattern": "^(docs/)?IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC\\.md$",
+      "spec": "docs/IAM_MULTI_MODEL_INTELLIGENCE_GOVERNANCE_SPEC.md; docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
       "decisions": ["OD-51"],
       "area": "multi-model-governance-proposed"
     },
     {
-      "pattern": "^IAM_VOICE_AND_HEARING_SYSTEM_SPEC\\.md$|^backend/app/(services/voice_service\\.py|api/routes/voice\\.py)$",
-      "spec": "IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md; IAM_MEDIA_AND_RESEARCH.md; IAM_API_CONTRACTS.md",
+      "pattern": "^(docs/)?IAM_VOICE_AND_HEARING_SYSTEM_SPEC\\.md$|^backend/app/(services/voice_service\\.py|api/routes/voice\\.py)$",
+      "spec": "docs/IAM_VOICE_AND_HEARING_SYSTEM_SPEC.md; docs/IAM_MEDIA_AND_RESEARCH.md; docs/IAM_API_CONTRACTS.md",
       "decisions": ["OD-50", "OD-28"],
       "area": "voice-and-hearing"
     },
     {
       "pattern": "^backend/app/(api/routes|models|services|db|core|orchestration|workers)/",
-      "spec": "IAM_API_CONTRACTS.md; IAM_DATABASE_DESIGN.md; IAM_FINAL_CONSOLIDATION.md",
+      "spec": "docs/IAM_API_CONTRACTS.md; docs/IAM_DATABASE_DESIGN.md; docs/IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],
       "area": "backend-core"
     },
     {
       "pattern": "^backend/app/db/migrations/",
-      "spec": "IAM_DATABASE_DESIGN.md",
+      "spec": "docs/IAM_DATABASE_DESIGN.md",
       "decisions": [],
       "area": "database-migrations"
     },
     {
       "pattern": "^frontend/",
-      "spec": "IAM_FRONTEND_IMPLEMENTATION.md; canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md",
+      "spec": "docs/IAM_FRONTEND_IMPLEMENTATION.md; canonical/IAM_DOC_04_UI_GLOBAL_ACCESS.md",
       "decisions": [],
       "area": "frontend"
     },
     {
       "pattern": "^sdk/",
-      "spec": "IAM_DEVELOPER_SDK_AND_CLI_SPEC.md; sdk/PROTOCOL.md",
+      "spec": "docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md; sdk/PROTOCOL.md",
       "decisions": ["OD-29"],
       "area": "sdk"
     },
     {
       "pattern": "^infra/litellm/",
-      "spec": "IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
+      "spec": "docs/IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md; docs/IAM_PRIMARY_MODEL_UNIFICATION_SPEC.md",
       "decisions": ["OD-38", "OD-46"],
       "area": "model-gateway"
     },
     {
       "pattern": "^infra/",
-      "spec": "IAM_DEPLOYMENT_CONFIG.md",
+      "spec": "docs/IAM_DEPLOYMENT_CONFIG.md",
       "decisions": [],
       "area": "infrastructure"
     },
     {
       "pattern": "^(backend/tests/|tests/)",
-      "spec": "IAM_FINAL_CONSOLIDATION.md",
+      "spec": "docs/IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],
       "area": "acceptance-tests"
     },
     {
       "pattern": "^(scripts/|tools/rkie/)",
-      "spec": "ARCHITECTURE_INDEX.md",
+      "spec": "docs/ARCHITECTURE_INDEX.md",
       "decisions": [],
       "area": "tooling"
     },
     {
       "pattern": "^IAM_.*\\.md$",
-      "spec": "IAM_FINAL_CONSOLIDATION.md",
+      "spec": "docs/IAM_FINAL_CONSOLIDATION.md",
       "decisions": [],
       "area": "architecture-documents"
     }

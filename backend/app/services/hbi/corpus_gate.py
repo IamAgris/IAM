@@ -122,7 +122,7 @@ def evaluate(manifest: CorpusSourceManifest, intended_purpose: str,
 class CorpusGovernance:
     """Durable-in-process registry of source decisions and audit history."""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         self.decisions: Dict[str, Dict[str, Any]] = {}
         self.audit: List[Dict[str, Any]] = []
 
@@ -153,7 +153,7 @@ class CorpusGovernance:
         })
         return {"restricted": True, "source_id": source_id, "reason": reason}
 
-    def approved_ids(self) -> set:
+    def approved_ids(self) -> set:  # type: ignore[type-arg]
         return {
             source_id for source_id, record in self.decisions.items()
             if record["decision"] == "approved" and record["state"] != "restricted"

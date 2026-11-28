@@ -1,0 +1,156 @@
+{
+  "checks": [
+    {
+      "actual": "sha256:eb4402837c7829a690fa845de4d7f3fd842c2adee476d5341da8a46ea9255175",
+      "expected": "sha256:eb4402837c7829a690fa845de4d7f3fd842c2adee476d5341da8a46ea9255175",
+      "name": "template blob digest matches manifest",
+      "pass": true
+    },
+    {
+      "actual": "qwen2",
+      "expected": "qwen2",
+      "name": "GGUF architecture",
+      "pass": true
+    },
+    {
+      "actual": 36,
+      "expected": 36,
+      "name": "block_count (layers)",
+      "pass": true
+    },
+    {
+      "actual": 2048,
+      "expected": 2048,
+      "name": "embedding_length (dim)",
+      "pass": true
+    },
+    {
+      "actual": 11008,
+      "expected": 11008,
+      "name": "feed_forward_length (intermediate)",
+      "pass": true
+    },
+    {
+      "actual": 16,
+      "expected": 16,
+      "name": "attention heads",
+      "pass": true
+    },
+    {
+      "actual": 2,
+      "expected": 2,
+      "name": "KV heads",
+      "pass": true
+    },
+    {
+      "actual": 1000000,
+      "expected": 1000000,
+      "name": "rope theta",
+      "pass": true
+    },
+    {
+      "actual": 1e-06,
+      "expected": 1e-06,
+      "name": "rms norm epsilon",
+      "pass": true
+    },
+    {
+      "actual": "qwen2",
+      "expected": "qwen2",
+      "name": "tokenizer pre",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "add_bos_token",
+      "pass": true
+    },
+    {
+      "actual": 151643,
+      "expected": 151643,
+      "name": "bos token id",
+      "pass": true
+    },
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "eos token id",
+      "pass": true
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "GGUF metadata has no head_dim key",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "chat template has im_start marker",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "chat template has im_end marker",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "upstream Qwen3 chat IDs cannot be reused unchanged",
+      "pass": true
+    }
+  ],
+  "gate": "G3-structural",
+  "limits": [
+    "tokenizer.ggml.tokens/merges empty in /api/show; no BPE sequence parity",
+    "no GGUF weight tensor loaded; no logit or token-sequence comparison",
+    "structural evidence only, not an engine or deployment claim"
+  ],
+  "overall_pass": true,
+  "provenance": {
+    "all_model_info_keys": [
+      "general.architecture",
+      "general.base_model.0.name",
+      "general.base_model.0.organization",
+      "general.base_model.0.repo_url",
+      "general.base_model.count",
+      "general.basename",
+      "general.file_type",
+      "general.finetune",
+      "general.languages",
+      "general.license",
+      "general.license.link",
+      "general.license.name",
+      "general.parameter_count",
+      "general.quantization_version",
+      "general.size_label",
+      "general.tags",
+      "general.type",
+      "qwen2.attention.head_count",
+      "qwen2.attention.head_count_kv",
+      "qwen2.attention.layer_norm_rms_epsilon",
+      "qwen2.block_count",
+      "qwen2.context_length",
+      "qwen2.embedding_length",
+      "qwen2.feed_forward_length",
+      "qwen2.rope.freq_base",
+      "tokenizer.ggml.add_bos_token",
+      "tokenizer.ggml.bos_token_id",
+      "tokenizer.ggml.eos_token_id",
+      "tokenizer.ggml.merges",
+      "tokenizer.ggml.model",
+      "tokenizer.ggml.padding_token_id",
+      "tokenizer.ggml.pre",
+      "tokenizer.ggml.token_type",
+      "tokenizer.ggml.tokens"
+    ],
+    "model": "qwen2.5:3b",
+    "note": "tokenizer.ggml.tokens and merges were returned empty by this endpoint; full BPE parity is NOT evidenced by this fixture",
+    "retrieved": "2026-11-28",
+    "source": "Ollama /api/show on aura-ollama (http://localhost:11434)"
+  },
+  "upstream_reference": "alesha-pro/llm.asm @ 48feccbf, shared/constants.inc:86-95"
+}

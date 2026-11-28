@@ -26,7 +26,7 @@ class PrincipleUpdateRequest(BaseModel):
 
 
 @router.post("")
-async def create_reflection(request: ReflectionRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_reflection(request: ReflectionRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Create a reflection entry."""
     service = ReflectionService(db)
     try:
@@ -40,21 +40,21 @@ async def create_reflection(request: ReflectionRequest, db: AsyncSession = Depen
 
 
 @router.get("")
-async def list_reflections(limit: int = 50, db: AsyncSession = Depends(get_db_session)):
+async def list_reflections(limit: int = 50, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List reflection entries."""
     service = ReflectionService(db)
     return await service.list_reflections(limit=limit)
 
 
 @router.get("/principles")
-async def get_operating_principles(db: AsyncSession = Depends(get_db_session)):
+async def get_operating_principles(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get IAM's operating principles."""
     service = ReflectionService(db)
     return await service.get_operating_principles()
 
 
 @router.patch("/principles/{principle_id}")
-async def update_principle(
+async def update_principle(  # type: ignore[no-untyped-def]
     principle_id: str,
     request: PrincipleUpdateRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -77,8 +77,8 @@ async def update_principle(
 
 
 @router.post("/initialize")
-async def initialize_principles(db: AsyncSession = Depends(get_db_session)):
+async def initialize_principles(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Initialize default operating principles."""
     service = ReflectionService(db)
-    await service.initialize_default_principles()
+    await service.initialize_default_principles()  # type: ignore[no-untyped-call]
     return {"status": "initialized"}

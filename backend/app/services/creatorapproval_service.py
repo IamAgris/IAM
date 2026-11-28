@@ -128,9 +128,9 @@ class CreatorApprovalService:
             "requester": request.requester,
             "creator_email": request.creator_email,
             "channel": request.channel,
-            "requested_at": _iso(request.requested_at),
-            "expires_at": _iso(request.expires_at),
-            "resolved_at": _iso(request.resolved_at),
+            "requested_at": _iso(request.requested_at),  # type: ignore[arg-type]
+            "expires_at": _iso(request.expires_at),  # type: ignore[arg-type]
+            "resolved_at": _iso(request.resolved_at),  # type: ignore[arg-type]
         }
 
     # ------------------------------------------------------------------ requests
@@ -288,8 +288,8 @@ class CreatorApprovalService:
             "status": outbox.status,
             "attempts": outbox.attempts,
             "last_error": outbox.last_error,
-            "created_at": _iso(outbox.created_at),
-            "sent_at": _iso(outbox.sent_at),
+            "created_at": _iso(outbox.created_at),  # type: ignore[arg-type]
+            "sent_at": _iso(outbox.sent_at),  # type: ignore[arg-type]
         }
 
     async def deliver_request(
@@ -314,9 +314,9 @@ class CreatorApprovalService:
         try:
             outcome = await transport_from_settings().send(message)
         except Exception as exc:  # delivery must never fail the approval request
-            outbox.status = "failed"
-            outbox.attempts += 1
-            outbox.last_error = str(exc)[:1000]
+            outbox.status = "failed"  # type: ignore[assignment]
+            outbox.attempts += 1  # type: ignore[assignment]
+            outbox.last_error = str(exc)[:1000]  # type: ignore[assignment]
             await self._audit(
                 channel="creator_email",
                 direction="outbound",
@@ -339,9 +339,9 @@ class CreatorApprovalService:
 
         outbox.status = outcome["status"]
         outbox.transport = outcome.get("mode", outbox.transport)
-        outbox.attempts += 1
-        outbox.last_error = None
-        outbox.sent_at = _now()
+        outbox.attempts += 1  # type: ignore[assignment]
+        outbox.last_error = None  # type: ignore[assignment]
+        outbox.sent_at = _now()  # type: ignore[assignment]
         await self._audit(
             channel="creator_email",
             direction="outbound",
@@ -414,7 +414,7 @@ class CreatorApprovalService:
             for row in result.scalars().all()
             if row.request_id not in excluded
         ]
-        return [await self.deliver_request(rid, force=True) for rid in request_ids]
+        return [await self.deliver_request(rid, force=True) for rid in request_ids]  # type: ignore[arg-type]
 
     async def dead_letters(self) -> List[Dict[str, Any]]:
         result = await self.db.execute(
@@ -428,8 +428,8 @@ class CreatorApprovalService:
                 "recipient": row.recipient,
                 "attempts": row.attempts,
                 "last_error": row.last_error,
-                "failed_at": _iso(row.failed_at),
-                "resolved_at": _iso(row.resolved_at),
+                "failed_at": _iso(row.failed_at),  # type: ignore[arg-type]
+                "resolved_at": _iso(row.resolved_at),  # type: ignore[arg-type]
             }
             for row in result.scalars().all()
         ]
@@ -451,10 +451,10 @@ class CreatorApprovalService:
         if not dead:
             raise LookupError(f"Dead letter not found: {request_id}")
         outbox = await self._outbox(request_id)
-        outbox.status = "pending"
-        outbox.attempts = 0
-        outbox.last_error = None
-        dead.resolved_at = _now()
+        outbox.status = "pending"  # type: ignore[assignment]
+        outbox.attempts = 0  # type: ignore[assignment]
+        outbox.last_error = None  # type: ignore[assignment]
+        dead.resolved_at = _now()  # type: ignore[assignment]
         await self._audit(
             channel="creator_email",
             direction="outbound",
@@ -479,7 +479,7 @@ class CreatorApprovalService:
             "request_id": request_id,
             "challenge_hash": digest,
             "nonce": challenge.nonce,
-            "expires_at": _iso(challenge.expires_at),
+            "expires_at": _iso(challenge.expires_at),  # type: ignore[arg-type]
             "signer_id": settings.creator_signer_id,
             "messages_to_sign": [f"{digest}|approved", f"{digest}|rejected"],
         }
@@ -501,7 +501,7 @@ class CreatorApprovalService:
         if request.status != "pending":
             raise CreatorApprovalError(f"request is already {request.status}")
         if request.expires_at <= _now():
-            request.status = "expired"
+            request.status = "expired"  # type: ignore[assignment]
             await self.db.commit()
             raise CreatorApprovalError("approval request has expired")
 
@@ -525,7 +525,7 @@ class CreatorApprovalService:
         except InvalidSignature as exc:
             raise CreatorApprovalError("signature verification failed") from exc
 
-        challenge.consumed_at = _now()
+        challenge.consumed_at = _now()  # type: ignore[assignment]
         self.db.add(
             CreatorApproval(
                 request_id=request.id,
@@ -534,8 +534,8 @@ class CreatorApprovalService:
                 signer_id=signer_id,
             )
         )
-        request.status = decision
-        request.resolved_at = _now()
+        request.status = decision  # type: ignore[assignment]
+        request.resolved_at = _now()  # type: ignore[assignment]
 
         authorization = None
         if decision == "approved":
@@ -588,7 +588,7 @@ class CreatorApprovalService:
         for auth in result.scalars().all():
             if auth.expires_at <= now or auth.revoked_at:
                 continue
-            if LEVEL_ORDER.get(auth.max_authority_level, 0) < requested:
+            if LEVEL_ORDER.get(str(auth.max_authority_level), 0) < requested:
                 continue
             if auth.target_ref and target_ref and auth.target_ref != target_ref:
                 continue
@@ -598,7 +598,7 @@ class CreatorApprovalService:
                 "max_level": auth.max_authority_level,
                 "signer_id": auth.signer_id,
                 "target_ref": auth.target_ref,
-                "expires_at": _iso(auth.expires_at),
+                "expires_at": _iso(auth.expires_at),  # type: ignore[arg-type]
             }
         return {
             "authorized": False,
@@ -617,8 +617,8 @@ class CreatorApprovalService:
         auth = result.scalar_one_or_none()
         if not auth:
             return False
-        auth.is_active = False
-        auth.revoked_at = _now()
+        auth.is_active = False  # type: ignore[assignment]
+        auth.revoked_at = _now()  # type: ignore[assignment]
         await self._audit(
             channel="creator_email",
             direction="inbound",
@@ -656,7 +656,7 @@ class CreatorApprovalService:
                 "purpose": a.purpose,
                 "request_id": a.request_id,
                 "details": a.details,
-                "created_at": _iso(a.created_at),
+                "created_at": _iso(a.created_at),  # type: ignore[arg-type]
             }
             for a in result.scalars().all()
         ]

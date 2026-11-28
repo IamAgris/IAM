@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   description: "One IAM · many independent conversations · an evolving autonomous intelligence",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>

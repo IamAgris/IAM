@@ -1,6 +1,6 @@
 """Uniform API error envelope.
 
-IAM_API_CONTRACTS.md:16 requires every error body to carry
+docs/IAM_API_CONTRACTS.md:16 requires every error body to carry
 ``detail``, ``code`` and ``request_id``. Existing clients may still read the
 legacy ``error`` field, so callers can pass it as an extra field.
 """

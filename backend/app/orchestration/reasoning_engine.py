@@ -203,12 +203,14 @@ async def _call_reasoning_llm(
         import json
 
         try:
-            return json.loads(content)
+            _typed_result: dict[str, Any] = json.loads(content)
+            return _typed_result
         except json.JSONDecodeError:
             start, end = content.find("{"), content.rfind("}")
             if start < 0 or end <= start:
                 raise
-            return json.loads(content[start : end + 1])
+            _typed_result_fallback: dict[str, Any] = json.loads(content[start : end + 1])
+            return _typed_result_fallback
     except Exception as exc:
         logger.warning(f"reasoning LLM call failed ({mode}): {exc}")
         return {
@@ -364,12 +366,14 @@ async def critique_reasoning(
         import json
 
         try:
-            return json.loads(content)
+            _typed_result: dict[str, Any] = json.loads(content)
+            return _typed_result
         except json.JSONDecodeError:
             start, end = content.find("{"), content.rfind("}")
             if start < 0 or end <= start:
                 raise
-            return json.loads(content[start : end + 1])
+            _typed_result_fallback: dict[str, Any] = json.loads(content[start : end + 1])
+            return _typed_result_fallback
     except Exception as exc:
         logger.warning(f"critique LLM call failed: {exc}")
         return {
@@ -424,7 +428,7 @@ async def synthesize_reasoning(
     all_steps: List[str] = []
     all_assumptions: List[str] = []
     all_evidence: List[Dict[str, Any]] = []
-    seen_evidence_ids: set = set()
+    seen_evidence_ids: set = set()  # type: ignore[type-arg]
 
     for t in traces:
         all_steps.extend([f"[{t.mode.value}] {s}" for s in t.reasoning_steps])

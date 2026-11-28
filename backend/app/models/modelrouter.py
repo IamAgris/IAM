@@ -12,7 +12,7 @@ import uuid
 from app.core.database import Base
 
 
-class AIProvider(Base):
+class AIProvider(Base):  # type: ignore[misc]
     """A model provider (NVIDIA, Alibaba, OpenAI, Ollama, etc.)."""
     __tablename__ = "ai_providers"
 
@@ -31,7 +31,7 @@ class AIProvider(Base):
     )
 
 
-class DiscoveredModel(Base):
+class DiscoveredModel(Base):  # type: ignore[misc]
     """A model discovered from a provider catalogue (not hardcoded)."""
     __tablename__ = "discovered_models"
 
@@ -87,7 +87,7 @@ class DiscoveredModel(Base):
     )
 
 
-class RoutingDecision(Base):
+class RoutingDecision(Base):  # type: ignore[misc]
     """Audit of which model was selected for a task and why."""
     __tablename__ = "routing_decisions"
 
@@ -101,7 +101,7 @@ class RoutingDecision(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class ProviderUsage(Base):
+class ProviderUsage(Base):  # type: ignore[misc]
     """Usage and remaining limits tracking to avoid unexpected charges."""
     __tablename__ = "provider_usage"
 

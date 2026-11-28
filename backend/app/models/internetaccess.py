@@ -12,7 +12,7 @@ import uuid
 from app.core.database import Base
 
 
-class InternetSession(Base):
+class InternetSession(Base):  # type: ignore[misc]
     """A browser session for navigating the open internet."""
     __tablename__ = "internet_sessions"
 
@@ -26,7 +26,7 @@ class InternetSession(Base):
     actions = relationship("BrowserAction", back_populates="session", cascade="all, delete-orphan")
 
 
-class BrowserAction(Base):
+class BrowserAction(Base):  # type: ignore[misc]
     """Recorded browser interaction — navigate, click, type, submit."""
     __tablename__ = "browser_actions"
 
@@ -47,7 +47,7 @@ class BrowserAction(Base):
     session = relationship("InternetSession", back_populates="actions")
 
 
-class OnlineAccount(Base):
+class OnlineAccount(Base):  # type: ignore[misc]
     """IAM's authorised online accounts and profiles."""
     __tablename__ = "online_accounts"
 
@@ -67,7 +67,7 @@ class OnlineAccount(Base):
     )
 
 
-class PublishedContent(Base):
+class PublishedContent(Base):  # type: ignore[misc]
     """Content published with approval."""
     __tablename__ = "published_content"
 
@@ -86,7 +86,7 @@ class PublishedContent(Base):
     )
 
 
-class MonitoredTarget(Base):
+class MonitoredTarget(Base):  # type: ignore[misc]
     """Websites, services and developments IAM monitors."""
     __tablename__ = "monitored_targets"
 
@@ -104,7 +104,7 @@ class MonitoredTarget(Base):
     )
 
 
-class RetrievedFile(Base):
+class RetrievedFile(Base):  # type: ignore[misc]
     """Files downloaded and analysed from the internet."""
     __tablename__ = "retrieved_files"
 
@@ -122,7 +122,7 @@ class RetrievedFile(Base):
     )
 
 
-class InternetPermission(Base):
+class InternetPermission(Base):  # type: ignore[misc]
     """Permission gates: public exploration open, consequential actions gated."""
     __tablename__ = "internet_permissions"
 
@@ -142,7 +142,7 @@ class InternetPermission(Base):
     )
 
 
-class InternetEvent(Base):
+class InternetEvent(Base):  # type: ignore[misc]
     """Audit trail of internet activity."""
     __tablename__ = "internet_events"
 

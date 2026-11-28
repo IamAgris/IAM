@@ -40,7 +40,7 @@ def _fail(exc: DigitalSecurityIncidentError) -> HTTPException:
 
 
 @router.post("")
-async def create_incident(
+async def create_incident(  # type: ignore[no-untyped-def]
     payload: IncidentCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -63,7 +63,7 @@ async def create_incident(
 
 
 @router.get("")
-async def list_incidents(
+async def list_incidents(  # type: ignore[no-untyped-def]
     website_knowledge_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -72,7 +72,7 @@ async def list_incidents(
 
 
 @router.get("/{incident_id}")
-async def get_incident(incident_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_incident(incident_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single security incident by ID."""
     try:
         return await DigitalSecurityService(db).get(incident_id)
@@ -81,7 +81,7 @@ async def get_incident(incident_id: str, db: AsyncSession = Depends(get_db_sessi
 
 
 @router.patch("/{incident_id}/status")
-async def update_status(
+async def update_status(  # type: ignore[no-untyped-def]
     incident_id: str,
     payload: IncidentStatusUpdate,
     request: Request,

@@ -39,7 +39,7 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     return {
         "enabled": settings.mobile_agent_enabled,
         "adb_path": settings.mobile_adb_path,
@@ -50,17 +50,17 @@ async def policy():
 
 
 @router.post("/devices")
-async def devices(request: Request, db=Depends(get_db_session)):
+async def devices(request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
-        return await MobileAgentService(db).list_devices(_actor(request))
+        return await MobileAgentService(db).list_devices(_actor(request))  # type: ignore[no-untyped-call]
     except MobileAgentError as exc:
         raise HTTPException(403, str(exc)) from exc
 
 
 @router.post("/tap")
-async def tap(payload: TapRequest, request: Request, db=Depends(get_db_session)):
+async def tap(payload: TapRequest, request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
-        return await MobileAgentService(db).tap(
+        return await MobileAgentService(db).tap(  # type: ignore[no-untyped-call]
             payload.device, payload.x, payload.y, _actor(request)
         )
     except MobileAgentError as exc:
@@ -68,9 +68,9 @@ async def tap(payload: TapRequest, request: Request, db=Depends(get_db_session))
 
 
 @router.post("/swipe")
-async def swipe(payload: SwipeRequest, request: Request, db=Depends(get_db_session)):
+async def swipe(payload: SwipeRequest, request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
-        return await MobileAgentService(db).swipe(
+        return await MobileAgentService(db).swipe(  # type: ignore[no-untyped-call]
             payload.device, payload.x, payload.y, payload.x2, payload.y2, _actor(request)
         )
     except MobileAgentError as exc:
@@ -78,9 +78,9 @@ async def swipe(payload: SwipeRequest, request: Request, db=Depends(get_db_sessi
 
 
 @router.post("/type")
-async def type_text(payload: TypeRequest, request: Request, db=Depends(get_db_session)):
+async def type_text(payload: TypeRequest, request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
-        return await MobileAgentService(db).type_text(
+        return await MobileAgentService(db).type_text(  # type: ignore[no-untyped-call]
             payload.device, payload.text, _actor(request)
         )
     except MobileAgentError as exc:
@@ -88,9 +88,9 @@ async def type_text(payload: TypeRequest, request: Request, db=Depends(get_db_se
 
 
 @router.post("/screenshot")
-async def screenshot(payload: ScreenshotRequest, request: Request, db=Depends(get_db_session)):
+async def screenshot(payload: ScreenshotRequest, request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
-        return await MobileAgentService(db).screenshot(
+        return await MobileAgentService(db).screenshot(  # type: ignore[no-untyped-call]
             payload.device, payload.filename, _actor(request)
         )
     except MobileAgentError as exc:

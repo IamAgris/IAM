@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class WorkspaceEnvironment(Base):
+class WorkspaceEnvironment(Base):  # type: ignore[misc]
     """An isolated, replaceable coding workspace.
 
     ``isolation`` records the enforced boundary (no protected-core access, no

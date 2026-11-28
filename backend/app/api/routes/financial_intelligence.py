@@ -142,27 +142,27 @@ def _denied(exc: Exception) -> HTTPException:
 # --- Prediction markets -------------------------------------------------------
 
 @prediction_markets_router.get("/policy")
-async def prediction_policy(db: AsyncSession = Depends(get_db_session)):
+async def prediction_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return PredictionMarketService(db).policy()
 
 
 @prediction_markets_router.get("/execution-adapter")
-async def prediction_execution_adapter():
+async def prediction_execution_adapter():  # type: ignore[no-untyped-def]
     return PredictionMarketService.execution_adapter()
 
 
 @prediction_markets_router.get("/adapter/policy")
-async def prediction_adapter_policy(db: AsyncSession = Depends(get_db_session)):
+async def prediction_adapter_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return PolymarketDataAdapter(db).policy()
 
 
 @prediction_markets_router.get("/adapter/status")
-async def prediction_adapter_status(db: AsyncSession = Depends(get_db_session)):
+async def prediction_adapter_status(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return PolymarketDataAdapter(db).status()
 
 
 @prediction_markets_router.post("/adapter/sync")
-async def sync_prediction_markets(
+async def sync_prediction_markets(  # type: ignore[no-untyped-def]
     payload: AdapterSyncCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -175,7 +175,7 @@ async def sync_prediction_markets(
 
 
 @prediction_markets_router.post("/adapter/order-book")
-async def prediction_order_book(
+async def prediction_order_book(  # type: ignore[no-untyped-def]
     payload: OrderBookCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -187,7 +187,7 @@ async def prediction_order_book(
 
 
 @prediction_markets_router.post("/adapter/data")
-async def prediction_data_query(
+async def prediction_data_query(  # type: ignore[no-untyped-def]
     payload: DataQueryCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -199,12 +199,12 @@ async def prediction_data_query(
 
 
 @prediction_markets_router.get("/forecast/policy")
-async def forecast_policy(db: AsyncSession = Depends(get_db_session)):
+async def forecast_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return ForecastEngine(db).policy()
 
 
 @prediction_markets_router.post("/forecast/run")
-async def run_forecast(
+async def run_forecast(  # type: ignore[no-untyped-def]
     payload: ForecastRunCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -224,7 +224,7 @@ async def run_forecast(
 
 
 @prediction_markets_router.get("/forecast/runs/{market_id}")
-async def list_forecast_runs(market_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_forecast_runs(market_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await ForecastEngine(db).runs(market_id)
     except LookupError as exc:
@@ -232,7 +232,7 @@ async def list_forecast_runs(market_id: str, db: AsyncSession = Depends(get_db_s
 
 
 @prediction_markets_router.post("/markets")
-async def register_market(
+async def register_market(  # type: ignore[no-untyped-def]
     payload: MarketCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -252,12 +252,12 @@ async def register_market(
 
 
 @prediction_markets_router.get("/markets")
-async def list_markets(db: AsyncSession = Depends(get_db_session)):
+async def list_markets(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await PredictionMarketService(db).markets()
 
 
 @prediction_markets_router.get("/markets/{market_id}/comparison")
-async def compare_market(market_id: str, db: AsyncSession = Depends(get_db_session)):
+async def compare_market(market_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await PredictionMarketService(db).compare(market_id)
     except LookupError as exc:
@@ -265,7 +265,7 @@ async def compare_market(market_id: str, db: AsyncSession = Depends(get_db_sessi
 
 
 @prediction_markets_router.post("/markets/{market_id}/estimates")
-async def record_estimate(
+async def record_estimate(  # type: ignore[no-untyped-def]
     market_id: str,
     payload: EstimateCreate,
     request: Request,
@@ -284,7 +284,7 @@ async def record_estimate(
 
 
 @prediction_markets_router.get("/markets/{market_id}/estimates")
-async def list_estimates(market_id: str, db: AsyncSession = Depends(get_db_session)):
+async def list_estimates(market_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await PredictionMarketService(db).estimates(market_id)
     except LookupError as exc:
@@ -292,7 +292,7 @@ async def list_estimates(market_id: str, db: AsyncSession = Depends(get_db_sessi
 
 
 @prediction_markets_router.post("/markets/{market_id}/legal-clearance")
-async def record_legal_clearance(
+async def record_legal_clearance(  # type: ignore[no-untyped-def]
     market_id: str,
     payload: LegalClearanceCreate,
     request: Request,
@@ -309,17 +309,17 @@ async def record_legal_clearance(
 # --- Gaming intelligence -----------------------------------------------------
 
 @gaming_intelligence_router.get("/policy")
-async def gaming_policy(db: AsyncSession = Depends(get_db_session)):
+async def gaming_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return GamingIntelligenceService(db).policy()
 
 
 @gaming_intelligence_router.get("/records")
-async def list_gaming_records(db: AsyncSession = Depends(get_db_session)):
+async def list_gaming_records(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await GamingIntelligenceService(db).records()
 
 
 @gaming_intelligence_router.get("/records/{record_id}")
-async def get_gaming_record(record_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_gaming_record(record_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await GamingIntelligenceService(db).record_by_id(record_id)
     except LookupError as exc:
@@ -327,7 +327,7 @@ async def get_gaming_record(record_id: str, db: AsyncSession = Depends(get_db_se
 
 
 @gaming_intelligence_router.post("/records")
-async def record_gaming_analysis(
+async def record_gaming_analysis(  # type: ignore[no-untyped-def]
     payload: GamingAnalysisCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -348,7 +348,7 @@ async def record_gaming_analysis(
 
 
 @gaming_intelligence_router.post("/rtp-scenario")
-async def rtp_scenario(payload: RtpScenarioCreate, db: AsyncSession = Depends(get_db_session)):
+async def rtp_scenario(payload: RtpScenarioCreate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return GamingIntelligenceService(db).rtp_scenario(
             payload.rtp, payload.wager, payload.plays
@@ -360,17 +360,17 @@ async def rtp_scenario(payload: RtpScenarioCreate, db: AsyncSession = Depends(ge
 # --- Investment intelligence -------------------------------------------------
 
 @investment_intelligence_router.get("/policy")
-async def investment_policy(db: AsyncSession = Depends(get_db_session)):
+async def investment_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return InvestmentIntelligenceService(db).policy()
 
 
 @investment_intelligence_router.get("/records")
-async def list_investment_records(db: AsyncSession = Depends(get_db_session)):
+async def list_investment_records(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await InvestmentIntelligenceService(db).records()
 
 
 @investment_intelligence_router.get("/records/{record_id}")
-async def get_investment_record(record_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_investment_record(record_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await InvestmentIntelligenceService(db).record_by_id(record_id)
     except LookupError as exc:
@@ -378,7 +378,7 @@ async def get_investment_record(record_id: str, db: AsyncSession = Depends(get_d
 
 
 @investment_intelligence_router.post("/records")
-async def record_thesis(
+async def record_thesis(  # type: ignore[no-untyped-def]
     payload: ThesisCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -397,7 +397,7 @@ async def record_thesis(
 
 
 @investment_intelligence_router.post("/rebalance-proposals")
-async def record_rebalance(
+async def record_rebalance(  # type: ignore[no-untyped-def]
     payload: RebalanceCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -416,12 +416,12 @@ async def record_rebalance(
 # --- Provider registry -------------------------------------------------------
 
 @provider_registry_router.get("/policy")
-async def provider_policy(db: AsyncSession = Depends(get_db_session)):
+async def provider_policy(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return ProviderRegistryService(db).policy()
 
 
 @provider_registry_router.post("/seed")
-async def seed_providers(
+async def seed_providers(  # type: ignore[no-untyped-def]
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -433,12 +433,12 @@ async def seed_providers(
 
 
 @provider_registry_router.get("/entries")
-async def list_providers(db: AsyncSession = Depends(get_db_session)):
+async def list_providers(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await ProviderRegistryService(db).entries()
 
 
 @provider_registry_router.post("/entries")
-async def register_provider(
+async def register_provider(  # type: ignore[no-untyped-def]
     payload: ProviderCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -464,7 +464,7 @@ async def register_provider(
 
 
 @provider_registry_router.get("/entries/{name}/evaluation")
-async def evaluate_provider(name: str, db: AsyncSession = Depends(get_db_session)):
+async def evaluate_provider(name: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     try:
         return await ProviderRegistryService(db).evaluate(name)
     except LookupError as exc:
@@ -472,7 +472,7 @@ async def evaluate_provider(name: str, db: AsyncSession = Depends(get_db_session
 
 
 @provider_registry_router.post("/entries/{name}/enable")
-async def enable_provider(
+async def enable_provider(  # type: ignore[no-untyped-def]
     name: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

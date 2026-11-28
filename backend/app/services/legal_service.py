@@ -76,7 +76,7 @@ class LegalService:
             terms_url=payload.get("terms_url"),
         )
         self.db.add(source)
-        self._audit(actor, "legal_source_registered", source.name, {"jurisdiction": source.jurisdiction})
+        self._audit(actor, "legal_source_registered", source.name, {"jurisdiction": source.jurisdiction})  # type: ignore[arg-type]
         await self.db.commit()
         await self.db.refresh(source)
         return self.source_dict(source)
@@ -117,7 +117,7 @@ class LegalService:
                 valid_from=payload.get("effective_at") or payload.get("published_at"),
             )
         )
-        self._audit(actor, "legal_instrument_recorded", instrument.title[:200], {"type": instrument_type})
+        self._audit(actor, "legal_instrument_recorded", instrument.title[:200], {"type": instrument_type})  # type: ignore[arg-type]
         await self.db.commit()
         await self.db.refresh(instrument)
         return self.instrument_dict(instrument)
@@ -144,7 +144,7 @@ class LegalService:
                 valid_from=payload.get("effective_at"),
             )
         )
-        instrument.document_hash = digest
+        instrument.document_hash = digest  # type: ignore[assignment]
         instrument.status = payload.get("status", instrument.status)
         change = LegalChange(
             instrument_id=instrument.id,
@@ -155,7 +155,7 @@ class LegalService:
         self.db.add(change)
         await self.db.commit()
         await self.db.flush()
-        self._audit(actor, "legal_amendment_recorded", instrument.title[:200], {"version": f"v{next_version}"})
+        self._audit(actor, "legal_amendment_recorded", instrument.title[:200], {"version": f"v{next_version}"})  # type: ignore[arg-type]
         await self.db.commit()
         return {
             "instrument_id": str(instrument.id),
@@ -182,7 +182,7 @@ class LegalService:
             evidence=evidence,
         )
         self.db.add(change)
-        self._audit(actor, "legal_change_discovered", instrument.title[:200], {"severity": severity})
+        self._audit(actor, "legal_change_discovered", instrument.title[:200], {"severity": severity})  # type: ignore[arg-type]
         await self.db.commit()
         await self.db.refresh(change)
         return {**self.change_dict(change), "next_stage": "authenticate"}
@@ -191,8 +191,8 @@ class LegalService:
         change = await self._change(change_id)
         instrument = await self._instrument(str(change.instrument_id))
         source = await self._source(str(instrument.source_id))
-        official_host = urlparse(instrument.official_url).netloc.lower()
-        source_host = urlparse(source.url).netloc.lower()
+        official_host = urlparse(str(instrument.official_url)).netloc.lower()
+        source_host = urlparse(str(source.url)).netloc.lower()
         matches = bool(official_host) and official_host == source_host
         authenticated = matches and source.reliability == "official"
         evidence = dict(change.evidence or {})
@@ -201,9 +201,9 @@ class LegalService:
             "source_reliability": source.reliability,
             "confidence": "document_host_and_source_reliability_only",
         }
-        change.evidence = evidence
-        change.authenticated = authenticated
-        change.lifecycle_stage = "authenticate"
+        change.evidence = evidence  # type: ignore[assignment]
+        change.authenticated = authenticated  # type: ignore[assignment]
+        change.lifecycle_stage = "authenticate"  # type: ignore[assignment]
         await self.db.commit()
         return {
             "change_id": change_id,
@@ -220,8 +220,8 @@ class LegalService:
             raise LegalError("change must be authenticated before it can be understood")
         evidence = dict(change.evidence or {})
         evidence["understanding"] = summary[:2000]
-        change.evidence = evidence
-        change.lifecycle_stage = "understand"
+        change.evidence = evidence  # type: ignore[assignment]
+        change.lifecycle_stage = "understand"  # type: ignore[assignment]
         await self.db.commit()
         return {"change_id": change_id, "lifecycle_stage": change.lifecycle_stage}
 
@@ -250,7 +250,7 @@ class LegalService:
             self.db.add(impact)
             created.append(impact)
         await self.db.flush()
-        change.lifecycle_stage = "assess"
+        change.lifecycle_stage = "assess"  # type: ignore[assignment]
         self._audit(actor, "legal_impact_recorded", change_id, {"impacts": len(created)})
         await self.db.commit()
         return {
@@ -267,8 +267,8 @@ class LegalService:
             raise LegalError("change must be assessed before recommendations")
         evidence = dict(change.evidence or {})
         evidence["recommendations"] = recommendations[:50]
-        change.evidence = evidence
-        change.lifecycle_stage = "recommend"
+        change.evidence = evidence  # type: ignore[assignment]
+        change.lifecycle_stage = "recommend"  # type: ignore[assignment]
         await self.db.commit()
         return {"change_id": change_id, "lifecycle_stage": "recommend"}
 
@@ -310,9 +310,9 @@ class LegalService:
         high_risk = any(i.risk_level in {"high", "critical"} for i in impacts.scalars().all())
         if high_risk and not professional_review_reference:
             raise LegalError("high-impact legal conclusions require qualified professional review")
-        change.creator_approval_reference = verified_reference
-        change.professional_review_reference = professional_review_reference
-        change.lifecycle_stage = "authorise"
+        change.creator_approval_reference = verified_reference  # type: ignore[assignment]
+        change.professional_review_reference = professional_review_reference  # type: ignore[assignment]
+        change.lifecycle_stage = "authorise"  # type: ignore[assignment]
         self._audit(actor, "legal_change_authorised", change_id, {"reference": verified_reference[:100]})
         await self.db.commit()
         return {"change_id": change_id, "lifecycle_stage": "authorise"}
@@ -325,9 +325,9 @@ class LegalService:
             raise LegalError("implementation evidence is required")
         data = dict(change.evidence or {})
         data["implementation"] = evidence
-        change.evidence = data
-        change.implemented_at = datetime.now(timezone.utc)
-        change.lifecycle_stage = "implement"
+        change.evidence = data  # type: ignore[assignment]
+        change.implemented_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        change.lifecycle_stage = "implement"  # type: ignore[assignment]
         await self.db.commit()
         return {"change_id": change_id, "lifecycle_stage": "implement"}
 
@@ -339,9 +339,9 @@ class LegalService:
             raise LegalError("verification evidence is required")
         data = dict(change.evidence or {})
         data["verification"] = evidence
-        change.evidence = data
-        change.verified_at = datetime.now(timezone.utc)
-        change.lifecycle_stage = "verify"
+        change.evidence = data  # type: ignore[assignment]
+        change.verified_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        change.lifecycle_stage = "verify"  # type: ignore[assignment]
         self._audit(actor, "legal_change_verified", change_id, {})
         await self.db.commit()
         return {
@@ -374,7 +374,7 @@ class LegalService:
         target["updated_at"] = datetime.now(timezone.utc).isoformat()
         evidence_list = list(impact.evidence or [])
         evidence_list.append({"obligation_id": obligation_id, "hash": _hash(evidence), **evidence})
-        impact.evidence = evidence_list
+        impact.evidence = evidence_list  # type: ignore[assignment]
         self._audit(actor, "legal_obligation_updated", obligation_id, {"status": status})
         await self.db.commit()
         return {"obligation": target, "evidence_recorded": True}
@@ -384,14 +384,14 @@ class LegalService:
         if content is None:
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(source.feed_url or source.url)
+                    response = await client.get(source.feed_url or source.url)  # type: ignore[arg-type]
                     content = response.text
             except httpx.HTTPError as exc:
                 raise LegalError(f"official source unreachable: {exc}") from exc
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         changed = source.last_content_hash is not None and source.last_content_hash != digest
-        source.last_content_hash = digest
-        source.last_checked_at = datetime.now(timezone.utc)
+        source.last_content_hash = digest  # type: ignore[assignment]
+        source.last_checked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         return {
             "source_id": source_id,
@@ -412,7 +412,7 @@ class LegalService:
                 {
                     "id": str(c.id),
                     "severity": c.severity,
-                    "priority": PRIORITY[c.severity],
+                    "priority": PRIORITY[str(c.severity)],
                     "stage": c.lifecycle_stage,
                     "authenticated": c.authenticated,
                     "creator_approval_reference": c.creator_approval_reference,

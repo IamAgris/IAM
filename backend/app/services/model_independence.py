@@ -58,9 +58,9 @@ def weighted_score(scores: Dict[str, Any]) -> float:
 
 
 class ModelIndependenceService:
-    def __init__(self, db: AsyncSession, store=None):
+    def __init__(self, db: AsyncSession, store=None):  # type: ignore[no-untyped-def]
         self.db = db
-        self.store = store or default_release_store()
+        self.store = store or default_release_store()  # type: ignore[no-untyped-call]
 
     async def _authority(self, action: str, target: str) -> Dict[str, Any]:
         authority = await CreatorApprovalService(self.db).check_authorization(
@@ -116,10 +116,10 @@ class ModelIndependenceService:
         row = result.scalar_one_or_none()
         if not row:
             raise LookupError("model comparison not found")
-        authority = await self._authority(ADOPT_ACTION, row.model_name)
+        authority = await self._authority(ADOPT_ACTION, row.model_name)  # type: ignore[arg-type]
         adopted = await self.db.execute(select(ModelComparison))
         for item in adopted.scalars().all():
-            item.is_adopted = item.id == row.id
+            item.is_adopted = item.id == row.id  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="primary_model_adopted",
@@ -188,7 +188,7 @@ class ModelIndependenceService:
             json.dumps(manifest, sort_keys=True, indent=2).encode("utf-8"),
             {"content_type": "application/json", "private_content": False},
         )
-        record.export_location = key
+        record.export_location = key  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="model_portability_exported",
@@ -227,7 +227,7 @@ class ModelIndependenceService:
         authority = await self._authority(FALLBACK_ACTION, primary)
         result = await self.db.execute(select(FallbackConfig))
         for item in result.scalars().all():
-            item.is_active = False
+            item.is_active = False  # type: ignore[assignment]
         row = FallbackConfig(
             primary_model=primary,
             fallback_model=fallback,

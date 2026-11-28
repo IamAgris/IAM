@@ -114,5 +114,5 @@ the channels above.
 
 ## Related Documentation
 
-- [IAM Security and Internet Access Policy](../IAM_SECURITY_AND_INTERNET_POLICY.md) — internet access rules, network and browser controls, isolation, incident response.
+- [IAM Security and Internet Access Policy](../docs/IAM_SECURITY_AND_INTERNET_POLICY.md) — internet access rules, network and browser controls, isolation, incident response.
 - Further design documents in the source tree cover privacy and secrets handling, scoped API authentication, and the sandboxed Skill Runtime. Consult those documents there when available.

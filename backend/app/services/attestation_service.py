@@ -127,7 +127,7 @@ class AttestationService:
             select(IntegrityManifest).where(IntegrityManifest.is_active.is_(True))
         )
         for manifest in previous.scalars().all():
-            manifest.is_active = False
+            manifest.is_active = False  # type: ignore[assignment]
         record = IntegrityManifest(
             version=f"manifest-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             root_hash=measured["root_hash"],
@@ -171,7 +171,7 @@ class AttestationService:
                 "evidence": ["No known-good manifest has been approved yet."],
                 "claim": "best_effort_not_certainty",
             }
-        expected = manifest.manifest or {}
+        expected: Any = manifest.manifest or {}
         differences = [
             path
             for path in sorted(set(expected) | set(current["files"]))
@@ -261,10 +261,10 @@ class AttestationService:
             verified=True,
             result=outcome,
         )
-        node.trust_level = outcome
+        node.trust_level = outcome  # type: ignore[assignment]
         node.is_active = matches
         if not matches:
-            node.status = "modified"
+            node.status = "modified"  # type: ignore[assignment]
         self.db.add(record)
         self.db.add(
             AuditEvent(
@@ -295,9 +295,9 @@ class AttestationService:
     ) -> Dict[str, Any]:
         """A modified deployment downgrades itself and reports status (OD-13)."""
         node = await self._node(node_id)
-        node.trust_level = "restricted"
-        node.is_active = False
-        node.status = "modified"
+        node.trust_level = "restricted"  # type: ignore[assignment]
+        node.is_active = False  # type: ignore[assignment]
+        node.status = "modified"  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="node_restricted_report",
@@ -316,8 +316,8 @@ class AttestationService:
 
     async def revoke(self, node_id: str, actor: str = "creator") -> Dict[str, Any]:
         node = await self._node(node_id)
-        node.trust_level = "revoked"
-        node.is_active = False
+        node.trust_level = "revoked"  # type: ignore[assignment]
+        node.is_active = False  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="node_revoked",

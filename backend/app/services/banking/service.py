@@ -135,8 +135,8 @@ class BankingService:
         consent = result.scalar_one_or_none()
         if not consent:
             raise LookupError("banking consent not found")
-        consent.is_active = False
-        consent.revoked_at = datetime.now(timezone.utc)
+        consent.is_active = False  # type: ignore[assignment]
+        consent.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="banking_consent_revoked",

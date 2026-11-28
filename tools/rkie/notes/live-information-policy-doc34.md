@@ -5,7 +5,7 @@
 ## Finding
 
 A proposal to add a "Web Intelligence & Live Information Retrieval System" is
-**mostly already frozen**: Doc 29 / OD-49 (`IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`)
+**mostly already frozen**: Doc 29 / OD-49 (`docs/IAM_BROWSER_INTELLIGENCE_MASTER_SPEC.md`)
 covers BIWOS, Web Research Engine, Browser Security Gateway, Web Knowledge
 Integration, provider-independent search, deep browsing, verification, security,
 autonomous/monitoring research and local-first operation (20/20 checklist §13).
@@ -24,7 +24,7 @@ Doc 14 (OD-30), Doc 11 (OD-27) and Doc 31 (OD-51) cover the rest. Runtime code:
 
 ## Files added / changed
 
-- `IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` — proposed Doc 34, OD-54 not recorded.
+- `docs/IAM_LIVE_INFORMATION_AND_WEB_INTELLIGENCE_SPEC.md` — proposed Doc 34, OD-54 not recorded.
 - `backend/app/services/live_information_policy.py` — policy text, deterministic
   `SearchTriggerClassifier`, `LiveEvidence`, `collect_live_evidence` (free providers only).
 - `backend/app/api/routes/models.py` — `_prepare_messages` injects policy always and
@@ -62,7 +62,7 @@ contradiction detection and prompt-injection redaction (`live_evidence_analysis.
 explicit public-host SSRF guard; behavioural DEEP follow-up stage; bounded
 autonomous monitoring (`live_research_tasks`, migration 063, max 50 tasks,
 15-10080 min); Docker build now fails if Playwright browsers cannot install.
-`.env.example` flags added. OD-54 signoff sheet: `IAM_OD54_SIGNOFF_SHEET.md`
+`.env.example` flags added. OD-54 signoff sheet: `docs/IAM_OD54_SIGNOFF_SHEET.md`
 with E-1/E-2/E-3 real-web evidence.
 
 Also added: isolated Tesseract OCR via `live_media_service.py` (Docker container,
@@ -81,7 +81,7 @@ OpenAPI checks OK. Remaining: Creator signature, Tavily key, STT provider.
 
 - OD-46 shared primary is **Qwen2.5-3B** (`local-qwen-3b`, owner reopened 27 Nov 2026); Coder 3B is an optional secondary.
 - Paid search stays fail-closed (OD-04/OD-25, `SEARCH_ACTION`).
-- `ARCHITECTURE_INDEX.md` and `IAM_OWNER_DECISIONS.md` intentionally untouched —
+- `docs/ARCHITECTURE_INDEX.md` and `docs/IAM_OWNER_DECISIONS.md` intentionally untouched —
   owner must record OD-54 before Doc 34 enters the frozen baseline.
 
 ## Verification

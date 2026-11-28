@@ -123,29 +123,29 @@ class WebsiteKnowledgeService:
     ) -> Dict[str, Any]:
         row = await self._knowledge(knowledge_id)
         if display_name is not None:
-            row.display_name = display_name
+            row.display_name = display_name  # type: ignore[assignment]
         if homepage_url is not None:
-            row.homepage_url = homepage_url
+            row.homepage_url = homepage_url  # type: ignore[assignment]
         if login_procedure is not None:
-            row.login_procedure = login_procedure
+            row.login_procedure = login_procedure  # type: ignore[assignment]
         if auth_methods is not None:
-            row.auth_methods = auth_methods
+            row.auth_methods = auth_methods  # type: ignore[assignment]
         if registration_procedure is not None:
-            row.registration_procedure = registration_procedure
+            row.registration_procedure = registration_procedure  # type: ignore[assignment]
         if supported_passkeys is not None:
-            row.supported_passkeys = supported_passkeys
+            row.supported_passkeys = supported_passkeys  # type: ignore[assignment]
         if mfa_methods is not None:
-            row.mfa_methods = mfa_methods
+            row.mfa_methods = mfa_methods  # type: ignore[assignment]
         if known_restrictions is not None:
-            row.known_restrictions = known_restrictions
+            row.known_restrictions = known_restrictions  # type: ignore[assignment]
         if browser_compatibility is not None:
-            row.browser_compatibility = browser_compatibility
+            row.browser_compatibility = browser_compatibility  # type: ignore[assignment]
         if verification_requirements is not None:
-            row.verification_requirements = verification_requirements
+            row.verification_requirements = verification_requirements  # type: ignore[assignment]
         if prior_failures is not None:
-            row.prior_failures = prior_failures
+            row.prior_failures = prior_failures  # type: ignore[assignment]
         if success_patterns is not None:
-            row.success_patterns = success_patterns
+            row.success_patterns = success_patterns  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

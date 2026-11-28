@@ -58,7 +58,7 @@ class ClnAdapter:
     def configured(self) -> bool:
         return bool(settings.cln_rest_url) and bool(read_secret(settings.cln_rune_env))
 
-    def _tls(self):
+    def _tls(self):  # type: ignore[no-untyped-def]
         material = read_secret(settings.cln_ca_cert_env) or ""
         if not material:
             raise ProviderDenied("CLN CA certificate is not configured")
@@ -91,7 +91,7 @@ class ClnAdapter:
         rune = read_secret(settings.cln_rune_env) or ""
         headers = {"Rune": rune, "Content-Type": "application/json"}
         async with httpx.AsyncClient(
-            timeout=settings.web3_request_timeout_seconds, verify=self._tls()
+            timeout=settings.web3_request_timeout_seconds, verify=self._tls()  # type: ignore[no-untyped-call]
         ) as client:
             response = await client.post(
                 f"{settings.cln_rest_url.rstrip('/')}/v1/{method}",
@@ -142,7 +142,7 @@ class ClnAdapter:
             raise ProviderDenied("a separate write-scoped CLN rune is required")
         headers = {"Rune": rune, "Content-Type": "application/json"}
         async with httpx.AsyncClient(
-            timeout=settings.web3_request_timeout_seconds, verify=self._tls()
+            timeout=settings.web3_request_timeout_seconds, verify=self._tls()  # type: ignore[no-untyped-call]
         ) as client:
             response = await client.post(
                 f"{settings.cln_rest_url.rstrip('/')}/v1/{method}",
@@ -153,7 +153,7 @@ class ClnAdapter:
             return ProviderResponse(
                 provider=self.name,
                 operation=method,
-                data={"result": response.json(), "authorization": authorization.summary(), "read_only": False},
+                data={"result": response.json(), "authorization": authorization.summary() if authorization is not None else {}, "read_only": False},
                 network_calls_made=True,
                 read_only=False,
             )
@@ -163,7 +163,7 @@ class ClnAdapter:
     ) -> ProviderResponse:
         Web3ApprovalService.require_authorization(authorization, "web3.invoice.create")
         try:
-            amount_msat = int(payload.get("amount_msat"))
+            amount_msat = int(payload.get("amount_msat"))  # type: ignore[arg-type]
         except (TypeError, ValueError) as exc:
             raise ProviderDenied("amount_msat must be an integer") from exc
         if amount_msat <= 0:

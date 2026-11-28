@@ -36,6 +36,9 @@ var/
 *.swp
 *.swo
 
+# Rust
+target/
+
 # Node / Next.js
 node_modules/
 .next/

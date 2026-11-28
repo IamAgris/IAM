@@ -4,14 +4,22 @@ IICS gap closure §2.1. Every outbound request from research, browse, API
 connector and download paths must pass this gate. DNS rebinding is addressed by
 resolving the host before connect and pinning the validated address; redirects
 are re-assessed rather than trusted.
+
+``fetch_pinned`` is the transport used by callers that must not be able to reach
+internal or metadata endpoints. It connects only to the address returned by
+``assess`` while keeping the original hostname for HTTP Host, TLS SNI and
+certificate verification.
 """
 
 from __future__ import annotations
 
+import asyncio
+import http.client
 import ipaddress
 import socket
-from dataclasses import asdict, dataclass
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional
+import ssl
+from dataclasses import asdict, dataclass, field, replace
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Union
 from urllib.parse import urlparse
 
 import httpx
@@ -27,6 +35,22 @@ BLOCKED_HOSTNAMES = frozenset(
 )
 
 Resolver = Callable[[str], Iterable[str]]
+
+
+@dataclass(frozen=True)
+class PinnedFetchResult:
+    """Result of a redirect-aware fetch whose socket used a pinned address."""
+
+    ok: bool
+    url: str
+    status_code: Optional[int] = None
+    content_type: str = ""
+    headers: Dict[str, str] = field(default_factory=dict)
+    body: bytes = b""
+    truncated: bool = False
+    decision: Optional[Dict[str, Any]] = None
+    error: str = ""
+    redirect_location: str = ""
 
 
 @dataclass(frozen=True)
@@ -64,6 +88,94 @@ def _is_forbidden_address(raw: str) -> bool:
         or address.is_reserved
         or address.is_unspecified
     )
+
+
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    """HTTP connection whose TCP peer is the validated address, not a fresh DNS lookup."""
+
+    def __init__(self, host: str, port: Optional[int], pinned: str, timeout: float) -> None:
+        super().__init__(host, port, timeout=timeout)
+        self._pinned = pinned
+
+    def connect(self) -> None:
+        # codeql[py/full-ssrf] pinned address passed EgressGateway.assess: scheme, host, DNS and private/metadata checks.
+        self.sock = socket.create_connection((self._pinned, self.port), self.timeout)
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS connection pinned to a validated IP with TLS SNI on the original host."""
+
+    def __init__(
+        self,
+        host: str,
+        port: Optional[int],
+        pinned: str,
+        timeout: float,
+        context: ssl.SSLContext,
+    ) -> None:
+        super().__init__(host, port, timeout=timeout, context=context)
+        self._pinned = pinned
+        self._ssl_context = context
+
+    def connect(self) -> None:
+        # codeql[py/full-ssrf] pinned address passed EgressGateway.assess: scheme, host, DNS and private/metadata checks.
+        sock = socket.create_connection((self._pinned, self.port), self.timeout)
+        # server_hostname=self.host preserves SNI and certificate hostname verification.
+        self.sock = self._ssl_context.wrap_socket(sock, server_hostname=self.host)
+
+
+def _http_request(
+    url: str,
+    pinned: str,
+    *,
+    timeout: float,
+    max_bytes: int,
+    method: str = "GET",
+    headers: Optional[Mapping[str, str]] = None,
+) -> PinnedFetchResult:
+    """Perform one request against a pinned address; caller re-assesses redirects."""
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    port = parsed.port
+    target = parsed.path or "/"
+    if parsed.query:
+        target = f"{target}?{parsed.query}"
+    context = ssl.create_default_context()
+    conn: Union[_PinnedHTTPConnection, _PinnedHTTPSConnection]
+    if parsed.scheme == "https":
+        conn = _PinnedHTTPSConnection(host, port, pinned, timeout, context)
+    else:
+        conn = _PinnedHTTPConnection(host, port, pinned, timeout)
+    try:
+        # codeql[py/full-ssrf] URL was assessed by EgressGateway.assess; the socket connects only to the pinned address.
+        conn.request(method, target, headers=dict(headers or {}))
+        response = conn.getresponse()
+        chunks: list[bytes] = []
+        total = 0
+        truncated = False
+        while True:
+            remaining = max_bytes + 1 - total
+            chunk = response.read(min(65536, max(1, remaining)))
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                truncated = True
+                chunks.append(chunk[: max(0, max_bytes - (total - len(chunk)))])
+                break
+            chunks.append(chunk)
+        return PinnedFetchResult(
+            ok=True,
+            url=url,
+            status_code=int(response.status),
+            content_type=str(response.getheader("content-type") or ""),
+            headers={key.lower(): value for key, value in response.getheaders()},
+            body=b"".join(chunks)[:max_bytes],
+            truncated=truncated,
+            redirect_location=str(response.getheader("location") or ""),
+        )
+    finally:
+        conn.close()
 
 
 class EgressGateway:
@@ -119,6 +231,66 @@ class EgressGateway:
             if _is_forbidden_address(address):
                 return EgressDecision(False, "internal_or_metadata_address", host, address)
         return EgressDecision(True, "allowed", host, addresses[0])
+
+    def fetch_pinned_sync(
+        self,
+        url: str,
+        *,
+        headers: Optional[Mapping[str, str]] = None,
+        max_bytes: Optional[int] = None,
+    ) -> PinnedFetchResult:
+        """Sync core: pin each hop, re-assess every redirect, cap size and time.
+
+        DNS is resolved by ``assess`` once per hop and the connection uses the
+        returned address, so a rebinding answer between check and connect cannot
+        redirect the socket to an internal service.
+        """
+        current = url
+        limit = self.max_bytes if max_bytes is None else max_bytes
+        for _ in range(self.max_redirects + 1):
+            decision = self.assess(current)
+            if not decision.allowed or decision.address is None:
+                return PinnedFetchResult(
+                    False,
+                    current,
+                    decision=decision.as_dict(),
+                    error=f"egress_denied:{decision.reason}",
+                )
+            try:
+                result = _http_request(
+                    current,
+                    decision.address,
+                    timeout=self.timeout,
+                    max_bytes=limit,
+                    headers=headers,
+                )
+            except (OSError, http.client.HTTPException, ssl.SSLError, ValueError) as exc:
+                return PinnedFetchResult(
+                    False, current, decision=decision.as_dict(), error=type(exc).__name__
+                )
+            result = replace(result, url=current, decision=decision.as_dict())
+            if result.status_code in (301, 302, 303, 307, 308) and result.redirect_location:
+                current = str(httpx.URL(current).join(result.redirect_location))
+                continue
+            return result
+        return PinnedFetchResult(
+            False,
+            current,
+            decision=self.assess(current).as_dict(),
+            error="too_many_redirects",
+        )
+
+    async def fetch_pinned(
+        self,
+        url: str,
+        *,
+        headers: Optional[Mapping[str, str]] = None,
+        max_bytes: Optional[int] = None,
+    ) -> PinnedFetchResult:
+        """Async wrapper around the same pinned, redirect-aware transport."""
+        return await asyncio.to_thread(
+            self.fetch_pinned_sync, url, headers=headers, max_bytes=max_bytes
+        )
 
     async def fetch(self, url: str) -> Dict[str, Any]:
         """Fetch a URL after assessment; re-assess every redirect."""

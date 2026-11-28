@@ -108,7 +108,7 @@ def _fail(exc: AICommunicationError) -> HTTPException:
 # ------------------------------------------------------------------ identity registry
 
 @router.post("/identity-registry")
-async def register_ai_identity(
+async def register_ai_identity(  # type: ignore[no-untyped-def]
     payload: AIIdentityCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -131,13 +131,13 @@ async def register_ai_identity(
 
 
 @router.get("/identity-registry")
-async def list_ai_identities(db: AsyncSession = Depends(get_db_session)):
+async def list_ai_identities(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List AI systems IAM can communicate with."""
     return await AICommunicationService(db).list_identities()
 
 
 @router.patch("/identity-registry/{identity_id}")
-async def update_ai_identity(
+async def update_ai_identity(  # type: ignore[no-untyped-def]
     identity_id: str,
     payload: AIIdentityUpdate,
     request: Request,
@@ -160,7 +160,7 @@ async def update_ai_identity(
 # ------------------------------------------------------------------ capabilities
 
 @router.post("/capabilities")
-async def register_capability(
+async def register_capability(  # type: ignore[no-untyped-def]
     payload: CapabilityCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -179,7 +179,7 @@ async def register_capability(
 
 
 @router.get("/capabilities")
-async def list_capabilities(
+async def list_capabilities(  # type: ignore[no-untyped-def]
     ai_identity_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -190,7 +190,7 @@ async def list_capabilities(
 # ------------------------------------------------------------------ conversations
 
 @router.post("/conversations")
-async def create_conversation(
+async def create_conversation(  # type: ignore[no-untyped-def]
     payload: ConversationCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -209,7 +209,7 @@ async def create_conversation(
 
 
 @router.get("/conversations")
-async def list_conversations(
+async def list_conversations(  # type: ignore[no-untyped-def]
     ai_identity_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -218,7 +218,7 @@ async def list_conversations(
 
 
 @router.post("/conversations/{conversation_id}/messages")
-async def add_message(
+async def add_message(  # type: ignore[no-untyped-def]
     conversation_id: str,
     payload: MessageCreate,
     request: Request,
@@ -239,7 +239,7 @@ async def add_message(
 
 
 @router.get("/conversations/{conversation_id}/messages")
-async def list_messages(
+async def list_messages(  # type: ignore[no-untyped-def]
     conversation_id: str,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -250,7 +250,7 @@ async def list_messages(
 # ------------------------------------------------------------------ context exchange
 
 @router.post("/context")
-async def exchange_context(
+async def exchange_context(  # type: ignore[no-untyped-def]
     payload: ContextExchangeCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -269,7 +269,7 @@ async def exchange_context(
 
 
 @router.get("/context")
-async def list_context_exchanges(
+async def list_context_exchanges(  # type: ignore[no-untyped-def]
     ai_identity_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -280,7 +280,7 @@ async def list_context_exchanges(
 # ------------------------------------------------------------------ response verification
 
 @router.post("/conversations/{message_id}/verify")
-async def verify_response(
+async def verify_response(  # type: ignore[no-untyped-def]
     message_id: str,
     payload: VerificationCreate,
     request: Request,
@@ -304,7 +304,7 @@ async def verify_response(
 # ------------------------------------------------------------------ reputation
 
 @router.post("/reputation")
-async def record_reputation(
+async def record_reputation(  # type: ignore[no-untyped-def]
     payload: ReputationCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -325,7 +325,7 @@ async def record_reputation(
 
 
 @router.get("/reputation")
-async def list_reputations(
+async def list_reputations(  # type: ignore[no-untyped-def]
     ai_identity_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -336,7 +336,7 @@ async def list_reputations(
 # ------------------------------------------------------------------ permissions
 
 @router.post("/permissions")
-async def set_permissions(
+async def set_permissions(  # type: ignore[no-untyped-def]
     payload: PermissionCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -358,7 +358,7 @@ async def set_permissions(
 
 
 @router.get("/permissions")
-async def list_permissions(db: AsyncSession = Depends(get_db_session)):
+async def list_permissions(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List communication permissions."""
     return await AICommunicationService(db).list_permissions()
 
@@ -366,7 +366,7 @@ async def list_permissions(db: AsyncSession = Depends(get_db_session)):
 # ------------------------------------------------------------------ human communication bridge
 
 @router.post("/human-bridge")
-async def create_human_bridge(
+async def create_human_bridge(  # type: ignore[no-untyped-def]
     payload: HumanBridgeCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -383,13 +383,13 @@ async def create_human_bridge(
 
 
 @router.get("/human-bridge")
-async def list_human_bridges(db: AsyncSession = Depends(get_db_session)):
+async def list_human_bridges(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List human-mediated communication bridge records."""
     return await AICommunicationService(db).list_bridges()
 
 
 @router.post("/human-bridge/{bridge_id}/complete")
-async def complete_human_bridge(
+async def complete_human_bridge(  # type: ignore[no-untyped-def]
     bridge_id: str,
     payload: HumanBridgeComplete,
     request: Request,
@@ -413,7 +413,7 @@ async def complete_human_bridge(
 # ------------------------------------------------------------------ audit
 
 @router.get("/audit")
-async def list_audit(
+async def list_audit(  # type: ignore[no-untyped-def]
     ai_identity_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):

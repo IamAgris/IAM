@@ -63,7 +63,7 @@ class BitcoinCoreAdapter:
             },
         )
 
-    async def _rpc(self, method: str, params: list) -> ProviderResponse:
+    async def _rpc(self, method: str, params: list) -> ProviderResponse:  # type: ignore[type-arg]
         require_flag(settings.bitcoin_core_read_enabled, "Bitcoin Core read adapter is disabled")
         if method not in READ_METHODS:
             raise ProviderDenied(

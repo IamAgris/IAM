@@ -65,7 +65,8 @@ class HttpExecutor:
                 },
             )
             response.raise_for_status()
-            return response.json()
+            _typed_result: dict[str, Any] = response.json()
+            return _typed_result
 
 
 def _executor() -> TransactionExecutor:
@@ -127,7 +128,7 @@ class TransactionManager:
         if not to_address or not isinstance(to_address, str):
             raise ProviderDenied("to_address is required")
         try:
-            amount = float(payload.get("amount"))
+            amount = float(payload.get("amount"))  # type: ignore[arg-type]
         except (TypeError, ValueError) as exc:
             raise ProviderDenied("amount must be numeric") from exc
         if amount <= 0:
@@ -224,10 +225,10 @@ class TransactionManager:
             requester=actor,
         )
         previous = row.status
-        row.status = "awaiting_approval"
+        row.status = "awaiting_approval"  # type: ignore[assignment]
         simulation = dict(row.simulation or {})
         simulation["creator_request_id"] = request.get("request_id")
-        row.simulation = simulation
+        row.simulation = simulation  # type: ignore[assignment]
         await self.db.flush()
         await self._audit(
             "web3_approval_requested", actor, transaction_id,
@@ -260,11 +261,11 @@ class TransactionManager:
             target_ref=transaction_id,
         )
         previous = row.status
-        row.status = "approved"
-        row.approval_id = approval_id
+        row.status = "approved"  # type: ignore[assignment]
+        row.approval_id = approval_id  # type: ignore[assignment]
         simulation = dict(row.simulation or {})
         simulation["amount_usd"] = float(amount_usd)
-        row.simulation = simulation
+        row.simulation = simulation  # type: ignore[assignment]
         await self.db.flush()
         await self._audit(
             "web3_approval_confirmed", "creator", transaction_id,
@@ -286,10 +287,10 @@ class TransactionManager:
         row = await self._get(transaction_id)
         if row.status != "approved" or not row.approval_id:
             raise ProviderDenied("transaction is not in the approved state")
-        valuation = amount_usd if amount_usd is not None else (row.simulation or {}).get("amount_usd")
+        valuation = amount_usd if amount_usd is not None else dict(row.simulation or {}).get("amount_usd")
         authorization = await self.approvals.authorize(
             action="web3.transaction.broadcast",
-            approval_id=row.approval_id,
+            approval_id=row.approval_id,  # type: ignore[arg-type]
             amount_usd=valuation,
             target_ref=transaction_id,
         )
@@ -303,8 +304,8 @@ class TransactionManager:
         }
         result = await _executor().submit(authorization, payload)
         previous = row.status
-        row.status = "broadcast"
-        row.tx_hash = result.get("tx_hash")
+        row.status = "broadcast"  # type: ignore[assignment]
+        row.tx_hash = result.get("tx_hash")  # type: ignore[assignment]
         await self.db.flush()
         await self._audit(
             "web3_transaction_broadcast", "creator", transaction_id,

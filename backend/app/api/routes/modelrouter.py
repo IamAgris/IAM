@@ -24,15 +24,15 @@ class SelectRequest(BaseModel):
 
 
 @router.post("/initialize")
-async def initialize(db=Depends(get_db_session)):
+async def initialize(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Register known model providers."""
     service = IntelligenceRouter(db)
-    await service.initialize_providers()
+    await service.initialize_providers()  # type: ignore[no-untyped-call]
     return {"status": "initialized"}
 
 
 @router.post("/discover/nvidia")
-async def discover_nvidia(db=Depends(get_db_session)):
+async def discover_nvidia(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Discover available models from NVIDIA's catalogue.
     Free-only mode is respected; choices come from the catalogue, not a hardcoded list.
     """
@@ -42,21 +42,21 @@ async def discover_nvidia(db=Depends(get_db_session)):
 
 
 @router.get("/providers")
-async def list_providers(db=Depends(get_db_session)):
+async def list_providers(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List registered model providers."""
     service = IntelligenceRouter(db)
     return await service.list_providers()
 
 
 @router.get("/models")
-async def list_models(provider: Optional[str] = None, db=Depends(get_db_session)):
+async def list_models(provider: Optional[str] = None, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List discovered models, optionally filtered by provider."""
     service = IntelligenceRouter(db)
     return await service.list_models(provider)
 
 
 @router.post("/select")
-async def select_model(request: SelectRequest, db=Depends(get_db_session)):
+async def select_model(request: SelectRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Select the best model for a task by capability, quality, cost and availability."""
     if request.allow_paid:
         try:
@@ -77,7 +77,7 @@ async def select_model(request: SelectRequest, db=Depends(get_db_session)):
 
 
 @router.get("/history")
-async def get_history(limit: int = 50, db=Depends(get_db_session)):
+async def get_history(limit: int = 50, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get routing decision history."""
     service = IntelligenceRouter(db)
     return await service.get_routing_history(limit)

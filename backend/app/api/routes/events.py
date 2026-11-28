@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1", tags=["events"])
 
 
 @router.get("/events")
-async def event_stream(
+async def event_stream(  # type: ignore[no-untyped-def]
     request: Request,
     since: Optional[str] = None,
     limit: int = 100,
@@ -35,7 +35,7 @@ async def event_stream(
     poll_seconds = max(0.5, min(interval, 30.0))
     seen: set[str] = set()
 
-    async def generate():
+    async def generate():  # type: ignore[no-untyped-def]
         nonlocal cursor
         while not await request.is_disconnected():
             async with get_session_factory()() as db:
@@ -56,7 +56,7 @@ async def event_stream(
             await asyncio.sleep(poll_seconds)
 
     return StreamingResponse(
-        generate(),
+        generate(),  # type: ignore[no-untyped-call]
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class WebAuthnChallenge(Base):
+class WebAuthnChallenge(Base):  # type: ignore[misc]
     __tablename__ = "webauthn_challenges"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -23,7 +23,7 @@ class WebAuthnChallenge(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class PasskeyCredential(Base):
+class PasskeyCredential(Base):  # type: ignore[misc]
     __tablename__ = "passkey_credentials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,7 +38,7 @@ class PasskeyCredential(Base):
     last_used_at = Column(DateTime(timezone=True), nullable=True)
 
 
-class TotpEnrollment(Base):
+class TotpEnrollment(Base):  # type: ignore[misc]
     __tablename__ = "totp_enrollments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

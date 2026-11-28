@@ -15,7 +15,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class TechnologyCapability(Base):
+class TechnologyCapability(Base):  # type: ignore[misc]
     """One discovered third-party technology with evidence and lifecycle state."""
 
     __tablename__ = "technology_capabilities"

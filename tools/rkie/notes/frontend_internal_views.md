@@ -3,7 +3,7 @@
 Per `frontend/AGENTS.md`, Next.js 16.4.6 docs in `frontend/node_modules/next/dist/docs/`
 were read before writing code (project structure, server/client components, route handlers).
 
-> **Historical snapshot (27 November 2026).** The four routable pages described here were subsequently removed or moved under underscore-prefixed (non-routable) directories. Current routable pages are `/`, `/suggestions`, `/conversations` and `/conversations/[id]`. Re-verify before relying on this note.
+> **Historical snapshot (27 November 2026).** The four routable pages described here were subsequently removed or moved under underscore-prefixed (non-routable) directories. As of 28 November 2026 the only routable page is `/` (owner decision); `/suggestions` and `/conversations/*` were removed and now redirect to `/`. See `frontend-one-page-decision.md`. Re-verify before relying on this note.
 
 ## Frontend shape at the time of this note
 

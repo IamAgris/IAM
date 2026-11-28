@@ -9,13 +9,24 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from app.core.config import settings
+from app.core.infisical import get_infisical_client
 from app.services.crypto_service import CryptoService
 
 PLACEHOLDERS = ("change-me", "change-this", "change-me-securely")
 
 
 def read_secret(name: str) -> Optional[str]:
-    """Return a secret from a Docker secret file or the environment."""
+    """Resolve a deployment secret; never log the value.
+
+    Default (OD-07): Docker secret file, then environment.
+    With ``SECRETS_BACKEND=infisical`` (OD-58): Infisical first, then the
+    Docker secret file / environment as fallback. The production fail-closed
+    policy in ``enforce_secret_policy`` is unchanged.
+    """
+    if settings.secrets_backend.lower() == "infisical":
+        remote = get_infisical_client().get(name)
+        if remote:
+            return remote
     file_var = f"{name}_FILE"
     path = os.environ.get(file_var)
     if path:
@@ -36,9 +47,9 @@ def placeholder_secrets() -> List[str]:
         "S3_SECRET_KEY": settings.s3_secret_key,
     }
     for name in list(candidates):
-        file_value = read_secret(name)
-        if file_value:
-            candidates[name] = file_value
+        resolved = read_secret(name)
+        if resolved:
+            candidates[name] = resolved
 
     bad: List[str] = [
         name

@@ -37,7 +37,7 @@ CONSEQUENCES = [
 ]
 REASON = (
     "Owner requested a Web3 and self-hosted Bitcoin/Lightning capability; "
-    "see IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md §1 for the exact proposed decision text."
+    "see docs/IAM_WEB3_AND_UMBREL_NODE_INTEGRATION_SPEC.md §1 for the exact proposed decision text."
 )
 
 

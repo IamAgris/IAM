@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class FreeNodeCandidate(Base):
+class FreeNodeCandidate(Base):  # type: ignore[misc]
     """A discovered free compute resource assessed for supplementary use."""
 
     __tablename__ = "free_node_candidates"

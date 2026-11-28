@@ -115,7 +115,7 @@ class WalletRegistry:
     ) -> Dict[str, Any]:
         require_flag(settings.web3_registry_enabled, "Web3 registry is disabled")
         row = await self._get(wallet_id)
-        if target not in TRANSITIONS.get(row.state, ()):
+        if target not in TRANSITIONS.get(str(row.state), ()):
             raise ProviderDenied(
                 f"transition {row.state} → {target} is not allowed"
             )
@@ -124,11 +124,11 @@ class WalletRegistry:
                 "verification requires a method and an evidence reference"
             )
         previous = row.state
-        row.state = target
+        row.state = target  # type: ignore[assignment]
         if verification_method:
-            row.verification_method = verification_method
+            row.verification_method = verification_method  # type: ignore[assignment]
         if verification_evidence_ref:
-            row.verification_evidence_ref = verification_evidence_ref
+            row.verification_evidence_ref = verification_evidence_ref  # type: ignore[assignment]
         await self.db.flush()
         await self._audit(
             "web3_wallet_state_changed", actor, wallet_id,

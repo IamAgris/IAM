@@ -5770,7 +5770,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SendRequest"
+                "$ref": "#/components/schemas/app__api__routes__p2p__SendRequest"
               }
             }
           },
@@ -19563,6 +19563,249 @@
         }
       }
     },
+    "/api/v1/access/user-email/opt-in": {
+      "post": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Opt In",
+        "description": "Start opt-in; a single-use verification token is emailed to the user.",
+        "operationId": "opt_in_api_v1_access_user_email_opt_in_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Opt In Api V1 Access User Email Opt In Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/access/user-email/verify": {
+      "post": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Verify",
+        "description": "Complete opt-in with the emailed token. Verified address is not authority.",
+        "operationId": "verify_api_v1_access_user_email_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__user_email__VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verify Api V1 Access User Email Verify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/access/user-email/status": {
+      "get": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Status",
+        "operationId": "status_api_v1_access_user_email_status_get",
+        "parameters": [
+          {
+            "name": "visitor_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Visitor Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Status Api V1 Access User Email Status Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/access/user-email/opt-out": {
+      "post": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Opt Out",
+        "operationId": "opt_out_api_v1_access_user_email_opt_out_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptOutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Opt Out Api V1 Access User Email Opt Out Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/access/user-email/send": {
+      "post": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Send Message",
+        "description": "Send one IAM reply, stored only in this visitor's private thread.",
+        "operationId": "send_message_api_v1_access_user_email_send_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__routes__user_email__SendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Send Message Api V1 Access User Email Send Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/access/user-email/inbound": {
+      "post": {
+        "tags": [
+          "user-email"
+        ],
+        "summary": "Inbound",
+        "description": "HMAC-protected forwarding endpoint for provider-delivered user replies.",
+        "operationId": "inbound_api_v1_access_user_email_inbound_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Inbound Api V1 Access User Email Inbound Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/geo/providers": {
       "post": {
         "tags": [
@@ -22854,6 +23097,50 @@
               "application/json": {
                 "schema": {
                   "title": "Response Force Release Api V1 Irwm Force Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-compat/probe": {
+      "post": {
+        "tags": [
+          "provider-compat"
+        ],
+        "summary": "Probe Model",
+        "description": "Run and persist the compatibility probe matrix for one model.",
+        "operationId": "probe_model_api_v1_provider_compat_probe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Probe Model Api V1 Provider Compat Probe Post"
                 }
               }
             }
@@ -46799,6 +47086,37 @@
         ],
         "title": "OpportunityCreate"
       },
+      "OptInRequest": {
+        "properties": {
+          "visitor_token": {
+            "type": "string",
+            "title": "Visitor Token"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor_token",
+          "email"
+        ],
+        "title": "OptInRequest"
+      },
+      "OptOutRequest": {
+        "properties": {
+          "visitor_token": {
+            "type": "string",
+            "title": "Visitor Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor_token"
+        ],
+        "title": "OptOutRequest"
+      },
       "OrderBookCreate": {
         "properties": {
           "token_id": {
@@ -48018,6 +48336,34 @@
           "evidence"
         ],
         "title": "PrivacyResolveRequest"
+      },
+      "ProbeRequest": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "retries": {
+            "type": "integer",
+            "title": "Retries",
+            "default": 0
+          },
+          "retry_delay_seconds": {
+            "type": "integer",
+            "title": "Retry Delay Seconds",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "model"
+        ],
+        "title": "ProbeRequest"
       },
       "ProfileRequest": {
         "properties": {
@@ -50099,30 +50445,6 @@
           "message"
         ],
         "title": "SendMessageRequest"
-      },
-      "SendRequest": {
-        "properties": {
-          "peer_id": {
-            "type": "string",
-            "title": "Peer Id"
-          },
-          "topic": {
-            "type": "string",
-            "title": "Topic"
-          },
-          "payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Payload",
-            "default": {}
-          }
-        },
-        "type": "object",
-        "required": [
-          "peer_id",
-          "topic"
-        ],
-        "title": "SendRequest"
       },
       "SessionCreateRequest": {
         "properties": {
@@ -53547,6 +53869,17 @@
             "type": "array",
             "title": "Dependencies"
           },
+          "schedule_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule At"
+          },
           "max_retries": {
             "type": "integer",
             "maximum": 10.0,
@@ -55892,6 +56225,30 @@
         ],
         "title": "BroadcastRequest"
       },
+      "app__api__routes__p2p__SendRequest": {
+        "properties": {
+          "peer_id": {
+            "type": "string",
+            "title": "Peer Id"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "peer_id",
+          "topic"
+        ],
+        "title": "SendRequest"
+      },
       "app__api__routes__publicrecords__CorrectionRequest": {
         "properties": {
           "facts": {
@@ -56379,6 +56736,42 @@
         },
         "type": "object",
         "title": "SessionRequest"
+      },
+      "app__api__routes__user_email__SendRequest": {
+        "properties": {
+          "visitor_token": {
+            "type": "string",
+            "title": "Visitor Token"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor_token",
+          "content"
+        ],
+        "title": "SendRequest"
+      },
+      "app__api__routes__user_email__VerifyRequest": {
+        "properties": {
+          "visitor_token": {
+            "type": "string",
+            "title": "Visitor Token"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor_token",
+          "token"
+        ],
+        "title": "VerifyRequest"
       },
       "app__api__routes__uwaie__ExecuteRequest": {
         "properties": {

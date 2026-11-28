@@ -10,7 +10,7 @@ import uuid
 from app.core.database import Base
 
 
-class MemoryItem(Base):
+class MemoryItem(Base):  # type: ignore[misc]
     __tablename__ = "memory_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,7 +38,7 @@ class MemoryItem(Base):
     relationships_as_target = relationship("MemoryRelationship", foreign_keys="MemoryRelationship.target_memory_id", cascade="all, delete-orphan")
 
 
-class MemoryEmbedding(Base):
+class MemoryEmbedding(Base):  # type: ignore[misc]
     __tablename__ = "memory_embeddings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -51,7 +51,7 @@ class MemoryEmbedding(Base):
     memory_item = relationship("MemoryItem", back_populates="embeddings")
 
 
-class MemoryRelationship(Base):
+class MemoryRelationship(Base):  # type: ignore[misc]
     __tablename__ = "memory_relationships"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -62,7 +62,7 @@ class MemoryRelationship(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class Experience(Base):
+class Experience(Base):  # type: ignore[misc]
     __tablename__ = "experiences"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -75,7 +75,7 @@ class Experience(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class Conversation(Base):
+class Conversation(Base):  # type: ignore[misc]
     __tablename__ = "conversations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -87,7 +87,7 @@ class Conversation(Base):
     messages = relationship("ConversationMessage", back_populates="conversation", cascade="all, delete-orphan")
 
 
-class ConversationMessage(Base):
+class ConversationMessage(Base):  # type: ignore[misc]
     __tablename__ = "conversation_messages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -104,7 +104,7 @@ class ConversationMessage(Base):
     conversation = relationship("Conversation", back_populates="messages")
 
 
-class KnowledgeItem(Base):
+class KnowledgeItem(Base):  # type: ignore[misc]
     __tablename__ = "knowledge_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -126,7 +126,7 @@ class KnowledgeItem(Base):
     sources = relationship("KnowledgeSource", back_populates="knowledge_item", cascade="all, delete-orphan")
 
 
-class KnowledgeSource(Base):
+class KnowledgeSource(Base):  # type: ignore[misc]
     __tablename__ = "knowledge_sources"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -143,7 +143,7 @@ class KnowledgeSource(Base):
     knowledge_item = relationship("KnowledgeItem", back_populates="sources")
 
 
-class LanguageProfile(Base):
+class LanguageProfile(Base):  # type: ignore[misc]
     __tablename__ = "language_profiles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -158,7 +158,7 @@ class LanguageProfile(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class Skill(Base):
+class Skill(Base):  # type: ignore[misc]
     __tablename__ = "skills"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

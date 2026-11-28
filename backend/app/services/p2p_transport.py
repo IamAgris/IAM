@@ -1,7 +1,7 @@
 """P2P transport service — direct peer-to-peer messaging and sync.
 
-Implements the transport layer specified in IAM_DISTRIBUTED_ARCHITECTURE.md (C)
-and IAM_DYNAMIC_NODE_NETWORK_SPEC.md (OD-26):
+Implements the transport layer specified in docs/IAM_DISTRIBUTED_ARCHITECTURE.md (C)
+and docs/IAM_DYNAMIC_NODE_NETWORK_SPEC.md (OD-26):
   - Signed message envelopes (HMAC-SHA256 over the canonical body; Ed25519 is
     not implemented in this transport — do not describe these as Ed25519)
   - Persistent WebSocket connections between nodes
@@ -73,7 +73,7 @@ def verify_envelope(env: Dict[str, Any], secret: str) -> bool:
 class P2PTransport:
     """In-memory transport registry + store-and-forward queues."""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.connections: Dict[str, Any] = {}       # node_id -> WebSocket
         self.seq: Dict[str, int] = defaultdict(int)  # sender -> last seq seen (inbound)
         self.outgoing_seq: Dict[str, int] = defaultdict(int)  # node -> next seq to send
@@ -165,7 +165,7 @@ class P2PTransport:
         if env["seq"] <= last:
             return {"accepted": False, "reason": "replay"}
         self.seq[env["sender"]] = env["seq"]
-        self.seen[eid] = time.time()
+        self.seen[str(eid)] = time.time()
         self._persist()
         return {"accepted": True, "envelope": env}
 

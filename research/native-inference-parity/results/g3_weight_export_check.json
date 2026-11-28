@@ -1,0 +1,62 @@
+{
+  "derived": {
+    "actual_tensor_range_bytes": 255252480,
+    "block_bytes": 210,
+    "blocks_per_row": 8,
+    "byte_count_ok": true,
+    "dims": [
+      2048,
+      151936
+    ],
+    "expected_tensor_bytes": 255252480,
+    "row_bytes": 1680,
+    "row_values": 2048
+  },
+  "gate": "G3-weight-export",
+  "ggml_type": 14,
+  "ggml_type_name": "GGML_TYPE_Q6_K (14), file_type 15 = MOSTLY_Q4_K_M",
+  "limits": [
+    "only a few embedding rows, not the full model",
+    "Q8_0 output is a research format check, not a written .asmbin file",
+    "no engine run or logit comparison"
+  ],
+  "overall_pass": true,
+  "rows": [
+    {
+      "cosine": 0.99998688582333,
+      "cosine_ok": true,
+      "max_abs_diff": 0.00032520294189453125,
+      "max_q8_scale": 0.0006575584411621094,
+      "mean_abs_diff": 0.00010415082215331495,
+      "within_2x_scale": true
+    },
+    {
+      "cosine": 0.9999873309012174,
+      "cosine_ok": true,
+      "max_abs_diff": 0.000324249267578125,
+      "max_q8_scale": 0.0006647109985351562,
+      "mean_abs_diff": 0.00010732890223152936,
+      "within_2x_scale": true
+    },
+    {
+      "cosine": 0.9999859234673845,
+      "cosine_ok": true,
+      "max_abs_diff": 0.0003262758255004883,
+      "max_q8_scale": 0.0006647109985351562,
+      "mean_abs_diff": 0.00010548776481300592,
+      "within_2x_scale": true
+    },
+    {
+      "cosine": 0.999987069492939,
+      "cosine_ok": true,
+      "max_abs_diff": 0.0003333091735839844,
+      "max_q8_scale": 0.0006690025329589844,
+      "mean_abs_diff": 9.62996855378151e-05,
+      "within_2x_scale": true
+    }
+  ],
+  "rows_checked": 4,
+  "source": "C:\\Users\\kagis\\AppData\\Local\\Temp\\opencode\\llmasm-audit\\qwen25_3b_model.gguf",
+  "source_reference": "ggml-org/ggml ggml/src/ggml-quants.c dequantize_row_q6_K lines 1949-1978",
+  "tensor": "token_embd.weight"
+}

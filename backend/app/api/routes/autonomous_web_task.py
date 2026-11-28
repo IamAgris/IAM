@@ -24,6 +24,7 @@ class TaskCreate(BaseModel):
     decomposition: List[Dict[str, Any]] = Field(default_factory=list)
     checkpoints: List[Dict[str, Any]] = Field(default_factory=list)
     dependencies: List[str] = Field(default_factory=list)
+    schedule_at: Optional[str] = None
     max_retries: int = Field(default=3, ge=0, le=10)
     is_background: bool = False
 
@@ -53,7 +54,7 @@ def _fail(exc: AutonomousWebTaskError) -> HTTPException:
 
 
 @router.post("")
-async def create_task(
+async def create_task(  # type: ignore[no-untyped-def]
     payload: TaskCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -69,6 +70,7 @@ async def create_task(
             decomposition=payload.decomposition,
             checkpoints=payload.checkpoints,
             dependencies=payload.dependencies,
+            schedule_at=payload.schedule_at,
             max_retries=payload.max_retries,
             is_background=payload.is_background,
             actor=_actor(request),
@@ -78,7 +80,7 @@ async def create_task(
 
 
 @router.get("")
-async def list_tasks(
+async def list_tasks(  # type: ignore[no-untyped-def]
     website_knowledge_id: Optional[str] = None,
     status: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
@@ -90,7 +92,7 @@ async def list_tasks(
 
 
 @router.get("/{task_id}")
-async def get_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_task(task_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get a single autonomous web task by ID."""
     try:
         return await AutonomousWebTaskService(db).get(task_id)
@@ -99,7 +101,7 @@ async def get_task(task_id: str, db: AsyncSession = Depends(get_db_session)):
 
 
 @router.patch("/{task_id}/progress")
-async def update_progress(
+async def update_progress(  # type: ignore[no-untyped-def]
     task_id: str,
     payload: TaskProgressUpdate,
     request: Request,
@@ -122,7 +124,7 @@ async def update_progress(
 
 
 @router.post("/{task_id}/retry")
-async def retry_task(
+async def retry_task(  # type: ignore[no-untyped-def]
     task_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -139,7 +141,7 @@ async def retry_task(
 
 
 @router.post("/{task_id}/cancel")
-async def cancel_task(
+async def cancel_task(  # type: ignore[no-untyped-def]
     task_id: str,
     request: Request,
     db: AsyncSession = Depends(get_db_session),

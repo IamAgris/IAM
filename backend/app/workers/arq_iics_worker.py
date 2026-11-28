@@ -45,7 +45,7 @@ async def run_scheduled_research(
             permission_source="legal_gateway",
         )
         try:
-            result = await ResearchService().research_topic(
+            result = await ResearchService().research_topic(  # type: ignore[no-untyped-call]
                 task["query"],
                 store_as_memory=True,
                 store_as_knowledge=False,

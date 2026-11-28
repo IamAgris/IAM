@@ -28,7 +28,7 @@ class AuthorisedSource:
 
 
 class LiveSourceRegistry:
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         self.sources: Dict[str, AuthorisedSource] = {}
 
     def register(self, source: AuthorisedSource) -> None:

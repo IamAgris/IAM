@@ -25,7 +25,7 @@ class IntelligenceRouter:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
-    async def initialize_providers(self):
+    async def initialize_providers(self):  # type: ignore[no-untyped-def]
         """Register known providers. NVIDIA is one of several, not exclusive."""
         providers = [
             ("nvidia", "nvidia", settings.nvidia_base_url, settings.nvidia_free_only),
@@ -106,8 +106,8 @@ class IntelligenceRouter:
                 self.db.add(dm)
             dm.capabilities = model["capabilities"]
             dm.is_free = model["is_free"]
-            dm.is_available = True
-            dm.last_checked_at = datetime.utcnow()
+            dm.is_available = True  # type: ignore[assignment]
+            dm.last_checked_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return models
 
@@ -182,10 +182,10 @@ class IntelligenceRouter:
         # Filter by capability and free-only policy
         candidates = []
         for m in models:
-            caps = m.capabilities or []
+            caps: Any = m.capabilities or []
             if required_capabilities and not all(c in caps for c in required_capabilities):
                 continue
-            if m.is_free is False and not allow_paid:
+            if not m.is_free and not allow_paid:
                 continue
             provider_result = await self.db.execute(
                 select(AIProvider).where(AIProvider.id == m.provider_id)
@@ -193,7 +193,7 @@ class IntelligenceRouter:
             provider = provider_result.scalar_one_or_none()
             if not provider or not provider.is_active:
                 continue
-            if provider.free_only and m.is_free is False:
+            if provider.free_only and not m.is_free:
                 continue
             score = float(m.quality_score or 0.5)
             if prefer_provider and provider.name == prefer_provider:

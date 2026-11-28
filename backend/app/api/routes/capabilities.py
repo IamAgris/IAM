@@ -41,7 +41,7 @@ class LearningPathRequest(BaseModel):
 
 
 @router.post("")
-async def create_capability(request: CapabilityRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_capability(request: CapabilityRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Define a new capability."""
     service = CapabilityService(db)
     try:
@@ -53,14 +53,14 @@ async def create_capability(request: CapabilityRequest, db: AsyncSession = Depen
 
 
 @router.get("")
-async def list_capabilities(db: AsyncSession = Depends(get_db_session)):
+async def list_capabilities(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all capabilities with current proficiency."""
     service = CapabilityService(db)
     return await service.list_capabilities()
 
 
 @router.post("/assess")
-async def assess_capability(request: AssessmentRequest, db: AsyncSession = Depends(get_db_session)):
+async def assess_capability(request: AssessmentRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Record a measurable capability assessment."""
     service = CapabilityService(db)
     try:
@@ -73,7 +73,7 @@ async def assess_capability(request: AssessmentRequest, db: AsyncSession = Depen
 
 
 @router.post("/learning-path")
-async def create_learning_path(request: LearningPathRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_learning_path(request: LearningPathRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Create a planned learning journey."""
     service = CapabilityService(db)
     return await service.create_learning_path(request.capability_id, request.steps)

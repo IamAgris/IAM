@@ -5,7 +5,7 @@
 
 ## Scope of this note
 
-Document 28 `IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md` (OD-48) is implemented
+Document 28 `docs/IAM_IP_AND_LEGAL_INTELLIGENCE_MASTER_SPEC.md` (OD-48) is implemented
 in code through phases P1–P6. This note records what **code cannot complete**.
 It is untrusted context, not legal advice.
 

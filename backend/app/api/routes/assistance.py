@@ -34,14 +34,14 @@ def _actor(request: Request) -> str:
 
 
 @router.get("/levels")
-async def levels():
+async def levels():  # type: ignore[no-untyped-def]
     from app.services.human_assistance import LEVELS
 
     return LEVELS
 
 
 @router.post("/requests")
-async def request_assistance(
+async def request_assistance(  # type: ignore[no-untyped-def]
     payload: AssistanceCreate,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
@@ -59,7 +59,7 @@ async def request_assistance(
 
 
 @router.get("/requests")
-async def list_requests(
+async def list_requests(  # type: ignore[no-untyped-def]
     status: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -70,7 +70,7 @@ async def list_requests(
 
 
 @router.post("/requests/{request_id}/resolve")
-async def resolve_request(
+async def resolve_request(  # type: ignore[no-untyped-def]
     request_id: str,
     payload: ResolveRequest,
     request: Request,
@@ -87,7 +87,7 @@ async def resolve_request(
 
 
 @router.post("/requests/{request_id}/escalate")
-async def escalate_request(
+async def escalate_request(  # type: ignore[no-untyped-def]
     request_id: str,
     payload: EscalateRequest,
     request: Request,

@@ -15,7 +15,8 @@ from app.services.hbi.schemas import KnowledgeRecordInput
 
 def _dump(model: Any) -> Dict[str, Any]:
     """Pydantic v1/v2 compatible model serialisation."""
-    return model.model_dump() if hasattr(model, "model_dump") else model.dict()
+    _typed_result: dict[str, Any] = model.model_dump() if hasattr(model, "model_dump") else model.dict()
+    return _typed_result
 
 
 class KnowledgeStore:
@@ -60,7 +61,7 @@ class KnowledgeStore:
         self.hydrated = True
         return len(self._records)
 
-    def _model_from_dict(self, record: Dict[str, Any]):
+    def _model_from_dict(self, record: Dict[str, Any]):  # type: ignore[no-untyped-def]
         from app.models.hbi import HBIKnowledgeRecord
         return HBIKnowledgeRecord(
             record_ref=record["record_ref"],
@@ -128,7 +129,7 @@ class KnowledgeStore:
             },
             "caveat": "Graded epistemic object; not a claim about a person's private psychological state.",
         }
-        self._records[record["record_ref"]] = record
+        self._records[str(record["record_ref"])] = record
         if self.db is not None:
             self.db.add(self._model_from_dict(record))
             await self.db.flush()

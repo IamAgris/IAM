@@ -24,7 +24,7 @@ import uuid
 from app.core.database import Base
 
 
-class PredictionMarket(Base):
+class PredictionMarket(Base):  # type: ignore[misc]
     """A public event contract discovered for research (never an open position)."""
 
     __tablename__ = "prediction_markets"
@@ -50,7 +50,7 @@ class PredictionMarket(Base):
     )
 
 
-class ProbabilityEstimate(Base):
+class ProbabilityEstimate(Base):  # type: ignore[misc]
     """IAM's independent probability estimate for one market outcome."""
 
     __tablename__ = "probability_estimates"
@@ -76,7 +76,7 @@ class ProbabilityEstimate(Base):
     )
 
 
-class ForecastRun(Base):
+class ForecastRun(Base):  # type: ignore[misc]
     """A documented IAM probability forecast, independent of market prices."""
 
     __tablename__ = "forecast_runs"
@@ -105,7 +105,7 @@ class ForecastRun(Base):
     )
 
 
-class GamingResearchRecord(Base):
+class GamingResearchRecord(Base):  # type: ignore[misc]
     """Mathematical study of a casino game — no wagering capability."""
 
     __tablename__ = "gaming_research_records"
@@ -130,7 +130,7 @@ class GamingResearchRecord(Base):
     )
 
 
-class InvestmentResearchRecord(Base):
+class InvestmentResearchRecord(Base):  # type: ignore[misc]
     """Research note or proposal for an authorised investment market."""
 
     __tablename__ = "investment_research_records"
@@ -153,7 +153,7 @@ class InvestmentResearchRecord(Base):
     )
 
 
-class ProviderRegistryEntry(Base):
+class ProviderRegistryEntry(Base):  # type: ignore[misc]
     """§18 provider gates recorded before any adapter is enabled."""
 
     __tablename__ = "provider_registry_entries"

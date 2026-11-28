@@ -12,23 +12,23 @@ IAM's own architecture and does not change any owner decision.
 
 ## 1. Read the architecture index before changing anything
 
-`ARCHITECTURE_INDEX.md` is the single entry point to the frozen architecture.
+`docs/ARCHITECTURE_INDEX.md` is the single entry point to the frozen architecture.
 
-- **Priority 1 / authoritative:** `IAM_FINAL_CONSOLIDATION.md` (master gap analysis,
-  systems, completion levels, roadmap) and `IAM_OWNER_DECISIONS.md` (locked OD-xx
+- **Priority 1 / authoritative:** `docs/IAM_FINAL_CONSOLIDATION.md` (master gap analysis,
+  systems, completion levels, roadmap) and `docs/IAM_OWNER_DECISIONS.md` (locked OD-xx
   decisions).
 - **Priority 2:** `canonical/IAM_DOC_01…04` and the numbered Documents 05–26 listed
   in the index.
-- **Superseded:** `MASTER_SPECIFICATION.md`, `IAM_MASTER_ARCHITECTURE.md`,
-  `IAM_INTELLIGENCE_EVOLUTION_SPEC.md`, `IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md`,
-  `IAM_UI_GLOBAL_ACCESS_SPEC.md`, `IAM_ARCHITECTURE_GAP_ANALYSIS.md`,
-  `IAM_DISTRIBUTED_GAP_ANALYSIS.md`. These are history, **not** current truth.
+- **Superseded:** `docs/MASTER_SPECIFICATION.md`, `docs/IAM_MASTER_ARCHITECTURE.md`,
+  `docs/IAM_INTELLIGENCE_EVOLUTION_SPEC.md`, `docs/IAM_INTERNET_AUTONOMY_ECOSYSTEM_SPEC.md`,
+  `docs/IAM_UI_GLOBAL_ACCESS_SPEC.md`, `docs/IAM_ARCHITECTURE_GAP_ANALYSIS.md`,
+  `docs/IAM_DISTRIBUTED_GAP_ANALYSIS.md`. These are history, **not** current truth.
 
 When implementation and specification disagree, the specification wins for
 *intent*, but the source code is the truth for *what currently runs*. Report the
 gap; do not silently "fix" the spec.
 
-Do not rewrite the source-of-truth tables in `ARCHITECTURE_INDEX.md` without owner
+Do not rewrite the source-of-truth tables in `docs/ARCHITECTURE_INDEX.md` without owner
 confirmation. Append new repository-map information instead.
 
 ---
@@ -89,7 +89,7 @@ file set, so uncommitted work is searchable too.
    implementation gap, or historical change. Pick the matching `-Mode`.
 2. **Locate** — search filenames first, then content, then docs.
 3. **Read the authoritative context** — open the matching spec/decision from
-   `ARCHITECTURE_INDEX.md` alongside the source file.
+   `docs/ARCHITECTURE_INDEX.md` alongside the source file.
 4. **Trace** — follow imports and call sites (`-Mode symbols`, then content search
    on the symbol name). Check routes, models, migrations and tests.
 5. **Verify** — run the relevant acceptance test or the CI checks from
@@ -110,7 +110,7 @@ file set, so uncommitted work is searchable too.
 
 | System | Purpose | Where it lives |
 |--------|---------|----------------|
-| Repository intelligence | IAM's own files, symbols, specs, history | `ARCHITECTURE_INDEX.md`, `tools/rkie/` |
+| Repository intelligence | IAM's own files, symbols, specs, history | `docs/ARCHITECTURE_INDEX.md`, `tools/rkie/` |
 | Knowledge & architecture intelligence | IAM runtime memory, verified knowledge, HBI, world model | `backend/app/services/memory_service.py`, `knowledge.py`, `hbi/`, `worldmodel_service.py` |
 | External research intelligence | Web, GitHub, documentation | `backend/app/services/search_service.py`, `research_service.py`, `browser_service.py` |
 

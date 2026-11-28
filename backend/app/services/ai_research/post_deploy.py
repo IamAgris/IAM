@@ -45,7 +45,7 @@ class RegressionCheck:
         }
 
 
-async def check_regression(
+async def check_regression(  # type: ignore[no-untyped-def]
     db: AsyncSession,
     model: str,
     version: str,
@@ -55,7 +55,7 @@ async def check_regression(
     actor: str = "iam",
 ) -> RegressionCheck:
     """Measure a deployed model and decide whether rollback is warranted."""
-    store = store or default_release_store()
+    store = store or default_release_store()  # type: ignore[no-untyped-call]
     service = ModelReleaseService(db, store)
     try:
         entry = service.registry.get(model, version)

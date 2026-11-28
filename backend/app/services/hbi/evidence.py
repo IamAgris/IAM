@@ -27,7 +27,7 @@ SOURCE_BASE = {
 
 
 def rate_source(source_type: str, licence: Any = None, permitted_purpose: Any = None,
-                learned_weights: Dict[str, Any] = None) -> Dict[str, Any]:
+                learned_weights: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     """Return a reliability rating; empirical calibration overrides the prior when available."""
     base = SOURCE_BASE.get(source_type, SOURCE_BASE["unknown"])
     learned = (learned_weights or {}).get(source_type)

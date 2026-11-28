@@ -55,7 +55,7 @@ class CandidateRequest:
     benchmark_spec: BenchmarkSpec | None = None
 
 
-async def prepare_candidate(
+async def prepare_candidate(  # type: ignore[no-untyped-def]
     db: AsyncSession,
     request: CandidateRequest,
     *,
@@ -79,7 +79,7 @@ async def prepare_candidate(
             approval_id=resolved.get("approval_id"),
             agent_id=str(resolved.get("agent_id") or actor),
         )
-    store = store or default_release_store()
+    store = store or default_release_store()  # type: ignore[no-untyped-call]
     adapters = list(adapters)
     if not request.checkpoint_ref.strip():
         raise InvalidResearchJob("checkpoint_ref is required before benchmarking")

@@ -23,7 +23,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class CreatorRequest(Base):
+class CreatorRequest(Base):  # type: ignore[misc]
     """A request sent to the verified Creator email address for a decision."""
 
     __tablename__ = "creator_requests"
@@ -58,7 +58,7 @@ class CreatorRequest(Base):
     )
 
 
-class SignedChallenge(Base):
+class SignedChallenge(Base):  # type: ignore[misc]
     """One-time challenge whose hash is signed by the Creator's external signer."""
 
     __tablename__ = "signed_challenges"
@@ -77,7 +77,7 @@ class SignedChallenge(Base):
     consumed_at = Column(DateTime(timezone=True), nullable=True)
 
 
-class CreatorApproval(Base):
+class CreatorApproval(Base):  # type: ignore[misc]
     """Verified decision. Created only after signature verification succeeds."""
 
     __tablename__ = "creator_approvals"
@@ -100,7 +100,7 @@ class CreatorApproval(Base):
     )
 
 
-class CreatorAuthorization(Base):
+class CreatorAuthorization(Base):  # type: ignore[misc]
     """Scoped authorization created from a verified signed approval.
 
     IAM has no write path to this table except through CreatorApprovalService,
@@ -133,7 +133,7 @@ class CreatorAuthorization(Base):
     )
 
 
-class CreatorMessage(Base):
+class CreatorMessage(Base):  # type: ignore[misc]
     """IAM-initiated non-authority communication with the Creator (OD-18/OD-19).
 
     Questions and status updates travel by email. They are informational: a plain
@@ -160,7 +160,7 @@ class CreatorMessage(Base):
     )
 
 
-class CreatorEmailOutbox(Base):
+class CreatorEmailOutbox(Base):  # type: ignore[misc]
     """Queued Creator approval email, with delivery state for retries."""
 
     __tablename__ = "creator_email_outbox"
@@ -185,7 +185,7 @@ class CreatorEmailOutbox(Base):
     )
 
 
-class CreatorEmailDeadLetter(Base):
+class CreatorEmailDeadLetter(Base):  # type: ignore[misc]
     """A Creator approval email that could not be delivered after retries."""
 
     __tablename__ = "creator_email_dead_letters"
@@ -199,7 +199,7 @@ class CreatorEmailDeadLetter(Base):
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
-class CommunicationAudit(Base):
+class CommunicationAudit(Base):  # type: ignore[misc]
     """Audit for all three channels; creator approvals are never off the record."""
 
     __tablename__ = "communication_audit"

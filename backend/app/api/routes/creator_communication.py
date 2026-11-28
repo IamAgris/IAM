@@ -37,12 +37,12 @@ class ReplyRequest(BaseModel):
     body: str
 
 
-def _handle(exc: Exception):
+def _handle(exc: Exception):  # type: ignore[no-untyped-def]
     raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/questions", status_code=202)
-async def ask_creator(request: QuestionRequest, db=Depends(get_db_session)):
+async def ask_creator(request: QuestionRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Send an informational question to the Creator by email."""
     try:
         return await CreatorCommunicationService(db).ask(
@@ -53,7 +53,7 @@ async def ask_creator(request: QuestionRequest, db=Depends(get_db_session)):
 
 
 @router.post("/status", status_code=202)
-async def send_status(request: StatusRequest, db=Depends(get_db_session)):
+async def send_status(request: StatusRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Send an informational progress update to the Creator by email."""
     try:
         return await CreatorCommunicationService(db).send_status(
@@ -64,13 +64,13 @@ async def send_status(request: StatusRequest, db=Depends(get_db_session)):
 
 
 @router.get("")
-async def list_messages(limit: int = 50, db=Depends(get_db_session)):
+async def list_messages(limit: int = 50, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List IAM↔Creator messages with authority markers."""
     return await CreatorCommunicationService(db).list_messages(limit)
 
 
 @router.post("/replies", status_code=202)
-async def record_reply(request: Request, db=Depends(get_db_session)):
+async def record_reply(request: Request, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Gateway callback for a Creator reply. Informational, never authority."""
     secret = settings.creator_gateway_secret
     if not secret:

@@ -23,7 +23,7 @@ CLASSIFICATION_LEVELS: Dict[str, int] = {
 
 PROVIDERS = ("openai", "nvidia", "google", "anthropic", "microsoft", "community")
 
-ALLOWED_PERMISSIONS: Dict[str, frozenset] = {
+ALLOWED_PERMISSIONS: Dict[str, frozenset] = {  # type: ignore[type-arg]
     "personal": frozenset(
         {
             "knowledge",

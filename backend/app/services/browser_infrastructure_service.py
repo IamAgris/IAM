@@ -99,9 +99,9 @@ class BrowserInfrastructureService:
         valid_statuses = ("healthy", "degraded", "offline", "unknown")
         if health_status not in valid_statuses:
             raise BrowserInfrastructureError(f"Invalid health status: {health_status}")
-        row.health_status = health_status
+        row.health_status = health_status  # type: ignore[assignment]
         from datetime import datetime, timezone
-        row.last_health_check_at = None  # set by caller if desired
+        row.last_health_check_at = None  # type: ignore[assignment]  # set by caller if desired
         await self.db.commit()
         return self._row_dict(row)
 
@@ -118,9 +118,9 @@ class BrowserInfrastructureService:
         if concurrent_session_limit is not None:
             if not 1 <= concurrent_session_limit <= 100:
                 raise BrowserInfrastructureError("Concurrent session limit must be between 1 and 100")
-            row.concurrent_session_limit = concurrent_session_limit
+            row.concurrent_session_limit = concurrent_session_limit  # type: ignore[assignment]
         if resource_allocation is not None:
-            row.resource_allocation = resource_allocation
+            row.resource_allocation = resource_allocation  # type: ignore[assignment]
         await self.db.commit()
         return self._row_dict(row)
 

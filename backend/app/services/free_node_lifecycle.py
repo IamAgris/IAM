@@ -126,9 +126,9 @@ class FreeNodeLifecycleService:
         if not source_url.strip() or not evidence.strip():
             raise FreeNodeError("source_url and evidence are required")
         record = await self._get(candidate_id)
-        record.terms_source = source_url
-        record.eligibility_verified = True
-        record.last_reviewed_at = datetime.utcnow()
+        record.terms_source = source_url  # type: ignore[assignment]
+        record.eligibility_verified = True  # type: ignore[assignment]
+        record.last_reviewed_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return {"id": str(record.id), "eligibility_verified": True}
 
@@ -138,8 +138,8 @@ class FreeNodeLifecycleService:
         record = await self._get(candidate_id)
         if status in {"deployed", "registered"} and not record.eligibility_verified:
             raise FreeNodeError("free-tier terms must be verified before deployment")
-        record.status = status
-        record.last_reviewed_at = datetime.utcnow()
+        record.status = status  # type: ignore[assignment]
+        record.last_reviewed_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return {"id": str(record.id), "status": record.status}
 
@@ -150,12 +150,12 @@ class FreeNodeLifecycleService:
         record = await self._get(candidate_id)
         if not record.expires_at:
             raise FreeNodeError("candidate has no expiry date")
-        record.quota_alarm_at = record.expires_at - timedelta(days=days_before_expiry)
+        record.quota_alarm_at = record.expires_at - timedelta(days=days_before_expiry)  # type: ignore[assignment]
         record.migration_plan = (
-            f"Stop non-essential workloads by {record.quota_alarm_at.isoformat()}; "
+            f"Stop non-essential workloads by {record.quota_alarm_at.isoformat()}; "  # type: ignore[assignment]
             "move state to the core or another verified free node; never fall back to paid capacity."
         )
-        record.status = "expiring"
+        record.status = "expiring"  # type: ignore[assignment]
         await self.db.commit()
         return {
             "id": str(record.id),

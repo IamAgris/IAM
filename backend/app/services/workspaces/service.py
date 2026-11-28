@@ -150,7 +150,7 @@ def check_command_hosts(command: str, credentials: List[WorkspaceCredential]) ->
     permitted = {
         host
         for credential in credentials
-        for host in (credential.scopes or {}).get("allowed_hosts", [])
+        for host in dict(credential.scopes or {}).get("allowed_hosts", [])
     }
     unauthorised = hosts - permitted
     if unauthorised:
@@ -208,7 +208,7 @@ class StubWorkspaceAdapter(WorkspaceAdapter):
 
     name = "stub"
 
-    async def run(self, workspace_dir, command, isolation, credential_env_vars):
+    async def run(self, workspace_dir, command, isolation, credential_env_vars):  # type: ignore[no-untyped-def]
         validate_isolation(isolation)
         validate_command(command)
         credential_env_names(credential_env_vars)
@@ -271,7 +271,7 @@ class DockerWorkspaceAdapter(WorkspaceAdapter):
             command,
         ]
 
-    async def run(self, workspace_dir, command, isolation, credential_env_vars):
+    async def run(self, workspace_dir, command, isolation, credential_env_vars):  # type: ignore[no-untyped-def]
         docker_command = self.command(
             workspace_dir, command, isolation, credential_env_vars
         )
@@ -333,11 +333,11 @@ class WorkspaceService:
         return workspace
 
     @staticmethod
-    def _remote(workspace: WorkspaceEnvironment):
-        external_id = (workspace.isolation or {}).get("provider_external_id")
+    def _remote(workspace: WorkspaceEnvironment):  # type: ignore[no-untyped-def]
+        external_id = dict(workspace.isolation or {}).get("provider_external_id")
         if not external_id:
             raise WorkspaceError("remote workspace has no provider external id")
-        return remote_adapter_for(workspace.provider), external_id
+        return remote_adapter_for(workspace.provider), external_id  # type: ignore[arg-type]
 
     def _directory(self, workspace_id: str, name: str) -> Path:
         slug = re.sub(r"[^a-z0-9-]", "-", name.lower())[:40].strip("-") or "workspace"
@@ -393,7 +393,7 @@ class WorkspaceService:
         self.db.add(workspace)
         await self.db.flush()
         if remote_info is None:
-            workspace.directory = str(self._directory(str(workspace.id), workspace.name))
+            workspace.directory = str(self._directory(str(workspace.id), str(workspace.name)))  # type: ignore[assignment]
             self.root.mkdir(parents=True, exist_ok=True)
             Path(workspace.directory).mkdir(parents=True, exist_ok=True)
         await self._audit(
@@ -412,12 +412,12 @@ class WorkspaceService:
         return self._serialize(workspace)
 
     async def _transition(self, workspace: WorkspaceEnvironment, status: str) -> None:
-        allowed = STATUS_TRANSITIONS.get(workspace.status, ())
+        allowed = STATUS_TRANSITIONS.get(str(workspace.status), ())
         if status not in allowed:
             raise WorkspaceError(
                 f"cannot change workspace from '{workspace.status}' to '{status}'"
             )
-        workspace.status = status
+        workspace.status = status  # type: ignore[assignment]
 
     async def start(self, workspace_id: str, actor: str) -> Dict[str, Any]:
         workspace = await self._workspace(workspace_id)
@@ -437,8 +437,8 @@ class WorkspaceService:
         workspace = await self._workspace(workspace_id)
         if workspace.status != "active":
             raise WorkspaceError("workspace must be active before execution")
-        assert_provider_available(workspace.provider)
-        isolation = workspace.isolation or {}
+        assert_provider_available(workspace.provider)  # type: ignore[arg-type]
+        isolation: Any = workspace.isolation or {}
         validate_isolation(isolation)
         credentials = await self._active_credentials(str(workspace.id))
         check_command_hosts(command, credentials)
@@ -447,12 +447,12 @@ class WorkspaceService:
             env_names.append(workspace.credential_env_var)
         if workspace.provider == "local":
             outcome = await self.adapter.run(
-                Path(workspace.directory), command, isolation, env_names
+                Path(workspace.directory), command, isolation, env_names  # type: ignore[arg-type]
             )
         else:
             remote, external_id = self._remote(workspace)
             outcome = await remote.execute(external_id, command, env_names, actor)
-        workspace.last_output = str(outcome.get("stdout") or "")[:2000]
+        workspace.last_output = str(outcome.get("stdout") or "")[:2000]  # type: ignore[assignment]
         for stream in ("stdout", "stderr"):
             content = str(outcome.get(stream) or "")
             for chunk in workspace_log_chunks(stream, content):
@@ -493,7 +493,7 @@ class WorkspaceService:
             digest = external_id
         isolation = dict(workspace.isolation or {})
         isolation["checksum"] = digest
-        workspace.isolation = isolation
+        workspace.isolation = isolation  # type: ignore[assignment]
         await self._audit("workspace_saved", workspace, actor, {"checksum": digest})
         await self.db.commit()
         return self._serialize(workspace)
@@ -549,7 +549,7 @@ class WorkspaceService:
             raise WorkspaceError("cannot issue credentials for a destroyed workspace")
         if purpose not in CREDENTIAL_PURPOSES:
             raise WorkspaceError(f"unsupported credential purpose: {purpose}")
-        secret_env_var = validate_credential_env_var(secret_env_var)
+        secret_env_var = validate_credential_env_var(secret_env_var)  # type: ignore[assignment]
         if not secret_env_var:
             raise WorkspaceError("secret_env_var is required")
         ttl = max(60, min(int(ttl_seconds or settings.workspace_credential_ttl_seconds), 86400))
@@ -599,8 +599,8 @@ class WorkspaceService:
         credential = result.scalar_one_or_none()
         if not credential:
             raise LookupError("credential not found")
-        credential.is_active = False
-        credential.revoked_at = datetime.now(timezone.utc)
+        credential.is_active = False  # type: ignore[assignment]
+        credential.revoked_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self._audit(
             "workspace_credential_revoked",
             workspace,

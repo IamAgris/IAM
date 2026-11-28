@@ -50,7 +50,7 @@ def _outcome(record: Dict[str, Any]) -> int | None:
     return None
 
 
-def build_cases(records: List[Dict[str, Any]], approved_ids: Set[str] = None) -> Dict[str, Any]:
+def build_cases(records: List[Dict[str, Any]], approved_ids: Set[str] = None) -> Dict[str, Any]:  # type: ignore[assignment]
     """Derive leakage-safe cases from dated, verified records only."""
     cases = []
     excluded = []
@@ -129,7 +129,7 @@ def bias_report(records: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def corpus_readiness(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Report whether licensed evidence, not fixtures, is available for validation."""
-    counts = defaultdict(int)
+    counts: Any = defaultdict(int)
     for record in records:
         counts[str(record.get("provenance_kind", "direct_observation"))] += 1
     licensed = counts["licensed_corpus"]
@@ -153,7 +153,7 @@ def report(service: Any, model_id: str = "ensemble") -> Dict[str, Any]:
     records = service.store.all()
     governance = getattr(service, "corpus_governance", None)
     approved_ids = governance.approved_ids() if governance is not None else None
-    derived = build_cases(records, approved_ids)
+    derived = build_cases(records, approved_ids)  # type: ignore[arg-type]
     bias = bias_report(records)
     blockers = []
 

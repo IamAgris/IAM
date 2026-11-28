@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
-class PublicSource(Base):
+class PublicSource(Base):  # type: ignore[misc]
     __tablename__ = "public_sources"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -39,7 +39,7 @@ class PublicSource(Base):
     )
 
 
-class PublicRecord(Base):
+class PublicRecord(Base):  # type: ignore[misc]
     __tablename__ = "public_records"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -74,7 +74,7 @@ class PublicRecord(Base):
     )
 
 
-class RecordRelationship(Base):
+class RecordRelationship(Base):  # type: ignore[misc]
     __tablename__ = "record_relationships"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
