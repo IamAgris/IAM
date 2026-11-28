@@ -19214,6 +19214,28 @@
         }
       }
     },
+    "/api/v1/iplci/validation/seed-free-evidence": {
+      "post": {
+        "tags": [
+          "ip-legal-intelligence"
+        ],
+        "summary": "Seed Free Validation Evidence",
+        "description": "Attach free official-source URLs as evidence; never verifies tasks.",
+        "operationId": "seed_free_validation_evidence_api_v1_iplci_validation_seed_free_evidence_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Seed Free Validation Evidence Api V1 Iplci Validation Seed Free Evidence Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/iplci/validation/tasks": {
       "get": {
         "tags": [
@@ -45946,6 +45968,11 @@
             "title": "Memory Type",
             "default": "fact"
           },
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "default": "episodic"
+          },
           "source": {
             "anyOf": [
               {
@@ -45999,6 +46026,11 @@
           "memory_type": {
             "type": "string",
             "title": "Memory Type"
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "default": "episodic"
           },
           "source": {
             "anyOf": [
