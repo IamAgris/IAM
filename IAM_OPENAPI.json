@@ -4149,6 +4149,30 @@
         }
       }
     },
+    "/api/v1/capabilities/modules": {
+      "get": {
+        "tags": [
+          "capabilities"
+        ],
+        "summary": "List Dispatchable Modules",
+        "description": "Discover the modules the autonomy loop may dispatch, with their contract.",
+        "operationId": "list_dispatchable_modules_api_v1_capabilities_modules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Dispatchable Modules Api V1 Capabilities Modules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/capabilities": {
       "get": {
         "tags": [
