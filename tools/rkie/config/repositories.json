@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "purpose": "Repository registry for multi-repository intelligence. External sources are always labelled and never treated as authoritative implementation evidence.",
+  "repositories": [
+    {
+      "name": "iam-core",
+      "path": ".",
+      "role": "authoritative-implementation",
+      "authority": "internal"
+    },
+    {
+      "name": "iam-sdk-python",
+      "path": "sdk/python",
+      "role": "sdk",
+      "authority": "internal"
+    },
+    {
+      "name": "iam-sdk-typescript",
+      "path": "sdk/typescript",
+      "role": "sdk",
+      "authority": "internal"
+    },
+    {
+      "name": "iam-research-notes",
+      "path": "research",
+      "role": "external-research",
+      "authority": "external"
+    }
+  ]
+}

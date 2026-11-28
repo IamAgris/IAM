@@ -1,0 +1,1 @@
+"""Banking adapter package."""

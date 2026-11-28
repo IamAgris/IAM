@@ -1,0 +1,89 @@
+{
+  "hf_reference_sequences": {
+    "Hello": {
+      "decodes_to_prompt": true,
+      "gguf_tokens": [
+        "Hello"
+      ],
+      "ids": [
+        9707
+      ]
+    },
+    "IAM": {
+      "decodes_to_prompt": true,
+      "gguf_tokens": [
+        "IAM"
+      ],
+      "ids": [
+        73707
+      ]
+    },
+    "OK": {
+      "decodes_to_prompt": true,
+      "gguf_tokens": [
+        "OK"
+      ],
+      "ids": [
+        3925
+      ]
+    }
+  },
+  "hf_template_marker_ids": {
+    "<|endoftext|>": [
+      151643
+    ],
+    "<|im_end|>": [
+      151645
+    ],
+    "<|im_start|>": [
+      151644
+    ]
+  },
+  "limits": [
+    "minimal BPE has no regex pre-tokenizer; mismatches on complex text are expected",
+    "no native engine was executed; this is tokenizer data/sequence parity only"
+  ],
+  "merge_count_gguf": 151387,
+  "merge_count_hf": 151387,
+  "merge_mismatch_count": 0,
+  "minimal_bpe_matches_hf": {
+    "Hello": false,
+    "IAM": false,
+    "OK": false
+  },
+  "minimal_bpe_sequences": {
+    "Hello": [
+      39,
+      68,
+      75,
+      75,
+      78
+    ],
+    "IAM": [
+      40,
+      32,
+      44
+    ],
+    "OK": [
+      46,
+      42
+    ]
+  },
+  "sources": {
+    "gguf": "C:\\Users\\kagis\\AppData\\Local\\Temp\\opencode\\llmasm-audit\\qwen25_3b_model.gguf",
+    "hf_source_url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/raw/main/tokenizer.json",
+    "hf_tokenizer_json": "C:\\Users\\kagis\\AppData\\Local\\Temp\\opencode\\llmasm-audit\\qwen25_3b_instruct_tokenizer.json"
+  },
+  "vocab_classification": {
+    "gguf_inline_added_tokens": 22,
+    "gguf_only_padding_tokens": 271,
+    "hf_added_tokens": 22,
+    "hf_model_vocab_entries": 151643,
+    "padding_first": 151665,
+    "padding_last": 151935,
+    "unexplained_ids_sample": [],
+    "unexplained_mismatch_count": 0
+  },
+  "vocab_size_gguf": 151936,
+  "vocab_size_hf": 151643
+}

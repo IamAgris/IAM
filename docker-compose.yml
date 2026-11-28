@@ -62,12 +62,27 @@ services:
     ports:
       - "${LITELLM_PORT:-4000}:4000"
     environment:
+      # OD-52 runtime /model/new registration needs LiteLLM's own Prisma DB.
+      # PostgreSQL already runs in this stack; SQLite is not supported for
+      # DB-backed routes. The password comes from .env, never from this file.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aura}:${POSTGRES_PASSWORD:-change-me-securely}@postgres:5432/${LITELLM_DB:-litellm_db}
+      # Use the bundled cost map so unknown model IDs do not block startup on
+      # a network cost-map lookup.
+      LITELLM_LOCAL_MODEL_COST_MAP: "True"
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      # Rotating this makes stored provider credentials unreadable. Set once.
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-change-me-salt-key}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      # Multiple NVIDIA free-tier keys. _1 falls back to the original single
+      # key; _2.._4 are optional and may be left blank when unused.
+      NVIDIA_API_KEY_1: ${NVIDIA_API_KEY_1:-${NVIDIA_API_KEY:-}}
+      NVIDIA_API_KEY_2: ${NVIDIA_API_KEY_2:-}
+      NVIDIA_API_KEY_3: ${NVIDIA_API_KEY_3:-}
+      NVIDIA_API_KEY_4: ${NVIDIA_API_KEY_4:-}
     volumes:
       - ./infra/litellm/config.yaml:/app/litellm/config.yaml
     healthcheck:
@@ -78,6 +93,41 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # ---------------------------------------------------------------------------
+  # Ollama (optional local models - private / low-resource inference)
+  # ---------------------------------------------------------------------------
+  # OD-38 reopened by owner 25 Nov 2026: only qwen2.5:3b is kept locally.
+  # On the 4 vCPU / 8 GB VPS keep local models small (3B); heavy reasoning
+  # stays with hosted inference. No GPU reservation by default.
+  # Pull after first start:
+  #   docker exec aura-ollama ollama pull qwen2.5:3b
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aura-ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - aura_ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - aura-network
 
@@ -117,6 +167,86 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-change-me}
       S3_BUCKET: ${S3_BUCKET:-aura-storage}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      IAM_BOOTSTRAP_API_KEY: ${IAM_BOOTSTRAP_API_KEY:-}
+      IAM_NODE_ID: ${IAM_NODE_ID:-local-iam}
+      IAM_P2P_SECRET: ${IAM_P2P_SECRET:-}
+      CREATOR_EMAIL: ${CREATOR_EMAIL:-}
+      CREATOR_EMAIL_DOMAIN: ${CREATOR_EMAIL_DOMAIN:-}
+      CREATOR_PUBLIC_KEY: ${CREATOR_PUBLIC_KEY:-}
+      CREATOR_SIGNER_ID: ${CREATOR_SIGNER_ID:-creator-hardware-signer}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      CREATOR_EMAIL_FROM: ${CREATOR_EMAIL_FROM:-}
+      CREATOR_SMTP_HOST: ${CREATOR_SMTP_HOST:-}
+      CREATOR_SMTP_PORT: ${CREATOR_SMTP_PORT:-587}
+      CREATOR_SMTP_USER: ${CREATOR_SMTP_USER:-}
+      CREATOR_SMTP_PASSWORD: ${CREATOR_SMTP_PASSWORD:-}
+      CREATOR_SMTP_USE_TLS: ${CREATOR_SMTP_USE_TLS:-true}
+      CREATOR_GATEWAY_SECRET: ${CREATOR_GATEWAY_SECRET:-}
+      USER_EMAIL_ENABLED: ${USER_EMAIL_ENABLED:-false}
+      USER_EMAIL_FROM: ${USER_EMAIL_FROM:-}
+      USER_EMAIL_DOMAIN: ${USER_EMAIL_DOMAIN:-}
+      USER_EMAIL_SMTP_HOST: ${USER_EMAIL_SMTP_HOST:-}
+      USER_EMAIL_SMTP_PORT: ${USER_EMAIL_SMTP_PORT:-587}
+      USER_EMAIL_SMTP_USER: ${USER_EMAIL_SMTP_USER:-}
+      USER_EMAIL_SMTP_PASSWORD: ${USER_EMAIL_SMTP_PASSWORD:-}
+      USER_EMAIL_SMTP_USE_TLS: ${USER_EMAIL_SMTP_USE_TLS:-true}
+      USER_EMAIL_WEBHOOK_SECRET: ${USER_EMAIL_WEBHOOK_SECRET:-}
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+      CREATOR_EMAIL_WORKER_BACKEND: ${CREATOR_EMAIL_WORKER_BACKEND:-loop}
+      # Docker secret file paths take precedence over literal env values.
+      APP_SECRET_KEY_FILE: ${APP_SECRET_KEY_FILE:-}
+      SESSION_SECRET_FILE: ${SESSION_SECRET_FILE:-}
+      ENCRYPTION_KEY_FILE: ${ENCRYPTION_KEY_FILE:-}
+      CREATOR_PUBLIC_KEY_FILE: ${CREATOR_PUBLIC_KEY_FILE:-}
+      CREATOR_GATEWAY_SECRET_FILE: ${CREATOR_GATEWAY_SECRET_FILE:-}
+      VOICE_TTS_URL: ${VOICE_TTS_URL:-}
+      VISION_FFMPEG_PATH: ${VISION_FFMPEG_PATH:-ffmpeg}
+      ARTEX_ENABLED: ${ARTEX_ENABLED:-false}
+      ARTEX_BASE_URL: ${ARTEX_BASE_URL:-http://127.0.0.1:8787}
+      ARTEX_DRY_RUN: ${ARTEX_DRY_RUN:-true}
+      ARTEX_MCP_TOKEN: ${ARTEX_MCP_TOKEN:-}
+      IAM_SDK_DEFAULT_MODEL: ${IAM_SDK_DEFAULT_MODEL:-nvidia-nemotron-3.5-lightning}
+      # One shared primary model for frontend and backend. Hosted models are
+      # optional specialists reached only by explicit model id.
+      IAM_PRIMARY_MODEL: ${IAM_PRIMARY_MODEL:-local-qwen-3b}
+      IAM_PRIMARY_LOCAL_TAG: ${IAM_PRIMARY_LOCAL_TAG:-qwen2.5:3b}
+      # Durable research artifacts and trusted local evaluation.
+      RESEARCH_ARTIFACT_STORE: ${RESEARCH_ARTIFACT_STORE:-local}
+      RESEARCH_ARTIFACT_PREFIX: ${RESEARCH_ARTIFACT_PREFIX:-research}
+      COLAB_MCP_ENABLED: ${COLAB_MCP_ENABLED:-false}
+      COLAB_MCP_BRIDGE_URL: ${COLAB_MCP_BRIDGE_URL:-}
+      COLAB_MCP_BRIDGE_TOKEN: ${COLAB_MCP_BRIDGE_TOKEN:-}
+      LM_EVAL_DATASET_PATH: ${LM_EVAL_DATASET_PATH:-app/services/ai_research/eval_sets/basic.jsonl}
+      POST_DEPLOY_MONITOR_ENABLED: ${POST_DEPLOY_MONITOR_ENABLED:-false}
+      POST_DEPLOY_AUTO_ROLLBACK_ENABLED: ${POST_DEPLOY_AUTO_ROLLBACK_ENABLED:-false}
+      POST_DEPLOY_REGRESSION_THRESHOLD: ${POST_DEPLOY_REGRESSION_THRESHOLD:-0.05}
+      # Cold local model loads on a 4 vCPU core can exceed a short timeout.
+      INFERENCE_CHAT_TIMEOUT_SECONDS: ${INFERENCE_CHAT_TIMEOUT_SECONDS:-300}
+      INFERENCE_STREAM_TIMEOUT_SECONDS: ${INFERENCE_STREAM_TIMEOUT_SECONDS:-300}
+      # Real inference: hosted keys (free-only policy enforced by LiteLLM config)
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      FREE_MODELS_ONLY: ${FREE_MODELS_ONLY:-true}
+      # OD-39 core-service reserve. Default 1500 MB suits the 8 GB target and
+      # is the policy default on the host/tests. A smaller dev Docker VM can
+      # override only the container with IAM_CONTAINER_RAM_RESERVE in .env.
+      ADAPTIVE_RESERVED_RAM_MB: ${IAM_CONTAINER_RAM_RESERVE:-1500}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Opt-in local inference via Ollama
+      OLLAMA_ENABLED: ${OLLAMA_ENABLED:-false}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      MEMORY_EMBEDDING_PROVIDER: ${MEMORY_EMBEDDING_PROVIDER:-local}
+      MEMORY_EMBEDDING_MODEL: ${MEMORY_EMBEDDING_MODEL:-nomic-embed-text}
+      # UWAIE browser runtime lives outside /app so container rebuilds can
+      # reinstall it explicitly (see README).
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      # P2: local Tesseract OCR is available in the image; opt in explicitly.
+      BROWSER_OCR_ENABLED: ${BROWSER_OCR_ENABLED:-false}
+      # TIPS: official Tor Browser path must be supplied by the operator.
+      TOR_ENABLED: ${TOR_ENABLED:-false}
+      TOR_BROWSER_EXECUTABLE: ${TOR_BROWSER_EXECUTABLE:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -126,6 +256,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      # Playwright browsers survive container recreation (UWAIE runtime).
+      - aura_playwright_data:/ms-playwright
     networks:
       - aura-network
 
@@ -136,6 +268,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        IAM_API_URL: http://backend:8000
     container_name: aura-frontend
     restart: unless-stopped
     deploy:
@@ -152,6 +286,10 @@ services:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      IAM_API_URL: http://backend:8000
+      IAM_USER_API_KEY: ${IAM_USER_API_KEY:-}
+      # Server-only credential for the read-only /iam-proxy allowlist.
+      IAM_PROXY_TOKEN: ${IAM_PROXY_TOKEN:-}
     depends_on:
       backend:
         condition: service_started
@@ -182,10 +320,163 @@ services:
     networks:
       - aura-network
 
+  # OD-08 ARQ worker for Creator email retries. Optional profile:
+  #   docker compose --profile arq up -d
+  # Set CREATOR_EMAIL_WORKER_BACKEND=arq to stop the in-process loop.
+  creator-email-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-creator-email-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_creator_email.WorkerSettings
+    profiles: ["arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      CREATOR_EMAIL_FROM: ${CREATOR_EMAIL_FROM:-}
+      CREATOR_SMTP_HOST: ${CREATOR_SMTP_HOST:-}
+      CREATOR_SMTP_PORT: ${CREATOR_SMTP_PORT:-587}
+      CREATOR_SMTP_USER: ${CREATOR_SMTP_USER:-}
+      CREATOR_SMTP_PASSWORD: ${CREATOR_SMTP_PASSWORD:-}
+      CREATOR_SMTP_USE_TLS: ${CREATOR_SMTP_USE_TLS:-true}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # Doc 29 / OD-49: optional ARQ worker for UWAIE browser tasks.
+  #   docker compose --profile browser-arq up -d
+  browser-task-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-browser-task-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_browser_worker.WorkerSettings
+    profiles: ["browser-arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      BROWSER_TASK_WORKER_BACKEND: arq
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # IICS overlay: scheduled research, threat-intel feed polling and site-policy
+  # refresh on the existing OD-08 ARQ runtime. No new queue or system.
+  iics-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-iics-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_iics_worker.WorkerSettings
+    profiles: ["iics", "arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      CREATOR_EMAIL_TRANSPORT: ${CREATOR_EMAIL_TRANSPORT:-log}
+      CREATOR_EMAIL: ${CREATOR_EMAIL:-}
+      CREATOR_EMAIL_FROM: ${CREATOR_EMAIL_FROM:-}
+      CREATOR_SMTP_HOST: ${CREATOR_SMTP_HOST:-}
+      CREATOR_SMTP_PORT: ${CREATOR_SMTP_PORT:-587}
+      CREATOR_SMTP_USER: ${CREATOR_SMTP_USER:-}
+      CREATOR_SMTP_PASSWORD: ${CREATOR_SMTP_PASSWORD:-}
+      CREATOR_SMTP_USE_TLS: ${CREATOR_SMTP_USE_TLS:-true}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # OD-52: scheduled free-model catalogue discovery and availability refresh.
+  #   docker compose --profile catalog-arq up -d
+  model-catalog-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-model-catalog-worker
+    restart: unless-stopped
+    command: arq app.workers.arq_model_catalog.WorkerSettings
+    profiles: ["catalog-arq", "arq"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      MODELS_DEV_API_URL: ${MODELS_DEV_API_URL:-https://models.dev/api.json?type=all}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-change-me-securely}
+      APP_ENV: ${APP_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # One-shot: apply IICS foundation tables before starting the worker.
+  #   docker compose --profile iics run --rm iics-migrate
+  iics-migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura-iics-migrate
+    command: python scripts/apply_iics_migration.py
+    profiles: ["iics"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - aura-network
+
+  # Doc 21 / OD-37: optional Caddy edge entry point. Enable with:
+  #   docker compose --profile edge up -d
+  # Transport only — no authority or decision logic runs here.
+  caddy:
+    image: caddy:2-alpine
+    container_name: aura-caddy
+    restart: unless-stopped
+    profiles: ["edge"]
+    ports:
+      - "${EDGE_PORT:-8080}:8080"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - aura_caddy_data:/data
+      - aura_caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - aura-network
+
 volumes:
+  aura_caddy_data:
+  aura_caddy_config:
   aura_postgres_data:
   aura_redis_data:
   aura_minio_data:
+  aura_ollama_data:
+  aura_playwright_data:
 
 networks:
   aura-network:

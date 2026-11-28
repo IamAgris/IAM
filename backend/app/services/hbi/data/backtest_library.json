@@ -1,0 +1,18 @@
+{
+  "status": "illustrative_fixture_not_real_historical_evidence",
+  "purpose": "leakage-free pipeline testing only; replace with licensed historical data before scientific claims",
+  "cases": [
+    {"case_id": "fx_01", "domain": "economic_crisis", "cutoff_year": 1929, "outcome_year": 1931, "features": {"support": 0.2, "against_support": 2.0}, "outcome": 0},
+    {"case_id": "fx_02", "domain": "economic_crisis", "cutoff_year": 1973, "outcome_year": 1975, "features": {"support": 0.4, "against_support": 1.8}, "outcome": 0},
+    {"case_id": "fx_03", "domain": "economic_crisis", "cutoff_year": 1997, "outcome_year": 1999, "features": {"support": 1.8, "against_support": 0.3}, "outcome": 1},
+    {"case_id": "fx_04", "domain": "economic_crisis", "cutoff_year": 2007, "outcome_year": 2009, "features": {"support": 0.3, "against_support": 2.1}, "outcome": 0},
+    {"case_id": "fx_05", "domain": "economic_crisis", "cutoff_year": 2019, "outcome_year": 2021, "features": {"support": 1.7, "against_support": 0.4}, "outcome": 1},
+    {"case_id": "fx_06", "domain": "technology_transition", "cutoff_year": 1440, "outcome_year": 1500, "features": {"support": 1.9, "against_support": 0.2}, "outcome": 1},
+    {"case_id": "fx_07", "domain": "technology_transition", "cutoff_year": 1760, "outcome_year": 1840, "features": {"support": 1.6, "against_support": 0.5}, "outcome": 1},
+    {"case_id": "fx_08", "domain": "technology_transition", "cutoff_year": 1990, "outcome_year": 2005, "features": {"support": 1.8, "against_support": 0.3}, "outcome": 1},
+    {"case_id": "fx_09", "domain": "social_movement", "cutoff_year": 1955, "outcome_year": 1965, "features": {"support": 1.5, "against_support": 0.6}, "outcome": 1},
+    {"case_id": "fx_10", "domain": "social_movement", "cutoff_year": 1985, "outcome_year": 1995, "features": {"support": 0.5, "against_support": 1.7}, "outcome": 0},
+    {"case_id": "fx_11", "domain": "institutional_change", "cutoff_year": 1910, "outcome_year": 1920, "features": {"support": 0.4, "against_support": 1.9}, "outcome": 0},
+    {"case_id": "fx_12", "domain": "institutional_change", "cutoff_year": 2000, "outcome_year": 2010, "features": {"support": 1.6, "against_support": 0.5}, "outcome": 1}
+  ]
+}

@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class ResearchHypothesis(Base):
+class ResearchHypothesis(Base):  # type: ignore[misc]
     """Research questions and hypotheses."""
     __tablename__ = "research_hypotheses"
 
@@ -28,7 +28,7 @@ class ResearchHypothesis(Base):
     experiments = relationship("ResearchExperiment", back_populates="hypothesis", cascade="all, delete-orphan")
 
 
-class ResearchExperiment(Base):
+class ResearchExperiment(Base):  # type: ignore[misc]
     """Experiments and simulations."""
     __tablename__ = "research_experiments"
 
@@ -48,7 +48,7 @@ class ResearchExperiment(Base):
     results = relationship("ExperimentResult", back_populates="experiment", cascade="all, delete-orphan")
 
 
-class ExperimentResult(Base):
+class ExperimentResult(Base):  # type: ignore[misc]
     """Recorded experiment results including failures."""
     __tablename__ = "experiment_results"
 
@@ -63,7 +63,7 @@ class ExperimentResult(Base):
     experiment = relationship("ResearchExperiment", back_populates="results")
 
 
-class ResearchPublication(Base):
+class ResearchPublication(Base):  # type: ignore[misc]
     """Research or projects published when authorised."""
     __tablename__ = "research_publications"
 

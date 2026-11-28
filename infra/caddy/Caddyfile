@@ -1,0 +1,23 @@
+# Doc 21 / OD-37: local edge entry point. This is a reverse proxy only —
+# it performs no authority, signing or decision logic.
+#
+# Public TLS termination for a real domain is a separate deployment decision.
+# Locally we listen on HTTP port 8080 and forward to the existing services.
+
+:8080 {
+	# API and health go to the backend. flush_interval -1 keeps SSE streams live.
+	handle /api/* {
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	handle /health {
+		reverse_proxy backend:8000
+	}
+
+	# Everything else is the Next.js chat interface.
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

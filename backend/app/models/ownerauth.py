@@ -8,7 +8,7 @@ import uuid
 from app.core.database import Base
 
 
-class OwnerAuthorization(Base):
+class OwnerAuthorization(Base):  # type: ignore[misc]
     """A standing or one-time authorization granted by the human owner."""
     __tablename__ = "owner_authorizations"
 

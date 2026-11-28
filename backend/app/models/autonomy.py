@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class Goal(Base):
+class Goal(Base):  # type: ignore[misc]
     __tablename__ = "goals"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -29,7 +29,7 @@ class Goal(Base):
     plans = relationship("Plan", back_populates="goal", cascade="all, delete-orphan")
 
 
-class Plan(Base):
+class Plan(Base):  # type: ignore[misc]
     __tablename__ = "plans"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -48,7 +48,7 @@ class Plan(Base):
     tasks = relationship("Task", back_populates="plan", cascade="all, delete-orphan")
 
 
-class Task(Base):
+class Task(Base):  # type: ignore[misc]
     __tablename__ = "tasks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -69,7 +69,7 @@ class Task(Base):
     executions = relationship("TaskExecution", back_populates="task", cascade="all, delete-orphan")
 
 
-class TaskExecution(Base):
+class TaskExecution(Base):  # type: ignore[misc]
     __tablename__ = "task_executions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -87,7 +87,7 @@ class TaskExecution(Base):
     task = relationship("Task", back_populates="executions")
 
 
-class DecisionRecord(Base):
+class DecisionRecord(Base):  # type: ignore[misc]
     __tablename__ = "decision_records"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -103,7 +103,7 @@ class DecisionRecord(Base):
     )
 
 
-class ToolRegistry(Base):
+class ToolRegistry(Base):  # type: ignore[misc]
     __tablename__ = "tool_registry"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -117,7 +117,7 @@ class ToolRegistry(Base):
     permissions = relationship("ToolPermission", back_populates="tool", cascade="all, delete-orphan")
 
 
-class ToolPermission(Base):
+class ToolPermission(Base):  # type: ignore[misc]
     __tablename__ = "tool_permissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -133,7 +133,7 @@ class ToolPermission(Base):
     tool = relationship("ToolRegistry", back_populates="permissions")
 
 
-class WorkflowCheckpoint(Base):
+class WorkflowCheckpoint(Base):  # type: ignore[misc]
     __tablename__ = "workflow_checkpoints"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -144,7 +144,7 @@ class WorkflowCheckpoint(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class ScheduledActivity(Base):
+class ScheduledActivity(Base):  # type: ignore[misc]
     __tablename__ = "scheduled_activities"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

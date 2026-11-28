@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class WorldEntity(Base):
+class WorldEntity(Base):  # type: ignore[misc]
     """Internal representation of people, organisations, countries, technologies, etc."""
     __tablename__ = "world_entities"
 
@@ -27,11 +27,11 @@ class WorldEntity(Base):
         CheckConstraint("entity_type IN ('person', 'organisation', 'country', 'technology', 'concept', 'event')", name="ck_world_entity_type"),
     )
 
-    relationships_as_source = relationship("EntityRelationship", foreign_keys="EntityRelationship.source_entity_id", cascade="all, delete-orphan")
-    relationships_as_target = relationship("EntityRelationship", foreign_keys="EntityRelationship.target_entity_id", cascade="all, delete-orphan")
+    relationships_as_source = relationship("EntityRelationship", foreign_keys="EntityRelationship.source_entity_id", cascade="all, delete-orphan", overlaps="source_entity")
+    relationships_as_target = relationship("EntityRelationship", foreign_keys="EntityRelationship.target_entity_id", cascade="all, delete-orphan", overlaps="target_entity")
 
 
-class EntityRelationship(Base):
+class EntityRelationship(Base):  # type: ignore[misc]
     """Relationships between world entities."""
     __tablename__ = "entity_relationships"
 
@@ -47,11 +47,11 @@ class EntityRelationship(Base):
         CheckConstraint("strength BETWEEN 0 AND 1", name="ck_entity_relationship_strength"),
     )
 
-    source_entity = relationship("WorldEntity", foreign_keys=[source_entity_id])
-    target_entity = relationship("WorldEntity", foreign_keys=[target_entity_id])
+    source_entity = relationship("WorldEntity", foreign_keys=[source_entity_id], overlaps="relationships_as_source")
+    target_entity = relationship("WorldEntity", foreign_keys=[target_entity_id], overlaps="relationships_as_target")
 
 
-class CauseEffectChain(Base):
+class CauseEffectChain(Base):  # type: ignore[misc]
     """Tracked cause-and-effect relationships for decision reasoning."""
     __tablename__ = "cause_effect_chains"
 
@@ -67,7 +67,7 @@ class CauseEffectChain(Base):
     )
 
 
-class WorldEvent(Base):
+class WorldEvent(Base):  # type: ignore[misc]
     """Tracked world events and changing circumstances."""
     __tablename__ = "world_events"
 
@@ -84,7 +84,7 @@ class WorldEvent(Base):
     )
 
 
-class CapabilityLimitation(Base):
+class CapabilityLimitation(Base):  # type: ignore[misc]
     """IAM's own capabilities and limitations tracking."""
     __tablename__ = "capability_limitations"
 

@@ -1,9 +1,14 @@
 """Voice service - speech-to-text and text-to-speech (pluggable providers)"""
 
-import httpx
-import loguru
+import array
+import asyncio
 import base64
 import io
+import math
+import os
+
+import httpx
+import loguru
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
@@ -20,7 +25,7 @@ class VoiceService:
     Audio storage only where retention is permitted.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore[no-untyped-def]
         # STT provider: 'whisper', 'azure', 'google', 'local'
         self.stt_provider = "whisper"
         self.stt_api_key = settings.openai_api_key  # Whisper via OpenAI-compatible
@@ -130,16 +135,64 @@ class VoiceService:
 
         if self.tts_provider == "elevenlabs" and self.tts_api_key:
             return await self._tts_elevenlabs(text, voice_id, format)
-        else:
-            # Local TTS placeholder - returns empty audio with metadata
+        if settings.voice_tts_url:
+            return await self._tts_http(text, voice_id, format)
+        return {
+            "audio_base64": "",
+            "format": format,
+            "duration_ms": 0,
+            "provider": "local",
+            "voice_id": voice_id,
+            "text_length": len(text),
+            "note": "No TTS provider configured; set VOICE_TTS_URL or an ElevenLabs key",
+        }
+
+    async def _tts_http(
+        self, text: str, voice_id: str, format: str
+    ) -> Dict[str, Any]:
+        """Generic HTTP TTS endpoint (self-hosted or provider-compatible)."""
+        token = os.environ.get(settings.voice_tts_api_key_env, "")
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    settings.voice_tts_url,
+                    headers=headers,
+                    json={"text": text, "voice": voice_id, "format": format},
+                )
+            if response.status_code >= 300:
+                return {
+                    "audio_base64": "",
+                    "format": format,
+                    "duration_ms": 0,
+                    "provider": "http",
+                    "voice_id": voice_id,
+                    "error": f"HTTP {response.status_code}",
+                }
+            payload = response.json() if "json" in response.headers.get("content-type", "") else {}
+            audio = payload.get("audio_base64") if isinstance(payload, dict) else None
+            if not audio:
+                audio = base64.b64encode(response.content).decode("utf-8")
+            duration = payload.get("duration_ms", 0) if isinstance(payload, dict) else 0
+            return {
+                "audio_base64": audio,
+                "format": format,
+                "duration_ms": duration,
+                "provider": "http",
+                "voice_id": voice_id,
+                "text_length": len(text),
+            }
+        except Exception as exc:
+            logger.error(f"HTTP TTS failed: {exc}")
             return {
                 "audio_base64": "",
                 "format": format,
                 "duration_ms": 0,
-                "provider": "local",
+                "provider": "http",
                 "voice_id": voice_id,
-                "text_length": len(text),
-                "note": "Local TTS not implemented - configure ElevenLabs or other provider",
+                "error": str(exc),
             }
 
     async def _tts_elevenlabs(
@@ -150,7 +203,7 @@ class VoiceService:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
-                    headers={
+                    headers={  # type: ignore[arg-type]
                         "Accept": f"audio/{format}",
                         "Content-Type": "application/json",
                         "xi-api-key": self.tts_api_key,
@@ -198,7 +251,7 @@ class VoiceService:
             }
 
     # -------------------------------------------------------------------------
-    # Voice Activity Detection (placeholder)
+    # Voice Activity Detection (energy-based PCM)
     # -------------------------------------------------------------------------
 
     async def detect_voice_activity(self, audio_bytes: bytes) -> Dict[str, Any]:
@@ -207,13 +260,43 @@ class VoiceService:
         
         Returns: { has_voice: boolean, confidence: float }
         """
-        # Placeholder - in production, use WebRTC VAD or similar
+        # Energy-based VAD on 16-bit little-endian PCM. Compressed audio must be
+        # decoded by the caller first; this never claims to understand codecs.
+        frame_samples = int(settings.voice_vad_sample_rate * 0.02)  # 20 ms
+        usable = len(audio_bytes) - (len(audio_bytes) % 2)
+        samples = array.array("h")
+        samples.frombytes(audio_bytes[:usable])
+        if len(samples) < frame_samples:
+            return {
+                "has_voice": False,
+                "confidence": 0.0,
+                "method": "pcm_energy",
+                "frames_analyzed": 0,
+                "note": "audio shorter than one 20 ms frame",
+            }
+
+        threshold = settings.voice_vad_threshold * 32768
+        voiced = 0
+        frames = 0
+        for start in range(0, len(samples) - frame_samples + 1, frame_samples):
+            frame = samples[start : start + frame_samples]
+            rms = math.sqrt(sum(s * s for s in frame) / frame_samples)
+            frames += 1
+            if rms >= threshold:
+                voiced += 1
+
+        fraction = voiced / frames if frames else 0.0
+        duration_ms = frames * 20
+        has_voice = fraction >= 0.2
         return {
-            "has_voice": len(audio_bytes) > 1000,
-            "confidence": 0.5,
-            "method": "placeholder",
+            "has_voice": bool(has_voice),
+            "confidence": round(fraction, 3),
+            "method": "pcm_energy",
+            "frames_analyzed": frames,
+            "sample_rate": settings.voice_vad_sample_rate,
+            "duration_ms": duration_ms,
         }
 
 
 # Singleton instance
-voice_service = VoiceService()
+voice_service = VoiceService()  # type: ignore[no-untyped-call]

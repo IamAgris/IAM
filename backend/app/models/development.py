@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class ModelRegistry(Base):
+class ModelRegistry(Base):  # type: ignore[misc]
     __tablename__ = "model_registry"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -26,7 +26,7 @@ class ModelRegistry(Base):
     evaluations = relationship("ModelEvaluation", back_populates="model", cascade="all, delete-orphan")
 
 
-class ModelVersion(Base):
+class ModelVersion(Base):  # type: ignore[misc]
     __tablename__ = "model_versions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -39,7 +39,7 @@ class ModelVersion(Base):
     model = relationship("ModelRegistry", back_populates="versions")
 
 
-class ModelEvaluation(Base):
+class ModelEvaluation(Base):  # type: ignore[misc]
     __tablename__ = "model_evaluations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -52,7 +52,7 @@ class ModelEvaluation(Base):
     model = relationship("ModelRegistry", back_populates="evaluations")
 
 
-class Experiment(Base):
+class Experiment(Base):  # type: ignore[misc]
     __tablename__ = "experiments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -69,7 +69,7 @@ class Experiment(Base):
     )
 
 
-class SoftwareProject(Base):
+class SoftwareProject(Base):  # type: ignore[misc]
     __tablename__ = "software_projects"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -88,7 +88,7 @@ class SoftwareProject(Base):
     deployments = relationship("DeploymentRecord", back_populates="project", cascade="all, delete-orphan")
 
 
-class CodeChange(Base):
+class CodeChange(Base):  # type: ignore[misc]
     __tablename__ = "code_changes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -107,7 +107,7 @@ class CodeChange(Base):
     project = relationship("SoftwareProject", back_populates="code_changes")
 
 
-class DeploymentRecord(Base):
+class DeploymentRecord(Base):  # type: ignore[misc]
     __tablename__ = "deployment_records"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -124,7 +124,7 @@ class DeploymentRecord(Base):
     project = relationship("SoftwareProject", back_populates="deployments")
 
 
-class ResourceMetric(Base):
+class ResourceMetric(Base):  # type: ignore[misc]
     __tablename__ = "resource_metrics"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -134,7 +134,7 @@ class ResourceMetric(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class UpgradeHistory(Base):
+class UpgradeHistory(Base):  # type: ignore[misc]
     __tablename__ = "upgrade_history"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

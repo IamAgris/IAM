@@ -1,0 +1,16 @@
+{
+  "fts5": {
+    "path": "tools/rkie/index/search.sqlite"
+  },
+  "migrations": [
+    "initial index directory",
+    "fts5 + code-intel index contract",
+    "semantic TF-IDF index contract"
+  ],
+  "semantic": {
+    "current_version": 2,
+    "expected_version": 2,
+    "path": "tools/rkie/index/semantic.sqlite"
+  },
+  "version": 3
+}

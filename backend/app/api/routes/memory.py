@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1/memory", tags=["memory"])
 class MemoryItemCreate(BaseModel):
     content: str
     memory_type: str = "fact"  # fact, opinion, hypothesis, preference, creative, experience
+    tier: str = "episodic"  # working, episodic, semantic, procedural, relationship, self, strategic
     source: Optional[str] = None
     confidence_level: float = 0.5
     topic: Optional[str] = None
@@ -32,6 +33,7 @@ class MemoryItemResponse(BaseModel):
     id: str
     content: str
     memory_type: str
+    tier: str = "episodic"
     source: Optional[str]
     confidence_level: float
     topic: Optional[str]
@@ -41,7 +43,7 @@ class MemoryItemResponse(BaseModel):
 # --- Routes ---
 
 @router.get("/")
-async def list_memories(
+async def list_memories(  # type: ignore[no-untyped-def]
     limit: int = 50,
     memory_type: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session),
@@ -59,11 +61,12 @@ async def list_memories(
     return [
         MemoryItemResponse(
             id=str(m.id),
-            content=m.content,
-            memory_type=m.memory_type,
-            source=m.source,
+            content=m.content,  # type: ignore[arg-type]
+            memory_type=m.memory_type,  # type: ignore[arg-type]
+            tier=str(m.tier),
+            source=m.source,  # type: ignore[arg-type]
             confidence_level=float(m.confidence_level) if m.confidence_level else 0.5,
-            topic=m.topic,
+            topic=m.topic,  # type: ignore[arg-type]
             created_at=m.created_at.isoformat() if m.created_at else None,
         )
         for m in items
@@ -71,16 +74,21 @@ async def list_memories(
 
 
 @router.post("/", response_model=MemoryItemResponse)
-async def create_memory(
+async def create_memory(  # type: ignore[no-untyped-def]
     item: MemoryItemCreate,
     db: AsyncSession = Depends(get_db_session),
 ):
     """Store a new memory item with embedding generation."""
     service = MemoryService(db)
+    # Provenance is mandatory in MemoryService. Public callers may omit it, so
+    # attribute those memories to the API boundary rather than failing with a
+    # 500 after passing schema validation.
+    source = item.source.strip() if item.source and item.source.strip() else "user-api"
     result = await service.store_memory(
         content=item.content,
         memory_type=item.memory_type,
-        source=item.source,
+        tier=item.tier,
+        source=source,
         confidence=item.confidence_level,
         topic=item.topic,
         metadata_=item.metadata,
@@ -97,7 +105,7 @@ async def create_memory(
 
 
 @router.post("/search")
-async def search_memory(
+async def search_memory(  # type: ignore[no-untyped-def]
     search: MemorySearch,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -112,7 +120,7 @@ async def search_memory(
 
 
 @router.post("/verify/{memory_id}")
-async def verify_memory(
+async def verify_memory(  # type: ignore[no-untyped-def]
     memory_id: str,
     status: str,  # verified, disputed, retracted
     db: AsyncSession = Depends(get_db_session),

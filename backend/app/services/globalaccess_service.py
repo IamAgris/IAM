@@ -18,6 +18,7 @@ from app.models.globalaccess import (
     VisitorMessage, VisitorPreference, VisitorConsent, VisitorMemoryPermission,
     RequestJob, RequestUsage, VisitorRateLimit, RegionalSetting,
 )
+from app.services.crypto_service import crypto
 
 logger = loguru.logger
 
@@ -44,7 +45,7 @@ class GlobalAccessService:
             )
             visitor = result.scalar_one_or_none()
             if visitor:
-                visitor.last_activity_at = datetime.now(timezone.utc)
+                visitor.last_activity_at = datetime.now(timezone.utc)  # type: ignore[assignment]
                 await self.db.commit()
                 return self._visitor_to_dict(visitor)
 
@@ -97,7 +98,7 @@ class GlobalAccessService:
         await self.db.flush()
 
         if resolve_geo and ip_address:
-            await self._resolve_geoip(session.id, ip_address)
+            await self._resolve_geoip(session.id, ip_address)  # type: ignore[arg-type]
 
         await self.db.commit()
         await self.db.refresh(session)
@@ -215,11 +216,11 @@ class GlobalAccessService:
         message = VisitorMessage(
             thread_id=thread.id,
             role=role,
-            content=content,
+            content=crypto.encrypt(content),
             mode=mode or session.mode,
         )
         self.db.add(message)
-        session.last_activity_at = datetime.now(timezone.utc)
+        session.last_activity_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
         await self.db.refresh(message)
 
@@ -261,7 +262,7 @@ class GlobalAccessService:
             {
                 "id": str(m.id),
                 "role": m.role,
-                "content": m.content,
+                "content": crypto.decrypt(m.content),  # type: ignore[arg-type]
                 "mode": m.mode,
                 "created_at": m.created_at.isoformat() if m.created_at else None,
             }
@@ -278,7 +279,7 @@ class GlobalAccessService:
         session = result.scalar_one_or_none()
         if not session:
             return False
-        session.mode = mode
+        session.mode = mode  # type: ignore[assignment]
         await self.db.commit()
         return True
 
@@ -302,8 +303,8 @@ class GlobalAccessService:
         )
         consent = result.scalar_one_or_none()
         if consent:
-            consent.granted = granted
-            consent.retention_days = retention_days
+            consent.granted = granted  # type: ignore[assignment]
+            consent.retention_days = retention_days  # type: ignore[assignment]
         else:
             consent = VisitorConsent(
                 visitor_id=visitor_id,
@@ -331,11 +332,11 @@ class GlobalAccessService:
             perm = VisitorMemoryPermission(visitor_id=visitor_id)
             self.db.add(perm)
         if allow_session_memory is not None:
-            perm.allow_session_memory = allow_session_memory
+            perm.allow_session_memory = allow_session_memory  # type: ignore[assignment]
         if allow_anonymous_memory is not None:
-            perm.allow_anonymous_memory = allow_anonymous_memory
+            perm.allow_anonymous_memory = allow_anonymous_memory  # type: ignore[assignment]
         if allow_shared_knowledge is not None:
-            perm.allow_shared_knowledge = allow_shared_knowledge
+            perm.allow_shared_knowledge = allow_shared_knowledge  # type: ignore[assignment]
         await self.db.commit()
         return {
             "allow_session_memory": perm.allow_session_memory,
@@ -356,6 +357,142 @@ class GlobalAccessService:
         logger.info(f"Deleted visitor data for token {visitor_token[:8]}...")
         return True
 
+    async def inspect_visitor_data(self, visitor_token: str) -> Optional[Dict[str, Any]]:
+        """OD-05: let a visitor inspect everything held under their token."""
+        result = await self.db.execute(
+            select(AnonymousVisitor).where(AnonymousVisitor.visitor_token == visitor_token)
+        )
+        visitor = result.scalar_one_or_none()
+        if not visitor:
+            return None
+
+        sessions = (
+            await self.db.execute(
+                select(VisitorSession).where(VisitorSession.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        session_ids = [s.id for s in sessions]
+
+        messages = []
+        if session_ids:
+            message_rows = (
+                await self.db.execute(
+                    select(VisitorMessage)
+                    .join(ConversationThread, VisitorMessage.thread_id == ConversationThread.id)
+                    .where(ConversationThread.session_id.in_(session_ids))
+                    .order_by(VisitorMessage.created_at.asc())
+                    .limit(500)
+                )
+            ).scalars().all()
+            messages = [
+                {
+                    "role": m.role,
+                    "content": crypto.decrypt(m.content),  # type: ignore[arg-type]
+                    "created_at": m.created_at.isoformat() if m.created_at else None,
+                }
+                for m in message_rows
+            ]
+
+        preferences = (
+            await self.db.execute(
+                select(VisitorPreference).where(VisitorPreference.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        consents = (
+            await self.db.execute(
+                select(VisitorConsent).where(VisitorConsent.visitor_id == visitor.id)
+            )
+        ).scalars().all()
+        permissions = (
+            await self.db.execute(
+                select(VisitorMemoryPermission).where(
+                    VisitorMemoryPermission.visitor_id == visitor.id
+                )
+            )
+        ).scalars().all()
+
+        return {
+            "visitor_token": visitor.visitor_token,
+            "created_at": visitor.created_at.isoformat() if visitor.created_at else None,
+            "is_active": visitor.is_active,
+            "sessions": [
+                {
+                    "session_token": s.session_token,
+                    "mode": s.mode,
+                    "started_at": s.started_at.isoformat() if s.started_at else None,
+                    "ended_at": s.ended_at.isoformat() if s.ended_at else None,
+                }
+                for s in sessions
+            ],
+            "messages": messages,
+            "preferences": {p.key: p.value for p in preferences},
+            "consents": [
+                {
+                    "consent_type": c.consent_type,
+                    "granted": c.granted,
+                    "retention_days": c.retention_days,
+                }
+                for c in consents
+            ],
+            "memory_permissions": [
+                {
+                    "allow_session_memory": p.allow_session_memory,
+                    "allow_anonymous_memory": p.allow_anonymous_memory,
+                    "allow_shared_knowledge": p.allow_shared_knowledge,
+                }
+                for p in permissions
+            ],
+        }
+
+    async def correct_visitor_data(
+        self,
+        visitor_token: str,
+        *,
+        preferences: Optional[Dict[str, Any]] = None,
+        memory_permissions: Optional[Dict[str, bool]] = None,
+    ) -> bool:
+        """OD-05: let a visitor correct stored preferences and permissions."""
+        result = await self.db.execute(
+            select(AnonymousVisitor).where(AnonymousVisitor.visitor_token == visitor_token)
+        )
+        visitor = result.scalar_one_or_none()
+        if not visitor:
+            return False
+
+        for key, value in (preferences or {}).items():
+            pref_result = await self.db.execute(
+                select(VisitorPreference).where(
+                    VisitorPreference.visitor_id == visitor.id,
+                    VisitorPreference.key == key,
+                )
+            )
+            pref = pref_result.scalar_one_or_none()
+            if pref:
+                pref.value = value
+            else:
+                self.db.add(VisitorPreference(visitor_id=visitor.id, key=key, value=value))
+
+        perm_result = await self.db.execute(
+            select(VisitorMemoryPermission).where(
+                VisitorMemoryPermission.visitor_id == visitor.id
+            )
+        )
+        perm = perm_result.scalar_one_or_none()
+        if memory_permissions:
+            if not perm:
+                perm = VisitorMemoryPermission(visitor_id=visitor.id)
+                self.db.add(perm)
+            for field in (
+                "allow_session_memory",
+                "allow_anonymous_memory",
+                "allow_shared_knowledge",
+            ):
+                if field in memory_permissions:
+                    setattr(perm, field, bool(memory_permissions[field]))
+
+        await self.db.commit()
+        return True
+
     async def check_rate_limit(self, scope_key: str, max_requests: int = 60, window_minutes: int = 1) -> bool:
         """Per-visitor / per-IP request budget (abuse protection)."""
         result = await self.db.execute(
@@ -365,9 +502,9 @@ class GlobalAccessService:
         now = datetime.now(timezone.utc)
         if not record or (now - record.window_start.replace(tzinfo=timezone.utc)).total_seconds() > window_minutes * 60:
             if record:
-                record.window_start = now
-                record.request_count = 1
-                record.is_blocked = False
+                record.window_start = now  # type: ignore[assignment]
+                record.request_count = 1  # type: ignore[assignment]
+                record.is_blocked = False  # type: ignore[assignment]
             else:
                 record = VisitorRateLimit(scope_key=scope_key, window_start=now, request_count=1)
                 self.db.add(record)
@@ -375,17 +512,17 @@ class GlobalAccessService:
             return True
         if record.is_blocked:
             return False
-        record.request_count += 1
+        record.request_count += 1  # type: ignore[assignment]
         if record.request_count > max_requests:
-            record.is_blocked = True
+            record.is_blocked = True  # type: ignore[assignment]
         await self.db.commit()
-        return record.request_count <= max_requests
+        return bool(record.request_count <= max_requests)
 
     # -------------------------------------------------------------------------
     # GeoIP — regional context only (estimate, never identity)
     # -------------------------------------------------------------------------
 
-    async def _resolve_geoip(self, session_id: str, ip_address: str):
+    async def _resolve_geoip(self, session_id: str, ip_address: str):  # type: ignore[no-untyped-def]
         """Resolve coarse GeoIP context from IP. Best-effort, non-blocking on failure."""
         location = VisitorLocation(
             session_id=session_id,
@@ -395,8 +532,8 @@ class GlobalAccessService:
         try:
             # Use ip-api.com free endpoint (no API key); skip private/local IPs
             if ip_address in ("127.0.0.1", "::1") or ip_address.startswith(("10.", "192.168.", "172.")):
-                location.city = "Local"
-                location.country = None
+                location.city = "Local"  # type: ignore[assignment]
+                location.country = None  # type: ignore[assignment]
             else:
                 async with httpx.AsyncClient() as client:
                     resp = await client.get(
@@ -441,12 +578,12 @@ class GlobalAccessService:
             location = VisitorLocation(session_id=session.id)
             self.db.add(location)
         if country is not None:
-            location.country = country
+            location.country = country  # type: ignore[assignment]
         if language is not None:
-            location.language = language
+            location.language = language  # type: ignore[assignment]
         if timezone is not None:
-            location.timezone = timezone
-        location.user_corrected = True
+            location.timezone = timezone  # type: ignore[assignment]
+        location.user_corrected = True  # type: ignore[assignment]
         await self.db.commit()
         return True
 

@@ -1,0 +1,5 @@
+{"prompt":"Reply with exactly: IAM","expected":"IAM"}
+{"prompt":"What is 2+2? Reply with the number only.","expected":"4"}
+{"prompt":"What is the capital of France? Reply with the city name only.","expected":"Paris"}
+{"prompt":"Complete: one, two, three, ... Reply with the next word only.","expected":"four"}
+{"prompt":"Which planet is known as the Red Planet? Reply with the planet name only.","expected":"Mars"}

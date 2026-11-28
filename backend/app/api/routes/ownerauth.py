@@ -1,14 +1,15 @@
-"""Owner authorization routes — human-controlled authority grants.
+"""Legacy owner authorization records — historical/read-only authority view.
 
-IAM can never write here. Every grant is an explicit owner action.
+OD-03/OD-04 removed standing owner grants. Creation is disabled; checks always
+fail closed; existing rows can only be listed and revoked during cleanup.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 from app.core.database import get_db_session
-from app.services.ownerauth_service import OwnerAuthService
+from app.services.ownerauth_service import LegacyAuthorityError, OwnerAuthService
 
 router = APIRouter(prefix="/api/v1/owner", tags=["owner-authorization"])
 
@@ -31,36 +32,34 @@ class CheckRequest(BaseModel):
 
 
 @router.post("/authorizations")
-async def grant(request: GrantRequest, db=Depends(get_db_session)):
-    """Owner grants an authorization. IAM can never call this itself."""
-    service = OwnerAuthService(db)
-    return await service.grant_authorization(
-        request.action_type, request.max_authority_level,
-        request.spending_limit_usd, request.can_create_accounts,
-        request.can_publish_externally, request.can_modify_own_security,
-        request.scope, request.granted_by, request.expires_at,
-    )
+async def grant(request: GrantRequest, db: Any = Depends(get_db_session)) -> Any:
+    """Retired: standing grants cannot recreate a second authority path."""
+    try:
+        await OwnerAuthService(db).grant_authorization(
+            request.action_type, request.max_authority_level, request.spending_limit_usd,
+            request.can_create_accounts, request.can_publish_externally,
+            request.can_modify_own_security, request.scope, request.granted_by, request.expires_at,
+        )
+    except LegacyAuthorityError as exc:
+        raise HTTPException(410, str(exc)) from exc
+    raise HTTPException(410, "legacy owner grants are disabled")
 
 
 @router.get("/authorizations")
-async def list_authorizations(db=Depends(get_db_session)):
-    """List owner-granted authorizations."""
-    service = OwnerAuthService(db)
-    return await service.list_authorizations()
+async def list_authorizations(db: Any = Depends(get_db_session)) -> Any:
+    return await OwnerAuthService(db).list_authorizations()
 
 
 @router.post("/authorizations/check")
-async def check_authorization(request: CheckRequest, db=Depends(get_db_session)):
-    """IAM checks whether owner authorized an action."""
-    service = OwnerAuthService(db)
-    return await service.check_authorization(request.action_type, request.requested_level)
+async def check(request: CheckRequest, db: Any = Depends(get_db_session)) -> Any:
+    """Always fails closed; legacy rows are not authority (OD-03/OD-04)."""
+    return await OwnerAuthService(db).check_authorization(
+        request.action_type, request.requested_level
+    )
 
 
 @router.delete("/authorizations/{authorization_id}")
-async def revoke_authorization(authorization_id: str, db=Depends(get_db_session)):
-    """Owner revokes an authorization."""
-    service = OwnerAuthService(db)
-    ok = await service.revoke_authorization(authorization_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Authorization not found")
+async def revoke(authorization_id: str, db: Any = Depends(get_db_session)) -> dict[str, str]:
+    if not await OwnerAuthService(db).revoke_authorization(authorization_id):
+        raise HTTPException(404, "Authorization not found")
     return {"status": "revoked"}

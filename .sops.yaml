@@ -1,0 +1,14 @@
+# OD-07 — SOPS configuration for deployment secrets.
+#
+# Replace the placeholder recipient with the operator's age public key before
+# encrypting any file. Until then SOPS refuses to create new encrypted files,
+# which is the intended fail-closed behaviour. Docker secret files (<FIELD>_FILE)
+# remain the runtime source; OD-58 may add an Infisical dual-read source.
+#
+# Usage:
+#   sops --encrypt .env > .env.enc   # encrypted form is safe to commit
+#   sops --decrypt .env.enc > .env   # local development only, never commit
+creation_rules:
+  - path_regex: \.enc\.env$|\.env\.enc$
+    age: "age1REPLACE_WITH_OPERATOR_AGE_PUBLIC_KEY"
+    encrypted_regex: '^(POSTGRES_PASSWORD|LITELLM_MASTER_KEY|LITELLM_SALT_KEY|APP_SECRET_KEY|AWS_SECRET_ACCESS_KEY|S3_SECRET_KEY|MINIO_ROOT_PASSWORD|CREATOR_.*|NVIDIA_API_KEY|.*_API_KEY|.*_SECRET|.*_TOKEN)$'

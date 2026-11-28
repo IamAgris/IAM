@@ -79,11 +79,11 @@ class SkillForgeService:
             "checksum": package.checksum,
             "created_by": package.created_by,
             "approved_by": package.approved_by,
-            "approved_at": _iso(package.approved_at),
-            "published_at": _iso(package.published_at),
-            "activated_at": _iso(package.activated_at),
-            "created_at": _iso(package.created_at),
-            "updated_at": _iso(package.updated_at),
+            "approved_at": _iso(package.approved_at),  # type: ignore[arg-type]
+            "published_at": _iso(package.published_at),  # type: ignore[arg-type]
+            "activated_at": _iso(package.activated_at),  # type: ignore[arg-type]
+            "created_at": _iso(package.created_at),  # type: ignore[arg-type]
+            "updated_at": _iso(package.updated_at),  # type: ignore[arg-type]
         }
 
     async def _audit(
@@ -118,7 +118,7 @@ class SkillForgeService:
 
     @staticmethod
     def _manifest(package: SkillPackage) -> SkillManifest:
-        return validate_manifest(package.manifest)
+        return validate_manifest(package.manifest)  # type: ignore[arg-type]
 
     # ------------------------------------------------------------------ creation
 
@@ -126,34 +126,34 @@ class SkillForgeService:
         """Build a skill and register it, or publish a new version of an existing one."""
         existing = await self._get(request.skill_id)
         if existing:
-            if _version_tuple(request.version) <= _version_tuple(existing.version):
+            if _version_tuple(request.version) <= _version_tuple(existing.version):  # type: ignore[arg-type]
                 raise ValueError(
                     f"new version {request.version} must be greater than {existing.version}"
                 )
             built = self.engine.create_version(
-                request.skill_id, request, previous_version=existing.version
+                request.skill_id, request, previous_version=existing.version  # type: ignore[arg-type]
             )
             manifest = validate_manifest(built["manifest"])
-            existing.name = manifest.name
-            existing.description = manifest.description
-            existing.classification = manifest.classification
-            existing.version = manifest.version
-            existing.manifest = manifest.to_dict()
-            existing.permissions = manifest.permissions
-            existing.network_access = manifest.network_access
-            existing.filesystem_access = manifest.filesystem_access
-            existing.requires_creator_approval = manifest.requires_creator_approval
+            existing.name = manifest.name  # type: ignore[assignment]
+            existing.description = manifest.description  # type: ignore[assignment]
+            existing.classification = manifest.classification  # type: ignore[assignment]
+            existing.version = manifest.version  # type: ignore[assignment]
+            existing.manifest = manifest.to_dict()  # type: ignore[assignment]
+            existing.permissions = manifest.permissions  # type: ignore[assignment]
+            existing.network_access = manifest.network_access  # type: ignore[assignment]
+            existing.filesystem_access = manifest.filesystem_access  # type: ignore[assignment]
+            existing.requires_creator_approval = manifest.requires_creator_approval  # type: ignore[assignment]
             existing.checksum = built["checksum"]
-            existing.approved_by = None
-            existing.approved_at = None
-            existing.status = "testing"
+            existing.approved_by = None  # type: ignore[assignment]
+            existing.approved_at = None  # type: ignore[assignment]
+            existing.status = "testing"  # type: ignore[assignment]
             # Prior test evidence is keyed by version, so it no longer applies.
             for version_row in (
                 await self.db.execute(
                     select(SkillVersion).where(SkillVersion.package_id == existing.id)
                 )
             ).scalars().all():
-                version_row.is_current = False
+                version_row.is_current = False  # type: ignore[assignment]
             self.db.add(
                 SkillVersion(
                     package_id=existing.id,
@@ -192,7 +192,9 @@ class SkillForgeService:
             provider=manifest.provider,
             category=category,
             classification=manifest.classification,
-            status="pending" if built["staged"] else "draft",
+            # Imported candidates are staged on disk but remain 'draft' in the
+            # registry until they pass tests and creator approval.
+            status="draft",
             version=manifest.version,
             manifest=manifest.to_dict(),
             permissions=manifest.permissions,
@@ -260,7 +262,7 @@ class SkillForgeService:
                 "checksum": v.checksum,
                 "change_note": v.change_note,
                 "is_current": v.is_current,
-                "created_at": _iso(v.created_at),
+                "created_at": _iso(v.created_at),  # type: ignore[arg-type]
             }
             for v in result.scalars().all()
         ]
@@ -278,7 +280,7 @@ class SkillForgeService:
                 "action": e.action,
                 "actor": e.actor,
                 "details": e.details,
-                "created_at": _iso(e.created_at),
+                "created_at": _iso(e.created_at),  # type: ignore[arg-type]
             }
             for e in result.scalars().all()
         ]
@@ -297,7 +299,7 @@ class SkillForgeService:
                 "test_type": t.test_type,
                 "passed": t.passed,
                 "details": t.details,
-                "executed_at": _iso(t.executed_at),
+                "executed_at": _iso(t.executed_at),  # type: ignore[arg-type]
             }
             for t in result.scalars().all()
         ]
@@ -310,9 +312,9 @@ class SkillForgeService:
         if not result["valid"]:
             # Rule 7: failed or suspicious skills are isolated immediately.
             if package.status != "quarantined":
-                self.permissions.require_transition(package.status, "quarantined")
-                package.status = "quarantined"
-                package.path = self.engine.quarantine(skill_id)
+                self.permissions.require_transition(package.status, "quarantined")  # type: ignore[arg-type]
+                package.status = "quarantined"  # type: ignore[assignment]
+                package.path = self.engine.quarantine(skill_id)  # type: ignore[assignment]
             await self._audit(
                 "validation_failed",
                 package_id=str(package.id),
@@ -328,7 +330,7 @@ class SkillForgeService:
         package = await self._require(skill_id)
         if package.status == "quarantined":
             raise PermissionDenied("Quarantined skills cannot be tested until reviewed")
-        self.permissions.require_transition(package.status, "testing")
+        self.permissions.require_transition(package.status, "testing")  # type: ignore[arg-type]
         results = self.engine.run_tests(skill_id)
         for item in results:
             self.db.add(
@@ -340,7 +342,7 @@ class SkillForgeService:
                     details=item["details"],
                 )
             )
-        package.status = "testing"
+        package.status = "testing"  # type: ignore[assignment]
         await self._audit(
             "tests_run",
             package_id=str(package.id),
@@ -403,14 +405,14 @@ class SkillForgeService:
         )
         if signer_id:
             package.approved_by = signer_id
-            package.approved_at = _now()
+            package.approved_at = _now()  # type: ignore[assignment]
 
         if package.origin == "imported" and package.path and package.path.startswith("pending/"):
-            package.path = self.engine.promote(skill_id)
+            package.path = self.engine.promote(skill_id)  # type: ignore[assignment]
 
-        self.permissions.require_transition(package.status, "published")
-        package.status = "published"
-        package.published_at = _now()
+        self.permissions.require_transition(package.status, "published")  # type: ignore[arg-type]
+        package.status = "published"  # type: ignore[assignment]
+        package.published_at = _now()  # type: ignore[assignment]
         await self._audit("skill_published", package_id=str(package.id))
         await self.db.commit()
         await self.db.refresh(package)
@@ -420,11 +422,11 @@ class SkillForgeService:
         package = await self._require(skill_id)
         manifest = self._manifest(package)
         self.permissions.require_activation_authority(
-            manifest, status=package.status, approved_by=package.approved_by
+            manifest, status=package.status, approved_by=package.approved_by  # type: ignore[arg-type]
         )
-        self.permissions.require_transition(package.status, "active")
-        package.status = "active"
-        package.activated_at = _now()
+        self.permissions.require_transition(package.status, "active")  # type: ignore[arg-type]
+        package.status = "active"  # type: ignore[assignment]
+        package.activated_at = _now()  # type: ignore[assignment]
         await self._audit("skill_activated", package_id=str(package.id))
         await self.db.commit()
         await self.db.refresh(package)
@@ -432,10 +434,10 @@ class SkillForgeService:
 
     async def quarantine(self, skill_id: str, reason: str = "manual") -> Dict[str, Any]:
         package = await self._require(skill_id)
-        self.permissions.require_transition(package.status, "quarantined")
-        package.path = self.engine.quarantine(skill_id)
-        package.status = "quarantined"
-        package.activated_at = None
+        self.permissions.require_transition(package.status, "quarantined")  # type: ignore[arg-type]
+        package.path = self.engine.quarantine(skill_id)  # type: ignore[assignment]
+        package.status = "quarantined"  # type: ignore[assignment]
+        package.activated_at = None  # type: ignore[assignment]
         await self._audit(
             "skill_quarantined", package_id=str(package.id), details={"reason": reason}
         )
@@ -458,10 +460,10 @@ class SkillForgeService:
             raise ValueError("version is already current")
 
         restored_path = self.engine.restore(skill_id, version)
-        restored_manifest = validate_manifest(target.manifest)
+        restored_manifest = validate_manifest(target.manifest)  # type: ignore[arg-type]
         previous_version = package.version
         previous_status = package.status
-        package.version = version
+        package.version = version  # type: ignore[assignment]
         package.manifest = target.manifest
         package.permissions = target.manifest.get("permissions", [])
         package.network_access = target.manifest.get("network_access", False)
@@ -469,10 +471,10 @@ class SkillForgeService:
         package.requires_creator_approval = target.manifest.get(
             "requires_creator_approval", False
         )
-        package.classification = restored_manifest.classification
+        package.classification = restored_manifest.classification  # type: ignore[assignment]
         package.checksum = target.checksum
-        package.path = restored_path
-        package.status = "active" if previous_status == "active" else "published"
+        package.path = restored_path  # type: ignore[assignment]
+        package.status = "active" if previous_status == "active" else "published"  # type: ignore[assignment]
 
         versions = (
             await self.db.execute(
@@ -480,7 +482,7 @@ class SkillForgeService:
             )
         ).scalars().all()
         for row in versions:
-            row.is_current = row.version == version
+            row.is_current = row.version == version  # type: ignore[assignment]
         await self._audit(
             "skill_rolled_back",
             package_id=str(package.id),
@@ -506,7 +508,7 @@ class SkillForgeService:
                 "permission": g.permission,
                 "granted_by": g.granted_by,
                 "reason": g.reason,
-                "created_at": _iso(g.created_at),
+                "created_at": _iso(g.created_at),  # type: ignore[arg-type]
             }
             for g in result.scalars().all()
         ]
@@ -572,7 +574,7 @@ class SkillForgeService:
         if not grants:
             raise LookupError("Active grant not found")
         for grant in grants:
-            grant.is_active = False
+            grant.is_active = False  # type: ignore[assignment]
         await self._audit(
             "permission_revoked",
             package_id=str(package.id),
@@ -596,6 +598,8 @@ class SkillForgeService:
             "network_access": self.permissions.can_use_network(
                 manifest, granted=network_grant
             ),
+            "filesystem_access": manifest.filesystem_access,
+            "filesystem_full_granted": "filesystem_full" in granted,
             "status": package.status,
         }
 
@@ -632,7 +636,7 @@ class SkillForgeService:
                         "suggested_skill_id": "iam.native."
                         + capability.category
                         + "."
-                        + re_safe(capability.name),
+                        + re_safe(capability.name),  # type: ignore[arg-type]
                     }
                 )
         return sorted(gaps, key=lambda g: g["gap"], reverse=True)

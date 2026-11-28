@@ -1,11 +1,43 @@
 "use client";
 
 import React from "react";
-import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square } from "lucide-react";
-import { PresenceSphere, IAMState, MemoryNode } from "./presence-sphere";
+import { Sun, Moon, History, Mic, ArrowRight, X, Volume2, VolumeX, RotateCcw, Square, Paperclip, Copy, Wand2, Settings2, Trash2, Activity, Minus, ChevronDown } from "lucide-react";
+import { PresenceSphere, IAMState, MemoryNode, SourceNode, SphereActivity, KnowledgeConnection, KnowledgeCluster, FreshnessInfo, MapPlace } from "./presence-sphere";
 import { api } from "@/lib/api";
+import { detectLocale, t, type Locale } from "@/lib/i18n";
+import { listConversations, createConversation, getConversationMessages, createConversationMessage, Conversation, ConversationMessage } from "@/lib/api";
 
 type Mode = "focus" | "recall" | "create";
+
+const SPEECH_LOCALES: Record<Locale, string> = {
+  en: "en-US",
+  fr: "fr-FR",
+  de: "de-DE",
+  es: "es-ES",
+  zu: "zu-ZA",
+};
+
+interface ProvenanceSource {
+  title: string;
+  url: string | null;
+  domain: string;
+  node_id: string | null;
+  credibility: number;
+}
+
+interface ProvenanceItem {
+  title: string;
+  summary: string;
+  confidence: number;
+  created_at: string | null;
+  sources: ProvenanceSource[];
+}
+
+interface ProvenanceResponse {
+  cluster: string;
+  items: ProvenanceItem[];
+  claim: string;
+}
 
 const MODE_CONFIG: Record<Mode, {
   hue: number;
@@ -51,7 +83,55 @@ interface SessionData {
 
 const STORAGE_KEY = "iam_session";
 
-export function IAMInterface() {
+function InlineText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**"))
+          return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+        if (part.startsWith("`") && part.endsWith("`"))
+          return <code key={i} className="rounded bg-white/10 px-1 py-0.5 text-[0.85em]">{part.slice(1, -1)}</code>;
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+}
+
+/** Lightweight, safe response formatting — no raw HTML from model output. */
+function FormattedResponse({ text }: { text: string }) {
+  const lines = text.split("\n");
+  let inCode = false;
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        if (line.trim().startsWith("```")) {
+          inCode = !inCode;
+          return null;
+        }
+        if (inCode)
+          return (
+            <pre key={i} className="overflow-x-auto rounded-xl border border-[var(--line)] bg-black/25 p-3 text-left text-[0.8em] font-mono leading-snug">
+              {line}
+            </pre>
+          );
+        if (!line.trim()) return <div key={i} className="h-1" />;
+        const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+        const numbered = line.match(/^\s*\d+\.\s+(.*)$/);
+        const heading = line.match(/^\s*#{2,4}\s+(.*)$/);
+        if (bullet)
+          return <div key={i} className="ml-5 list-disc text-left"><InlineText text={bullet[1]} /></div>;
+        if (numbered)
+          return <div key={i} className="ml-5 list-decimal text-left"><InlineText text={numbered[1]} /></div>;
+        if (heading)
+          return <div key={i} className="font-semibold text-left"><InlineText text={heading[1]} /></div>;
+        return <div key={i} className="text-left"><InlineText text={line} /></div>;
+      })}
+    </div>
+  );
+}
+
+export function IAMInterface({ initialConversationId }: { initialConversationId?: string } = {}) {
   const [mode, setMode] = React.useState<Mode>("focus");
   const [state, setState] = React.useState<IAMState>("idle");
   const [status, setStatus] = React.useState("Online · ready when you are");
@@ -60,20 +140,75 @@ export function IAMInterface() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [nodes, setNodes] = React.useState<MemoryNode[]>([]);
   const [suggestions, setSuggestions] = React.useState<string[]>(MODE_CONFIG.focus.suggestions);
+  const [suggestionsOpen, setSuggestionsOpen] = React.useState(false);
   const [session, setSession] = React.useState<SessionData | null>(null);
   const [showHistory, setShowHistory] = React.useState(false);
-  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
+  const [theme, setTheme] = React.useState<"dark" | "light">("light");
   const [listening, setListening] = React.useState(false);
   const [voiceEnabled, setVoiceEnabled] = React.useState(false);
+  const [locale, setLocale] = React.useState<Locale>("en");
+  const [attachment, setAttachment] = React.useState<File | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
   const [connected, setConnected] = React.useState<boolean | null>(null);
   const [lastQuery, setLastQuery] = React.useState("");
   const [generating, setGenerating] = React.useState(false);
+  const [showOptions, setShowOptions] = React.useState(false);
+  // Conversation persistence
+  const [conversations, setConversations] = React.useState<Conversation[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = React.useState<string | null>(
+    initialConversationId ?? null
+  );
+  const [isLoadingConversations, setIsLoadingConversations] = React.useState(false);
+  // OD-51 model control stays inside the sphere. Only free models are offered.
+  type ModelMode = "manual" | "auto" | "hybrid";
+  const [modelMode, setModelMode] = React.useState<ModelMode>("hybrid");
+  const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
+  const [freeModels, setFreeModels] = React.useState<Array<{
+    model_id: string; display_name: string | null; endpoint_status: string;
+    capabilities: string[]; context_length: number | null; last_checked_at: string | null;
+  }>>([]);
+  const [catalogSearch, setCatalogSearch] = React.useState("");
+  const [providerKeys, setProviderKeys] = React.useState<Array<{ provider: string; key_alias: string; health: string; scope: string; is_enabled: boolean }>>([]);
+  const [delegations, setDelegations] = React.useState<Array<{ model: string; status: string }>>([]);
+  const [previousModel, setPreviousModel] = React.useState<string | null>(null);
+  const [inference, setInference] = React.useState<{ mode: string; model: string | null; available: boolean } | null>(null);
+  const [copied, setCopied] = React.useState(false);
+  const [responseMinimized, setResponseMinimized] = React.useState(false);
+  const [responseDismissed, setResponseDismissed] = React.useState(false);
+  const [activity, setActivity] = React.useState<SphereActivity | null>(null);
+  const [sources, setSources] = React.useState<SourceNode[]>([]);
+  const [connections, setConnections] = React.useState<KnowledgeConnection[]>([]);
+  const [clusters, setClusters] = React.useState<KnowledgeCluster[]>([]);
+  const [graphConnections, setGraphConnections] = React.useState<KnowledgeConnection[]>([]);
+  const [freshness, setFreshness] = React.useState<Record<string, FreshnessInfo>>({});
+  const [mapMode, setMapMode] = React.useState(false);
+  const [mapPlaces, setMapPlaces] = React.useState<MapPlace[]>([]);
+  const [hoveredSource, setHoveredSource] = React.useState<{ node: SourceNode; x: number; y: number } | null>(null);
+  const [selectedSource, setSelectedSource] = React.useState<SourceNode | null>(null);
+  const [provenance, setProvenance] = React.useState<ProvenanceResponse | null>(null);
+  const [provenanceLoading, setProvenanceLoading] = React.useState(false);
+  const [lastInference, setLastInference] = React.useState<{ mode: string; model: string } | null>(null);
+  const compactResponse = response.length > 0 && response.length < 160 && !response.includes("\n");
+  const allConnections = React.useMemo(() => {
+    const merged = new Map<string, KnowledgeConnection>();
+    // Stored graph links carry from_node/to_node; map them onto the source
+    // endpoints the sphere draws so persisted provenance survives event ageing.
+    const persisted: KnowledgeConnection[] = graphConnections
+      .filter((c) => c.from_node && c.to_node)
+      .map((c) => ({ ...c, from: c.from_node as string, to: c.to_node as string }));
+    [...connections, ...persisted].forEach((c) => {
+      merged.set(`${c.from}-${c.to}`, c);
+    });
+    return Array.from(merged.values());
+  }, [connections, graphConnections]);
   const recognitionRef = React.useRef<any>(null);
   const sessionRef = React.useRef<SessionData | null>(null);
+  React.useEffect(() => { setLocale(detectLocale()); }, []);
   React.useEffect(() => { sessionRef.current = session; }, [session]);
   const abortRef = React.useRef<AbortController | null>(null);
   const timersRef = React.useRef<number[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const lastHoverRef = React.useRef<string | null>(null);
 
   // Check backend connectivity (subtle, unobtrusive)
   React.useEffect(() => {
@@ -81,6 +216,33 @@ export function IAMInterface() {
       try {
         const r = await api.get("/health", { timeout: 4000 });
         setConnected(r.status === 200);
+        const m = await api.get("/api/v1/models/readiness", { timeout: 4000 });
+        setInference({ mode: m.data.mode, model: m.data.model, available: m.data.available });
+        // Read-only model/key status. No credential is ever requested by the browser.
+        try {
+          const [primary, models, keys] = await Promise.all([
+            api.get("/api/v1/models/primary", { timeout: 4000 }),
+            api.get("/api/v1/models/router/models?provider=nvidia", { timeout: 4000 }),
+            api.get("/api/v1/models/credentials/health?provider=nvidia", { timeout: 4000 }),
+          ]);
+          setPreviousModel(primary.data.resolved_model || null);
+          // Free models only: paid access is a separate signed decision (OD-04).
+          setFreeModels(
+            (Array.isArray(models.data) ? models.data : [])
+              .filter((item: any) => item?.is_free === true && item?.is_available !== false)
+              .map((item: any) => ({
+                model_id: String(item.model_id),
+                display_name: item.display_name ? String(item.display_name) : null,
+                endpoint_status: String(item.endpoint_status || "unknown"),
+                capabilities: Array.isArray(item.capabilities) ? item.capabilities.map(String) : [],
+                context_length: item.context_length ? Number(item.context_length) : null,
+                last_checked_at: item.last_checked_at ? String(item.last_checked_at) : null,
+              })),
+          );
+          setProviderKeys(
+            Array.isArray(keys.data?.keys) ? keys.data.keys : [],
+          );
+        } catch {}
       } catch { setConnected(false); }
     };
     check();
@@ -88,10 +250,172 @@ export function IAMInterface() {
     return () => window.clearInterval(t);
   }, []);
 
+  // Live, privacy-filtered IAM activity from the public event stream.
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    const handle = (dataStr: string) => {
+      try {
+        const payload = JSON.parse(dataStr);
+        const d = payload.details || {};
+        const source = d.source;
+        const now = Date.now();
+        const nodeState: SourceNode["state"] =
+          payload.event_type === "research.memory_stored" ? "stored"
+          : payload.event_type === "research.source_extracted" ? "extracted"
+          : payload.event_type === "research.page_opened" ? "opened"
+          : "discovered";
+
+        setActivity({
+          event_type: payload.event_type,
+          label: d.label,
+          sourceCount: d.source_count,
+          memoryCount: d.result_count,
+          activityId: d.activity_id,
+          sourceId: source?.node_id,
+          updatedAt: now,
+        });
+
+        if (payload.event_type === "research.started") {
+          setSources((prev) => prev.map((s) => ({ ...s, recalled: false })));
+        }
+
+        if (payload.event_type === "memory.retrieved" && Array.isArray(d.nodes)) {
+          setSources((prev) => {
+            const next = new Map(prev.map((s) => [s.id, { ...s, recalled: false }]));
+            for (const item of d.nodes) {
+              if (!item?.node_id) continue;
+              next.set(item.node_id, {
+                id: item.node_id,
+                title: item.domain || "Recalled source",
+                domain: item.domain || "",
+                url: "",
+                state: "stored",
+                recalled: true,
+              });
+            }
+            return Array.from(next.values()).slice(-12);
+          });
+        }
+
+        if (source?.node_id) {
+          setSources((prev) => {
+            const next = new Map(prev.map((s) => [s.id, s]));
+            next.set(source.node_id, {
+              id: source.node_id,
+              title: source.title || source.domain || "Source",
+              domain: source.domain || "",
+              url: source.url || "",
+              state: nodeState,
+            });
+            return Array.from(next.values()).slice(-12);
+          });
+        }
+
+        if (payload.event_type === "knowledge.connected" && d.from_node && d.to_node) {
+          setConnections((prev) => [
+            ...prev.filter((c) => !(c.from === d.from_node && c.to === d.to_node)),
+            { from: d.from_node, to: d.to_node },
+          ].slice(-20));
+        }
+
+        // Keep the completed trace visible until the next user query.
+      } catch {}
+    };
+
+    // The Next dev rewrite proxy buffers infinite SSE streams. Poll a finite
+    // activity snapshot instead; the backend stream remains available for
+    // production clients that connect directly.
+    let cursor = new Date(Date.now() - 5 * 60_000).toISOString();
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/v1/interface/activity`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ since: cursor }),
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const item of data.events || []) {
+          handle(JSON.stringify(item));
+          if (item.created_at) cursor = item.created_at;
+        }
+      } catch {}
+    };
+    poll();
+    const timer = window.setInterval(poll, 2000);
+
+    return () => {
+      window.clearInterval(timer);
+      controller.abort();
+    };
+  }, []);
+
+  // Persistent knowledge graph — verified public clusters and discovered links.
+  React.useEffect(() => {
+    let live = true;
+    const load = async () => {
+      try {
+        const [c, g, f, m] = await Promise.all([
+          api.get("/api/v1/interface/clusters"),
+          api.get("/api/v1/interface/connections"),
+          api.get("/api/v1/interface/freshness"),
+          api.get("/api/v1/interface/map"),
+        ]);
+        if (!live) return;
+        const savedLinks: KnowledgeConnection[] = g.data?.connections || [];
+        setClusters(c.data?.clusters || []);
+        setGraphConnections(savedLinks);
+        setFreshness(f.data?.nodes || {});
+        setMapPlaces(m.data?.places || []);
+
+        // Rebuild source dots from persisted links so the graph survives
+        // activity events ageing out of the recent-event window.
+        const savedNodes = new Map<string, SourceNode>();
+        for (const link of savedLinks) {
+          if (link.from_node && link.from_cluster) {
+            savedNodes.set(link.from_node, {
+              id: link.from_node,
+              title: link.from_cluster,
+              domain: link.from_cluster,
+              url: "",
+              state: "stored",
+            });
+          }
+          if (link.to_node && link.to_cluster) {
+            savedNodes.set(link.to_node, {
+              id: link.to_node,
+              title: link.to_cluster,
+              domain: link.to_cluster,
+              url: "",
+              state: "stored",
+            });
+          }
+        }
+        if (savedNodes.size) {
+          setSources((prev) => {
+            const merged = new Map(prev.map((s) => [s.id, s]));
+            savedNodes.forEach((node, id) => { if (!merged.has(id)) merged.set(id, node); });
+            return Array.from(merged.values()).slice(-12);
+          });
+        }
+      } catch {}
+    };
+    load();
+    return () => { live = false; };
+  }, []);
+
+  React.useEffect(() => () => {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
+    try { recognitionRef.current?.stop(); } catch {}
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
+
   // Initialize theme
   React.useEffect(() => {
     const stored = (typeof localStorage !== "undefined" && localStorage.getItem("iam_theme")) as "dark" | "light" | null;
-    const initial = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    const initial = stored === "dark" ? "dark" : "light";
     setTheme(initial);
     document.documentElement.dataset.theme = initial;
     document.documentElement.style.setProperty("color-scheme", initial);
@@ -106,10 +430,11 @@ export function IAMInterface() {
         if (raw) stored = JSON.parse(raw);
       } catch {}
       if (stored?.session_token) {
+        const restoredMode: Mode = stored.mode || "focus";
         setSession(stored);
-        setMode(stored.mode || "focus");
+        setMode(restoredMode);
+        setStatus(MODE_CONFIG[restoredMode].status);
         await loadMessages(stored.session_token);
-        return;
       }
       try {
         const resp = await api.post("/api/v1/access/sessions", { mode: "focus" });
@@ -123,6 +448,7 @@ export function IAMInterface() {
       } catch {
         // Offline mode — interface still works visually
       }
+      await loadConversations();
     };
     init();
   }, []);
@@ -159,7 +485,7 @@ export function IAMInterface() {
   React.useEffect(() => {
     loadNodes();
     loadSuggestions(mode, session?.session_token);
-  }, [loadNodes, loadSuggestions]);
+  }, [loadNodes, loadSuggestions, mode, session?.session_token]);
 
   const loadMessages = async (token: string) => {
     try {
@@ -168,6 +494,88 @@ export function IAMInterface() {
       setMessages(items.filter((m: any) => m.role === "user" || m.role === "assistant"));
     } catch {}
   };
+
+  // Load all conversations for the sidebar/history
+  const loadConversations = React.useCallback(async () => {
+    try {
+      setIsLoadingConversations(true);
+      const data = await listConversations();
+      setConversations(Array.isArray(data) ? data : []);
+    } catch {
+      // Conversations list unavailable - continue with current conversation
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, []);
+
+  // Create a new conversation
+  const createNewConversation = React.useCallback(async () => {
+    try {
+      const created = await createConversation("New Conversation");
+      setSelectedConversationId(created.id);
+      setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
+      setMessages([]);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {
+      // Fall back to local-only conversation
+    }
+  }, []);
+
+  // Deep-links stay on the single page: /?conversation=<id>. No extra routes.
+  const setConversationInUrl = React.useCallback((conversationId?: string) => {
+    if (typeof window === "undefined") return;
+    const url = conversationId
+      ? `${window.location.pathname}?conversation=${encodeURIComponent(conversationId)}`
+      : window.location.pathname;
+    window.history.replaceState(null, "", url);
+  }, []);
+
+  // Load messages for a specific conversation
+  const loadConversationMessages = React.useCallback(async (conversationId: string) => {
+    try {
+      setSelectedConversationId(conversationId);
+      setConversationInUrl(conversationId);
+      const items = await getConversationMessages(conversationId);
+      setMessages(
+        items
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content, created_at: m.created_at ?? undefined }))
+      );
+    } catch {
+      setMessages([]);
+    }
+  }, [setConversationInUrl]);
+
+  const selectConversation = React.useCallback((conversationId: string) => {
+    void loadConversationMessages(conversationId);
+  }, [loadConversationMessages]);
+
+  const deleteConversation = React.useCallback(async (conversationId: string) => {
+    try {
+      await api.delete(`/api/v1/conversations/${conversationId}`);
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (selectedConversationId === conversationId) {
+        setSelectedConversationId(null);
+        setConversationInUrl();
+        setMessages([]);
+      }
+    } catch {
+      // Keep the conversation visible if deletion fails; the backend is authoritative.
+    }
+  }, [selectedConversationId, setConversationInUrl]);
+
+  React.useEffect(() => {
+    if (initialConversationId) {
+      void loadConversationMessages(initialConversationId);
+    }
+  }, [initialConversationId, loadConversationMessages]);
+
+  // Refresh the in-page list whenever the history drawer is opened.
+  React.useEffect(() => {
+    if (showHistory) void loadConversations();
+  }, [showHistory, loadConversations]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -189,14 +597,74 @@ export function IAMInterface() {
     loadSuggestions(m, session?.session_token);
   };
 
-  const speak = (text: string) => {
-    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  const speak = async (text: string) => {
+    if (!voiceEnabled || typeof window === "undefined") return;
+    // Prefer IAM's own voice service; browser synthesis is the offline fallback.
+    try {
+      const r = await api.post("/api/v1/voice/text-to-speech", { text, format: "mp3" });
+      const b64 = r.data?.audio_base64;
+      if (b64 && !r.data?.error) {
+        const audio = new Audio(`data:audio/${r.data.format || "mp3"};base64,${b64}`);
+        await audio.play();
+        return;
+      }
+    } catch {}
+    if (!("speechSynthesis" in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.rate = 1; u.pitch = 1;
       window.speechSynthesis.speak(u);
     } catch {}
+  };
+
+  // Vision/document analysis — runs inside the same interface, no separate page.
+  const handleAttachment = async (file: File) => {
+    setAttachment(file);
+    setResponse("");
+    setResponseMinimized(false);
+    setResponseDismissed(false);
+    setShowHistory(false);
+    setState("thinking");
+    setStatus("Analysing…");
+    setGenerating(true);
+    try {
+      const form = new FormData();
+      const isImage = file.type.startsWith("image/");
+      form.append(isImage ? "image" : "video", file);
+      const url = isImage ? "/api/v1/vision/understand-image" : "/api/v1/vision/analyze-video";
+      const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
+      const res = await fetch(base + url, { method: "POST", body: form });
+      const data = await res.json();
+      const text = data.description || data.error || "Could not analyse the file.";
+      setResponse(text);
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: `[attachment: ${file.name}]` },
+        { role: "assistant", content: text },
+      ]);
+      if (res.ok && !text.startsWith("Could not")) speak(text);
+    } catch {
+      setResponse("I could not read that file. Try an image or video.");
+    } finally {
+      setGenerating(false);
+      setAttachment(null);
+      const t = window.setTimeout(() => { setState("idle"); setStatus(MODE_CONFIG[mode].status); }, 1200);
+      timersRef.current.push(t);
+    }
+  };
+
+  const loadProvenance = async (cluster: string) => {
+    setProvenanceLoading(true);
+    setSelectedSource(null);
+    try {
+      const res = await api.get("/api/v1/interface/provenance", { params: { cluster } });
+      setProvenance(res.data as ProvenanceResponse);
+    } catch {
+      setProvenance({ cluster, items: [], claim: "provenance_unavailable" });
+    } finally {
+      setProvenanceLoading(false);
+    }
   };
 
   const stopGeneration = () => {
@@ -208,24 +676,15 @@ export function IAMInterface() {
     setState("idle");
   };
 
-  const animateResponse = (text: string) => {
-    setResponse("");
-    const words = text.split(" ");
-    words.forEach((_, i) => {
-      const t = window.setTimeout(() => {
-        setResponse((prev) => prev + (i === 0 ? "" : " ") + words[i]);
-      }, i * 45);
-      timersRef.current.push(t);
-    });
-    speak(text);
-    return words.length * 45;
-  };
-
   const ask = async (query: string) => {
     query = query.trim();
-    if (!query) return;
+    if (!query || generating) return;
     setInput("");
     setResponse("");
+    setResponseMinimized(false);
+    setResponseDismissed(false);
+    setLastInference(null);
+    setActivity(null);
     setShowHistory(false);
     setState("thinking");
     setStatus("Thinking…");
@@ -248,33 +707,116 @@ export function IAMInterface() {
       }).catch(() => {});
     }
 
-    const historyMessages = [...messages, userMessage].slice(-12).map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // With a server-side conversation the backend supplies history; sending it
+    // again would duplicate context and stored turns. Without one, keep the
+    // client-side transcript so the first turn still has context.
+    const historyMessages = selectedConversationId
+      ? [{ role: "user" as const, content: query }]
+      : [...messages, userMessage].slice(-12).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
-    let answer: string;
+    // Real SSE streaming from the backend. Stay in "thinking" until the
+    // backend emits start/first token so the sphere reflects reality.
+    let answer = "";
     try {
-      const resp = await api.post("/api/v1/models/chat", {
-        model: "qwen3.5-9b",
-        messages: [
-          { role: "system", content: cfg.systemPrompt },
-          ...historyMessages,
-        ],
-        temperature: mode === "create" ? 0.8 : 0.6,
-      }, { signal: abortRef.current?.signal });
-      answer = resp.data?.choices?.[0]?.message?.content
-        || resp.data?.response
-        || "I received your message but could not generate a response.";
-    } catch {
+      const base = (typeof window !== "undefined" && (window as any).__NEXT_PUBLIC_API_URL) || "";
+      const res = await fetch(`${base}/api/v1/models/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: selectedConversationId || undefined,
+          messages: [
+            { role: "system", content: cfg.systemPrompt },
+            ...historyMessages,
+          ],
+          temperature: mode === "create" ? 0.8 : 0.6,
+          // Recall mode opts into IAM's permission-controlled memory layer.
+          include_memory: mode === "recall",
+          // OD-51 sphere control: manual selects a free specialist; auto leaves
+          // model choice to IAM; hybrid keeps the local primary and consults an
+          // authorised specialist through IAM's delegation workflow.
+          ...(modelMode === "manual" && selectedModel ? { model: selectedModel } : {}),
+          ...(modelMode === "hybrid" ? { delegate: true } : {}),
+        }),
+        signal: abortRef.current?.signal,
+      });
+
+      if (!res.ok || !res.body) throw new Error(`stream status ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() || "";
+        for (const frame of frames) {
+          let event = "message", dataStr = "";
+          for (const line of frame.split("\n")) {
+            if (line.startsWith("event:")) event = line.slice(6).trim();
+            if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+          }
+          if (!dataStr) continue;
+          let data: any;
+          try { data = JSON.parse(dataStr); } catch { continue; }
+
+          if (event === "start") {
+            if (data.conversation_id && !selectedConversationId) {
+              setSelectedConversationId(data.conversation_id);
+            }
+            setState("speaking");
+            setStatus("Speaking");
+            if (data.mode && data.model) {
+              if (lastInference && lastInference.model !== data.model) {
+                setPreviousModel(lastInference.model);
+              }
+              setLastInference({ mode: data.mode, model: data.model });
+            }
+            if (data.delegation) {
+              const tasks = Array.isArray(data.delegation.tasks) ? data.delegation.tasks : null;
+              setDelegations(
+                tasks
+                  ? tasks.map((task: any) => ({
+                      model: String(task.delegate_model || "specialist"),
+                      status: String(task.status || "unknown"),
+                    }))
+                  : [
+                      {
+                        model: String(data.delegation.delegate_model || "specialist"),
+                        status: String(data.delegation.status || "unknown"),
+                      },
+                    ],
+              );
+            }
+          } else if (event === "delta") {
+            full += data.text || "";
+            setResponse(full);
+          } else if (event === "error") {
+            full += (full ? "\n\n" : "") + (data.message || "stream error");
+            setResponse(full);
+          } else if (event === "done") {
+            // finished
+          }
+        }
+      }
+      answer = full || "I could not generate a response.";
+    } catch (err) {
+      // User-initiated Stop is not an outage — do not record it as an answer.
+      if ((err as DOMException)?.name === "AbortError" || abortRef.current?.signal.aborted) {
+        return;
+      }
       answer = "I'm unable to reach the model gateway right now. Please check the backend connection and try again.";
+      setResponse(answer);
     }
 
-    const duration = animateResponse(answer);
-    setState("speaking");
-    setStatus("Speaking");
     setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
-
     if (activeSession) {
       api.post("/api/v1/access/messages", {
         session_token: activeSession.session_token,
@@ -284,25 +826,32 @@ export function IAMInterface() {
       }).catch(() => {});
     }
 
+    if (answer && !answer.startsWith("I'm unable")) speak(answer);
     setGenerating(false);
     const doneTimer = window.setTimeout(() => {
       setState("idle");
       setStatus(MODE_CONFIG[mode].status);
-    }, duration + 900);
+    }, 900);
     timersRef.current.push(doneTimer);
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     const on = !listening;
     setListening(on);
     setState(on ? "listening" : "idle");
     setStatus(on ? "Listening…" : MODE_CONFIG[mode].status);
 
-    if (on && typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+    if (!on) {
+      try { recognitionRef.current?.stop(); } catch {}
+      recognitionRef.current = null;
+      return;
+    }
+
+    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
       try {
         const SR = (window as any).webkitSpeechRecognition;
         const rec = new SR();
-        rec.lang = "en-US";
+        rec.lang = SPEECH_LOCALES[locale];
         rec.interimResults = false;
         rec.continuous = false;
         rec.onresult = (e: any) => {
@@ -319,19 +868,76 @@ export function IAMInterface() {
         rec.onend = () => setListening(false);
         recognitionRef.current = rec;
         rec.start();
+        return;
       } catch {}
+    }
+
+    // Browser STT unavailable: record audio and use IAM's own voice service.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        try {
+          const form = new FormData();
+          form.append("audio", new Blob(chunks, { type: chunks[0]?.type || "audio/webm" }), "speech.webm");
+          form.append("language", SPEECH_LOCALES[locale]);
+          const r = await api.post("/api/v1/voice/speech-to-text", form, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const text = String(r.data?.text || "");
+          if (text && !r.data?.error) {
+            setInput(text);
+            ask(text);
+          }
+        } catch {}
+        setListening(false);
+        setState("idle");
+      };
+      recognitionRef.current = { stop: () => recorder.stop() };
+      recorder.start();
+    } catch {
+      setListening(false);
+      setState("idle");
     }
   };
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden">
-      <PresenceSphere state={state} mode={mode} nodes={nodes} />
+      <PresenceSphere
+        state={state}
+        mode={mode}
+        nodes={nodes}
+        activity={activity}
+        sourceNodes={sources}
+        selectedId={selectedSource?.id ?? null}
+        connections={allConnections}
+        clusters={clusters}
+        graphConnections={graphConnections}
+        freshness={freshness}
+        mapMode={mapMode}
+        mapPlaces={mapPlaces}
+        dark={theme === "dark"}
+        onNodeHover={(node, x, y) => {
+          const id = node?.id ?? null;
+          if (id && id === lastHoverRef.current) return;
+          lastHoverRef.current = id;
+          setHoveredSource(node && x !== undefined && y !== undefined ? { node, x, y } : null);
+        }}
+        onNodeSelect={(node) => {
+          if (node.kind === "cluster" && node.clusterName) void loadProvenance(node.clusterName);
+          else setSelectedSource(node);
+        }}
+      />
 
       {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-3 p-5 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-start gap-2 p-3 sm:gap-3 sm:p-5 pointer-events-none"
+        style={{ paddingTop: "max(0.75rem, var(--safe-top))", paddingLeft: "max(0.75rem, var(--safe-left))", paddingRight: "max(0.75rem, var(--safe-right))" }}>
         <div className="pointer-events-auto">
-          <h1 className="font-medium tracking-widest text-lg" style={{ letterSpacing: "0.08em" }}>IAM</h1>
-          <p className="flex items-center gap-2 text-[13px] opacity-60">
+          <h1 className="font-medium tracking-widest text-base sm:text-lg" style={{ letterSpacing: "0.08em" }}>IAM</h1>
+          <p className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[13px] opacity-60">
             Intellectual Artificial Mainbrain
             <span
               title={connected === true ? "Connected" : connected === false ? "Offline" : "Connecting"}
@@ -341,14 +947,47 @@ export function IAMInterface() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="flex gap-1.5 p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label="Mode">
+        <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto">
+          <div className="relative">
+            <button
+              type="button"
+              aria-expanded={suggestionsOpen}
+              aria-haspopup="menu"
+              onClick={() => setSuggestionsOpen((open) => !open)}
+              onKeyDown={(e) => { if (e.key === "Escape") setSuggestionsOpen(false); }}
+              className="px-2.5 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-[13px] rounded-full border border-[var(--line)] backdrop-blur-xl whitespace-nowrap"
+              style={{ background: "var(--glass)", color: "var(--mute)" }}
+            >
+              Suggestions
+            </button>
+            {suggestionsOpen && (
+              <div
+                role="menu"
+                aria-label={t("Suggestions", locale)}
+                className="absolute right-0 top-full mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-[var(--line)] p-2 backdrop-blur-xl space-y-1"
+                style={{ background: "var(--glass)", color: "var(--mute)" }}
+              >
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    role="menuitem"
+                    disabled={generating}
+                    onClick={() => { setSuggestionsOpen(false); ask(s); }}
+                    className="block w-full rounded-lg px-2 py-1.5 text-left text-[12px] opacity-80 hover:opacity-100 disabled:opacity-40"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-0.5 p-0.5 sm:gap-1.5 sm:p-1 rounded-full border border-[var(--line)] backdrop-blur-xl" style={{ background: "var(--glass)" }} role="group" aria-label={t("Mode", locale)}>
             {(Object.keys(MODE_CONFIG) as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => changeMode(m)}
                 aria-pressed={mode === m}
-                className="px-3.5 py-1.5 rounded-full text-[13px] transition-all"
+                className="px-2 py-1 text-[11px] sm:px-3.5 sm:py-1.5 sm:text-[13px] rounded-full transition-all"
                 style={mode === m
                   ? { background: "var(--ink)", color: "var(--bg2)" }
                   : { color: "var(--mute)" }}
@@ -360,29 +999,162 @@ export function IAMInterface() {
         </div>
       </header>
 
+      {/* Live intelligence activity — driven by real IAM events */}
+      {activity && (
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-[var(--line)] px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] backdrop-blur-xl pointer-events-none whitespace-nowrap"
+          style={{ background: "var(--glass)", color: "var(--mute)" }}>
+          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "var(--accent)" }} />
+          <span className="uppercase tracking-wider opacity-60">Live activity</span>
+          <span>{activity.label || "Working"}</span>
+          {typeof activity.sourceCount === "number" && (
+            <span className="opacity-60">{activity.sourceCount} sources</span>
+          )}
+          {typeof activity.memoryCount === "number" && (
+            <span className="opacity-60">{activity.memoryCount} memories</span>
+          )}
+        </div>
+      )}
+
+      {/* Source node detail — stays on the same screen */}
+      {(selectedSource || hoveredSource) && (() => {
+        const node = selectedSource || hoveredSource!.node;
+        const x = Math.min(hoveredSource?.x ?? window.innerWidth / 2, window.innerWidth - 262);
+        const y = Math.min(hoveredSource?.y ?? 180, window.innerHeight - 220);
+        return (
+          <div className="fixed z-30 w-[min(250px,calc(100vw-24px))] rounded-2xl border border-[var(--line)] p-3 backdrop-blur-2xl pointer-events-auto"
+            style={{ background: "var(--glass)", left: Math.max(12, x + 16), top: Math.max(80, y + 12) }}>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <p className="text-xs font-medium leading-snug">{node.title}</p>
+              {selectedSource && (
+                <button onClick={() => setSelectedSource(null)} aria-label="Close source details" className="opacity-50 hover:opacity-100">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2">{node.domain}</p>
+            <div className="flex items-center gap-2 text-[10px] opacity-70">
+              <span className="rounded-full border border-[var(--line)] px-2 py-0.5 capitalize">
+                {node.kind === "cluster" ? "cluster" : node.recalled ? "recalled" : node.state}
+              </span>
+              <span>{node.kind === "cluster" ? "Verified knowledge" : "Public research"}</span>
+            </div>
+            {node.freshnessLabel ? (
+              <p className="mt-2 text-[10px] opacity-60">{node.freshnessLabel}</p>
+            ) : null}
+            {node.url ? (
+              <a href={node.url} target="_blank" rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100">
+                Open source <ArrowRight size={11} />
+              </a>
+            ) : null}
+            {node.kind === "cluster" && node.clusterName ? (
+              <button onClick={() => void loadProvenance(node.clusterName!)}
+                className="mt-2 inline-flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100">
+                View provenance <ArrowRight size={11} />
+              </button>
+            ) : null}
+            <p className="mt-2 text-[9px] leading-relaxed opacity-40">
+              Provenance only. Public sources are not automatically trusted facts.
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* Provenance path — sources behind a clicked cluster */}
+      {provenance && (
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[80dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] p-4 backdrop-blur-2xl pointer-events-auto md:inset-x-auto md:bottom-auto md:left-24 md:top-28 md:max-h-[55vh] md:rounded-2xl md:border md:w-[330px]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h2 className="text-sm font-medium">Provenance</h2>
+              <p className="text-[10px] uppercase tracking-wider opacity-50">{provenance.cluster}</p>
+            </div>
+            <button onClick={() => setProvenance(null)} aria-label="Close provenance" className="opacity-50 hover:opacity-100">
+              <X size={14} />
+            </button>
+          </div>
+          {provenanceLoading ? (
+            <p className="text-xs opacity-60">Tracing sources…</p>
+          ) : provenance.items.length === 0 ? (
+            <p className="text-xs opacity-60 leading-relaxed">
+              No verified public records are attached to this cluster yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {provenance.items.map((item, i) => (
+                <div key={i} className="rounded-xl border border-[var(--line)] p-2.5 text-xs"
+                  style={{ background: "rgba(255,255,255,.035)" }}>
+                  <div className="flex justify-between gap-2">
+                    <span className="font-medium leading-snug">{item.title}</span>
+                    <span className="opacity-50">{Math.round(item.confidence * 100)}%</span>
+                  </div>
+                  <p className="mt-1 opacity-60 leading-snug">{item.summary}</p>
+                  <div className="mt-2 space-y-1">
+                    {item.sources.map((source, j) => (
+                      <div key={j} className="flex items-center gap-2 text-[11px]">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--accent)" }} />
+                        {source.url ? (
+                          <a href={source.url} target="_blank" rel="noopener noreferrer"
+                            className="truncate opacity-70 hover:opacity-100">
+                            {source.title} · {source.domain}
+                          </a>
+                        ) : (
+                          <span className="opacity-60">{source.title}</span>
+                        )}
+                        {source.node_id && freshness[source.node_id] ? (
+                          <span className="rounded-full border border-[var(--line)] px-1.5 py-0.5 text-[9px] capitalize"
+                            style={{ color: freshness[source.node_id].state === "contradicted" ? "#f87171" : undefined }}>
+                            {freshness[source.node_id].state.replace("_", " ")}
+                          </span>
+                        ) : null}
+                        <span className="ml-auto opacity-40">{Math.round(source.credibility * 100)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-3 text-[9px] leading-relaxed opacity-40">
+            Provenance only. Sources are not automatically trusted facts.
+          </p>
+        </div>
+      )}
+
       {/* Theme + history controls */}
-      <div className="fixed right-5 bottom-28 z-10 flex flex-col gap-2 pointer-events-auto">
+      <div className="fixed right-3 sm:right-5 bottom-32 sm:bottom-28 z-10 flex flex-col gap-2 pointer-events-auto"
+        style={{ right: "max(0.75rem, var(--safe-right))" }}>
         <button
           onClick={() => setShowHistory(!showHistory)}
-          aria-label="Conversation history"
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          aria-label={t("Conversation history", locale)}
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: "var(--glass)" }}
         >
           {showHistory ? <X size={16} /> : <History size={16} />}
         </button>
         <button
+          onClick={() => setShowOptions(!showOptions)}
+          aria-label={t("IAM options", locale)}
+          aria-pressed={showOptions}
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          style={{ background: showOptions ? "var(--accent)" : "var(--glass)", color: showOptions ? "var(--bg2)" : undefined }}
+        >
+          {showOptions ? <X size={16} /> : <Settings2 size={16} />}
+        </button>
+        <button
           onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          aria-label={t("Toggle theme", locale)}
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: "var(--glass)" }}
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          aria-label={voiceEnabled ? "Disable voice" : "Enable voice"}
+          aria-label={t(voiceEnabled ? "Disable voice" : "Enable voice", locale)}
           aria-pressed={voiceEnabled}
-          className="w-10 h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
+          className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-[var(--line)] backdrop-blur-xl grid place-items-center transition-colors hover:border-[var(--accent)]"
           style={{ background: voiceEnabled ? "var(--accent)" : "var(--glass)", color: voiceEnabled ? "var(--bg2)" : undefined }}
         >
           {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -391,9 +1163,46 @@ export function IAMInterface() {
 
       {/* Conversation history — expandable, unobtrusive */}
       {showHistory && (
-        <div className="fixed right-20 top-24 bottom-28 z-20 w-[min(380px,calc(100vw-120px))] rounded-2xl border border-[var(--line)] backdrop-blur-2xl p-4 overflow-y-auto pointer-events-auto"
-          style={{ background: "var(--glass)" }}>
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[78dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:bottom-auto md:right-20 md:top-24 md:max-h-none md:rounded-2xl md:border md:w-[min(380px,calc(100vw-120px))]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
           <h2 className="text-sm font-medium mb-3 text-[var(--mute)]">Conversation</h2>
+          <div className="mb-3 rounded-xl border border-[var(--line)] p-2" style={{ background: "rgba(255,255,255,.035)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider opacity-50 text-[var(--mute)]">Past conversations</span>
+              <button onClick={() => void createNewConversation()} className="text-[11px] text-[var(--accent)] hover:underline">+ New</button>
+            </div>
+            {isLoadingConversations ? (
+              <p className="text-xs opacity-60">Loading…</p>
+            ) : conversations.length === 0 ? (
+              <p className="text-xs opacity-60">No saved conversations yet.</p>
+            ) : (
+              <ul className="max-h-40 space-y-1 overflow-y-auto">
+                {conversations.map((c) => (
+                  <li key={c.id} className="flex items-center gap-1">
+                    <button
+                      onClick={() => selectConversation(c.id)}
+                      title={c.title || "Untitled conversation"}
+                      className={`flex-1 truncate rounded-lg px-2 py-1.5 text-left text-xs ${selectedConversationId === c.id ? "bg-[rgba(143,166,255,.16)]" : "hover:bg-white/5"}`}
+                    >
+                      <span className="block truncate">{c.title || "Untitled conversation"}</span>
+                      <span className="block text-[10px] opacity-50">
+                        {c.started_at ? new Date(c.started_at).toLocaleDateString() : ""}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => void deleteConversation(c.id)}
+                      aria-label={`Delete ${c.title || "conversation"}`}
+                      className="rounded-lg p-1.5 opacity-50 hover:opacity-100 hover:text-red-400"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <h3 className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Current conversation</h3>
           {messages.length === 0 ? (
             <p className="text-xs text-[var(--mute)] opacity-70">No conversation yet. Ask IAM anything.</p>
           ) : (
@@ -410,18 +1219,168 @@ export function IAMInterface() {
         </div>
       )}
 
-      {/* Center response + input */}
-      <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-4 pb-6 pointer-events-none">
-        <div
-          className="say max-w-[600px] text-center leading-relaxed min-h-[1.5em] transition-opacity duration-300"
-          style={{ fontSize: "clamp(19px, 2.6vw, 25px)", fontWeight: 300, opacity: response ? 1 : 0 }}
-          aria-live="polite"
-        >
-          {response}
-        </div>
+      {/* In-screen options — no extra pages, no navigation */}
+      {showOptions && (
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[82dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--line)] backdrop-blur-2xl p-3 sm:p-4 pointer-events-auto md:inset-x-auto md:bottom-auto md:right-20 md:top-24 md:max-h-none md:rounded-2xl md:border md:w-[min(340px,calc(100vw-120px))]"
+          style={{ background: "var(--glass)", paddingBottom: "max(1.5rem, var(--safe-bottom))" }}>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--line)] md:hidden" aria-hidden="true" />
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-[var(--mute)]">IAM options</h2>
+            <button onClick={() => setShowOptions(false)} aria-label={t("Close options", locale)} className="opacity-60 hover:opacity-100">
+              <X size={15} />
+            </button>
+          </div>
 
-        {(generating || (response && !generating)) && (
-          <div className="flex gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--line)] px-3 py-2 mb-3 text-xs"
+            style={{ background: "rgba(255,255,255,.04)" }}>
+            <Activity size={13} />
+            <span className="opacity-70">Inference</span>
+            <span className="ml-auto capitalize">
+              {inference ? `${inference.mode}${inference.model ? ` · ${inference.model}` : ""}` : "checking…"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] opacity-50 mb-1">
+            <span>Active model</span>
+            <span className="truncate ml-2 capitalize">{lastInference?.model || inference?.model || "local primary"}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] opacity-50 mb-3">
+            <span>Previous</span>
+            <span className="truncate ml-2 capitalize">{previousModel || "none"}</span>
+          </div>
+
+          <p className="text-[10px] uppercase tracking-wider opacity-50 mb-2 text-[var(--mute)]">Model mode</p>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(["manual", "auto", "hybrid"] as const).map((choice) => (
+              <button key={choice} onClick={() => setModelMode(choice)}
+                aria-pressed={modelMode === choice}
+                title={
+                  choice === "manual" ? "Choose a free specialist model" :
+                  choice === "auto" ? "IAM chooses the model" :
+                  "Local primary with an authorised specialist"
+                }
+                className="rounded-lg border px-1 py-2 text-[10px] transition-colors capitalize"
+                style={{
+                  borderColor: modelMode === choice ? "var(--accent)" : "var(--line)",
+                  background: modelMode === choice ? "rgba(143,166,255,.16)" : "transparent",
+                }}>
+                {choice}
+              </button>
+            ))}
+          </div>
+
+          {modelMode === "manual" && (
+            <div className="mb-3 rounded-xl border border-[var(--line)] px-2 py-1.5 text-[10px]"
+              style={{ background: "rgba(255,255,255,.035)" }}>
+              <div className="opacity-60 mb-1">Free models only · paid access needs signed approval</div>
+              <input
+                value={catalogSearch}
+                onChange={(event) => setCatalogSearch(event.target.value)}
+                placeholder={t("Search catalogue", locale)}
+                aria-label="Search free model catalogue"
+                className="w-full mb-1 rounded border border-[var(--line)] bg-transparent px-2 py-1 text-[10px]"
+              />
+              <div className="max-h-28 overflow-y-auto space-y-1">
+                {freeModels.length === 0 && <div className="opacity-50">No free models discovered yet.</div>}
+                {freeModels
+                  .filter((item) => `${item.display_name || ""} ${item.model_id}`.toLowerCase().includes(catalogSearch.toLowerCase()))
+                  .map((item) => (
+                    <button key={item.model_id}
+                      onClick={() => setSelectedModel(item.model_id)}
+                      aria-pressed={selectedModel === item.model_id}
+                      className="w-full flex justify-between gap-2 text-left hover:opacity-100 opacity-80">
+                      <span className="truncate">{item.display_name || item.model_id}</span>
+                      <span className="opacity-50">
+                        {item.endpoint_status === "available" ? "ready" : item.endpoint_status} · {item.capabilities.slice(0, 2).join(",") || "general"}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          <button onClick={() => { setMapMode(!mapMode); setShowOptions(false); }}
+            className="w-full mb-3 rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:border-[var(--accent)] transition-colors">
+            {mapMode ? "Return to intelligence sphere" : "Open geospatial view"}
+          </button>
+
+          {clusters[0] ? (
+            <button onClick={() => { void loadProvenance(clusters[0].name); setShowOptions(false); }}
+              className="w-full mb-3 rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center justify-center gap-2 hover:border-[var(--accent)] transition-colors">
+              Inspect {clusters[0].name} provenance <ArrowRight size={12} />
+            </button>
+          ) : null}
+
+          <button
+            onClick={() => { setMessages([]); setSelectedConversationId(null); setResponse(""); setLastQuery(""); setShowOptions(false); }}
+            className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-xs flex items-center gap-2 justify-center hover:border-[var(--accent)] transition-colors"
+          >
+            <Trash2 size={13} /> Clear this conversation view
+          </button>
+          <p className="mt-3 text-[10px] leading-relaxed opacity-50 text-[var(--mute)]">
+            Everything stays on this one screen. Responses are formatted, scrollable and copyable.
+          </p>
+        </div>
+      )}
+
+      {/* Center response + input */}
+      <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 sm:gap-4 px-3 sm:px-4 pb-6 pointer-events-none"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
+        <span className="sr-only" aria-live="polite">
+          {generating ? "IAM is responding" : response && !responseDismissed ? "Response ready" : ""}
+        </span>
+        {!responseDismissed && (
+          <div
+            className={`say w-full max-w-[720px] leading-relaxed min-h-[1.5em] transition-opacity duration-300 overflow-y-auto pointer-events-auto ${
+              compactResponse ? "text-center" : "rounded-2xl border border-[var(--line)] p-4 text-left"
+            }`}
+            style={{
+              fontSize: compactResponse ? "clamp(19px, 2.6vw, 25px)" : "clamp(14px, 1.35vw, 16px)",
+              fontWeight: compactResponse ? 300 : 400,
+              opacity: response ? 1 : 0,
+              maxHeight: responseMinimized ? "auto" : compactResponse ? "30vh" : "42vh",
+              background: compactResponse ? undefined : "var(--glass)",
+              backdropFilter: compactResponse ? undefined : "blur(18px)",
+            }}
+            >
+            {response && !compactResponse && !responseMinimized ? (
+              <div className="flex justify-end gap-1.5 mb-2">
+                <button
+                  onClick={() => setResponseMinimized(true)}
+                  aria-label="Minimize response"
+                  className="w-6 h-6 rounded-full border border-[var(--line)] grid place-items-center opacity-50 hover:opacity-100"
+                >
+                  <Minus size={12} />
+                </button>
+                <button
+                  onClick={() => setResponseDismissed(true)}
+                  aria-label="Close response"
+                  className="w-6 h-6 rounded-full border border-[var(--line)] grid place-items-center opacity-50 hover:opacity-100"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ) : null}
+            {responseMinimized ? (
+              <button
+                onClick={() => setResponseMinimized(false)}
+                aria-label="Expand response"
+                className="w-full flex items-center gap-2 text-left opacity-70 hover:opacity-100"
+                style={{ fontSize: 13 }}
+              >
+                <ChevronDown size={13} className="rotate-180 shrink-0" />
+                <span className="truncate">{response.slice(0, 90)}{response.length > 90 ? "…" : ""}</span>
+              </button>
+            ) : (
+              <>
+                {response ? <FormattedResponse text={response} /> : null}
+                {generating && <span className="ml-0.5 animate-pulse opacity-70">▍</span>}
+              </>
+            )}
+          </div>
+        )}
+
+        {(generating || (response && !generating && !responseDismissed)) && (
+          <div className="flex flex-wrap justify-center gap-2 pointer-events-auto">
             {generating && (
               <button
                 onClick={stopGeneration}
@@ -432,37 +1391,48 @@ export function IAMInterface() {
                 <Square size={12} /> Stop
               </button>
             )}
-            {!generating && response && (
-              <button
-                onClick={() => ask(lastQuery)}
-                aria-label="Retry"
-                className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
-                style={{ background: "var(--glass)", color: "var(--mute)" }}
-              >
-                <RotateCcw size={12} /> Retry
-              </button>
+            {!generating && response && !responseMinimized && (
+              <>
+                <button
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(response); setCopied(true); timersRef.current.push(window.setTimeout(() => setCopied(false), 1500)); } catch {}
+                  }}
+                  aria-label="Copy response"
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <Copy size={12} /> {copied ? "Copied" : "Copy"}
+                </button>
+                <button
+                  onClick={() => ask("Explain that last answer more simply.")}
+                  aria-label="Simplify response"
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <Wand2 size={12} /> Simplify
+                </button>
+                <button
+                  onClick={() => ask(lastQuery)}
+                  aria-label={t("Retry", locale)}
+                  className="px-3 py-1.5 rounded-full text-xs border border-[var(--line)] backdrop-blur-md hover:border-[var(--accent)] transition flex items-center gap-1.5"
+                  style={{ background: "var(--glass)", color: "var(--mute)" }}
+                >
+                  <RotateCcw size={12} /> Retry
+                </button>
+                {lastInference ? (
+                  <span className="px-2.5 py-1.5 rounded-full text-[10px] border border-[var(--line)] opacity-60 capitalize"
+                    title="Actual model used for this response">
+                    {lastInference.mode} · {lastInference.model}
+                  </span>
+                ) : null}
+              </>
             )}
-          </div>
-        )}
-
-        {!response && (
-          <div className="ghost flex gap-2 flex-wrap justify-center pointer-events-auto">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                onClick={() => ask(s)}
-                className="px-3.5 py-1.5 rounded-full text-[13px] border border-[var(--line)] backdrop-blur-md transition-colors hover:border-[var(--accent)]"
-                style={{ background: "var(--glass)", color: "var(--mute)" }}
-              >
-                {s}
-              </button>
-            ))}
           </div>
         )}
 
         <form
           onSubmit={(e) => { e.preventDefault(); ask(input); }}
-          className="bar pointer-events-auto w-full max-w-[600px] flex items-center gap-2 py-1.5 pl-5 pr-1.5 rounded-full border border-[var(--line)] backdrop-blur-xl transition-all focus-within:border-[var(--accent)]"
+          className="bar pointer-events-auto group w-full max-w-[600px] flex items-center gap-2 py-2 pl-5 pr-2 rounded-[22px] border border-[var(--line)] backdrop-blur-2xl shadow-[0_12px_40px_-18px_rgba(0,0,0,.55)] ring-1 ring-white/5 transition-all duration-300 focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_rgba(143,166,255,.14)]"
           style={{ background: "var(--glass)" }}
         >
           <input
@@ -475,18 +1445,40 @@ export function IAMInterface() {
                 setStatus(e.target.value ? "Listening…" : MODE_CONFIG[mode].status);
               }
             }}
-            placeholder={MODE_CONFIG[mode].placeholder}
+            placeholder={t(MODE_CONFIG[mode].placeholder, locale)}
             aria-label="Message to IAM"
             autoComplete="off"
-            className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2.5 text-inherit"
+            className="flex-1 min-w-0 bg-transparent border-0 outline-none py-2 text-[15px] tracking-wide caret-[var(--accent)] placeholder:opacity-40"
             style={{ color: "var(--ink)" }}
           />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleAttachment(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label="Attach image or video"
+            className="w-9 h-9 rounded-full border grid place-items-center opacity-60 transition-all duration-200 hover:opacity-100 hover:border-[var(--accent)] hover:bg-white/5 active:scale-95"
+            style={{ borderColor: "var(--line)" }}
+          >
+            <Paperclip size={16} />
+          </button>
           <button
             type="button"
             onClick={toggleMic}
             aria-pressed={listening}
             aria-label="Listen"
-            className="w-[42px] h-[42px] rounded-full border grid place-items-center transition-colors"
+            className={`w-[42px] h-[42px] rounded-full border grid place-items-center transition-all duration-200 active:scale-95 ${
+              listening ? "shadow-[0_0_0_4px_rgba(143,166,255,.18)] animate-pulse" : "opacity-60 hover:opacity-100 hover:bg-white/5"
+            }`}
             style={listening
               ? { background: "var(--accent)", color: "var(--bg2)", borderColor: "transparent" }
               : { borderColor: "var(--line)" }}
@@ -495,9 +1487,10 @@ export function IAMInterface() {
           </button>
           <button
             type="submit"
+            disabled={!input.trim() && !listening}
             aria-label="Send"
-            className="w-[42px] h-[42px] rounded-full grid place-items-center border-0 transition-opacity hover:opacity-90"
-            style={{ background: "var(--ink)", color: "var(--bg2)" }}
+            className="w-[42px] h-[42px] rounded-full grid place-items-center border-0 transition-all duration-200 hover:scale-[1.05] active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+            style={{ background: "var(--ink)", color: "var(--bg2)", boxShadow: "0 8px 22px -10px var(--accent)" }}
           >
             <ArrowRight size={18} />
           </button>

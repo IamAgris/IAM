@@ -1,0 +1,18 @@
+{
+  "classification": "personal",
+  "creator": "IAM",
+  "description": "Summarise IAM-verified knowledge with explicit provenance and uncertainty.",
+  "filesystem_access": "none",
+  "id": "iam.native.research.evidence-summary",
+  "name": "Evidence summariser",
+  "network_access": false,
+  "origin": "native",
+  "permissions": [
+    "knowledge",
+    "reasoning",
+    "documentation"
+  ],
+  "requires_creator_approval": false,
+  "status": "draft",
+  "version": "1.0.0"
+}

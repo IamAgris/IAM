@@ -1,0 +1,133 @@
+{
+  "checks": [
+    {
+      "actual": "KeyError: 'head_dim'",
+      "expected": "KeyError: 'head_dim'",
+      "name": "upstream exporter head_dim requirement fails on real Qwen2.5 metadata",
+      "pass": true
+    },
+    {
+      "actual": 128,
+      "expected": 128,
+      "name": "derived head_dim",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "QK-Norm tensors absent from real GGUF header",
+      "pass": true
+    },
+    {
+      "actual": 2048,
+      "expected": 2048,
+      "name": "resolved header field dim",
+      "pass": true
+    },
+    {
+      "actual": 11008,
+      "expected": 11008,
+      "name": "resolved header field hidden_dim",
+      "pass": true
+    },
+    {
+      "actual": 36,
+      "expected": 36,
+      "name": "resolved header field n_layers",
+      "pass": true
+    },
+    {
+      "actual": 16,
+      "expected": 16,
+      "name": "resolved header field n_heads",
+      "pass": true
+    },
+    {
+      "actual": 2,
+      "expected": 2,
+      "name": "resolved header field n_kv_heads",
+      "pass": true
+    },
+    {
+      "actual": 128,
+      "expected": 128,
+      "name": "resolved header field head_dim",
+      "pass": true
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "real GGUF has no head_dim key",
+      "pass": true
+    }
+  ],
+  "gate": "G3-head_dim",
+  "limits": [
+    "vocab_size not present in GGUF metadata; not resolved here",
+    "tie_word_embeddings not verified from available artifacts; default only",
+    "<|im_start|> token ID not available; chat IDs must not be guessed",
+    "no weights exported and no engine run"
+  ],
+  "overall_pass": true,
+  "provenance": {
+    "all_model_info_keys": [
+      "general.architecture",
+      "general.base_model.0.name",
+      "general.base_model.0.organization",
+      "general.base_model.0.repo_url",
+      "general.base_model.count",
+      "general.basename",
+      "general.file_type",
+      "general.finetune",
+      "general.languages",
+      "general.license",
+      "general.license.link",
+      "general.license.name",
+      "general.parameter_count",
+      "general.quantization_version",
+      "general.size_label",
+      "general.tags",
+      "general.type",
+      "qwen2.attention.head_count",
+      "qwen2.attention.head_count_kv",
+      "qwen2.attention.layer_norm_rms_epsilon",
+      "qwen2.block_count",
+      "qwen2.context_length",
+      "qwen2.embedding_length",
+      "qwen2.feed_forward_length",
+      "qwen2.rope.freq_base",
+      "tokenizer.ggml.add_bos_token",
+      "tokenizer.ggml.bos_token_id",
+      "tokenizer.ggml.eos_token_id",
+      "tokenizer.ggml.merges",
+      "tokenizer.ggml.model",
+      "tokenizer.ggml.padding_token_id",
+      "tokenizer.ggml.pre",
+      "tokenizer.ggml.token_type",
+      "tokenizer.ggml.tokens"
+    ],
+    "model": "qwen2.5:3b",
+    "note": "tokenizer.ggml.tokens and merges were returned empty by this endpoint; full BPE parity is NOT evidenced by this fixture",
+    "retrieved": "2026-11-28",
+    "source": "Ollama /api/show on aura-ollama (http://localhost:11434)"
+  },
+  "resolved_fields": {
+    "dim": 2048,
+    "head_dim": 128,
+    "head_dim_source": "derived: hidden_size / num_attention_heads",
+    "hidden_dim": 11008,
+    "n_heads": 16,
+    "n_kv_heads": 2,
+    "n_layers": 36,
+    "qk_norm": false,
+    "rms_norm_eps": 1e-06,
+    "rope_theta": 1000000.0,
+    "tie_emb_default": true,
+    "upstream_references": [
+      "scripts/export_weights.py:235",
+      "scripts/export_weights.py:279-285"
+    ]
+  },
+  "tensor_names_source": "first 8 MiB of GGUF blob sha256:5ee4f07c... via grep -a on aura-ollama",
+  "upstream": "alesha-pro/llm.asm @ 48feccbf (export_weights.py:235,279-285)"
+}

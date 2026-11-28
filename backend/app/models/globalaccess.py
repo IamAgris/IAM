@@ -13,7 +13,7 @@ import uuid
 from app.core.database import Base
 
 
-class AnonymousVisitor(Base):
+class AnonymousVisitor(Base):  # type: ignore[misc]
     """Pseudonymous visitor identity — not a person, not tied to IP permanently."""
     __tablename__ = "anonymous_visitors"
 
@@ -27,7 +27,7 @@ class AnonymousVisitor(Base):
     sessions = relationship("VisitorSession", back_populates="visitor", cascade="all, delete-orphan")
 
 
-class VisitorSession(Base):
+class VisitorSession(Base):  # type: ignore[misc]
     """An isolated conversation session for one visitor."""
     __tablename__ = "visitor_sessions"
 
@@ -49,7 +49,7 @@ class VisitorSession(Base):
     threads = relationship("ConversationThread", back_populates="session", cascade="all, delete-orphan")
 
 
-class VisitorLocation(Base):
+class VisitorLocation(Base):  # type: ignore[misc]
     """Coarse GeoIP context — an estimate, never a verified identity."""
     __tablename__ = "visitor_locations"
 
@@ -68,7 +68,7 @@ class VisitorLocation(Base):
     session = relationship("VisitorSession", back_populates="location")
 
 
-class ConversationThread(Base):
+class ConversationThread(Base):  # type: ignore[misc]
     """Separate conversation per visitor session — private context."""
     __tablename__ = "conversation_threads"
 
@@ -82,7 +82,7 @@ class ConversationThread(Base):
     messages = relationship("VisitorMessage", back_populates="thread", cascade="all, delete-orphan")
 
 
-class VisitorMessage(Base):
+class VisitorMessage(Base):  # type: ignore[misc]
     """Individual message within a visitor's private conversation."""
     __tablename__ = "visitor_messages"
 
@@ -101,7 +101,7 @@ class VisitorMessage(Base):
     thread = relationship("ConversationThread", back_populates="messages")
 
 
-class VisitorPreference(Base):
+class VisitorPreference(Base):  # type: ignore[misc]
     """Permitted remembered preferences for anonymous visitors."""
     __tablename__ = "visitor_preferences"
 
@@ -112,7 +112,7 @@ class VisitorPreference(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class VisitorConsent(Base):
+class VisitorConsent(Base):  # type: ignore[misc]
     """Privacy and data-retention choices."""
     __tablename__ = "visitor_consents"
 
@@ -124,7 +124,7 @@ class VisitorConsent(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class VisitorMemoryPermission(Base):
+class VisitorMemoryPermission(Base):  # type: ignore[misc]
     """Controls whether visitor data may enter any memory layer."""
     __tablename__ = "visitor_memory_permissions"
 
@@ -136,7 +136,7 @@ class VisitorMemoryPermission(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class RequestJob(Base):
+class RequestJob(Base):  # type: ignore[misc]
     """Queued and executing visitor requests."""
     __tablename__ = "request_jobs"
 
@@ -153,7 +153,7 @@ class RequestJob(Base):
     )
 
 
-class RequestUsage(Base):
+class RequestUsage(Base):  # type: ignore[misc]
     """Resource and usage accounting per visitor/session."""
     __tablename__ = "request_usage"
 
@@ -167,7 +167,7 @@ class RequestUsage(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class VisitorRateLimit(Base):
+class VisitorRateLimit(Base):  # type: ignore[misc]
     """Abuse and usage controls per visitor or IP-derived key."""
     __tablename__ = "visitor_rate_limits"
 
@@ -179,7 +179,7 @@ class VisitorRateLimit(Base):
     is_blocked = Column(Boolean, nullable=False, default=False)
 
 
-class RegionalSetting(Base):
+class RegionalSetting(Base):  # type: ignore[misc]
     """Regional language, currency and time-zone defaults."""
     __tablename__ = "regional_settings"
 

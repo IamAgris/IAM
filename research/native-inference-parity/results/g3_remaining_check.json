@@ -1,0 +1,342 @@
+{
+  "adapter_resolved": {
+    "dim": 2048,
+    "head_dim": 128,
+    "head_dim_source": "derived: hidden_size / num_attention_heads",
+    "hidden_dim": 11008,
+    "n_heads": 16,
+    "n_kv_heads": 2,
+    "n_layers": 36,
+    "qk_norm": false,
+    "rms_norm_eps": 1e-06,
+    "rope_theta": 1000000.0,
+    "special_ids": {
+      "</tool_call>": 151658,
+      "<tool_call>": 151657,
+      "<|box_end|>": 151649,
+      "<|box_start|>": 151648,
+      "<|endoftext|>": 151643,
+      "<|file_sep|>": 151664,
+      "<|fim_middle|>": 151660,
+      "<|fim_pad|>": 151662,
+      "<|fim_prefix|>": 151659,
+      "<|fim_suffix|>": 151661,
+      "<|im_end|>": 151645,
+      "<|im_start|>": 151644,
+      "<|image_pad|>": 151655,
+      "<|object_ref_end|>": 151647,
+      "<|object_ref_start|>": 151646,
+      "<|quad_end|>": 151651,
+      "<|quad_start|>": 151650,
+      "<|repo_name|>": 151663,
+      "<|video_pad|>": 151656,
+      "<|vision_end|>": 151653,
+      "<|vision_pad|>": 151654,
+      "<|vision_start|>": 151652
+    },
+    "tie_emb": true,
+    "tie_emb_default": true,
+    "upstream_references": [
+      "scripts/export_weights.py:235",
+      "scripts/export_weights.py:279-285"
+    ],
+    "vocab_size": 151936
+  },
+  "checks": [
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "GGUF eos identifies Instruct variant",
+      "pass": true
+    },
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "Instruct config eos matches GGUF",
+      "pass": true
+    },
+    {
+      "actual": 151643,
+      "expected": 151643,
+      "name": "base config eos differs (variant distinction)",
+      "pass": true
+    },
+    {
+      "actual": 151936,
+      "expected": 151936,
+      "name": "vocab_size resolved from official config",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "tie_word_embeddings resolved from official config",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "official config has no head_dim key",
+      "pass": true
+    },
+    {
+      "actual": 151936,
+      "expected": 151936,
+      "name": "adapter resolves vocab_size from real config",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "adapter resolves tie_word_embeddings from real config",
+      "pass": true
+    },
+    {
+      "actual": 128,
+      "expected": 128,
+      "name": "adapter resolves head_dim from real config",
+      "pass": true
+    },
+    {
+      "actual": 151644,
+      "expected": 151644,
+      "name": "adapter resolves im_start token id",
+      "pass": true
+    },
+    {
+      "actual": 2048,
+      "expected": 2048,
+      "name": "hidden_size corroborated",
+      "pass": true
+    },
+    {
+      "actual": 11008,
+      "expected": 11008,
+      "name": "intermediate_size corroborated",
+      "pass": true
+    },
+    {
+      "actual": 36,
+      "expected": 36,
+      "name": "layers corroborated",
+      "pass": true
+    },
+    {
+      "actual": 16,
+      "expected": 16,
+      "name": "attention heads corroborated",
+      "pass": true
+    },
+    {
+      "actual": 2,
+      "expected": 2,
+      "name": "KV heads corroborated",
+      "pass": true
+    },
+    {
+      "actual": 1000000.0,
+      "expected": 1000000,
+      "name": "rope theta corroborated",
+      "pass": true
+    },
+    {
+      "actual": 1e-06,
+      "expected": 1e-06,
+      "name": "rms eps corroborated",
+      "pass": true
+    },
+    {
+      "actual": 151936,
+      "expected": 151936,
+      "name": "local GGUF vocab matches official config",
+      "pass": true
+    },
+    {
+      "actual": 151643,
+      "expected": 151643,
+      "name": "official special token <|endoftext|>",
+      "pass": true
+    },
+    {
+      "actual": 151643,
+      "expected": 151643,
+      "name": "local GGUF special token <|endoftext|>",
+      "pass": true
+    },
+    {
+      "actual": 151644,
+      "expected": 151644,
+      "name": "official special token <|im_start|>",
+      "pass": true
+    },
+    {
+      "actual": 151644,
+      "expected": 151644,
+      "name": "local GGUF special token <|im_start|>",
+      "pass": true
+    },
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "official special token <|im_end|>",
+      "pass": true
+    },
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "local GGUF special token <|im_end|>",
+      "pass": true
+    },
+    {
+      "actual": 151657,
+      "expected": 151657,
+      "name": "official special token <tool_call>",
+      "pass": true
+    },
+    {
+      "actual": 151657,
+      "expected": 151657,
+      "name": "local GGUF special token <tool_call>",
+      "pass": true
+    },
+    {
+      "actual": 151658,
+      "expected": 151658,
+      "name": "official special token </tool_call>",
+      "pass": true
+    },
+    {
+      "actual": 151658,
+      "expected": 151658,
+      "name": "local GGUF special token </tool_call>",
+      "pass": true
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "local GGUF has no QK-Norm tensors",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "local GGUF has no standalone output.weight",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "name": "tied embeddings corroborated by official config and GGUF layout",
+      "pass": true
+    },
+    {
+      "actual": 151644,
+      "expected": 151644,
+      "name": "Qwen3 TOK_IM_START equals Qwen2.5 im_start",
+      "pass": true
+    },
+    {
+      "actual": 151645,
+      "expected": 151645,
+      "name": "Qwen3 TOK_IM_END equals Qwen2.5 im_end",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "Qwen3 think-start 151667 absent from Qwen2.5 specials",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "Qwen3 think-end 151668 absent from Qwen2.5 specials",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "Qwen3 TOK_USER 872 absent from Qwen2.5 specials",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "expected": false,
+      "name": "Qwen3 TOK_ASSISTANT 77091 absent from Qwen2.5 specials",
+      "pass": true
+    }
+  ],
+  "gate": "G3-remaining",
+  "limits": [
+    "official configs were fetched from public Hugging Face, not from the local model blob",
+    "no GGUF weight tensor or full BPE token sequence was loaded or compared",
+    "this is structural resolution of three unknowns, not a full exporter or engine validation"
+  ],
+  "local_gguf_probe": {
+    "file_size": 1929903008,
+    "gguf_version": 3,
+    "source": "C:\\Users\\kagis\\AppData\\Local\\Temp\\opencode\\llmasm-audit\\qwen25_3b_model.gguf",
+    "tied_embedding_note": "GGUF has no standalone output.weight; only token_embd.weight is present. This is consistent with tied embeddings (no separate tensor to hash)."
+  },
+  "local_provenance": {
+    "all_model_info_keys": [
+      "general.architecture",
+      "general.base_model.0.name",
+      "general.base_model.0.organization",
+      "general.base_model.0.repo_url",
+      "general.base_model.count",
+      "general.basename",
+      "general.file_type",
+      "general.finetune",
+      "general.languages",
+      "general.license",
+      "general.license.link",
+      "general.license.name",
+      "general.parameter_count",
+      "general.quantization_version",
+      "general.size_label",
+      "general.tags",
+      "general.type",
+      "qwen2.attention.head_count",
+      "qwen2.attention.head_count_kv",
+      "qwen2.attention.layer_norm_rms_epsilon",
+      "qwen2.block_count",
+      "qwen2.context_length",
+      "qwen2.embedding_length",
+      "qwen2.feed_forward_length",
+      "qwen2.rope.freq_base",
+      "tokenizer.ggml.add_bos_token",
+      "tokenizer.ggml.bos_token_id",
+      "tokenizer.ggml.eos_token_id",
+      "tokenizer.ggml.merges",
+      "tokenizer.ggml.model",
+      "tokenizer.ggml.padding_token_id",
+      "tokenizer.ggml.pre",
+      "tokenizer.ggml.token_type",
+      "tokenizer.ggml.tokens"
+    ],
+    "model": "qwen2.5:3b",
+    "note": "tokenizer.ggml.tokens and merges were returned empty by this endpoint; full BPE parity is NOT evidenced by this fixture",
+    "retrieved": "2026-11-28",
+    "source": "Ollama /api/show on aura-ollama (http://localhost:11434)"
+  },
+  "official_sources": [
+    "https://huggingface.co/Qwen/Qwen2.5-3B/raw/main/config.json",
+    "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/raw/main/config.json",
+    "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/raw/main/tokenizer_config.json"
+  ],
+  "overall_pass": true,
+  "resolved": {
+    "head_dim": "not in official config or GGUF metadata; derive as hidden_size / heads = 128",
+    "special_token_ids": {
+      "</tool_call>": 151658,
+      "<tool_call>": 151657,
+      "<|endoftext|>": 151643,
+      "<|im_end|>": 151645,
+      "<|im_start|>": 151644
+    },
+    "tie_word_embeddings": true,
+    "variant": "Qwen2.5-3B-Instruct (eos_token_id 151645 matches local GGUF)",
+    "vocab_size": 151936
+  }
+}

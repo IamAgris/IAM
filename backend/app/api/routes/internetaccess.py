@@ -38,6 +38,10 @@ class AccountRequest(BaseModel):
     authorised_by: Optional[str] = None
 
 
+class RotateCredentialRequest(BaseModel):
+    credential_reference: str
+
+
 class PublishRequest(BaseModel):
     title: str
     content_type: str
@@ -65,15 +69,15 @@ class PermissionCheckRequest(BaseModel):
 
 
 @router.post("/initialize")
-async def initialize(db=Depends(get_db_session)):
+async def initialize(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Initialize default internet permission gates."""
     service = InternetAccessService(db)
-    await service.initialize_permissions()
+    await service.initialize_permissions()  # type: ignore[no-untyped-call]
     return {"status": "initialized"}
 
 
 @router.get("/permissions")
-async def list_permissions(db=Depends(get_db_session)):
+async def list_permissions(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """List all internet permission gates."""
     from app.models.internetaccess import InternetPermission
     from sqlalchemy import select
@@ -91,21 +95,21 @@ async def list_permissions(db=Depends(get_db_session)):
 
 
 @router.post("/permissions/check")
-async def check_permission(request: PermissionCheckRequest, db=Depends(get_db_session)):
+async def check_permission(request: PermissionCheckRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Check whether an internet action is permitted."""
     service = InternetAccessService(db)
     return await service.check_permission(request.action_type)
 
 
 @router.post("/sessions")
-async def create_session(request: SessionRequest, db=Depends(get_db_session)):
+async def create_session(request: SessionRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Create a persistent browsing session."""
     service = InternetAccessService(db)
     return await service.create_session(request.purpose)
 
 
 @router.delete("/sessions/{token}")
-async def close_session(token: str, db=Depends(get_db_session)):
+async def close_session(token: str, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Close a browsing session."""
     service = InternetAccessService(db)
     ok = await service.close_session(token)
@@ -115,7 +119,7 @@ async def close_session(token: str, db=Depends(get_db_session)):
 
 
 @router.post("/browse")
-async def browse(request: BrowseRequest, db=Depends(get_db_session)):
+async def browse(request: BrowseRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Browse or interact with the internet (public exploration is autonomous)."""
     service = InternetAccessService(db)
     return await service.browse(
@@ -125,14 +129,14 @@ async def browse(request: BrowseRequest, db=Depends(get_db_session)):
 
 
 @router.post("/search")
-async def search(request: SearchRequest, db=Depends(get_db_session)):
+async def search(request: SearchRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Search the web (autonomous public exploration)."""
     service = InternetAccessService(db)
     return await service.search(request.query, request.max_results)
 
 
 @router.post("/accounts")
-async def register_account(request: AccountRequest, db=Depends(get_db_session)):
+async def register_account(request: AccountRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Register an online account (requires owner authorization)."""
     service = InternetAccessService(db)
     result = await service.register_account(
@@ -144,8 +148,40 @@ async def register_account(request: AccountRequest, db=Depends(get_db_session)):
     return result
 
 
+@router.get("/accounts")
+async def list_accounts(db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    """List account metadata; credential values are never returned."""
+    return await InternetAccessService(db).list_accounts()
+
+
+@router.post("/accounts/{account_id}/rotate")
+async def rotate_account_credential(  # type: ignore[no-untyped-def]
+    account_id: str,
+    request: RotateCredentialRequest,
+    db=Depends(get_db_session),
+):
+    try:
+        return await InternetAccessService(db).rotate_account_credential(
+            account_id, request.credential_reference, "sdk"
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.post("/accounts/{account_id}/close")
+async def close_account(account_id: str, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    try:
+        return await InternetAccessService(db).close_account(account_id, "sdk")
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
 @router.post("/publish")
-async def publish_content(request: PublishRequest, db=Depends(get_db_session)):
+async def publish_content(request: PublishRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Publish content (requires owner authorization)."""
     service = InternetAccessService(db)
     result = await service.publish_content(
@@ -158,7 +194,7 @@ async def publish_content(request: PublishRequest, db=Depends(get_db_session)):
 
 
 @router.post("/monitor")
-async def add_monitored_target(request: MonitorRequest, db=Depends(get_db_session)):
+async def add_monitored_target(request: MonitorRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Add a website/service to monitor."""
     service = InternetAccessService(db)
     return await service.add_monitored_target(
@@ -167,7 +203,7 @@ async def add_monitored_target(request: MonitorRequest, db=Depends(get_db_sessio
 
 
 @router.post("/files")
-async def record_file(request: FileRequest, db=Depends(get_db_session)):
+async def record_file(request: FileRequest, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Record a retrieved file for scanning and analysis."""
     service = InternetAccessService(db)
     return await service.record_retrieved_file(
@@ -177,7 +213,7 @@ async def record_file(request: FileRequest, db=Depends(get_db_session)):
 
 
 @router.get("/events")
-async def get_events(limit: int = 100, db=Depends(get_db_session)):
+async def get_events(limit: int = 100, db=Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Get the internet activity audit trail."""
     service = InternetAccessService(db)
     return await service.get_events(limit)

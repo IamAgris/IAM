@@ -1,0 +1,19 @@
+{
+  "delta_count": 1,
+  "exact_tag_present": true,
+  "gate": "G4-api-contract",
+  "gateway_endpoint": "http://localhost:4000/v1/chat/completions",
+  "ollama_endpoint": "http://localhost:11434/api/tags",
+  "overall_pass": true,
+  "required_tag": "qwen2.5:3b",
+  "saw_done": true,
+  "status": "RUN",
+  "tool_schema_accepted": true,
+  "usage_keys": [
+    "completion_tokens",
+    "completion_tokens_details",
+    "prompt_tokens",
+    "total_tokens"
+  ],
+  "usage_present": true
+}

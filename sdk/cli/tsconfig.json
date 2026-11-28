@@ -6,9 +6,9 @@
     "strict": true,
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
-    "paths": { "@iam/sdk": ["../typescript/dist/index.d.ts"] },
-    "skipLibCheck": true
+    "paths": { "@iamagris/sdk": ["../typescript/dist/index.d.ts"] },
+    "skipLibCheck": true,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"]
 }

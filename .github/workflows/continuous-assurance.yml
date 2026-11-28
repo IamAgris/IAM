@@ -1,0 +1,77 @@
+name: Continuous assurance
+
+# Automated, reproducible assurance evidence. The container-backed L1-L5
+# acceptance run is scheduled nightly and remains available manually; the
+# deterministic gates run on every invocation without a live stack.
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-gates:
+    name: Release, evaluation, recovery and integration gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip && python -m pip install -e ./backend pytest
+      - name: Run assurance suites
+        working-directory: backend
+        run: |
+          python -m pytest \
+            tests/test_model_release.py \
+            tests/test_lm_eval.py \
+            tests/test_eval_suite.py \
+            tests/test_post_deploy.py \
+            tests/test_backup_service.py \
+            tests/test_autonomy_graph_integration.py \
+            tests/test_legal_authority.py \
+            tests/test_irwm_inference_gate.py \
+            tests/test_inference_security_gate.py \
+            tests/test_provider_compatibility.py \
+            tests/test_iam_tool_wiring.py \
+            -q
+
+  live-acceptance:
+    name: Level 1-5 acceptance (isolated stack)
+    needs: deterministic-gates
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://aura:change-me-securely@postgres:5432/aura_db
+      REDIS_URL: redis://localhost:6379/0
+      LITELLM_MASTER_KEY: change-me-securely
+      IAM_BOOTSTRAP_API_KEY: ci-acceptance-bootstrap-key
+      IAM_API_URL: http://localhost:8000
+      AUTH_ENABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install httpx
+      - name: Start minimum IAM stack
+        run: docker compose up -d --wait postgres redis litellm backend
+      - name: Diagnose stack startup failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail=100 postgres redis litellm backend || true
+      - name: Bootstrap admin acceptance credential
+        run: |
+          KEY=$(python backend/scripts/bootstrap_acceptance_admin.py)
+          test -n "$KEY"
+          echo "IAM_API_KEY=$KEY" >> "$GITHUB_ENV"
+      - name: Run Level 1-5 acceptance suites
+        run: |
+          for level in 1 2 3 4 5; do
+            python tests/level${level}_acceptance.py
+          done
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v

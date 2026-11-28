@@ -1,0 +1,17 @@
+{
+  "classification": "personal",
+  "creator": "IAM",
+  "description": "Review text for secret-like material and recommend safe redaction without echoing values.",
+  "filesystem_access": "none",
+  "id": "iam.native.security.secret-redaction",
+  "name": "Secret redaction reviewer",
+  "network_access": false,
+  "origin": "native",
+  "permissions": [
+    "reasoning",
+    "code_review"
+  ],
+  "requires_creator_approval": false,
+  "status": "draft",
+  "version": "1.0.0"
+}

@@ -1,11 +1,11 @@
-# iam-sdk (Python)
+# iamagris-sdk (Python)
 
-Official Python client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
+Official Python client for the IAM Core. See [../PROTOCOL.md](../PROTOCOL.md) and [docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md](../../docs/IAM_DEVELOPER_SDK_AND_CLI_SPEC.md).
 
-**Proposed PyPI name — not published.** Python 3.11+.
+Python 3.11+. Published to PyPI:
 
 ```bash
-pip install iam-sdk
+pip install iamagris-sdk
 ```
 
 ```python
@@ -25,4 +25,37 @@ async def main():
 asyncio.run(main())
 ```
 
-Same protocol and conceptual surface as `@iam/sdk`: `core`, `tasks`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`. Scoped bearer tokens, version negotiation, controlled retries, offline task queue with `tasks.flush_queue()`. No database access and no protected-core modification.
+Same protocol and conceptual surface as `@iamagris/sdk`: `core`, `tasks`, `events`, `nodes`, `resources`, `files`, `knowledge`, `sync`, `diagnostics`, `creator`, `integrity`, `uwaie`, `public_records`, `legal`, `geo`, `human_presence`, `assistant_lab`, `free_sandbox`. Scoped bearer tokens, version negotiation, controlled retries, offline task queue with `tasks.flush_queue()`. No database access and no protected-core modification.
+
+## Creator CLI (no email dependency)
+
+The `creator` section is for the human Creator's tooling, not for IAM. It reads
+pending requests and challenges from the Core API and submits locally signed
+decisions:
+
+```bash
+export IAM_CORE_URL=https://core.example.com
+export IAM_TOKEN=<creator-scoped-token>
+# Only if the Core is behind Cloudflare Access:
+export IAM_CF_ACCESS_CLIENT_ID=<access-service-token-id>
+export IAM_CF_ACCESS_CLIENT_SECRET=<access-service-token-secret>
+
+python -m iam_sdk.creator_cli pending
+python -m iam_sdk.creator_cli show cr_...
+python -m iam_sdk.creator_cli sign cr_... --approve \
+  --signer "python /secure/path/sign_with_hardware_key.py"
+```
+
+The signer command must print a base64 ED25519 signature for exactly
+`<challenge_hash>|<approved|rejected>` (it receives that string as its last
+argument, or on stdin with `--signer-input stdin`). Use `--dry-run` to inspect
+the signing message without submitting. `decide` submits a signature obtained
+from a separate signer.
+
+Email is optional notification only. Authority comes from the verified
+signature over the one-time challenge (OD-03/OD-19/OD-42), never from the channel.
+
+For production, configure `CREATOR_PUBLIC_KEY` and `CREATOR_SIGNER_ID` in the
+Core environment so signatures can be verified. `scripts/creator_signer_example.py`
+is a reference signer template — replace it with a hardware-key/HSM command.
+End-to-end evidence: `tests/creator_cli_e2e.md`.

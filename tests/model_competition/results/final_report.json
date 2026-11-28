@@ -1,0 +1,130 @@
+{
+  "method": "Score 0-5 per criterion; weights Critical=3, High=2. N/A criteria excluded; weighted average taken over measured criteria only. No new model calls; all values derived from recorded evidence.",
+  "inference_modes": {
+    "local-qwen-coder-3b": "default (non-thinking model)",
+    "local-qwen-3b": "default (non-thinking model)",
+    "local-qwen3.5-4b": "think=false (thinking disabled \u2014 default mode exhausted the 512-token budget with no code in 314 s)"
+  },
+  "cold": {
+    "local-qwen-coder-3b": {
+      "n": 2,
+      "median_ms": 17697.5,
+      "median_ttft_ms": 10787.6,
+      "correct": 0
+    },
+    "local-qwen-3b": {
+      "n": 2,
+      "median_ms": 16344.7,
+      "median_ttft_ms": 9221.7,
+      "correct": 0
+    },
+    "local-qwen3.5-4b": {
+      "n": 2,
+      "median_ms": 29772.4,
+      "median_ttft_ms": 15508.3,
+      "correct": 0
+    }
+  },
+  "warm": {
+    "local-qwen-coder-3b": {
+      "n": 5,
+      "min_ms": 6817.9,
+      "median_ms": 6978.9,
+      "max_ms": 7391.1,
+      "stdev_ms": 218.2,
+      "peak_mem_median_mb": 4749.6,
+      "avg_cpu_cores": 4.0,
+      "swap_max_mb": 150.0,
+      "excluded_reloads": 0,
+      "correct": 0
+    },
+    "local-qwen-3b": {
+      "n": 5,
+      "min_ms": 7275.8,
+      "median_ms": 7484.8,
+      "max_ms": 7683.8,
+      "stdev_ms": 155.2,
+      "peak_mem_median_mb": 4711.4,
+      "avg_cpu_cores": 4.01,
+      "swap_max_mb": 150.1,
+      "excluded_reloads": 1,
+      "correct": 0
+    },
+    "local-qwen3.5-4b": {
+      "n": 6,
+      "min_ms": 16322.9,
+      "median_ms": 19951.2,
+      "max_ms": 22256.5,
+      "stdev_ms": 2417.1,
+      "peak_mem_median_mb": 5503.2,
+      "avg_cpu_cores": 3.99,
+      "swap_max_mb": 676.7,
+      "excluded_reloads": 1,
+      "correct": 0
+    }
+  },
+  "scorecard": {
+    "local-qwen-coder-3b": {
+      "scores": {
+        "Coding correctness": 3.75,
+        "Reasoning quality": null,
+        "RAM consumption": 3,
+        "CPU efficiency": 4.99,
+        "Cold-start latency": 4.62,
+        "Warm inference speed": 5.0,
+        "Long-running stability": 4,
+        "ARM64 compatibility": null,
+        "Tool calling": null
+      },
+      "weighted_score_measured_only": 4.1,
+      "measured_weight": 14,
+      "total_weight": 21,
+      "coverage_pct": 66.7
+    },
+    "local-qwen-3b": {
+      "scores": {
+        "Coding correctness": 3.12,
+        "Reasoning quality": null,
+        "RAM consumption": 3,
+        "CPU efficiency": 4.98,
+        "Cold-start latency": 5.0,
+        "Warm inference speed": 4.66,
+        "Long-running stability": 3,
+        "ARM64 compatibility": null,
+        "Tool calling": null
+      },
+      "weighted_score_measured_only": 3.83,
+      "measured_weight": 14,
+      "total_weight": 21,
+      "coverage_pct": 66.7
+    },
+    "local-qwen3.5-4b": {
+      "scores": {
+        "Coding correctness": 3.75,
+        "Reasoning quality": null,
+        "RAM consumption": 2,
+        "CPU efficiency": 5.0,
+        "Cold-start latency": 2.74,
+        "Warm inference speed": 1.75,
+        "Long-running stability": 2,
+        "ARM64 compatibility": null,
+        "Tool calling": null
+      },
+      "weighted_score_measured_only": 2.87,
+      "measured_weight": 14,
+      "total_weight": 21,
+      "coverage_pct": 66.7
+    }
+  },
+  "recommendation": {
+    "initial_local_brain": "local-qwen-coder-3b",
+    "rationale": "Highest weighted score over measured criteria. This is a relative choice for the private/low-resource baseline, not approval as the primary brain: correctness, concurrency and hosted comparison all remain constrained. See RESULTS.md for the written interpretation.",
+    "caveats": [
+      "Dev-host emulation only; final decision requires the Contabo VPS 4 run with --target.",
+      "Hosted contenders were unavailable (no API keys), so no cross-provider comparison exists.",
+      "Reasoning quality, ARM64 compatibility and tool calling were not measured.",
+      "qwen3.5:4b requires think=false to produce code within the unchanged 512-token budget; its default thinking mode failed completely.",
+      "Multiple resident models push swap to ~150 MB and host RAM available down to 0.69 GB; run one model at a time on the 8 GB VPS."
+    ]
+  }
+}

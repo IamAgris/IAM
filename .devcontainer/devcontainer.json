@@ -1,0 +1,38 @@
+{
+  "name": "IAM / AURA Development",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "GitHub.vscode-github-actions"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "forwardPorts": [8000, 3000, 4000, 5433, 6380, 9020, 9021],
+  "portsAttributes": {
+    "8000": { "label": "IAM Backend API", "onAutoForward": "notify" },
+    "3000": { "label": "IAM Frontend", "onAutoForward": "notify" },
+    "4000": { "label": "LiteLLM Gateway", "onAutoForward": "silent" },
+    "5433": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6380": { "label": "Redis", "onAutoForward": "silent" },
+    "9020": { "label": "MinIO API", "onAutoForward": "silent" },
+    "9021": { "label": "MinIO Console", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "remoteUser": "vscode"
+}

@@ -4,16 +4,40 @@ Supports IAM's self-development lifecycle: identify → prototype → test →
 evaluate → versioned release → authorized deployment → rollback.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.core.database import get_db_session
 from app.models.development import (
     SoftwareProject, CodeChange, DeploymentRecord, Experiment, UpgradeHistory,
 )
+from app.models.security import AuditEvent
+from app.services.development_governance import (
+    DeploymentGateDenied,
+    is_protected_environment,
+    verify_protected_deployment,
+)
+from app.services.ai_research.release_gate import (
+    MODEL_RELEASE_ACTION,
+    ModelReleaseError,
+    ModelReleaseService,
+)
+from app.services.ai_research.continuous_improvement import ContinuousImprovement, default_adapters
+from app.services.ai_research.base import ResearchError
+from app.services.ai_research.dataset_engine import DatasetBuildRequest, build as build_dataset
+from app.services.ai_research.self_improvement import CandidateRequest, prepare_candidate
+from app.services.ai_research.post_deploy import check_regression
+from app.services.ai_research.lm_eval import default_lm_eval_driver, eval_config
+from app.services.ai_research.benchmarks import BenchmarkSpec
+from app.services.ai_research.artifacts import new_experiment_id
+from app.services.ai_research.jobs import HardwareRequirement, ResearchJob, ResearchMethod
+from app.services.free_sandboxes.base import ProviderUnavailable, SandboxError
+from app.services.iplci.gateway import GovernanceRefusal
+from app.services.iplci.integration import enforce_collection_request, enforce_training_request
 
 router = APIRouter(prefix="/api/v1/development", tags=["development"])
 
@@ -51,6 +75,8 @@ class DeploymentRequest(BaseModel):
     project_id: str
     version: str
     environment: str
+    protected_core: bool = False
+    change_ids: List[str] = []
 
 
 class UpgradeRequest(BaseModel):
@@ -60,8 +86,73 @@ class UpgradeRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class ModelReleaseRegister(BaseModel):
+    model: str
+    version: str
+    checkpoint_ref: str
+    capability_profile: Dict[str, Any] = Field(default_factory=dict)
+    baseline_score: float
+    min_improvement: float = 0.0
+    dataset_ref: str
+    dataset_sha256: str
+    licence: str
+    consent_recorded: bool = False
+    poisoning_scan_ref: str
+    benchmark_ref: str
+
+
+class ModelPromoteRequest(BaseModel):
+    benchmark_refs: List[str]
+
+
+class ModelRollbackRequest(BaseModel):
+    version: str
+    reason: str = ""
+
+
+class DatasetBuildRequestModel(BaseModel):
+    experiment_id: str
+    licence: str
+    min_confidence: float = 0.7
+    max_rows: int = 200
+    consent_types: List[str] = []
+    diagnosis: str = ""
+    iplci_source_id: Optional[str] = None
+
+
+class CandidateRequestModel(BaseModel):
+    experiment_id: str
+    licence: str
+    base_model: str = ""
+    candidate_model: str = ""
+    version: str = "candidate"
+    task_type: str = "coding"
+    checkpoint_ref: str
+    baseline_score: float = 0.0
+    min_improvement: float = 0.01
+    min_confidence: float = 0.7
+    max_rows: int = 200
+    consent_types: List[str] = []
+    diagnosis: str = ""
+    iplci_source_id: Optional[str] = None
+    iplci_dataset_id: Optional[str] = None
+    iplci_approval_id: Optional[str] = None
+
+
+class ResearchRunRequest(BaseModel):
+    title: str
+    task_type: str = "coding"
+    complexity: int = 3
+    method: str = "evaluation"
+    model: str = settings.iam_primary_model
+    dataset_ref: str = ""
+    min_ram_mb: int = 4096
+    min_vram_mb: int = 0
+    max_runtime_minutes: int = 60
+
+
 @router.get("/projects")
-async def list_projects(db: AsyncSession = Depends(get_db_session)):
+async def list_projects(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(SoftwareProject).order_by(SoftwareProject.created_at.desc()))
     items = r.scalars().all()
     return [{
@@ -71,7 +162,7 @@ async def list_projects(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/projects")
-async def create_project(request: ProjectCreate, db: AsyncSession = Depends(get_db_session)):
+async def create_project(request: ProjectCreate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     p = SoftwareProject(name=request.name, description=request.description)
     db.add(p)
     await db.commit()
@@ -80,7 +171,7 @@ async def create_project(request: ProjectCreate, db: AsyncSession = Depends(get_
 
 
 @router.patch("/projects/{project_id}")
-async def update_project(project_id: str, request: ProjectUpdate, db: AsyncSession = Depends(get_db_session)):
+async def update_project(project_id: str, request: ProjectUpdate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(SoftwareProject).where(SoftwareProject.id == project_id))
     p = r.scalar_one_or_none()
     if not p:
@@ -92,7 +183,7 @@ async def update_project(project_id: str, request: ProjectUpdate, db: AsyncSessi
 
 
 @router.post("/code-changes")
-async def record_code_change(request: CodeChangeRequest, db: AsyncSession = Depends(get_db_session)):
+async def record_code_change(request: CodeChangeRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     c = CodeChange(
         project_id=request.project_id, description=request.description,
         file_path=request.file_path, change_type=request.change_type,
@@ -104,7 +195,7 @@ async def record_code_change(request: CodeChangeRequest, db: AsyncSession = Depe
 
 
 @router.get("/code-changes")
-async def list_code_changes(project_id: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):
+async def list_code_changes(project_id: Optional[str] = None, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     stmt = select(CodeChange)
     if project_id:
         stmt = stmt.where(CodeChange.project_id == project_id)
@@ -112,8 +203,36 @@ async def list_code_changes(project_id: Optional[str] = None, db: AsyncSession =
     return [{"id": str(c.id), "file_path": c.file_path, "change_type": c.change_type, "status": c.status} for c in r.scalars().all()]
 
 
+@router.post("/code-changes/{change_id}/review")
+async def review_code_change(change_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    """Record a peer/self review before testing (no authority is granted)."""
+    result = await db.execute(select(CodeChange).where(CodeChange.id == change_id))
+    change = result.scalar_one_or_none()
+    if not change:
+        raise HTTPException(404, "Code change not found")
+    if change.status != "proposed":
+        raise HTTPException(400, f"cannot review a change in status '{change.status}'")
+    change.status = "reviewed"  # type: ignore[assignment]
+    await db.commit()
+    return {"id": str(change.id), "status": change.status}
+
+
+@router.post("/code-changes/{change_id}/test")
+async def test_code_change(change_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    """Record a passing test. Protected deployments require this gate."""
+    result = await db.execute(select(CodeChange).where(CodeChange.id == change_id))
+    change = result.scalar_one_or_none()
+    if not change:
+        raise HTTPException(404, "Code change not found")
+    if change.status not in ("reviewed", "tested"):
+        raise HTTPException(400, f"cannot test a change in status '{change.status}'")
+    change.status = "tested"  # type: ignore[assignment]
+    await db.commit()
+    return {"id": str(change.id), "status": change.status}
+
+
 @router.post("/experiments")
-async def create_experiment(request: ExperimentCreate, db: AsyncSession = Depends(get_db_session)):
+async def create_experiment(request: ExperimentCreate, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     e = Experiment(name=request.name, hypothesis=request.hypothesis, description=request.description)
     db.add(e)
     await db.commit()
@@ -122,44 +241,88 @@ async def create_experiment(request: ExperimentCreate, db: AsyncSession = Depend
 
 
 @router.get("/experiments")
-async def list_experiments(db: AsyncSession = Depends(get_db_session)):
+async def list_experiments(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(Experiment).order_by(Experiment.created_at.desc()))
     return [{"id": str(e.id), "name": e.name, "status": e.status, "hypothesis": e.hypothesis} for e in r.scalars().all()]
 
 
 @router.patch("/experiments/{experiment_id}")
-async def update_experiment(experiment_id: str, request: ExperimentResultRequest, db: AsyncSession = Depends(get_db_session)):
+async def update_experiment(experiment_id: str, request: ExperimentResultRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(Experiment).where(Experiment.id == experiment_id))
     e = r.scalar_one_or_none()
     if not e:
         raise HTTPException(404, "Experiment not found")
-    e.status = request.status
+    e.status = request.status  # type: ignore[assignment]
     if request.results is not None:
-        e.results = request.results
+        e.results = request.results  # type: ignore[assignment]
     if request.status in ("completed", "failed"):
         from datetime import datetime
-        e.completed_at = datetime.utcnow()
+        e.completed_at = datetime.utcnow()  # type: ignore[assignment]
     await db.commit()
     return {"id": str(e.id), "status": e.status}
 
 
 @router.post("/deployments")
-async def record_deployment(request: DeploymentRequest, db: AsyncSession = Depends(get_db_session)):
-    d = DeploymentRecord(project_id=request.project_id, version=request.version, environment=request.environment)
+async def record_deployment(  # type: ignore[no-untyped-def]
+    request: DeploymentRequest,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Record a deployment; protected-core deploys need tests + signed authority."""
+    protected = request.protected_core or is_protected_environment(request.environment)
+    authority = None
+    if protected:
+        try:
+            authority = await verify_protected_deployment(
+                db, request.project_id, request.change_ids
+            )
+        except DeploymentGateDenied as exc:
+            raise HTTPException(403, str(exc)) from exc
+
+    d = DeploymentRecord(
+        project_id=request.project_id,
+        version=request.version,
+        environment=request.environment,
+    )
     db.add(d)
+    await db.flush()
+    credential = getattr(http_request.state, "credential", None)
+    actor = credential.get("name", "iam") if credential else "iam"
+    db.add(
+        AuditEvent(
+            event_type="protected_deployment_requested" if protected else "deployment_recorded",
+            actor=actor,
+            target=str(d.id),
+            details={
+                "project_id": request.project_id,
+                "version": request.version,
+                "environment": request.environment,
+                "protected_core": protected,
+                "authorization_id": authority["authorization_id"] if authority else None,
+                "tested_changes": authority["tested_changes"] if authority else [],
+            },
+        )
+    )
     await db.commit()
     await db.refresh(d)
-    return {"id": str(d.id), "status": d.status, "version": d.version, "environment": d.environment}
+    return {
+        "id": str(d.id),
+        "status": d.status,
+        "version": d.version,
+        "environment": d.environment,
+        "protected_core": protected,
+        "authorization_id": authority["authorization_id"] if authority else None,
+    }
 
 
 @router.get("/deployments")
-async def list_deployments(db: AsyncSession = Depends(get_db_session)):
+async def list_deployments(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(DeploymentRecord).order_by(DeploymentRecord.deployed_at.desc()))
     return [{"id": str(d.id), "version": d.version, "environment": d.environment, "status": d.status} for d in r.scalars().all()]
 
 
 @router.post("/upgrades")
-async def record_upgrade(request: UpgradeRequest, db: AsyncSession = Depends(get_db_session)):
+async def record_upgrade(request: UpgradeRequest, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     u = UpgradeHistory(
         component=request.component, previous_version=request.previous_version,
         new_version=request.new_version, reason=request.reason,
@@ -171,6 +334,270 @@ async def record_upgrade(request: UpgradeRequest, db: AsyncSession = Depends(get
 
 
 @router.get("/upgrades")
-async def list_upgrades(db: AsyncSession = Depends(get_db_session)):
+async def list_upgrades(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     r = await db.execute(select(UpgradeHistory).order_by(UpgradeHistory.created_at.desc()))
     return [{"id": str(u.id), "component": u.component, "new_version": u.new_version, "status": u.status} for u in r.scalars().all()]
+
+
+def _release_actor(request: Request) -> str:
+    credential = getattr(request.state, "credential", None)
+    return credential.get("name", "iam") if credential else "iam"
+
+
+@router.get("/models/release-policy")
+async def model_release_policy():  # type: ignore[no-untyped-def]
+    return {
+        "action": MODEL_RELEASE_ACTION,
+        "requires_signed_creator_authorization": True,
+        "evidence": {
+            "reproducible_benchmark_runs": 2,
+            "matching_config_hash": True,
+            "minimum_improvement": "declared per version",
+            "provenance": [
+                "dataset_sha256", "licence", "consent_recorded", "poisoning_scan_ref"
+            ],
+        },
+        "supports_rollback": True,
+    }
+
+
+@router.post("/models/versions")
+async def register_model_version(  # type: ignore[no-untyped-def]
+    payload: ModelReleaseRegister,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    try:
+        return await ModelReleaseService(db).register(
+            model=payload.model,
+            version=payload.version,
+            checkpoint_ref=payload.checkpoint_ref,
+            capability_profile=payload.capability_profile,
+            baseline_score=payload.baseline_score,
+            min_improvement=payload.min_improvement,
+            dataset_ref=payload.dataset_ref,
+            dataset_sha256=payload.dataset_sha256,
+            licence=payload.licence,
+            consent_recorded=payload.consent_recorded,
+            poisoning_scan_ref=payload.poisoning_scan_ref,
+            benchmark_ref=payload.benchmark_ref,
+            actor=_release_actor(request),
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.get("/models/versions")
+async def list_model_versions(  # type: ignore[no-untyped-def]
+    model: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+):
+    return await ModelReleaseService(db).versions(model)
+
+
+@router.post("/models/{model}/versions/{version}/promote")
+async def promote_model_version(  # type: ignore[no-untyped-def]
+    model: str,
+    version: str,
+    payload: ModelPromoteRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    try:
+        return await ModelReleaseService(db).promote(
+            model, version, payload.benchmark_refs, _release_actor(request)
+        )
+    except ModelReleaseError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/models/{model}/rollback")
+async def rollback_model(  # type: ignore[no-untyped-def]
+    model: str,
+    payload: ModelRollbackRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    try:
+        return await ModelReleaseService(db).rollback(
+            model, payload.version, payload.reason, _release_actor(request)
+        )
+    except ModelReleaseError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.post("/research-runs")
+async def run_research_cycle(  # type: ignore[no-untyped-def]
+    payload: ResearchRunRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Run one fail-closed research cycle with memory, scheduling and recovery."""
+    try:
+        method = ResearchMethod(payload.method)
+    except ValueError as exc:
+        raise HTTPException(400, f"unknown research method: {payload.method}") from exc
+    if method in (
+        ResearchMethod.SFT,
+        ResearchMethod.LORA,
+        ResearchMethod.QLORA,
+        ResearchMethod.FULL_FINE_TUNE,
+        ResearchMethod.DISTILLATION,
+    ) and not payload.dataset_ref:
+        raise HTTPException(400, "training research runs require dataset_ref")
+    job = ResearchJob(
+        experiment_id=new_experiment_id(),
+        title=payload.title,
+        task_type=payload.task_type,
+        complexity=max(1, min(5, payload.complexity)),
+        method=method,
+        model=payload.model,
+        dataset_ref=payload.dataset_ref,
+        hardware=HardwareRequirement(
+            min_ram_mb=payload.min_ram_mb,
+            min_vram_mb=payload.min_vram_mb,
+            max_runtime_minutes=payload.max_runtime_minutes,
+        ),
+    )
+    try:
+        result = await ContinuousImprovement(db).run(job, _release_actor(request))
+    except (ProviderUnavailable, SandboxError) as exc:
+        raise HTTPException(503, str(exc)) from exc
+    return result.to_dict()
+
+
+@router.get("/research-history")
+async def research_history(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    return await ContinuousImprovement(db).history()
+
+
+@router.post("/datasets")
+async def build_dataset_artifact(  # type: ignore[no-untyped-def]
+    payload: DatasetBuildRequestModel,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Build a provenance-bearing dataset from verified knowledge only.
+
+    Consent types default to empty, so no visitor interaction is included until
+    the owner explicitly configures an allowed consent type.
+    """
+    if payload.iplci_source_id:
+        try:
+            await enforce_collection_request(
+                db, source_id=payload.iplci_source_id,
+                agent_id=str(getattr(request.state, "credential", None) or "sdk"),
+            )
+        except GovernanceRefusal as exc:
+            raise HTTPException(403, {"code": exc.code, "decision": exc.decision, "detail": str(exc)})
+    try:
+        result = await build_dataset(
+            db,
+            DatasetBuildRequest(
+                experiment_id=payload.experiment_id,
+                licence=payload.licence,
+                min_confidence=payload.min_confidence,
+                max_rows=payload.max_rows,
+                consent_types=frozenset(payload.consent_types),
+                diagnosis=payload.diagnosis,
+            ),
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result.as_dict()
+
+
+@router.post("/self-improvement/cycle")
+async def run_self_improvement_cycle(  # type: ignore[no-untyped-def]
+    payload: CandidateRequestModel,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Prepare a benchmarked candidate. Promotion remains a separate signed gate."""
+    if not payload.iplci_source_id or not payload.iplci_dataset_id:
+        raise HTTPException(403, {
+            "code": "IPLCI_PROVENANCE_REQUIRED",
+            "detail": "training requires a registered IPLCI source, dataset and approval",
+        })
+    try:
+        await enforce_training_request(
+            db,
+            source_id=payload.iplci_source_id,
+            dataset_id=payload.iplci_dataset_id,
+            approval_id=payload.iplci_approval_id,
+            agent_id=_release_actor(request),
+        )
+    except GovernanceRefusal as exc:
+        raise HTTPException(403, {
+            "code": exc.code, "decision": exc.decision, "detail": str(exc),
+        })
+    try:
+        result = await prepare_candidate(
+            db,
+            CandidateRequest(
+                experiment_id=payload.experiment_id,
+                licence=payload.licence,
+                base_model=payload.base_model or settings.iam_primary_model,
+                candidate_model=payload.candidate_model,
+                version=payload.version,
+                task_type=payload.task_type,
+                checkpoint_ref=payload.checkpoint_ref,
+                baseline_score=payload.baseline_score,
+                min_improvement=payload.min_improvement,
+                min_confidence=payload.min_confidence,
+                max_rows=payload.max_rows,
+                consent_types=frozenset(payload.consent_types),
+                diagnosis=payload.diagnosis,
+            ),
+            adapters=default_adapters(),
+            actor=_release_actor(request),
+            governance_context={
+                "source_id": payload.iplci_source_id,
+                "dataset_id": payload.iplci_dataset_id,
+                "approval_id": payload.iplci_approval_id,
+                "agent_id": _release_actor(request),
+            },
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result
+
+
+@router.post("/models/{model}/versions/{version}/regression-check")
+async def model_regression_check(  # type: ignore[no-untyped-def]
+    model: str,
+    version: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Compare a deployed version with a fresh trusted evaluation.
+
+    Rollback is never self-authorized: it needs the operator switch and the
+    signed release gate, otherwise the result is `approval_required`.
+    """
+    driver = default_lm_eval_driver()
+    if driver is None:
+        raise HTTPException(400, "no trusted evaluator is configured")
+    spec = BenchmarkSpec(
+        name="post-deploy-regression",
+        task_type="regression",
+        repetitions=1,
+        config=eval_config(driver),
+    )
+    try:
+        result = await check_regression(
+            db,
+            model,
+            version,
+            evaluate=lambda candidate: driver.evaluate(spec, candidate),
+            actor=_release_actor(request),
+        )
+    except ResearchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return result.as_dict()

@@ -41,7 +41,7 @@ class VisionMemoryRequest(BaseModel):
 
 
 @router.post("/understand-image", response_model=ImageUnderstandResponse)
-async def understand_image(
+async def understand_image(  # type: ignore[no-untyped-def]
     image: UploadFile = File(...),
     prompt: Optional[str] = Form(None),
     store_in_memory: bool = Form(False),
@@ -86,7 +86,7 @@ async def understand_image(
 
 
 @router.post("/analyze-video", response_model=VideoAnalyzeResponse)
-async def analyze_video(
+async def analyze_video(  # type: ignore[no-untyped-def]
     video: UploadFile = File(...),
     prompt: Optional[str] = Form(None),
     max_frames: Optional[int] = Form(None),

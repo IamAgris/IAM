@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class ModelComparison(Base):
+class ModelComparison(Base):  # type: ignore[misc]
     """Testing and comparing new foundation models."""
     __tablename__ = "model_comparisons"
 
@@ -28,7 +28,7 @@ class ModelComparison(Base):
     )
 
 
-class ModelPortabilityExport(Base):
+class ModelPortabilityExport(Base):  # type: ignore[misc]
     """Export memory and identity in provider-independent format."""
     __tablename__ = "model_portability_exports"
 
@@ -39,7 +39,7 @@ class ModelPortabilityExport(Base):
     export_location = Column(Text, nullable=True)
 
 
-class FallbackConfig(Base):
+class FallbackConfig(Base):  # type: ignore[misc]
     """Fallback model configuration if primary provider unavailable."""
     __tablename__ = "fallback_configs"
 

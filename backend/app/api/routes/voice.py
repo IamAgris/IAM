@@ -41,7 +41,7 @@ class VADResponse(BaseModel):
 
 
 @router.post("/speech-to-text", response_model=STTResponse)
-async def speech_to_text(
+async def speech_to_text(  # type: ignore[no-untyped-def]
     audio: UploadFile = File(...),
     language: Optional[str] = Form(None),
 ):
@@ -70,7 +70,7 @@ async def speech_to_text(
 
 
 @router.post("/text-to-speech", response_model=TTSResponse)
-async def text_to_speech(request: TTSRequest):
+async def text_to_speech(request: TTSRequest):  # type: ignore[no-untyped-def]
     """Convert text to speech audio (returns base64-encoded audio)."""
     result = await voice_service.text_to_speech(
         text=request.text,
@@ -90,7 +90,7 @@ async def text_to_speech(request: TTSRequest):
 
 
 @router.post("/voice-activity", response_model=VADResponse)
-async def voice_activity_detection(
+async def voice_activity_detection(  # type: ignore[no-untyped-def]
     audio: UploadFile = File(...),
 ):
     """Detect voice activity in uploaded audio."""

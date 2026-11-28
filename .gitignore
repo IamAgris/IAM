@@ -36,6 +36,9 @@ var/
 *.swp
 *.swo
 
+# Rust
+target/
+
 # Node / Next.js
 node_modules/
 .next/
@@ -70,3 +73,7 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+
+# Generated local search cache (RKIE) — generated indexes and journals
+tools/rkie/index/*.sqlite
+tools/rkie/index/*.sqlite-*

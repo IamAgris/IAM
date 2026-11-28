@@ -1,0 +1,88 @@
+{
+  "adapter": "self-test:reference_ops",
+  "cases_per_op": 32,
+  "gate": "G2",
+  "operations": {
+    "attention_causal": {
+      "abs_tol": 1e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 3072,
+      "error": null,
+      "exact_matches": 3072,
+      "max_abs_diff": 0.0,
+      "min_cosine": 0.9999999999999998,
+      "pass": true
+    },
+    "dequant_q8_0_row": {
+      "abs_tol": 0.0,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 1024,
+      "error": null,
+      "exact_matches": 1024,
+      "max_abs_diff": 0.0,
+      "min_cosine": 0.9999999999999998,
+      "pass": true
+    },
+    "rmsnorm": {
+      "abs_tol": 1e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 2048,
+      "error": null,
+      "exact_matches": 2048,
+      "max_abs_diff": 0.0,
+      "min_cosine": 0.9999999999999998,
+      "pass": true
+    },
+    "rope_apply": {
+      "abs_tol": 1e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 1024,
+      "error": null,
+      "exact_matches": 1024,
+      "max_abs_diff": 0.0,
+      "min_cosine": 0.9999999999999998,
+      "pass": true
+    },
+    "rope_cos_sin": {
+      "abs_tol": 2.887e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 1024,
+      "error": null,
+      "exact_matches": 1024,
+      "max_abs_diff": 0.0,
+      "min_cosine": 1.0,
+      "pass": true
+    },
+    "rope_inv_freq": {
+      "abs_tol": 1e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 512,
+      "error": null,
+      "exact_matches": 512,
+      "max_abs_diff": 0.0,
+      "min_cosine": 1.0,
+      "pass": true
+    },
+    "swiglu": {
+      "abs_tol": 5.482e-06,
+      "case_count": 32,
+      "cos_min": 0.9999,
+      "elements_compared": 256,
+      "error": null,
+      "exact_matches": 256,
+      "max_abs_diff": 0.0,
+      "min_cosine": 0.9999999999999998,
+      "pass": true
+    }
+  },
+  "overall_pass": true,
+  "reference": "reference_ops.py (strict FP32)",
+  "seed": 20261128,
+  "tolerances": "tolerances.json"
+}

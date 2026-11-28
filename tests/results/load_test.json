@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-11-26T23:58:16.256410+00:00",
+  "base_url": "http://localhost:8080",
+  "target_concurrency": 50,
+  "sessions_created": 50,
+  "messages_per_session": 2,
+  "total_requests": 150,
+  "errors": 0,
+  "error_samples": [],
+  "latency_ms": {
+    "p50": 736.5,
+    "p95": 2427.2,
+    "p99": 2486.4,
+    "max": 2489.4,
+    "mean": 1098.3
+  },
+  "p95_limit_ms": 5000,
+  "passed": true
+}

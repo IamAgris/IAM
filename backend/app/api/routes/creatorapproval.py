@@ -33,6 +33,7 @@ class RequestCreate(BaseModel):
     risk_level: str = "3"
     target_ref: Optional[str] = None
     reason: Optional[str] = None
+    channel: str = "creator_email"  # creator_email | creator_cli | creator_webhook | creator_node | creator_file
 
 
 class DecisionRequest(BaseModel):
@@ -41,7 +42,7 @@ class DecisionRequest(BaseModel):
     signer_id: str
 
 
-async def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:
+async def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:  # type: ignore[type-arg]
     try:
         return await operation(*args, **kwargs)
     except CreatorApprovalError as exc:
@@ -53,7 +54,7 @@ async def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:
 
 
 @router.get("/policy")
-async def policy():
+async def policy():  # type: ignore[no-untyped-def]
     return {
         "channel": "creator_email",
         "creator_ui": False,
@@ -66,7 +67,7 @@ async def policy():
 
 
 @router.post("/requests", status_code=202)
-async def create_request(
+async def create_request(  # type: ignore[no-untyped-def]
     request: RequestCreate, db: AsyncSession = Depends(get_db_session)
 ):
     """IAM creates an approval request; the returned package is sent by email."""
@@ -78,23 +79,24 @@ async def create_request(
         risk_level=request.risk_level,
         target_ref=request.target_ref,
         reason=request.reason,
+        channel=request.channel,
     )
 
 
 @router.get("/requests")
-async def list_requests(
+async def list_requests(  # type: ignore[no-untyped-def]
     status: Optional[str] = None, db: AsyncSession = Depends(get_db_session)
 ):
     return await _run(CreatorApprovalService(db).list_requests, status)
 
 
 @router.get("/requests/{request_id}")
-async def get_request(request_id: str, db: AsyncSession = Depends(get_db_session)):
+async def get_request(request_id: str, db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(CreatorApprovalService(db).get_request, request_id)
 
 
 @router.post("/requests/{request_id}/decide")
-async def decide(
+async def decide(  # type: ignore[no-untyped-def]
     request_id: str,
     request: DecisionRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -114,7 +116,7 @@ async def decide(
 
 
 @router.post("/gateway/decision")
-async def gateway_decision(
+async def gateway_decision(  # type: ignore[no-untyped-def]
     request: Request, db: AsyncSession = Depends(get_db_session)
 ):
     """Inbound webhook for the Creator email/signer gateway.
@@ -147,7 +149,7 @@ async def gateway_decision(
 
 
 @router.get("/requests/{request_id}/challenge")
-async def challenge_for_signer(
+async def challenge_for_signer(  # type: ignore[no-untyped-def]
     request_id: str, db: AsyncSession = Depends(get_db_session)
 ):
     """Challenge material for the external signer — contains no private key."""
@@ -157,7 +159,7 @@ async def challenge_for_signer(
 
 
 @router.post("/requests/{request_id}/deliver")
-async def deliver_request(
+async def deliver_request(  # type: ignore[no-untyped-def]
     request_id: str, db: AsyncSession = Depends(get_db_session)
 ):
     """Retry delivery of a queued Creator approval email."""
@@ -165,25 +167,39 @@ async def deliver_request(
 
 
 @router.get("/outbox")
-async def outbox(db: AsyncSession = Depends(get_db_session)):
+async def outbox(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     return await _run(CreatorApprovalService(db).outbox)
 
 
+@router.get("/outbox/dead-letters")
+async def dead_letters(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
+    return await _run(CreatorApprovalService(db).dead_letters)
+
+
+@router.post("/outbox/dead-letters/{request_id}/resolve")
+async def resolve_dead_letter(  # type: ignore[no-untyped-def]
+    request_id: str, db: AsyncSession = Depends(get_db_session)
+):
+    return await _run(
+        CreatorApprovalService(db).resolve_dead_letter, request_id
+    )
+
+
 @router.post("/outbox/retry")
-async def retry_outbox(db: AsyncSession = Depends(get_db_session)):
+async def retry_outbox(db: AsyncSession = Depends(get_db_session)):  # type: ignore[no-untyped-def]
     """Worker-friendly retry of all pending/failed email deliveries."""
     return await _run(CreatorApprovalService(db).retry_failed_deliveries)
 
 
 @router.get("/audit")
-async def audit(
+async def audit(  # type: ignore[no-untyped-def]
     request_id: Optional[str] = None, db: AsyncSession = Depends(get_db_session)
 ):
     return await _run(CreatorApprovalService(db).audit, request_id)
 
 
 @router.post("/authorizations/{authorization_id}/revoke")
-async def revoke(
+async def revoke(  # type: ignore[no-untyped-def]
     authorization_id: str, db: AsyncSession = Depends(get_db_session)
 ):
     return {

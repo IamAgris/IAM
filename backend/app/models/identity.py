@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class AIIdentity(Base):
+class AIIdentity(Base):  # type: ignore[misc]
     __tablename__ = "ai_identity"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -26,7 +26,7 @@ class AIIdentity(Base):
     history = relationship("IdentityHistory", back_populates="identity", cascade="all, delete-orphan")
 
 
-class AIPersonality(Base):
+class AIPersonality(Base):  # type: ignore[misc]
     __tablename__ = "ai_personality"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -44,7 +44,7 @@ class AIPersonality(Base):
     identity = relationship("AIIdentity", back_populates="personality")
 
 
-class IdentityHistory(Base):
+class IdentityHistory(Base):  # type: ignore[misc]
     __tablename__ = "identity_history"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

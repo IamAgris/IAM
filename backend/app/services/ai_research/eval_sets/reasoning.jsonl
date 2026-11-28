@@ -1,0 +1,6 @@
+{"prompt":"A box has 3 red and 5 blue balls. How many balls are in the box? Reply with the number only.","expected":"8"}
+{"prompt":"If all flibs are gnarps and all gnarps are wobs, is a flib a wob? Reply yes or no only.","expected":"yes"}
+{"prompt":"What is 12 multiplied by 7? Reply with the number only.","expected":"84"}
+{"prompt":"A train leaves at 09:00 and travels 2 hours. What time does it arrive? Reply with HH:MM only.","expected":"11:00"}
+{"prompt":"Which is larger: 0.5 or 0.25? Reply with the larger number only.","expected":"0.5"}
+{"prompt":"There are 4 teams with 3 players each. How many players total? Reply with the number only.","expected":"12"}

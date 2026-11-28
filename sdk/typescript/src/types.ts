@@ -8,6 +8,9 @@ export interface IAMOptions {
   apiVersion?: string;
   timeoutMs?: number;
   maxRetries?: number;
+  /** Optional Cloudflare Access service-token headers (transport only). */
+  accessClientId?: string;
+  accessClientSecret?: string;
 }
 
 export interface TaskSubmit {

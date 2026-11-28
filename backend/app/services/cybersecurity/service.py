@@ -127,7 +127,7 @@ class SecurityEngineService:
             "allow_execution": engine.allow_execution,
             "allowed_scopes": engine.allowed_scopes or [],
             "created_by": engine.created_by,
-            "created_at": _iso(engine.created_at),
+            "created_at": _iso(engine.created_at),  # type: ignore[arg-type]
         }
 
     def _task_dict(self, task: SecurityEngineTask) -> Dict[str, Any]:
@@ -143,12 +143,12 @@ class SecurityEngineService:
             "status": task.status,
             "created_by": task.created_by,
             "approved_by": task.approved_by,
-            "approved_at": _iso(task.approved_at),
+            "approved_at": _iso(task.approved_at),  # type: ignore[arg-type]
             "external_task_id": task.external_task_id,
             "metadata": task.metadata_ or {},
-            "created_at": _iso(task.created_at),
-            "started_at": _iso(task.started_at),
-            "completed_at": _iso(task.completed_at),
+            "created_at": _iso(task.created_at),  # type: ignore[arg-type]
+            "started_at": _iso(task.started_at),  # type: ignore[arg-type]
+            "completed_at": _iso(task.completed_at),  # type: ignore[arg-type]
         }
 
     @staticmethod
@@ -163,7 +163,7 @@ class SecurityEngineService:
             "evidence": finding.evidence or [],
             "remediation": finding.remediation,
             "verified": finding.verified,
-            "created_at": _iso(finding.created_at),
+            "created_at": _iso(finding.created_at),  # type: ignore[arg-type]
         }
 
     async def _audit(
@@ -257,17 +257,17 @@ class SecurityEngineService:
     async def health_check(self, engine_id: str) -> Dict[str, Any]:
         engine = await self._get_engine(engine_id)
         self.guard.validate_base_url(
-            engine.base_url, allow_private_network=engine.allow_private_network
+            engine.base_url, allow_private_network=engine.allow_private_network  # type: ignore[arg-type]
         )
         self.guard.authorize_tool(
             "list_tasks",
             allowed_scopes=engine.allowed_scopes or [],
-            enabled=engine.enabled,
-            allow_execution=engine.allow_execution,
+            enabled=engine.enabled,  # type: ignore[arg-type]
+            allow_execution=engine.allow_execution,  # type: ignore[arg-type]
             approved_by=None,
             authorization=None,
         )
-        result = await adapter_for(engine.transport).health_check(self._config(engine))
+        result = await adapter_for(engine.transport).health_check(self._config(engine))  # type: ignore[arg-type]
         await self._audit("engine_health_check", engine_id=str(engine.id))
         await self.db.commit()
         return result
@@ -342,9 +342,9 @@ class SecurityEngineService:
         """Create a task. No external call happens here."""
         engine = await self._get_engine(engine_id)
         self.guard.validate_base_url(
-            engine.base_url, allow_private_network=engine.allow_private_network
+            engine.base_url, allow_private_network=engine.allow_private_network  # type: ignore[arg-type]
         )
-        scope = self.guard.validate_target(target, await self._scopes(engine.id))
+        scope = self.guard.validate_target(target, await self._scopes(engine.id))  # type: ignore[arg-type]
         self.guard.validate_operation(operation)
         if operation in EXECUTION_TOOLS and not engine.allow_execution:
             raise SecurityGuardDenied("engine does not permit execution operations")
@@ -386,11 +386,11 @@ class SecurityEngineService:
         task = await self._get_task(task_id)
         engine = await self._get_engine(str(task.engine_id))
         self.guard.validate_base_url(
-            engine.base_url, allow_private_network=engine.allow_private_network
+            engine.base_url, allow_private_network=engine.allow_private_network  # type: ignore[arg-type]
         )
-        self.guard.validate_operation(task.operation)
-        scopes = await self._scopes(engine.id)
-        scope = self.guard.validate_target(task.target, scopes)
+        self.guard.validate_operation(task.operation)  # type: ignore[arg-type]
+        scopes = await self._scopes(engine.id)  # type: ignore[arg-type]
+        scope = self.guard.validate_target(task.target, scopes)  # type: ignore[arg-type]
         level = "4" if task.risk_level == "protected_core" else "3"
         authorization = await self._require_creator(
             "cybersecurity.task_approve",
@@ -400,10 +400,10 @@ class SecurityEngineService:
             target_ref=str(task.id),
         )
         self.guard.authorize_tool(
-            task.operation,
+            task.operation,  # type: ignore[arg-type]
             allowed_scopes=engine.allowed_scopes or [],
-            enabled=engine.enabled,
-            allow_execution=engine.allow_execution,
+            enabled=engine.enabled,  # type: ignore[arg-type]
+            allow_execution=engine.allow_execution,  # type: ignore[arg-type]
             approved_by=authorization["signer_id"],
             authorization=authorization,
         )
@@ -411,8 +411,8 @@ class SecurityEngineService:
             raise SecurityGuardDenied("scope does not permit write/execution operations")
 
         task.approved_by = authorization["signer_id"]
-        task.approved_at = _now()
-        task.status = "authorized"
+        task.approved_at = _now()  # type: ignore[assignment]
+        task.status = "authorized"  # type: ignore[assignment]
         await self._audit(
             "task_approved",
             engine_id=str(engine.id),
@@ -433,7 +433,7 @@ class SecurityEngineService:
             target_ref=task_id,
         )
         task = await self._get_task(task_id)
-        task.status = "rejected"
+        task.status = "rejected"  # type: ignore[assignment]
         await self._audit(
             "task_rejected", task_id=str(task.id), actor=auth["signer_id"]
         )
@@ -444,22 +444,22 @@ class SecurityEngineService:
         """Send an already-approved task through the guard to the adapter."""
         task = await self._get_task(task_id)
         engine = await self._get_engine(str(task.engine_id))
-        scopes = await self._scopes(engine.id)
-        scope = self.guard.validate_target(task.target, scopes)
+        scopes = await self._scopes(engine.id)  # type: ignore[arg-type]
+        scope = self.guard.validate_target(task.target, scopes)  # type: ignore[arg-type]
         level = "4" if task.risk_level == "protected_core" else "3"
         authorization = await self._authorization(level)
         self.guard.authorize_dispatch(
             enabled=bool(engine.enabled),
-            approved_by=task.approved_by,
+            approved_by=task.approved_by,  # type: ignore[arg-type]
             authorization=authorization,
             scope=scope,
         )
         self.guard.authorize_tool(
-            task.operation,
+            task.operation,  # type: ignore[arg-type]
             allowed_scopes=engine.allowed_scopes or [],
             enabled=bool(engine.enabled),
             allow_execution=bool(engine.allow_execution),
-            approved_by=task.approved_by,
+            approved_by=task.approved_by,  # type: ignore[arg-type]
             authorization=authorization,
         )
 
@@ -469,20 +469,20 @@ class SecurityEngineService:
         if task.parent_task_id:
             arguments["retest_of"] = str(task.parent_task_id)
 
-        result = await adapter_for(engine.transport).call_tool(
-            self._config(engine), task.operation, arguments
+        result = await adapter_for(engine.transport).call_tool(  # type: ignore[arg-type]
+            self._config(engine), task.operation, arguments  # type: ignore[arg-type]
         )
-        task.status = "dispatched"
-        task.started_at = _now()
+        task.status = "dispatched"  # type: ignore[assignment]
+        task.started_at = _now()  # type: ignore[assignment]
         metadata = dict(task.metadata_ or {})
         metadata["last_dispatch"] = {
             "dry_run": result.get("dry_run"),
             "tool": task.operation,
         }
-        task.metadata_ = metadata
+        task.metadata_ = metadata  # type: ignore[assignment]
         external_id = (result.get("result") or {}).get("task_id")
         if external_id:
-            task.external_task_id = str(external_id)
+            task.external_task_id = str(external_id)  # type: ignore[assignment]
         await self._audit(
             "task_dispatched",
             engine_id=str(engine.id),
@@ -508,15 +508,15 @@ class SecurityEngineService:
             authorization=None,
         )
         arguments = {"task_id": task.external_task_id} if task.external_task_id else {}
-        result = await adapter_for(engine.transport).call_tool(
+        result = await adapter_for(engine.transport).call_tool(  # type: ignore[arg-type]
             self._config(engine), "list_task_findings", arguments
         )
         raw_findings = (result.get("result") or {}).get("findings", [])
         if not isinstance(raw_findings, list):
             raw_findings = []
         stored = await self.ingest_findings(str(task.id), raw_findings)
-        task.status = "completed" if task.status == "dispatched" else task.status
-        task.completed_at = _now() if task.status == "completed" else None
+        task.status = "completed" if task.status == "dispatched" else task.status  # type: ignore[assignment]
+        task.completed_at = _now() if task.status == "completed" else None  # type: ignore[assignment]
         await self._audit(
             "task_synced",
             engine_id=str(engine.id),
@@ -573,7 +573,7 @@ class SecurityEngineService:
         finding = await self._get_finding(finding_id)
         if FORBIDDEN_GUIDANCE.search(guidance):
             raise SecurityGuardDenied("remediation must be defensive only")
-        finding.remediation = self.guard.sanitize_finding_text(guidance)
+        finding.remediation = self.guard.sanitize_finding_text(guidance)  # type: ignore[assignment]
         await self._audit(
             "remediation_added",
             task_id=str(finding.task_id),
@@ -644,13 +644,13 @@ class SecurityEngineService:
         """Create a gated retest task linked to the original."""
         task = await self._get_task(task_id)
         scopes = await self._scopes(str(task.engine_id))
-        self.guard.validate_target(task.target, scopes)
+        self.guard.validate_target(task.target, scopes)  # type: ignore[arg-type]
         return await self.create_task(
             str(task.engine_id),
-            target=task.target,
+            target=task.target,  # type: ignore[arg-type]
             description=f"Retest of {task_id}: verify approved fixes",
             operation="spawn_task",
-            risk_level=task.risk_level,
+            risk_level=task.risk_level,  # type: ignore[arg-type]
             parent_task_id=str(task.id),
         )
 
@@ -677,7 +677,7 @@ class SecurityEngineService:
                 "action": a.action,
                 "actor": a.actor,
                 "details": a.details,
-                "created_at": _iso(a.created_at),
+                "created_at": _iso(a.created_at),  # type: ignore[arg-type]
             }
             for a in result.scalars().all()
         ]

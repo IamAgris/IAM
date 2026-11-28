@@ -7,13 +7,14 @@ Free-only mode prevents unexpected charges.
 
 import httpx
 import loguru
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Set
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
 from app.models.modelrouter import AIProvider, DiscoveredModel, RoutingDecision, ProviderUsage
+from app.services.adaptive_model_selector import AdaptiveModelSelector
 
 logger = loguru.logger
 
@@ -24,14 +25,14 @@ class IntelligenceRouter:
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
-    async def initialize_providers(self):
+    async def initialize_providers(self):  # type: ignore[no-untyped-def]
         """Register known providers. NVIDIA is one of several, not exclusive."""
         providers = [
             ("nvidia", "nvidia", settings.nvidia_base_url, settings.nvidia_free_only),
             ("alibaba-dashscope", "hosted", "https://dashscope.aliyuncs.com/compatible-mode/v1", False),
             ("openai", "hosted", "https://api.openai.com/v1", True),
             ("anthropic", "hosted", "https://api.anthropic.com/v1", True),
-            ("ollama", "local", "http://ollama:11434", True),
+            ("ollama", "local", settings.ollama_base_url, True),
         ]
         for name, ptype, base_url, free_only in providers:
             result = await self.db.execute(select(AIProvider).where(AIProvider.name == name))
@@ -105,8 +106,8 @@ class IntelligenceRouter:
                 self.db.add(dm)
             dm.capabilities = model["capabilities"]
             dm.is_free = model["is_free"]
-            dm.is_available = True
-            dm.last_checked_at = datetime.utcnow()
+            dm.is_available = True  # type: ignore[assignment]
+            dm.last_checked_at = datetime.utcnow()  # type: ignore[assignment]
         await self.db.commit()
         return models
 
@@ -136,9 +137,34 @@ class IntelligenceRouter:
         required_capabilities: Optional[List[str]] = None,
         prefer_provider: Optional[str] = None,
         allow_paid: bool = False,
+        task_complexity: Optional[int] = None,
+        available_aliases: Optional[Set[str]] = None,
     ) -> Dict[str, Any]:
-        """Select the best available model for a task with failover."""
+        """Select the best available model for a task with failover.
+
+        When `available_aliases` is supplied and adaptive selection is enabled,
+        hardware-aware local model choice (OD-39) runs first; the caller can
+        delegate to a hosted specialist or trusted node when no local model fits.
+        """
         required_capabilities = required_capabilities or []
+        if settings.adaptive_model_enabled and available_aliases is not None:
+            decision = AdaptiveModelSelector().select(
+                task_complexity or 3, set(available_aliases), task_type
+            )
+            if decision.get("delegate"):
+                from app.services.model_policy import require_paid_authorization
+
+                await require_paid_authorization(self.db, decision.get("model"))
+            self.db.add(RoutingDecision(
+                task_type=task_type,
+                required_capabilities=required_capabilities,
+                selected_provider="delegated" if decision["delegate"] else "ollama",
+                selected_model=decision["model"],
+                reason=decision["reason"],
+                fallback_used=decision["delegate"],
+            ))
+            await self.db.commit()
+            return decision
         result = await self.db.execute(
             select(DiscoveredModel).where(DiscoveredModel.is_available == True)
         )
@@ -156,10 +182,10 @@ class IntelligenceRouter:
         # Filter by capability and free-only policy
         candidates = []
         for m in models:
-            caps = m.capabilities or []
+            caps: Any = m.capabilities or []
             if required_capabilities and not all(c in caps for c in required_capabilities):
                 continue
-            if m.is_free is False and not allow_paid:
+            if not m.is_free and not allow_paid:
                 continue
             provider_result = await self.db.execute(
                 select(AIProvider).where(AIProvider.id == m.provider_id)
@@ -167,7 +193,7 @@ class IntelligenceRouter:
             provider = provider_result.scalar_one_or_none()
             if not provider or not provider.is_active:
                 continue
-            if provider.free_only and m.is_free is False:
+            if provider.free_only and not m.is_free:
                 continue
             score = float(m.quality_score or 0.5)
             if prefer_provider and provider.name == prefer_provider:

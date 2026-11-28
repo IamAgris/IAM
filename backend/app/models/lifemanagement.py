@@ -9,7 +9,7 @@ import uuid
 from app.core.database import Base
 
 
-class AIIdentityGenesis(Base):
+class AIIdentityGenesis(Base):  # type: ignore[misc]
     """Permanent, immutable IAM identity genesis record (OD-01)."""
     __tablename__ = "iam_identity_genesis"
 
@@ -22,7 +22,7 @@ class AIIdentityGenesis(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class LifeCycle(Base):
+class LifeCycle(Base):  # type: ignore[misc]
     """Daily self-management cycle states."""
     __tablename__ = "life_cycles"
 
@@ -39,7 +39,7 @@ class LifeCycle(Base):
     )
 
 
-class DailyRoutine(Base):
+class DailyRoutine(Base):  # type: ignore[misc]
     """Recurring daily self-management patterns."""
     __tablename__ = "daily_routines"
 
@@ -54,7 +54,7 @@ class DailyRoutine(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class LifeHistory(Base):
+class LifeHistory(Base):  # type: ignore[misc]
     """Chronological record of important experiences, decisions, achievements."""
     __tablename__ = "life_history"
 
@@ -73,7 +73,7 @@ class LifeHistory(Base):
     )
 
 
-class GoalLifecycle(Base):
+class GoalLifecycle(Base):  # type: ignore[misc]
     """Long-term goal tracking over weeks/months/years."""
     __tablename__ = "goal_lifecycles"
 

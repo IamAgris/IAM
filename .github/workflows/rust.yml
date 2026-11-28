@@ -1,0 +1,41 @@
+name: Rust workspace
+
+# Additive gate for the cross-cutting implementation technology addendum (A17).
+# The existing ci.yml, quality-gates.yml and supply-chain.yml are left untouched.
+on:
+  push:
+    branches: [main, testing]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-workspace:
+    name: Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.90.0'
+          components: rustfmt, clippy
+      - name: Format check
+        run: cargo fmt --all -- --check
+      - name: Lint (warnings are errors)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --workspace
+      - name: Generate lockfile for audit
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo generate-lockfile
+      - name: Dependency audit
+        if: matrix.os == 'ubuntu-latest'
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

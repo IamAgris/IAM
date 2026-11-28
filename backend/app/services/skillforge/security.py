@@ -24,7 +24,7 @@ class Finding:
     message: str
     line: int = 0
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict:  # type: ignore[type-arg]
         return {
             "severity": self.severity,
             "code": self.code,
@@ -35,7 +35,7 @@ class Finding:
 
 
 # (code, severity, compiled pattern, human-readable message)
-RULES: Tuple[Tuple[str, str, Pattern, str], ...] = (
+RULES: Tuple[Tuple[str, str, Pattern, str], ...] = (  # type: ignore[type-arg]
     (
         "PROMPT_INJECTION",
         "critical",
