@@ -131,6 +131,11 @@ async def lifespan(app: FastAPI) -> Any:
     from app.services.p2p_transport import transport
 
     enforce_secret_policy()
+    from app.core.observability import configure_tracing
+
+    trace_state = configure_tracing()
+    if trace_state.get("enabled"):
+        logger.info("OTLP tracing enabled")
     transport.configure(
         settings.iam_node_id,
         settings.iam_p2p_secret,

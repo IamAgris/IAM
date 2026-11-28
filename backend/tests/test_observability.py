@@ -1,8 +1,10 @@
 """Runtime observability must expose counters and safe spans without an SDK."""
 
 import unittest
+from unittest.mock import patch
 
-from app.core.observability import metrics, prometheus_text, span
+from app.core.config import settings
+from app.core.observability import configure_tracing, metrics, prometheus_text, span
 
 
 class ObservabilityTests(unittest.TestCase):
@@ -21,6 +23,11 @@ class ObservabilityTests(unittest.TestCase):
         self.assertEqual(after["requests"] - before["requests"], 2)
         self.assertEqual(after["errors"] - before["errors"], 1)
         self.assertEqual(after["in_flight"], before["in_flight"])
+
+    def test_tracing_is_disabled_without_endpoint(self):
+        with patch.object(settings, "otel_exporter_otlp_endpoint", ""):
+            state = configure_tracing()
+        self.assertFalse(state["enabled"])
 
     def test_prometheus_text_exposes_alertable_signals(self):
         text = prometheus_text()

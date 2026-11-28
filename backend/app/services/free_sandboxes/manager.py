@@ -45,7 +45,11 @@ class FreeSandboxManager:
         enabled: bool = True,
         policy: Optional[SchedulerPolicy] = None,
     ) -> None:
-        self.guard = quota_guard or QuotaGuard()
+        from app.core.config import settings
+
+        self.guard = quota_guard or QuotaGuard(
+            safety_margin=settings.free_sandbox_quota_safety_margin
+        )
         self.audit_sink = audit_sink
         self.enabled = enabled
         self.policy = policy or SchedulerPolicy()

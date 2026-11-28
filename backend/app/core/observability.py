@@ -15,11 +15,15 @@ from collections import defaultdict
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator
 
+from app.core.config import settings
+
+_otel_trace: Any = None
 try:  # pragma: no cover - depends on optional SDK
     from opentelemetry import trace as _otel_trace
 
     _tracer: Any = _otel_trace.get_tracer("iam.backend")
 except Exception:  # pragma: no cover
+    _otel_trace = None
     _tracer = None
 
 
@@ -29,6 +33,32 @@ class _NoopSpan:
 
     def record_exception(self, exc: BaseException) -> None:
         return None
+
+
+def configure_tracing() -> Dict[str, Any]:
+    """Install an OTLP exporter when configured and the optional SDK exists.
+
+    The setting is consumed here rather than being dead configuration. Without
+    an SDK, spans stay no-op and the deployment keeps working offline.
+    """
+    endpoint = settings.otel_exporter_otlp_endpoint
+    if not endpoint:
+        return {"enabled": False, "reason": "no OTLP endpoint configured"}
+    if _otel_trace is None:  # pragma: no cover - depends on optional SDK
+        return {"enabled": False, "reason": "opentelemetry SDK not installed"}
+    try:  # pragma: no cover - optional dependency
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    except ImportError:  # pragma: no cover
+        return {"enabled": False, "reason": "OTLP exporter not installed"}
+
+    global _tracer
+    provider = TracerProvider()
+    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    _otel_trace.set_tracer_provider(provider)
+    _tracer = _otel_trace.get_tracer("iam.backend")
+    return {"enabled": True, "exporter": "otlp-grpc"}
 
 
 @contextmanager
