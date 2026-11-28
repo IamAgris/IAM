@@ -18,6 +18,7 @@ from app.models.internetaccess import InternetSession
 from app.models.security import AuditEvent
 from app.models.uwaie import WebsiteWorkflow
 from app.services.browser_service import browser_service
+from app.services.iics.egress import enforce as enforce_egress
 from app.services.browser_evidence_service import BrowserEvidenceService
 from app.services.internetaccess_service import InternetAccessService
 from app.services.creatorapproval_service import CreatorApprovalService
@@ -69,6 +70,12 @@ class UWAIEService:
 
     async def inspect(self, url: str, actor: str = "sdk") -> Dict[str, Any]:
         """Discover and understand a page without storing credentials."""
+        target = str(url or "").strip()
+        if not target or BLOCKED_TARGETS.search(target):
+            raise UWAIEError("target is empty or is an access challenge/paywall")
+        decision = enforce_egress(target)
+        if not decision.allowed:
+            raise UWAIEError(f"egress_denied:{decision.reason}")
         permission = await InternetAccessService(self.db).check_permission("browse_public")
         if not permission["permitted"]:
             raise UWAIEError(permission["reason"])
@@ -322,7 +329,7 @@ class UWAIEService:
             raise UWAIEError("no signed Creator authorization covers this workflow")
         if approval_id and authority.get("authorization_id") != approval_id:
             raise UWAIEError("approval_id does not match the active signed authorization")
-        workflow.is_approved = True
+        workflow.is_approved = True  # type: ignore[assignment]
         self.db.add(
             AuditEvent(
                 event_type="uwaie_workflow_approved",
@@ -357,10 +364,10 @@ class UWAIEService:
         )
         result = await self.execute(
             steps=adapted,
-            verification=workflow.verification or {},
+            verification=workflow.verification or {},  # type: ignore[arg-type]
             session_token=session_token,
             learn=False,
-            workflow_name=workflow.name,
+            workflow_name=workflow.name,  # type: ignore[arg-type]
             actor=actor,
         )
         result["adapted_steps"] = remapped

@@ -9,21 +9,40 @@ import os
 import httpx
 
 
+_installed = False
+
+
 def install_auth_headers() -> bool:
+    global _installed
     key = os.environ.get("IAM_API_KEY", "").strip()
     if not key:
         return False
+    if _installed:
+        return True
 
     import httpx._api
+
+    def with_auth(kwargs: dict) -> dict:
+        headers = dict(kwargs.pop("headers", None) or {})
+        headers.setdefault("Authorization", f"Bearer {key}")
+        kwargs["headers"] = headers
+        return kwargs
 
     original_request = httpx._api.request
 
     def authenticated_request(method, url, **kwargs):
-        headers = dict(kwargs.pop("headers", None) or {})
-        headers.setdefault("Authorization", f"Bearer {key}")
-        return original_request(method, url, headers=headers, **kwargs)
+        return original_request(method, url, **with_auth(kwargs))
 
-    # httpx.get/post call httpx._api.request, not the package-level re-export.
+    # Module-level helpers (httpx.get/post) route through httpx._api.request.
     httpx._api.request = authenticated_request
     httpx.request = authenticated_request
+
+    # Client-based scripts use Client.request, which bypasses the module API.
+    original_client_request = httpx.Client.request
+
+    def authenticated_client_request(self, method, url, **kwargs):
+        return original_client_request(self, method, url, **with_auth(kwargs))
+
+    httpx.Client.request = authenticated_client_request
+    _installed = True
     return True

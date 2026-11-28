@@ -53,9 +53,9 @@ def main():
                 "session_token": session_token,
                 "steps": [
                     {"action": "navigate", "target": TARGET},
-                    {"action": "text", "target": ""},
+                    {"action": "text", "target": "body"},
                 ],
-                "verification": {"expected_text": "Example Domain"},
+                "verification": {"expected_text": "This domain is for use"},
                 "actor": "browser-smoke",
                 "actor_type": "agent",
                 "permission_scope": "browse_public",
