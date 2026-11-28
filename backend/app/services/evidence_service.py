@@ -133,16 +133,17 @@ class EvidenceService:
         await self.db.commit()
         await self.db.refresh(item)
 
+        evidence_meta: Dict[str, Any] = dict(item.metadata_ or {})
         return EvidenceItem(
             id=str(item.id),
             source_id=source_id,
             source_type=source_type,
             locator=locator,
             content=content.strip(),
-            collected_at=item.metadata_.get("collected_at", ""),
+            collected_at=str(evidence_meta.get("collected_at", "")),
             credibility=cred,
             evidence_type=evidence_type,
-            metadata=item.metadata_ or {},
+            metadata=evidence_meta,
         )
 
     # ------------------------------------------------------------------
@@ -165,18 +166,18 @@ class EvidenceService:
         existing = result.scalar_one_or_none()
 
         if existing is not None:
-            meta = existing.metadata_ or {}
+            meta: Dict[str, Any] = dict(existing.metadata_ or {})
             reliability = float(meta.get("source_reliability", 0.5))
             total = int(meta.get("total_claims", 1))
             accurate = int(meta.get("accurate_claims", 0))
             return SourceRecord(
                 source_id=source_id,
                 source_type=source_type,
-                locator=locator or meta.get("locator"),
+                locator=locator or (str(meta["locator"]) if meta.get("locator") else None),
                 reliability=reliability,
                 total_claims=total,
                 accurate_claims=accurate,
-                last_verified=meta.get("last_verified"),
+                last_verified=str(meta["last_verified"]) if meta.get("last_verified") else None,
                 first_seen=existing.created_at.isoformat() if existing.created_at else "",
                 metadata=meta,
             )
@@ -207,6 +208,7 @@ class EvidenceService:
         result = await self.db.execute(stmt)
         existing = result.scalar_one_or_none()
 
+        meta: Dict[str, Any]
         if existing is None:
             # No evidence trail for this source; create a neutral record.
             meta = {
@@ -239,7 +241,7 @@ class EvidenceService:
                 first_seen=datetime.now(timezone.utc).isoformat(),
             )
 
-        meta = existing.metadata_ or {}
+        meta = dict(existing.metadata_ or {})
         total = int(meta.get("total_claims", 0)) + 1
         accurate = int(meta.get("accurate_claims", 0)) + (1 if was_accurate else 0)
         reliability = accurate / total if total > 0 else 0.5
@@ -249,19 +251,19 @@ class EvidenceService:
             "source_reliability": round(reliability, 3),
             "last_verified": datetime.now(timezone.utc).isoformat(),
         })
-        existing.metadata_ = meta
-        existing.confidence_level = reliability
-        existing.last_reviewed_at = datetime.now(timezone.utc)
+        existing.metadata_ = meta  # type: ignore[assignment]
+        existing.confidence_level = reliability  # type: ignore[assignment]
+        existing.last_reviewed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await self.db.commit()
 
         return SourceRecord(
             source_id=source_id,
             source_type=str(meta.get("source_type", "unknown")),
-            locator=meta.get("locator"),
+            locator=str(meta["locator"]) if meta.get("locator") else None,
             reliability=reliability,
             total_claims=total,
             accurate_claims=accurate,
-            last_verified=meta["last_verified"],
+            last_verified=str(meta["last_verified"]) if meta.get("last_verified") else None,
             first_seen=existing.created_at.isoformat() if existing.created_at else "",
             metadata=meta,
         )

@@ -19,6 +19,7 @@ class MemoryItem(Base):
     source = Column(Text, nullable=True)
     confidence_level = Column(Numeric(3, 2), nullable=False, default=0.5)
     topic = Column(Text, nullable=True)
+    verification_status = Column(Text, nullable=False, default="unverified")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_reviewed_at = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
@@ -27,6 +28,7 @@ class MemoryItem(Base):
     __table_args__ = (
         CheckConstraint("memory_type IN ('fact', 'opinion', 'hypothesis', 'preference', 'creative', 'experience')", name="ck_memory_type"),
         CheckConstraint("confidence_level BETWEEN 0 AND 1", name="ck_memory_confidence_level"),
+        CheckConstraint("verification_status IN ('unverified', 'verified', 'disputed', 'retracted', 'expired')", name="ck_memory_verification_status"),
     )
 
     embeddings = relationship("MemoryEmbedding", back_populates="memory_item", cascade="all, delete-orphan")
@@ -39,7 +41,8 @@ class MemoryEmbedding(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     memory_item_id = Column(UUID(as_uuid=True), ForeignKey("memory_items.id", ondelete="CASCADE"), nullable=False)
-    embedding = Column(Vector(1536), nullable=True)
+    # Local Ollama embedder (nomic-embed-text) produces 768 dimensions.
+    embedding = Column(Vector(768), nullable=True)
     model = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

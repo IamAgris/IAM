@@ -331,6 +331,11 @@
       "sequence": 66,
       "number": 69,
       "path": "069_memory_verification.sql"
+    },
+    {
+      "sequence": 67,
+      "number": 70,
+      "path": "070_memory_embedding_dim.sql"
     }
   ]
 }

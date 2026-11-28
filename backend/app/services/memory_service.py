@@ -89,7 +89,7 @@ class MemoryService:
             embedding = MemoryEmbedding(
                 memory_item_id=memory.id,
                 embedding=embedding_vector,
-                model="text-embedding-3-small",
+                model=settings.memory_embedding_model,
             )
             self.db.add(embedding)
 
@@ -236,7 +236,7 @@ class MemoryService:
         memory = result.scalar_one_or_none()
         if not memory:
             return False
-        memory.verification_status = status
+        memory.verification_status = status  # type: ignore[assignment]
         memory.last_reviewed_at = datetime.now(timezone.utc)
         await self.db.commit()
         return True

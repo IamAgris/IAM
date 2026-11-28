@@ -77,10 +77,14 @@ async def create_memory(
 ):
     """Store a new memory item with embedding generation."""
     service = MemoryService(db)
+    # Provenance is mandatory in MemoryService. Public callers may omit it, so
+    # attribute those memories to the API boundary rather than failing with a
+    # 500 after passing schema validation.
+    source = item.source.strip() if item.source and item.source.strip() else "user-api"
     result = await service.store_memory(
         content=item.content,
         memory_type=item.memory_type,
-        source=item.source,
+        source=source,
         confidence=item.confidence_level,
         topic=item.topic,
         metadata_=item.metadata,

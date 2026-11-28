@@ -79,7 +79,10 @@ Assert-NotContains $out '.env.example' 'secret pattern excludes .env.example'
 Assert-Contains $out 'No results' 'no results for excluded secret filename'
 
 # 4. Architecture docs
-$out = (& $searchScript -Query 'OD-46' -Mode docs -MaxResults 20 2>&1 6>&1 | Out-String)
+# The authoritative doc corpus grew (licensing README, conflict report, automation spec),
+# so the OD-46 authority can rank below position 20. Widen deliberately to 50 — still a
+# bounded smoke assertion, not a full-corpus dump.
+$out = (& $searchScript -Query 'OD-46' -Mode docs -MaxResults 50 2>&1 6>&1 | Out-String)
 Assert-Contains $out 'IAM_FOUNDATION_MODEL_AND_INTELLIGENCE_SPEC.md' 'docs mode finds OD-46 authority'
 
 # 5. Content search
