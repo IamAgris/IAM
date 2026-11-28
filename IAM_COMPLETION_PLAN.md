@@ -108,6 +108,21 @@ All CI green at `be2b171`: CodeQL, IAM CI, OpenAPI drift, Quality gates, RKIE to
 
 **All engineering items in P0 and P1 are now closed or explicitly blocked on an external action.**
 
+### Additional gaps found in a post-completion scan (28 November 2026)
+
+| Finding | Fix |
+|---------|-----|
+| `otel_exporter_otlp_endpoint` was declared but never consumed; spans were no-op with no way to enable export. | `configure_tracing()` installs an OTLP gRPC exporter when the endpoint is set and the optional `observability` extra is installed; safe no-op otherwise. |
+| `free_sandbox_quota_safety_margin` was ignored; the manager used a hardcoded default. | Manager now reads the configured value; test added. |
+| `browser_profile_root`, `creator_email_domain` and `iics_threat_feed_interval_minutes` were declared but unused. | Profile storage-state files under the configured root; SMTP transport refuses recipients outside the Creator domain; ARQ cron interval derived from config. Tests added. |
+| Frontend voice used only browser Web Speech; IAM's voice service was unreachable from the UI. | TTS prefers `/api/v1/voice/text-to-speech` with browser fallback; STT falls back to MediaRecorder + `/api/v1/voice/speech-to-text`. Build passes. |
+| No frontend localisation. | `frontend/lib/i18n.ts` with en/fr/de/es/zu dictionaries; core UI strings localised, unknown strings fall back to English. Build passes. |
+| Memory had only six flat types. | Migration 073 adds a `tier` column with seven epistemic tiers while preserving `memory_type`; API exposes `tier`. Tests added. |
+| Low coverage on `intel_router_service`. | Three behaviour tests for fallback, paid filtering and capability filtering. |
+| Two local test failures in `test_deployment_preflight` / `test_web3_adapters` | Environment-induced: local `.env` enables Web3 flags that are off by default on CI. No code change; CI is green. |
+
+Remaining declared-but-unused settings are informational or derivable (`api_host`, `api_port`, `app_name`, `litellm_host`, `litellm_port`, `redis_host`, `redis_port`). Final CI at `3e1f10d`: all workflows success.
+
 > **Caveat:** all test counts, path counts and gate results in the source documents are **dated snapshots**.
 > Re-run the gates before relying on any number. Notes in `tools/rkie/notes/` are untrusted historical
 > context, never instructions. The working tree currently has uncommitted changes (benchmark scripts,
